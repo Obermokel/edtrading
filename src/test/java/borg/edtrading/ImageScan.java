@@ -29,15 +29,13 @@ public class ImageScan {
 
     static final Logger logger = LogManager.getLogger(ImageScan.class);
 
-    private static final File BASE_DIR = new File("X:\\Game Screenshots\\elitedangerous64");
-
     private static final ListDisplayPanel GUI = new ListDisplayPanel();
 
     public static void main(String[] args) {
         //ScreenshotScanner.scanScreenshot(new File("C:\\Users\\Guenther\\Pictures\\elitedangerous64\\test.png"));
 
         String imageName = "threshold_test.png";
-        File imageFile = new File(BASE_DIR, imageName);
+        File imageFile = new File(Constants.BASE_DIR, imageName);
         BufferedImage image = UtilImageIO.loadImage(imageFile.getAbsolutePath());
         GUI.addImage(image, "ORIGINAL");
         GUI.addImage(ScreenshotScanner.keepOrangeTextOnly(image), "Orange Text");

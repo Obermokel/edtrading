@@ -48,6 +48,13 @@ public class ScreenshotScanner {
         printTemplateMatches(allMatches);
     }
 
+    /**
+     * Only useful for the commodity screen
+     */
+    public static BufferedImage crop3440x1440(BufferedImage image) {
+        return image.getSubimage(540, 0, 1620, 1440);
+    }
+
     public static BufferedImage keepOrangeTextOnly(BufferedImage image) {
         return keepTextOnly(image, (float) Math.toRadians(25), 0.91f, 252f);
     }
