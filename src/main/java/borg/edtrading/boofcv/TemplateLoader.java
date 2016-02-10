@@ -32,6 +32,11 @@ public class TemplateLoader {
         });
         for (File subDir : subDirs) {
             String text = subDir.getName();
+            if ("_punkt".equals(text)) {
+                text = ".";
+            } else if ("_strich".equals(text)) {
+                text = "-";
+            }
             File[] pngFiles = subDir.listFiles(new FileFilter() {
                 @Override
                 public boolean accept(File file) {
