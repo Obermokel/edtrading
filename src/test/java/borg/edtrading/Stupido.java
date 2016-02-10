@@ -1,4 +1,4 @@
-package bord.edtrading;
+package borg.edtrading;
 
 import java.sql.Timestamp;
 
