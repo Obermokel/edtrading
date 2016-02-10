@@ -9,6 +9,6 @@ import java.io.File;
  */
 public interface Constants {
 
-    File BASE_DIR = new File("X:\\Game Screenshots\\elitedangerous64");
+    File SCREENSHOTS_DIR = new File("X:\\Game Screenshots\\elitedangerous64");
 
 }

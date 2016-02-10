@@ -19,7 +19,7 @@ public class ScreenshotConverter {
     static final Logger logger = LogManager.getLogger(ScreenshotConverter.class);
 
     public static void main(String[] args) {
-        File[] screenshotFiles = Constants.BASE_DIR.listFiles(new FileFilter() {
+        File[] screenshotFiles = Constants.SCREENSHOTS_DIR.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {
                 return file.getName().startsWith("elitedangerous64_") && file.getName().endsWith(".png");

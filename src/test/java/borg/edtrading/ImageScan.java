@@ -35,7 +35,7 @@ public class ImageScan {
         //ScreenshotScanner.scanScreenshot(new File("C:\\Users\\Guenther\\Pictures\\elitedangerous64\\test.png"));
 
         String imageName = "threshold_test.png";
-        File imageFile = new File(Constants.BASE_DIR, imageName);
+        File imageFile = new File(Constants.SCREENSHOTS_DIR, imageName);
         BufferedImage image = UtilImageIO.loadImage(imageFile.getAbsolutePath());
         GUI.addImage(image, "ORIGINAL");
         GUI.addImage(ScreenshotScanner.keepOrangeTextOnly(image), "Orange Text");
