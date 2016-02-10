@@ -29,17 +29,17 @@ public class ImageScan {
 
     static final Logger logger = LogManager.getLogger(ImageScan.class);
 
-    private static final ListDisplayPanel GUI = new ListDisplayPanel();
+    static final ListDisplayPanel GUI = new ListDisplayPanel();
 
     public static void main(String[] args) {
-        //ScreenshotScanner.scanScreenshot(new File("C:\\Users\\Guenther\\Pictures\\elitedangerous64\\test.png"));
+        ScreenshotScanner.scanScreenshot(new File(Constants.SCREENSHOTS_DIR, "elitedangerous64_2016-02-09_21-34-33.png"));
 
-        String imageName = "threshold_test.png";
-        File imageFile = new File(Constants.SCREENSHOTS_DIR, imageName);
-        BufferedImage image = UtilImageIO.loadImage(imageFile.getAbsolutePath());
-        GUI.addImage(image, "ORIGINAL");
-        GUI.addImage(ScreenshotScanner.keepOrangeTextOnly(image), "Orange Text");
-        ShowImages.showWindow(GUI, imageName);
+        //        String imageName = "threshold_test.png";
+        //        File imageFile = new File(Constants.SCREENSHOTS_DIR, imageName);
+        //        BufferedImage image = UtilImageIO.loadImage(imageFile.getAbsolutePath());
+        //        GUI.addImage(image, "ORIGINAL");
+        //        GUI.addImage(ScreenshotScanner.keepOrangeTextOnly(image), "Orange Text");
+        //        ShowImages.showWindow(GUI, imageName);
     }
 
     static void templateMatch() {

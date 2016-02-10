@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.FileFilter;
 
 import boofcv.io.image.UtilImageIO;
-import borg.edtrading.boofcv.ScreenshotScanner;
+import borg.edtrading.boofcv.ScreenshotSimplifier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,8 +28,7 @@ public class ScreenshotConverter {
         for (File screenshotFile : screenshotFiles) {
             File orangeTextFile = new File(screenshotFile.getParentFile(), "orangeText_" + screenshotFile.getName());
             BufferedImage originalImage = UtilImageIO.loadImage(screenshotFile.getAbsolutePath());
-            BufferedImage croppedImage = ScreenshotScanner.crop3440x1440(originalImage);
-            BufferedImage orangeTextImage = ScreenshotScanner.keepOrangeTextOnly(croppedImage);
+            BufferedImage orangeTextImage = ScreenshotSimplifier.simplifyScreenshot(originalImage);
             UtilImageIO.saveImage(orangeTextImage, orangeTextFile.getAbsolutePath());
         }
     }

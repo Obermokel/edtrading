@@ -7,6 +7,7 @@ import java.util.List;
 
 import boofcv.io.image.UtilImageIO;
 import boofcv.struct.image.ImageFloat32;
+import borg.edtrading.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,7 +23,7 @@ public class TemplateLoader {
     public static List<Template> loadTemplates() {
         List<Template> result = new ArrayList<>();
 
-        File baseDir = new File(System.getProperty("user.home"), "EliteDangerous\\Templates");
+        File baseDir = Constants.TEMPLATES_DIR;
         File[] subDirs = baseDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {
