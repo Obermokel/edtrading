@@ -29,6 +29,7 @@ public class TemplateMatcher {
     public static List<TemplateMatch> findAllTemplateMatches(ImageFloat32 screenshotImage) {
         List<Template> templates = TemplateLoader.loadTemplates();
 
+        logger.debug("Scanning for " + templates.size() + " template(s) in screenshot");
         List<TemplateMatch> allMatches = new ArrayList<>();
         for (Template template : templates) {
             allMatches.addAll(findTemplateInScreenshot(template, screenshotImage));
@@ -41,19 +42,19 @@ public class TemplateMatcher {
         TemplateMatching<ImageFloat32> matcher = FactoryTemplateMatching.createMatcher(TemplateScoreType.SUM_DIFF_SQ, ImageFloat32.class);
 
         // Find the points which match the template the best
-        matcher.setTemplate(template.getImage(), null, 1);
+        matcher.setTemplate(template.getImage(), null, 100);
         matcher.process(screenshotImage);
 
         int templatePixels = template.getImage().getWidth() * template.getImage().getHeight();
-        double maxScore = 735.0 * templatePixels;
+        //double maxScore = 735.0 * templatePixels;
 
         List<TemplateMatch> result = new ArrayList<>();
         ListIterator<Match> it = matcher.getResults().toList().listIterator();
         while (it.hasNext()) {
             Match match = it.next();
-            if (match.score < maxScore) {
-                result.add(new TemplateMatch(template, match));
-            }
+            //if (match.score < maxScore) {
+            result.add(new TemplateMatch(template, match));
+            //}
         }
 
         return result;

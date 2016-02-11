@@ -43,8 +43,8 @@ public class TemplateHighlighter {
             g2.drawLine(x0, y1, x0, y0);
 
             g2.setColor(Color.WHITE);
-            //g2.drawString("" + match.getMatch().score, match.getMatch().x, match.getMatch().y);
-            g2.drawString(match.getTemplate().getText() + "=" + match.getErrorPerPixel(), match.getMatch().x, match.getMatch().y);
+            g2.drawString(match.getTemplate().getText(), match.getMatch().x, match.getMatch().y);
+            //g2.drawString(match.getTemplate().getText() + "=" + match.getErrorPerPixel(), match.getMatch().x, match.getMatch().y);
         }
     }
 

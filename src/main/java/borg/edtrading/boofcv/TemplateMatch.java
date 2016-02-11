@@ -1,5 +1,8 @@
 package borg.edtrading.boofcv;
 
+import java.awt.Rectangle;
+import java.util.List;
+
 import boofcv.struct.feature.Match;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,11 +24,34 @@ public class TemplateMatch {
         this.setMatch(match);
     }
 
+    /**
+     * The closer to 0 the better
+     */
     public int getErrorPerPixel() {
         int pixels = this.getTemplate().getImage().getWidth() * this.getTemplate().getImage().getHeight();
         double error = this.getMatch().score;
 
-        return (int) (error / pixels);
+        return -1 * (int) (error / pixels);
+    }
+
+    public boolean overlapsWithAny(List<TemplateMatch> other) {
+        // 1px smaller than actual in order to correct template match jitter
+        final Rectangle thisRectangle = new Rectangle( //
+        this.getMatch().x + 1, this.getMatch().y + 1, //
+        this.getTemplate().getImage().width - 2, this.getTemplate().getImage().height - 2);
+
+        for (TemplateMatch that : other) {
+            // 1px smaller than actual in order to correct template match jitter
+            final Rectangle thatRectangle = new Rectangle( //
+            that.getMatch().x + 1, that.getMatch().y + 1, //
+            that.getTemplate().getImage().width - 2, that.getTemplate().getImage().height - 2);
+
+            if (thisRectangle.intersects(thatRectangle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public Template getTemplate() {
