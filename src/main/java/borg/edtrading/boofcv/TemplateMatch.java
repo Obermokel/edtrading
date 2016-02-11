@@ -21,6 +21,13 @@ public class TemplateMatch {
         this.setMatch(match);
     }
 
+    public int getErrorPerPixel() {
+        int pixels = this.getTemplate().getImage().getWidth() * this.getTemplate().getImage().getHeight();
+        double error = this.getMatch().score;
+
+        return (int) (error / pixels);
+    }
+
     public Template getTemplate() {
         return this.template;
     }

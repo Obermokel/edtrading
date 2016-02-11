@@ -41,7 +41,7 @@ public class TemplateMatcher {
         TemplateMatching<ImageFloat32> matcher = FactoryTemplateMatching.createMatcher(TemplateScoreType.SUM_DIFF_SQ, ImageFloat32.class);
 
         // Find the points which match the template the best
-        matcher.setTemplate(template.getImage(), null, 20);
+        matcher.setTemplate(template.getImage(), null, 1);
         matcher.process(screenshotImage);
 
         int templatePixels = template.getImage().getWidth() * template.getImage().getHeight();

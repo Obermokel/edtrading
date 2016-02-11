@@ -16,7 +16,10 @@ import boofcv.io.image.ConvertBufferedImage;
 import boofcv.io.image.UtilImageIO;
 import boofcv.struct.feature.Match;
 import boofcv.struct.image.ImageFloat32;
-import borg.edtrading.boofcv.ScreenshotScanner;
+import borg.edtrading.boofcv.ScreenshotSimplifier;
+import borg.edtrading.boofcv.TemplateHighlighter;
+import borg.edtrading.boofcv.TemplateMatch;
+import borg.edtrading.boofcv.TemplateMatcher;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,14 +35,20 @@ public class ImageScan {
     static final ListDisplayPanel GUI = new ListDisplayPanel();
 
     public static void main(String[] args) {
-        ScreenshotScanner.scanScreenshot(new File(Constants.SCREENSHOTS_DIR, "elitedangerous64_2016-02-09_21-34-33.png"));
+        //ScreenshotScanner.scanScreenshot(new File(Constants.SCREENSHOTS_DIR, "elitedangerous64_2016-02-09_21-34-33.png"));
 
-        //        String imageName = "threshold_test.png";
-        //        File imageFile = new File(Constants.SCREENSHOTS_DIR, imageName);
-        //        BufferedImage image = UtilImageIO.loadImage(imageFile.getAbsolutePath());
-        //        GUI.addImage(image, "ORIGINAL");
+        //String imageName = "elitedangerous64_2016-02-09_21-34-33.png";
+        String imageName = "test.png";
+        File imageFile = new File(Constants.SCREENSHOTS_DIR, imageName);
+        BufferedImage image = UtilImageIO.loadImage(imageFile.getAbsolutePath());
+        BufferedImage simplifiedScreenshot = ScreenshotSimplifier.simplifyScreenshot(image);
+        GUI.addImage(simplifiedScreenshot, "simplifiedScreenshot");
+        List<TemplateMatch> allMatches = TemplateMatcher.findAllTemplateMatches(ConvertBufferedImage.convertFrom(simplifiedScreenshot, (ImageFloat32) null));
         //        GUI.addImage(ScreenshotScanner.keepOrangeTextOnly(image), "Orange Text");
-        //        ShowImages.showWindow(GUI, imageName);
+        TemplateHighlighter.highlightMatches(simplifiedScreenshot, allMatches);
+        GUI.addImage(simplifiedScreenshot, "matches");
+
+        ShowImages.showWindow(GUI, imageName);
     }
 
     static void templateMatch() {

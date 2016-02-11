@@ -29,7 +29,11 @@ public class ScreenshotSimplifier {
      * Only useful for the commodity screen
      */
     private static BufferedImage crop3440x1440(BufferedImage image) {
-        return image.getSubimage(540, 0, 1620, 1440);
+        if (image.getWidth() == 3440 && image.getHeight() == 1440) {
+            return image.getSubimage(540, 0, 1620, 1440);
+        } else {
+            return image;
+        }
     }
 
     private static BufferedImage keepOrangeTextOnly(BufferedImage image) {
