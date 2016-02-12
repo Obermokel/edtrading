@@ -34,6 +34,13 @@ public class TemplateMatch {
         return -1 * (int) (error / pixels);
     }
 
+    /**
+     * The closer to 0 the better
+     */
+    public int getMatchQuality() {
+        return this.getErrorPerPixel() / this.getTemplate().getImage().getWidth();
+    }
+
     public boolean overlapsWithAny(List<TemplateMatch> other) {
         // 1px smaller than actual in order to correct template match jitter
         final Rectangle thisRectangle = new Rectangle( //

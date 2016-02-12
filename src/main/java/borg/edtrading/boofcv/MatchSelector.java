@@ -42,7 +42,7 @@ public class MatchSelector {
         Collections.sort(matches, new Comparator<TemplateMatch>() {
             @Override
             public int compare(TemplateMatch m1, TemplateMatch m2) {
-                return new Integer(m1.getErrorPerPixel()).compareTo(new Integer(m2.getErrorPerPixel()));
+                return new Integer(m1.getMatchQuality()).compareTo(new Integer(m2.getMatchQuality()));
             }
         });
     }

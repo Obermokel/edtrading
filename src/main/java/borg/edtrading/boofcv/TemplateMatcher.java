@@ -46,15 +46,15 @@ public class TemplateMatcher {
         matcher.process(screenshotImage);
 
         int templatePixels = template.getImage().getWidth() * template.getImage().getHeight();
-        //double maxScore = 735.0 * templatePixels;
+        double maxScore = 1000.0 * templatePixels;
 
         List<TemplateMatch> result = new ArrayList<>();
         ListIterator<Match> it = matcher.getResults().toList().listIterator();
         while (it.hasNext()) {
             Match match = it.next();
-            //if (match.score < maxScore) {
-            result.add(new TemplateMatch(template, match));
-            //}
+            if (match.score < maxScore) {
+                result.add(new TemplateMatch(template, match));
+            }
         }
 
         return result;
