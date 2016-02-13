@@ -17,6 +17,7 @@ import boofcv.io.image.UtilImageIO;
 import boofcv.struct.feature.Match;
 import boofcv.struct.image.ImageFloat32;
 import borg.edtrading.boofcv.MatchSelector;
+import borg.edtrading.boofcv.MatchToText;
 import borg.edtrading.boofcv.ScreenshotSimplifier;
 import borg.edtrading.boofcv.TemplateHighlighter;
 import borg.edtrading.boofcv.TemplateMatch;
@@ -49,6 +50,7 @@ public class ImageScan {
         List<TemplateMatch> selectedMatches = MatchSelector.selectMatches(allMatches);
         TemplateHighlighter.highlightMatches(simplifiedScreenshot, selectedMatches);
         GUI.addImage(simplifiedScreenshot, "matches");
+        MatchToText.matchesToText(selectedMatches);
 
         ShowImages.showWindow(GUI, imageName);
     }
