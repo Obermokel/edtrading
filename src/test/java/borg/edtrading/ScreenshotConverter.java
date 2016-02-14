@@ -3,9 +3,11 @@ package borg.edtrading;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
+import java.util.List;
 
 import boofcv.io.image.UtilImageIO;
-import borg.edtrading.boofcv.ScreenshotSimplifier;
+import borg.edtrading.boofcv.ScreenshotScanner;
+import borg.edtrading.boofcv.Template;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,8 +30,10 @@ public class ScreenshotConverter {
         for (File screenshotFile : screenshotFiles) {
             File orangeTextFile = new File(screenshotFile.getParentFile(), "orangeText_" + screenshotFile.getName());
             BufferedImage originalImage = UtilImageIO.loadImage(screenshotFile.getAbsolutePath());
-            BufferedImage orangeTextImage = ScreenshotSimplifier.simplifyScreenshot(originalImage);
-            UtilImageIO.saveImage(orangeTextImage, orangeTextFile.getAbsolutePath());
+            BufferedImage orangeTextImage = ScreenshotScanner.keepOrangeTextOnly(originalImage);
+            List<Template> templates = ScreenshotScanner.loadTemplates();
+            BufferedImage croppedImage = ScreenshotScanner.cropToCommoditiesMarket(orangeTextImage, templates);
+            UtilImageIO.saveImage(croppedImage, orangeTextFile.getAbsolutePath());
         }
     }
 

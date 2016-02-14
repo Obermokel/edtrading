@@ -15,10 +15,12 @@ public class Template {
 
     private String text = null;
     private ImageFloat32 image = null;
+    private boolean special = false;
 
-    public Template(String text, ImageFloat32 image) {
+    public Template(String text, ImageFloat32 image, boolean special) {
         this.setText(text);
         this.setImage(image);
+        this.setSpecial(special);
     }
 
     public String getText() {
@@ -35,6 +37,14 @@ public class Template {
 
     public void setImage(ImageFloat32 image) {
         this.image = image;
+    }
+
+    public boolean isSpecial() {
+        return this.special;
+    }
+
+    public void setSpecial(boolean special) {
+        this.special = special;
     }
 
 }

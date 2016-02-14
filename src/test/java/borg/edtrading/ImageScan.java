@@ -1,27 +1,19 @@
 package borg.edtrading;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
-import boofcv.alg.feature.detect.template.TemplateMatching;
-import boofcv.factory.feature.detect.template.FactoryTemplateMatching;
-import boofcv.factory.feature.detect.template.TemplateScoreType;
 import boofcv.gui.ListDisplayPanel;
 import boofcv.gui.image.ShowImages;
-import boofcv.io.image.ConvertBufferedImage;
 import boofcv.io.image.UtilImageIO;
-import boofcv.struct.feature.Match;
-import boofcv.struct.image.ImageFloat32;
-import borg.edtrading.boofcv.MatchSelector;
-import borg.edtrading.boofcv.MatchToText;
-import borg.edtrading.boofcv.ScreenshotSimplifier;
-import borg.edtrading.boofcv.TemplateHighlighter;
+import borg.edtrading.boofcv.ScreenshotScanner;
+import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
-import borg.edtrading.boofcv.TemplateMatcher;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -39,106 +31,85 @@ public class ImageScan {
     public static void main(String[] args) {
         //ScreenshotScanner.scanScreenshot(new File(Constants.SCREENSHOTS_DIR, "elitedangerous64_2016-02-09_21-34-33.png"));
 
+        //String imageName = "test.png";
         //String imageName = "elitedangerous64_2016-02-09_21-34-33.png";
-        String imageName = "test.png";
+        //String imageName = "elitedangerous64_2016-02-09_21-47-18.png";
+        //String imageName = "elitedangerous64_2016-02-09_21-47-41.png";
+        String imageName = "elitedangerous64_2016-02-09_22-01-21.png";
         File imageFile = new File(Constants.SCREENSHOTS_DIR, imageName);
         BufferedImage image = UtilImageIO.loadImage(imageFile.getAbsolutePath());
-        BufferedImage simplifiedScreenshot = ScreenshotSimplifier.simplifyScreenshot(image);
-        GUI.addImage(simplifiedScreenshot, "simplifiedScreenshot");
-        List<TemplateMatch> allMatches = TemplateMatcher.findAllTemplateMatches(ConvertBufferedImage.convertFrom(simplifiedScreenshot, (ImageFloat32) null));
-        //        GUI.addImage(ScreenshotScanner.keepOrangeTextOnly(image), "Orange Text");
-        List<TemplateMatch> selectedMatches = MatchSelector.selectMatches(allMatches);
-        TemplateHighlighter.highlightMatches(simplifiedScreenshot, selectedMatches);
-        GUI.addImage(simplifiedScreenshot, "matches");
-        MatchToText.matchesToText(selectedMatches);
+        List<Template> templates = ScreenshotScanner.loadTemplates();
+        GUI.addImage(image, "image");
+        BufferedImage orangeTextImage = ScreenshotScanner.keepOrangeTextOnly(image);
+        GUI.addImage(orangeTextImage, "orangeTextImage");
+        BufferedImage croppedImage = ScreenshotScanner.cropToCommoditiesMarket(orangeTextImage, templates);
+        GUI.addImage(croppedImage, "croppedImage");
+        Map<String, Integer> columns = ScreenshotScanner.findColumns(croppedImage, templates);
+        List<Integer> rows = ScreenshotScanner.findRows(croppedImage, templates, columns);
+        BufferedImage colsAndRowsImage = drawColsAndRows(croppedImage, columns, rows);
+        GUI.addImage(colsAndRowsImage, "colsAndRowsImage");
+        BufferedImage noHairlineImage = ScreenshotScanner.removeHairlines(croppedImage, rows, columns);
+        GUI.addImage(noHairlineImage, "noHairlineImage");
+        Map<Integer, Map<String, List<TemplateMatch>>> groupedMatches = ScreenshotScanner.findAndGroupMatches(noHairlineImage, templates, rows, columns);
+        BufferedImage matchesImage = drawMatches(noHairlineImage, groupedMatches, columns, rows);
+        GUI.addImage(matchesImage, "matchesImage");
+        Map<Integer, Map<String, String>> texts = ScreenshotScanner.extractTexts(groupedMatches);
+        for (Map<String, String> row : texts.values()) {
+            String ware = row.get("WAREN");
+            String verkauf = row.get("VERKAUF");
+            String einkauf = row.get("EINKAUF");
+            String fracht = row.get("FRACHT");
+            String nachfrage = row.get("NACHFRAGE");
+            String auflager = row.get("AUFLAGER");
+            String durchschnitt = row.get("DURCHSCHNITT");
+            System.out.println(String.format("%30s %10s %10s %10s %10s %10s %10s", ware, verkauf, einkauf, fracht, nachfrage, auflager, durchschnitt));
+        }
 
         ShowImages.showWindow(GUI, imageName);
     }
 
-    static void templateMatch() {
-        //test.png
-        //elitedangerous64_2016-02-08_18-47-15.jpg
-
-        ImageFloat32 image = UtilImageIO.loadImage("C:\\Users\\Guenther\\Pictures\\elitedangerous64\\test.png", ImageFloat32.class);
-        ImageFloat32 templateCursor = UtilImageIO.loadImage("C:\\Users\\Guenther\\Pictures\\elitedangerous64\\u.png", ImageFloat32.class);
-        //        ImageFloat32 maskCursor = UtilImageIO.loadImage(directory , "cursor_mask.png", ImageFloat32.class);
-        //        ImageFloat32 templatePaint = UtilImageIO.loadImage(directory , "paint.png", ImageFloat32.class);
-
-        // create output image to show results
-        BufferedImage output = new BufferedImage(image.width, image.height, BufferedImage.TYPE_INT_BGR);
-        ConvertBufferedImage.convertTo(image, output);
-        Graphics2D g2 = output.createGraphics();
-
-        //        // Search for the cursor in the image.  For demonstration purposes it has been pasted 3 times
-        //        g2.setColor(Color.RED); g2.setStroke(new BasicStroke(5));
-        //        drawRectangles(g2, image, templateCursor, maskCursor, 3);
-        //        // show match intensity image for this template
-        //        showMatchIntensity(image, templateCursor, maskCursor);
-
-        // Now it's try finding the cursor without a mask.  it will get confused when the background is black
-        g2.setColor(Color.BLUE);
-        g2.setStroke(new BasicStroke(2));
-        drawRectangles(g2, image, templateCursor, null, 20);
-
-        //        // Now it searches for a specific icon for which there is only one match
-        //        g2.setColor(Color.ORANGE); g2.setStroke(new BasicStroke(3));
-        //        drawRectangles(g2, image, templatePaint, null, 1);
-
-        ShowImages.showWindow(output, "Found Matches", true);
+    private static BufferedImage copyImage(BufferedImage image) {
+        BufferedImage copy = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
+        Graphics2D g = copy.createGraphics();
+        g.drawImage(image, 0, 0, image.getWidth(), image.getHeight(), null);
+        g.dispose();
+        return copy;
     }
 
-    /**
-     * Helper function will is finds matches and displays the results as colored rectangles
-     */
-    private static void drawRectangles(Graphics2D g2,
-    ImageFloat32 image, ImageFloat32 template, ImageFloat32 mask,
-    int expectedMatches) {
-        List<Match> found = findMatches(image, template, mask, expectedMatches);
-
-        int r = 2;
-        int w = template.width + 2 * r;
-        int h = template.height + 2 * r;
-
-        for (Match m : found) {
-            // the return point is the template's top left corner
-            int x0 = m.x - r;
-            int y0 = m.y - r;
-            int x1 = x0 + w;
-            int y1 = y0 + h;
-
-            g2.drawLine(x0, y0, x1, y0);
-            g2.drawLine(x1, y0, x1, y1);
-            g2.drawLine(x1, y1, x0, y1);
-            g2.drawLine(x0, y1, x0, y0);
-
-            g2.drawString("" + m.score, m.x, m.y);
+    private static BufferedImage drawColsAndRows(BufferedImage image, Map<String, Integer> columns, List<Integer> rows) {
+        BufferedImage copy = copyImage(image);
+        Graphics2D g = copy.createGraphics();
+        g.setColor(Color.BLUE);
+        for (String text : columns.keySet()) {
+            int x = columns.get(text);
+            g.drawLine(x, 0, x, copy.getHeight());
+            g.drawString(text, x, 20);
         }
+        for (Integer y : rows) {
+            g.drawLine(0, y, copy.getWidth(), y);
+        }
+        g.dispose();
+        return copy;
     }
 
-    /**
-     * Demonstrates how to search for matches of a template inside an image
-     *
-     * @param image
-     *            Image being searched
-     * @param template
-     *            Template being looked for
-     * @param mask
-     *            Mask which determines the weight of each template pixel in the match score
-     * @param expectedMatches
-     *            Number of expected matches it hopes to find
-     * @return List of match location and scores
-     */
-    private static List<Match> findMatches(ImageFloat32 image, ImageFloat32 template, ImageFloat32 mask,
-    int expectedMatches) {
-        // create template matcher.
-        TemplateMatching<ImageFloat32> matcher = FactoryTemplateMatching.createMatcher(TemplateScoreType.SUM_DIFF_SQ, ImageFloat32.class);
-
-        // Find the points which match the template the best
-        matcher.setTemplate(template, mask, expectedMatches);
-        matcher.process(image);
-
-        return matcher.getResults().toList();
-
+    private static BufferedImage drawMatches(BufferedImage image, Map<Integer, Map<String, List<TemplateMatch>>> groupedMatches, Map<String, Integer> columns, List<Integer> rows) {
+        BufferedImage copy = copyImage(image);
+        Graphics2D g = copy.createGraphics();
+        g.setColor(Color.BLUE);
+        g.setFont(new Font("Consolas", Font.PLAIN, 20));
+        for (Integer rowNum : groupedMatches.keySet()) {
+            Map<String, List<TemplateMatch>> rowMatches = groupedMatches.get(rowNum);
+            for (String columnName : rowMatches.keySet()) {
+                List<TemplateMatch> columnMatches = rowMatches.get(columnName);
+                for (TemplateMatch tm : columnMatches) {
+                    //int colX = columns.get(columnName);
+                    int rowY = rows.get(rowNum);
+                    g.drawString(tm.getTemplate().getText(), tm.getMatch().x, tm.getMatch().y + rowY);
+                }
+            }
+        }
+        g.dispose();
+        return copy;
     }
 
 }

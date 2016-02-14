@@ -46,12 +46,20 @@ public class TemplateMatch {
         final Rectangle thisRectangle = new Rectangle( //
         this.getMatch().x + 1, this.getMatch().y + 1, //
         this.getTemplate().getImage().width - 2, this.getTemplate().getImage().height - 2);
+        //        // Real size
+        //        final Rectangle thisRectangle = new Rectangle( //
+        //        this.getMatch().x, this.getMatch().y, //
+        //        this.getTemplate().getImage().width, this.getTemplate().getImage().height);
 
         for (TemplateMatch that : other) {
-            // 1px smaller than actual in order to correct template match jitter
+            //            // 1px smaller than actual in order to correct template match jitter
+            //            final Rectangle thatRectangle = new Rectangle( //
+            //            that.getMatch().x + 1, that.getMatch().y + 1, //
+            //            that.getTemplate().getImage().width - 2, that.getTemplate().getImage().height - 2);
+            // Real size
             final Rectangle thatRectangle = new Rectangle( //
-            that.getMatch().x + 1, that.getMatch().y + 1, //
-            that.getTemplate().getImage().width - 2, that.getTemplate().getImage().height - 2);
+            that.getMatch().x, that.getMatch().y, //
+            that.getTemplate().getImage().width, that.getTemplate().getImage().height);
 
             if (thisRectangle.intersects(thatRectangle)) {
                 return true;
