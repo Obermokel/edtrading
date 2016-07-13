@@ -1,14 +1,14 @@
 package borg.edtrading.data;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.Map;
-
 import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.Map;
 
 /**
  * TradingData
@@ -23,14 +23,14 @@ public class TradingData {
 
     private Date timestamp = null;
     private Station station = null;
-    private Cargo cargo = null;
+    private Commodity commodity = null;
     private Long priceToSell = null; // What I get if I sell
     private Long priceToBuy = null; // What I have to pay if I buy
 
-    public TradingData(Date timestamp, Station station, Cargo cargo, Long priceToSell, Long priceToBuy) {
+    public TradingData(Date timestamp, Station station, Commodity commodity, Long priceToSell, Long priceToBuy) {
         this.setTimestamp(timestamp);
         this.setStation(station);
-        this.setCargo(cargo);
+        this.setCommodity(commodity);
         this.setPriceToSell(priceToSell);
         this.setPriceToBuy(priceToBuy);
     }
@@ -51,7 +51,7 @@ public class TradingData {
                 .endObject().endObject()
                 .startObject("distanceFromStarInLs").field("type", "double").endObject()
             .endObject().endObject()
-            .startObject("cargo").startObject("properties")
+            .startObject("commodity").startObject("properties")
                 .startObject("name").field("type", "string").field("analyzer", "lowercaseKeyword").endObject()
                 .startObject("galacticAverage").field("type", "long").endObject()
             .endObject().endObject()
@@ -70,11 +70,11 @@ public class TradingData {
     public static TradingData fromElasticSearchSource(Map<String, Object> source) {
         Date timestamp = MiscUtil.getAsDate(source.get("timestamp"));
         Station station = Station.fromElasticSearchSource((Map<String, Object>) source.get("station"));
-        Cargo cargo = null;
+        Commodity commodity = null;
         Long priceToSell = MiscUtil.getAsLong(source.get("priceToSell"));
         Long priceToBuy = MiscUtil.getAsLong(source.get("priceToBuy"));
 
-        return new TradingData(timestamp, station, cargo, priceToSell, priceToBuy);
+        return new TradingData(timestamp, station, commodity, priceToSell, priceToBuy);
     }
 
     public XContentBuilder toElasticSearchSource() {
@@ -90,9 +90,9 @@ public class TradingData {
                 .endObject()
                 .field("distanceFromStarInLs", this.getStation().getDistanceFromStarInLs())
             .endObject()
-            .startObject("cargo")
-                .field("name", this.getCargo().getName())
-                .field("galacticAverage", this.getCargo().getGalacticAverage())
+            .startObject("commodity")
+                .field("name", this.getCommodity().getName())
+                .field("galacticAverage", this.getCommodity().getGalacticAverage())
             .endObject()
             .field("priceToSell", this.getPriceToSell())
             .field("priceToBuy", this.getPriceToBuy());
@@ -105,7 +105,7 @@ public class TradingData {
     }
 
     public String getElasticSearchId() {
-        return (this.getStation().getStarSystem().getName() + "_" + this.getStation().getName() + "_" + this.getCargo().getName()).toLowerCase();
+        return (this.getStation().getStarSystem().getName() + "_" + this.getStation().getName() + "_" + this.getCommodity().getName()).toLowerCase();
     }
 
     public Date getTimestamp() {
@@ -124,12 +124,12 @@ public class TradingData {
         this.station = station;
     }
 
-    public Cargo getCargo() {
-        return this.cargo;
+    public Commodity getCommodity() {
+        return this.commodity;
     }
 
-    public void setCargo(Cargo cargo) {
-        this.cargo = cargo;
+    public void setCommodity(Commodity commodity) {
+        this.commodity = commodity;
     }
 
     public Long getPriceToSell() {

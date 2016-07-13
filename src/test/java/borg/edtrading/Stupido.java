@@ -2,7 +2,7 @@ package borg.edtrading;
 
 import java.sql.Timestamp;
 
-import borg.edtrading.data.Cargo;
+import borg.edtrading.data.Commodity;
 import borg.edtrading.data.StarSystem;
 import borg.edtrading.data.Station;
 import borg.edtrading.data.TradingData;
@@ -21,7 +21,7 @@ public class Stupido {
 
     public static void main(String[] args) {
         final Timestamp now = new Timestamp(System.currentTimeMillis());
-        final Cargo erntemaschinen = new Cargo("ERNTEMASCHINEN", 2378L);
+        final Commodity erntemaschinen = new Commodity("ERNTEMASCHINEN", 2378L);
         final StarSystem bandua = new StarSystem("BANDUA");
         final Station gagnanMarket = new Station("GAGNAN MARKET", bandua, 859.77);
         final StarSystem olelbis = new StarSystem("OLELBIS");

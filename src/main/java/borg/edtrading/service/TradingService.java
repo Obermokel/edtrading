@@ -104,7 +104,7 @@ public class TradingService {
     }
 
     public void saveTradingData(TradingData tradingData) {
-        TradingDao.getInstance().saveCargo(tradingData.getCargo());
+        TradingDao.getInstance().saveCargo(tradingData.getCommodity());
         TradingDao.getInstance().saveStarSystem(tradingData.getStation().getStarSystem());
         TradingDao.getInstance().saveStation(tradingData.getStation());
         TradingDao.getInstance().saveTradingData(tradingData);

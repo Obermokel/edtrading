@@ -1,29 +1,29 @@
 package borg.edtrading.data;
 
-import java.io.IOException;
-import java.util.Map;
-
 import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 
+import java.io.IOException;
+import java.util.Map;
+
 /**
- * Cargo
+ * Commodity
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class Cargo {
+public class Commodity {
 
-    static final Logger logger = LogManager.getLogger(Cargo.class);
+    static final Logger logger = LogManager.getLogger(Commodity.class);
 
-    public static final String ES_TYPE = "cargo";
+    public static final String ES_TYPE = "commodity";
 
     private String name = null;
     private Long galacticAverage = null;
 
-    public Cargo(String name, Long galacticAverage) {
+    public Commodity(String name, Long galacticAverage) {
         this.setName(name);
         this.setGalacticAverage(galacticAverage);
     }
@@ -48,11 +48,11 @@ public class Cargo {
         }
     }
 
-    public static Cargo fromElasticSearchSource(Map<String, Object> source) {
+    public static Commodity fromElasticSearchSource(Map<String, Object> source) {
         String name = MiscUtil.getAsString(source.get("name"));
         Long galacticAverage = MiscUtil.getAsLong(source.get("galacticAverage"));
 
-        return new Cargo(name, galacticAverage);
+        return new Commodity(name, galacticAverage);
     }
 
     public XContentBuilder toElasticSearchSource() {

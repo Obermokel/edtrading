@@ -3,7 +3,7 @@ package borg.edtrading.service;
 import java.io.Closeable;
 import java.io.IOException;
 
-import borg.edtrading.data.Cargo;
+import borg.edtrading.data.Commodity;
 import borg.edtrading.data.StarSystem;
 import borg.edtrading.data.Station;
 import borg.edtrading.data.TradingData;
@@ -98,8 +98,8 @@ public class TradingDao implements Closeable {
 
         // Put mappings
         client.admin().indices()
-        .preparePutMapping(ES_INDEX).setType(Cargo.ES_TYPE)
-        .setSource(Cargo.createElasticSearchMapping()).setIgnoreConflicts(false)
+        .preparePutMapping(ES_INDEX).setType(Commodity.ES_TYPE)
+        .setSource(Commodity.createElasticSearchMapping()).setIgnoreConflicts(false)
         .execute().actionGet();
         client.admin().indices()
         .preparePutMapping(ES_INDEX).setType(StarSystem.ES_TYPE)
@@ -115,10 +115,10 @@ public class TradingDao implements Closeable {
         .execute().actionGet();
     }
 
-    public String saveCargo(Cargo cargo) {
-        IndexRequestBuilder irb = client.prepareIndex(ES_INDEX, Cargo.ES_TYPE);
-        irb.setId(cargo.getElasticSearchId());
-        irb.setSource(cargo.toElasticSearchSource());
+    public String saveCargo(Commodity commodity) {
+        IndexRequestBuilder irb = client.prepareIndex(ES_INDEX, Commodity.ES_TYPE);
+        irb.setId(commodity.getElasticSearchId());
+        irb.setSource(commodity.toElasticSearchSource());
         IndexResponse ir = irb.execute().actionGet();
 
         return ir.getId();
@@ -151,10 +151,10 @@ public class TradingDao implements Closeable {
         return ir.getId();
     }
 
-    public Cargo loadCargoByName(String name) {
+    public Commodity loadCargoByName(String name) {
         SearchRequestBuilder srb = client.prepareSearch(ES_INDEX);
         QueryBuilder qb = QueryBuilders.matchQuery("name", name);
-        srb.setTypes(Cargo.ES_TYPE).setQuery(qb);
+        srb.setTypes(Commodity.ES_TYPE).setQuery(qb);
         SearchResponse sr = srb.execute().actionGet();
 
         if (sr.getHits().getTotalHits() <= 0) {
@@ -163,7 +163,7 @@ public class TradingDao implements Closeable {
         } else if (sr.getHits().getTotalHits() >= 2) {
             throw new RuntimeException("Found more than one cargo with name '" + name + "'");
         } else {
-            return Cargo.fromElasticSearchSource(sr.getHits().getHits()[0].getSource());
+            return Commodity.fromElasticSearchSource(sr.getHits().getHits()[0].getSource());
         }
     }
 
