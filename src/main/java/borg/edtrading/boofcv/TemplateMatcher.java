@@ -6,7 +6,7 @@ import boofcv.factory.feature.detect.template.TemplateScoreType;
 import boofcv.io.image.ConvertBufferedImage;
 import boofcv.io.image.UtilImageIO;
 import boofcv.struct.feature.Match;
-import boofcv.struct.image.ImageFloat32;
+import boofcv.struct.image.GrayF32;
 import borg.edtrading.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,11 +65,11 @@ public class TemplateMatcher {
                     text = pngFile.getName().replace(".png", "").replaceAll("\\d", "");
                     special = true;
                 }
-                ImageFloat32 image = UtilImageIO.loadImage(pngFile.getAbsolutePath(), ImageFloat32.class);
-                ImageFloat32 mask = null;
+                GrayF32 image = UtilImageIO.loadImage(pngFile.getAbsolutePath(), GrayF32.class);
+                GrayF32 mask = null;
                 File maskFile = new File(pngFile.getParentFile(), pngFile.getName().replace(".png", "_mask.png"));
                 if (maskFile.exists()) {
-                    mask = UtilImageIO.loadImage(maskFile.getAbsolutePath(), ImageFloat32.class);
+                    mask = UtilImageIO.loadImage(maskFile.getAbsolutePath(), GrayF32.class);
                 }
                 result.add(new Template(text, image, mask, special));
             }
@@ -81,9 +81,9 @@ public class TemplateMatcher {
     public static List<TemplateMatch> findTemplateMatches(BufferedImage image, Template template, int maxMatches) {
         logger.trace("Searching max " + maxMatches + " match(es) of <" + template.getText() + ">");
 
-        TemplateMatching<ImageFloat32> matcher = FactoryTemplateMatching.createMatcher(TemplateScoreType.SUM_DIFF_SQ, ImageFloat32.class);
+        TemplateMatching<GrayF32> matcher = FactoryTemplateMatching.createMatcher(TemplateScoreType.SUM_DIFF_SQ, GrayF32.class);
         matcher.setTemplate(template.getImage(), template.getMask(), maxMatches);
-        matcher.process(ConvertBufferedImage.convertFrom(image, (ImageFloat32) null));
+        matcher.process(ConvertBufferedImage.convertFrom(image, (GrayF32) null));
 
         //int templatePixels = template.getImage().getWidth() * template.getImage().getHeight();
         //double maxScore = 1000.0 * templatePixels;

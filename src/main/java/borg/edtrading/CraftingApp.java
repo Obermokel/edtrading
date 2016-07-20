@@ -4,8 +4,8 @@ import boofcv.alg.feature.detect.edge.CannyEdge;
 import boofcv.factory.feature.detect.edge.FactoryEdgeDetectors;
 import boofcv.gui.binary.VisualizeBinaryData;
 import boofcv.io.image.ConvertBufferedImage;
-import boofcv.struct.image.ImageSInt16;
-import boofcv.struct.image.ImageUInt8;
+import boofcv.struct.image.GrayS16;
+import boofcv.struct.image.GrayU8;
 import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
@@ -108,17 +108,17 @@ public class CraftingApp {
     }
 
     private static BufferedImage cannyEdge(BufferedImage originalImage) {
-        ImageUInt8 gray = ConvertBufferedImage.convertFrom(originalImage, (ImageUInt8) null);
-        ImageUInt8 edge = gray.createSameShape();
-        CannyEdge<ImageUInt8, ImageSInt16> canny = FactoryEdgeDetectors.canny(3, true, true, ImageUInt8.class, ImageSInt16.class);
+        GrayU8 gray = ConvertBufferedImage.convertFrom(originalImage, (GrayU8) null);
+        GrayU8 edge = gray.createSameShape();
+        CannyEdge<GrayU8, GrayS16> canny = FactoryEdgeDetectors.canny(3, true, true, GrayU8.class, GrayS16.class);
         canny.process(gray, 0.1f, 0.3f, edge);
         return VisualizeBinaryData.renderBinary(edge, false, null);
     }
 
     private static BufferedImage correctDistort(BufferedImage originalImage) {
-        ImageUInt8 gray = ConvertBufferedImage.convertFrom(originalImage, (ImageUInt8) null);
-        ImageUInt8 edge = gray.createSameShape();
-        CannyEdge<ImageUInt8, ImageSInt16> canny = FactoryEdgeDetectors.canny(3, true, true, ImageUInt8.class, ImageSInt16.class);
+        GrayU8 gray = ConvertBufferedImage.convertFrom(originalImage, (GrayU8) null);
+        GrayU8 edge = gray.createSameShape();
+        CannyEdge<GrayU8, GrayS16> canny = FactoryEdgeDetectors.canny(3, true, true, GrayU8.class, GrayS16.class);
         canny.process(gray, 0.1f, 0.3f, edge);
         return VisualizeBinaryData.renderBinary(edge, false, null);
     }

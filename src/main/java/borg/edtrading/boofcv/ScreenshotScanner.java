@@ -3,8 +3,8 @@ package borg.edtrading.boofcv;
 import boofcv.alg.color.ColorHsv;
 import boofcv.io.image.ConvertBufferedImage;
 import boofcv.io.image.UtilImageIO;
-import boofcv.struct.image.ImageFloat32;
-import boofcv.struct.image.MultiSpectral;
+import boofcv.struct.image.GrayF32;
+import boofcv.struct.image.Planar;
 import georegression.metric.UtilAngle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -64,8 +64,8 @@ public class ScreenshotScanner {
     private static BufferedImage keepTextOnly(BufferedImage image, float hue, float saturation, float value) {
         logger.debug("Simplifying image");
 
-        MultiSpectral<ImageFloat32> input = ConvertBufferedImage.convertFromMulti(image, null, true, ImageFloat32.class);
-        MultiSpectral<ImageFloat32> hsv = input.createSameShape();
+        Planar<GrayF32> input = ConvertBufferedImage.convertFromMulti(image, null, true, GrayF32.class);
+        Planar<GrayF32> hsv = input.createSameShape();
 
         // Convert into HSV
         ColorHsv.rgbToHsv_F32(input, hsv);
@@ -74,9 +74,9 @@ public class ScreenshotScanner {
         float maxDist2 = 0.5f * 0.5f;
 
         // Extract hue and saturation bands which are independent of intensity
-        ImageFloat32 H = hsv.getBand(0);
-        ImageFloat32 S = hsv.getBand(1);
-        ImageFloat32 V = hsv.getBand(2);
+        GrayF32 H = hsv.getBand(0);
+        GrayF32 S = hsv.getBand(1);
+        GrayF32 V = hsv.getBand(2);
 
         // step through each pixel and mark how close it is to the selected color
         BufferedImage output = new BufferedImage(input.width, input.height, BufferedImage.TYPE_INT_RGB);
