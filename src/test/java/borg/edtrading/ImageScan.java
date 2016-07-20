@@ -1,5 +1,15 @@
 package borg.edtrading;
 
+import boofcv.gui.ListDisplayPanel;
+import boofcv.gui.image.ShowImages;
+import boofcv.io.image.UtilImageIO;
+import borg.edtrading.boofcv.ScreenshotScanner;
+import borg.edtrading.boofcv.Template;
+import borg.edtrading.boofcv.TemplateMatch;
+import borg.edtrading.boofcv.TemplateMatcher;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -7,15 +17,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-
-import boofcv.gui.ListDisplayPanel;
-import boofcv.gui.image.ShowImages;
-import boofcv.io.image.UtilImageIO;
-import borg.edtrading.boofcv.ScreenshotScanner;
-import borg.edtrading.boofcv.Template;
-import borg.edtrading.boofcv.TemplateMatch;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * ImageScan
@@ -38,7 +39,7 @@ public class ImageScan {
         String imageName = "elitedangerous64_2016-02-09_22-01-21.png";
         File imageFile = new File(Constants.SCREENSHOTS_DIR, imageName);
         BufferedImage image = UtilImageIO.loadImage(imageFile.getAbsolutePath());
-        List<Template> templates = ScreenshotScanner.loadTemplates();
+        List<Template> templates = TemplateMatcher.loadTemplates();
         GUI.addImage(image, "image");
         BufferedImage orangeTextImage = ScreenshotScanner.keepOrangeTextOnly(image);
         GUI.addImage(orangeTextImage, "orangeTextImage");

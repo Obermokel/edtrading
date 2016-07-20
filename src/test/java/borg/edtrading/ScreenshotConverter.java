@@ -1,15 +1,16 @@
 package borg.edtrading;
 
+import boofcv.io.image.UtilImageIO;
+import borg.edtrading.boofcv.ScreenshotScanner;
+import borg.edtrading.boofcv.Template;
+import borg.edtrading.boofcv.TemplateMatcher;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.List;
-
-import boofcv.io.image.UtilImageIO;
-import borg.edtrading.boofcv.ScreenshotScanner;
-import borg.edtrading.boofcv.Template;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * ScreenshotConverter
@@ -31,7 +32,7 @@ public class ScreenshotConverter {
             File orangeTextFile = new File(screenshotFile.getParentFile(), "orangeText_" + screenshotFile.getName());
             BufferedImage originalImage = UtilImageIO.loadImage(screenshotFile.getAbsolutePath());
             BufferedImage orangeTextImage = ScreenshotScanner.keepOrangeTextOnly(originalImage);
-            List<Template> templates = ScreenshotScanner.loadTemplates();
+            List<Template> templates = TemplateMatcher.loadTemplates();
             BufferedImage croppedImage = ScreenshotScanner.cropToCommoditiesMarket(orangeTextImage, templates);
             UtilImageIO.saveImage(croppedImage, orangeTextFile.getAbsolutePath());
         }

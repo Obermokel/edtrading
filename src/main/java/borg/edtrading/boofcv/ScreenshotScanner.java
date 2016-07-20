@@ -1,30 +1,24 @@
 package borg.edtrading.boofcv;
 
+import boofcv.alg.color.ColorHsv;
+import boofcv.io.image.ConvertBufferedImage;
+import boofcv.io.image.UtilImageIO;
+import boofcv.struct.image.ImageFloat32;
+import boofcv.struct.image.MultiSpectral;
+import georegression.metric.UtilAngle;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import boofcv.alg.color.ColorHsv;
-import boofcv.alg.feature.detect.template.TemplateMatching;
-import boofcv.factory.feature.detect.template.FactoryTemplateMatching;
-import boofcv.factory.feature.detect.template.TemplateScoreType;
-import boofcv.io.image.ConvertBufferedImage;
-import boofcv.io.image.UtilImageIO;
-import boofcv.struct.feature.Match;
-import boofcv.struct.image.ImageFloat32;
-import boofcv.struct.image.MultiSpectral;
-import borg.edtrading.Constants;
-import georegression.metric.UtilAngle;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * ScreenshotScanner
@@ -38,7 +32,7 @@ public class ScreenshotScanner {
     public static Map<Integer, Map<String, String>> scanScreenshot(File screenshotFile) {
         // Load the screenshot and all templates
         BufferedImage screenshotImage = UtilImageIO.loadImage(screenshotFile.getAbsolutePath());
-        List<Template> templates = loadTemplates();
+        List<Template> templates = TemplateMatcher.loadTemplates();
 
         // Simplify the screenshot so that orange text is better to recognize
         BufferedImage orangeTextImage = keepOrangeTextOnly(screenshotImage);
@@ -61,53 +55,6 @@ public class ScreenshotScanner {
 
         // Finished
         return texts;
-    }
-
-    public static List<Template> loadTemplates() {
-        logger.debug("Loading templates");
-
-        List<Template> result = new ArrayList<>();
-
-        File baseDir = Constants.TEMPLATES_DIR;
-        File[] subDirs = baseDir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return file.isDirectory();
-            }
-        });
-        for (File subDir : subDirs) {
-            File[] pngFiles = subDir.listFiles(new FileFilter() {
-                @Override
-                public boolean accept(File file) {
-                    return file.getName().toLowerCase().endsWith(".png");
-                }
-            });
-            for (File pngFile : pngFiles) {
-                String text = subDir.getName();
-                boolean special = false;
-                if ("_punkt".equals(subDir.getName())) {
-                    text = ".";
-                } else if ("_strich".equals(subDir.getName())) {
-                    text = "-";
-                } else if ("_hoch".equals(subDir.getName())) {
-                    text = "^3";
-                } else if ("_mittel".equals(subDir.getName())) {
-                    text = "^2";
-                } else if ("_niedrig".equals(subDir.getName())) {
-                    text = "^1";
-                } else if ("_space".equals(subDir.getName())) {
-                    text = "";
-                    continue; // FIXME
-                } else if ("__border".equals(subDir.getName())) {
-                    text = pngFile.getName().replace(".png", "").replaceAll("\\d", "");
-                    special = true;
-                }
-                ImageFloat32 image = UtilImageIO.loadImage(pngFile.getAbsolutePath(), ImageFloat32.class);
-                result.add(new Template(text, image, special));
-            }
-        }
-
-        return result;
     }
 
     public static BufferedImage keepOrangeTextOnly(BufferedImage image) {
@@ -238,13 +185,13 @@ public class ScreenshotScanner {
         // Find all possible high/med/low
         List<TemplateMatch> matches = new ArrayList<>();
         for (Template template : lookupTemplatesWithText(templates, "HOCH")) {
-            matches.addAll(findTemplateMatches(subimage, template, maxRowsExpected));
+            matches.addAll(TemplateMatcher.findTemplateMatches(subimage, template, maxRowsExpected));
         }
         for (Template template : lookupTemplatesWithText(templates, "MITTEL")) {
-            matches.addAll(findTemplateMatches(subimage, template, maxRowsExpected));
+            matches.addAll(TemplateMatcher.findTemplateMatches(subimage, template, maxRowsExpected));
         }
         for (Template template : lookupTemplatesWithText(templates, "NIEDRIG")) {
-            matches.addAll(findTemplateMatches(subimage, template, maxRowsExpected));
+            matches.addAll(TemplateMatcher.findTemplateMatches(subimage, template, maxRowsExpected));
         }
 
         // Sort by score
@@ -314,8 +261,7 @@ public class ScreenshotScanner {
     /**
      * @return First key is row number (starting at 0), second key is column name, value is list of matches for that combination
      */
-    public static Map<Integer, Map<String, List<TemplateMatch>>> findAndGroupMatches(BufferedImage image, List<Template> templates, List<Integer> rows,
-    Map<String, Integer> columns) {
+    public static Map<Integer, Map<String, List<TemplateMatch>>> findAndGroupMatches(BufferedImage image, List<Template> templates, List<Integer> rows, Map<String, Integer> columns) {
         Map<Integer, Map<String, List<TemplateMatch>>> result = new LinkedHashMap<>();
 
         int rowNum = 0;
@@ -329,7 +275,7 @@ public class ScreenshotScanner {
             List<TemplateMatch> matches = new ArrayList<>();
             for (Template template : templates) {
                 if (!template.isSpecial()) {
-                    matches.addAll(findTemplateMatches(rowImage, template, 13)); // max 13 matches should be enough for E, 0 and other frequent chars
+                    matches.addAll(TemplateMatcher.findTemplateMatches(rowImage, template, 13)); // max 13 matches should be enough for E, 0 and other frequent chars
                 }
             }
 
@@ -394,7 +340,7 @@ public class ScreenshotScanner {
         TemplateMatch bestMatch = null;
 
         for (Template template : templates) {
-            List<TemplateMatch> matches = findTemplateMatches(image, template, 1);
+            List<TemplateMatch> matches = TemplateMatcher.findTemplateMatches(image, template, 1);
             if (!matches.isEmpty()) {
                 TemplateMatch match = matches.get(0);
                 if (bestMatch == null || bestMatch.getMatchQuality() > match.getMatchQuality()) {
@@ -404,26 +350,6 @@ public class ScreenshotScanner {
         }
 
         return bestMatch;
-    }
-
-    private static List<TemplateMatch> findTemplateMatches(BufferedImage image, Template template, int maxMatches) {
-        logger.trace("Searching max " + maxMatches + " match(es) of <" + template.getText() + ">");
-
-        TemplateMatching<ImageFloat32> matcher = FactoryTemplateMatching.createMatcher(TemplateScoreType.SUM_DIFF_SQ, ImageFloat32.class);
-        matcher.setTemplate(template.getImage(), null, maxMatches);
-        matcher.process(ConvertBufferedImage.convertFrom(image, (ImageFloat32) null));
-
-        //int templatePixels = template.getImage().getWidth() * template.getImage().getHeight();
-        //double maxScore = 1000.0 * templatePixels;
-
-        List<TemplateMatch> result = new ArrayList<>(maxMatches);
-        for (Match match : matcher.getResults().toList()) {
-            //if (match.score < maxScore) {
-            result.add(new TemplateMatch(template, match));
-            //}
-        }
-
-        return result;
     }
 
     public static Map<Integer, Map<String, String>> extractTexts(Map<Integer, Map<String, List<TemplateMatch>>> groupedMatches) {

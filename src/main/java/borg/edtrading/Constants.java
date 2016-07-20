@@ -9,8 +9,18 @@ import java.io.File;
  */
 public interface Constants {
 
-    File SCREENSHOTS_DIR = new File("X:\\Game Screenshots\\elitedangerous64");
+    File TEMP_DIR = new File(System.getProperty("user.home"), "edtmp");
 
-    File TEMPLATES_DIR = new File("P:\\Elite Dangerous");
+    /**
+     * Where screenshots are saved by Fraps, PlayClaw etc
+     */
+    File SCREENSHOTS_DIR = new File(System.getProperty("user.home"), "Google Drive\\Game Screenshots\\elitedangerous64");
+
+    /**
+     * Where this program stores its data
+     */
+    File EDTRADING_BASE_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\edtrading");
+    File TEMPLATES_DIR = new File(EDTRADING_BASE_DIR, "Templates");
+    File INVENTORY_SCREENSHOTS_DIR = new File(EDTRADING_BASE_DIR, "Inventory Screenshots");
 
 }

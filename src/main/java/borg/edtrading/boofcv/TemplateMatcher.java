@@ -1,0 +1,101 @@
+package borg.edtrading.boofcv;
+
+import boofcv.alg.feature.detect.template.TemplateMatching;
+import boofcv.factory.feature.detect.template.FactoryTemplateMatching;
+import boofcv.factory.feature.detect.template.TemplateScoreType;
+import boofcv.io.image.ConvertBufferedImage;
+import boofcv.io.image.UtilImageIO;
+import boofcv.struct.feature.Match;
+import boofcv.struct.image.ImageFloat32;
+import borg.edtrading.Constants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileFilter;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * TemplateMatcher
+ *
+ * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
+ */
+public class TemplateMatcher {
+
+    static final Logger logger = LogManager.getLogger(TemplateMatcher.class);
+
+    public static List<Template> loadTemplates() {
+        logger.debug("Loading templates");
+
+        List<Template> result = new ArrayList<>();
+
+        File baseDir = Constants.TEMPLATES_DIR;
+        File[] subDirs = baseDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.isDirectory();
+            }
+        });
+        for (File subDir : subDirs) {
+            File[] pngFiles = subDir.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File file) {
+                    return file.getName().toLowerCase().endsWith(".png") && !file.getName().toLowerCase().endsWith("_mask.png");
+                }
+            });
+            for (File pngFile : pngFiles) {
+                String text = subDir.getName();
+                boolean special = false;
+                if ("_punkt".equals(subDir.getName())) {
+                    text = ".";
+                } else if ("_strich".equals(subDir.getName())) {
+                    text = "-";
+                } else if ("_hoch".equals(subDir.getName())) {
+                    text = "^3";
+                } else if ("_mittel".equals(subDir.getName())) {
+                    text = "^2";
+                } else if ("_niedrig".equals(subDir.getName())) {
+                    text = "^1";
+                } else if ("_space".equals(subDir.getName())) {
+                    text = "";
+                    continue; // FIXME
+                } else if ("__border".equals(subDir.getName())) {
+                    text = pngFile.getName().replace(".png", "").replaceAll("\\d", "");
+                    special = true;
+                }
+                ImageFloat32 image = UtilImageIO.loadImage(pngFile.getAbsolutePath(), ImageFloat32.class);
+                ImageFloat32 mask = null;
+                File maskFile = new File(pngFile.getParentFile(), pngFile.getName().replace(".png", "_mask.png"));
+                if (maskFile.exists()) {
+                    mask = UtilImageIO.loadImage(maskFile.getAbsolutePath(), ImageFloat32.class);
+                }
+                result.add(new Template(text, image, mask, special));
+            }
+        }
+
+        return result;
+    }
+
+    public static List<TemplateMatch> findTemplateMatches(BufferedImage image, Template template, int maxMatches) {
+        logger.trace("Searching max " + maxMatches + " match(es) of <" + template.getText() + ">");
+
+        TemplateMatching<ImageFloat32> matcher = FactoryTemplateMatching.createMatcher(TemplateScoreType.SUM_DIFF_SQ, ImageFloat32.class);
+        matcher.setTemplate(template.getImage(), template.getMask(), maxMatches);
+        matcher.process(ConvertBufferedImage.convertFrom(image, (ImageFloat32) null));
+
+        //int templatePixels = template.getImage().getWidth() * template.getImage().getHeight();
+        //double maxScore = 1000.0 * templatePixels;
+
+        List<TemplateMatch> result = new ArrayList<>(maxMatches);
+        for (Match match : matcher.getResults().toList()) {
+            //if (match.score < maxScore) {
+            result.add(new TemplateMatch(template, match));
+            //}
+        }
+
+        return result;
+    }
+
+}

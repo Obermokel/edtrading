@@ -1,11 +1,11 @@
 package borg.edtrading.boofcv;
 
-import java.awt.Rectangle;
-import java.util.List;
-
 import boofcv.struct.feature.Match;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.awt.Rectangle;
+import java.util.List;
 
 /**
  * TemplateMatch
@@ -29,9 +29,9 @@ public class TemplateMatch {
      */
     public int getErrorPerPixel() {
         int pixels = this.getTemplate().getImage().getWidth() * this.getTemplate().getImage().getHeight();
-        double error = this.getMatch().score;
+        double error = -1 * this.getMatch().score;
 
-        return -1 * (int) (error / pixels);
+        return (int) (error / pixels);
     }
 
     /**
@@ -42,24 +42,34 @@ public class TemplateMatch {
     }
 
     public boolean overlapsWithAny(List<TemplateMatch> other) {
+        //@formatter:off
+
         // 1px smaller than actual in order to correct template match jitter
-        final Rectangle thisRectangle = new Rectangle( //
-        this.getMatch().x + 1, this.getMatch().y + 1, //
-        this.getTemplate().getImage().width - 2, this.getTemplate().getImage().height - 2);
-        //        // Real size
-        //        final Rectangle thisRectangle = new Rectangle( //
-        //        this.getMatch().x, this.getMatch().y, //
-        //        this.getTemplate().getImage().width, this.getTemplate().getImage().height);
+        final Rectangle thisRectangle = new Rectangle(
+                this.getMatch().x + 1, this.getMatch().y + 1,
+                this.getTemplate().getImage().width - 2, this.getTemplate().getImage().height - 2);
+
+//        // Real size
+//        final Rectangle thisRectangle = new Rectangle(
+//                this.getMatch().x, this.getMatch().y,
+//                this.getTemplate().getImage().width, this.getTemplate().getImage().height);
+
+        //@formatter:on
 
         for (TemplateMatch that : other) {
-            //            // 1px smaller than actual in order to correct template match jitter
-            //            final Rectangle thatRectangle = new Rectangle( //
-            //            that.getMatch().x + 1, that.getMatch().y + 1, //
-            //            that.getTemplate().getImage().width - 2, that.getTemplate().getImage().height - 2);
+            //@formatter:off
+
+//            // 1px smaller than actual in order to correct template match jitter
+//            final Rectangle thatRectangle = new Rectangle(
+//                    that.getMatch().x + 1, that.getMatch().y + 1,
+//                    that.getTemplate().getImage().width - 2, that.getTemplate().getImage().height - 2);
+
             // Real size
-            final Rectangle thatRectangle = new Rectangle( //
-            that.getMatch().x, that.getMatch().y, //
-            that.getTemplate().getImage().width, that.getTemplate().getImage().height);
+            final Rectangle thatRectangle = new Rectangle(
+                    that.getMatch().x, that.getMatch().y,
+                    that.getTemplate().getImage().width, that.getTemplate().getImage().height);
+
+            //@formatter:on
 
             if (thisRectangle.intersects(thatRectangle)) {
                 return true;

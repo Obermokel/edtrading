@@ -12,7 +12,7 @@
 
     <Loggers>
         
-        <logger name="borg" level="DEBUG"></logger>
+        <logger name="borg" level="TRACE"></logger>
         
         <Root level="ERROR">
             <AppenderRef ref="STDOUT" />
