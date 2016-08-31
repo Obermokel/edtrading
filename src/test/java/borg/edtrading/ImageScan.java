@@ -39,7 +39,7 @@ public class ImageScan {
         String imageName = "elitedangerous64_2016-02-09_22-01-21.png";
         File imageFile = new File(Constants.SCREENSHOTS_DIR, imageName);
         BufferedImage image = UtilImageIO.loadImage(imageFile.getAbsolutePath());
-        List<Template> templates = TemplateMatcher.loadTemplates();
+        List<Template> templates = TemplateMatcher.loadTemplates("Commodities");
         GUI.addImage(image, "image");
         BufferedImage orangeTextImage = ScreenshotScanner.keepOrangeTextOnly(image);
         GUI.addImage(orangeTextImage, "orangeTextImage");

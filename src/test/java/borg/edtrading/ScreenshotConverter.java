@@ -32,7 +32,7 @@ public class ScreenshotConverter {
             File orangeTextFile = new File(screenshotFile.getParentFile(), "orangeText_" + screenshotFile.getName());
             BufferedImage originalImage = UtilImageIO.loadImage(screenshotFile.getAbsolutePath());
             BufferedImage orangeTextImage = ScreenshotScanner.keepOrangeTextOnly(originalImage);
-            List<Template> templates = TemplateMatcher.loadTemplates();
+            List<Template> templates = TemplateMatcher.loadTemplates("Commodities");
             BufferedImage croppedImage = ScreenshotScanner.cropToCommoditiesMarket(orangeTextImage, templates);
             UtilImageIO.saveImage(croppedImage, orangeTextFile.getAbsolutePath());
         }

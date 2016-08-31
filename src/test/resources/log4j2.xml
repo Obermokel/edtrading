@@ -14,10 +14,12 @@
         
         <logger name="borg" level="TRACE"></logger>
         
+        <logger name="borg.edtrading.boofcv.TemplateMatcher" level="DEBUG"></logger>
+        
         <Root level="ERROR">
             <AppenderRef ref="STDOUT" />
         </Root>
-
+        
     </Loggers>
 
 </Configuration>

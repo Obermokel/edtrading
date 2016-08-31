@@ -32,7 +32,7 @@ public class ScreenshotScanner {
     public static Map<Integer, Map<String, String>> scanScreenshot(File screenshotFile) {
         // Load the screenshot and all templates
         BufferedImage screenshotImage = UtilImageIO.loadImage(screenshotFile.getAbsolutePath());
-        List<Template> templates = TemplateMatcher.loadTemplates();
+        List<Template> templates = TemplateMatcher.loadTemplates("Commodities");
 
         // Simplify the screenshot so that orange text is better to recognize
         BufferedImage orangeTextImage = keepOrangeTextOnly(screenshotImage);

@@ -22,6 +22,8 @@ public class MatchSorter {
 
     public static List<MatchGroup> sortMatches(Collection<TemplateMatch> matches) {
         List<TemplateMatch> sortedMatches = new ArrayList<TemplateMatch>(matches);
+
+        // Sort by score, so the seeding matches are the best matches.
         Collections.sort(sortedMatches, new Comparator<TemplateMatch>() {
             @Override
             public int compare(TemplateMatch m1, TemplateMatch m2) {
@@ -29,11 +31,17 @@ public class MatchSorter {
             }
         });
 
+        // Create MatchGroups.
+        // This will pick the topmost match as a seeding match, then add surrounding matches
+        // as long as possible, removing them from the list. The next topmost match will start
+        // a new MatchGroup, until no single match is left in the list.
         List<MatchGroup> matchGroups = new ArrayList<>();
         while (addNextMatchGroup(sortedMatches, matchGroups)) {
             // Continue
         }
 
+        // Sort the match groups by position.
+        // High prio = y, low prio = x -> first sort by x, then by y.
         Collections.sort(matchGroups, new Comparator<MatchGroup>() {
             @Override
             public int compare(MatchGroup mg1, MatchGroup mg2) {
@@ -78,17 +86,17 @@ public class MatchSorter {
         public boolean expand(List<TemplateMatch> remainingMatches) {
             ListIterator<TemplateMatch> it = remainingMatches.listIterator();
             while (it.hasNext()) {
-                TemplateMatch groupMatchCandidate = it.next();
-                for (TemplateMatch groupMatchConfirmed : this.groupMatches) {
-                    if (this.areMatchesAdjacent(groupMatchCandidate, groupMatchConfirmed)) {
-                        this.groupMatches.add(groupMatchCandidate);
-                        it.remove();
-                        return true;
+                TemplateMatch groupMatchCandidate = it.next(); // This one might be added to the group
+                for (TemplateMatch groupMatchConfirmed : this.groupMatches) { // These already have been added
+                    if (this.areMatchesAdjacent(groupMatchCandidate, groupMatchConfirmed)) { // Check
+                        this.groupMatches.add(groupMatchCandidate); // Add
+                        it.remove(); // Remove
+                        return true; // Continue
                     }
                 }
             }
 
-            return false;
+            return false; // No more adjacent matches -> Finish
         }
 
         private boolean areMatchesAdjacent(TemplateMatch m1, TemplateMatch m2) {
@@ -103,7 +111,7 @@ public class MatchSorter {
 
             if (avgYDiff <= maxYDiff) {
                 // Check there is only a small gap between them
-                double maxXGap = Math.max(h1, h2) / 4.0; // Max x-axis gap is 1/4th of the highest of both
+                double maxXGap = Math.max(h1, h2) / 6.0; // Max x-axis gap is 1/6th of the highest of both
                 double xGap1 = Math.abs(m2.getMatch().x - (m1.getMatch().x + m1.getTemplate().getImage().width));
                 double xGap2 = Math.abs(m1.getMatch().x - (m2.getMatch().x + m2.getTemplate().getImage().width));
                 double minXGap = Math.min(xGap1, xGap2);
@@ -114,6 +122,10 @@ public class MatchSorter {
             }
 
             return false;
+        }
+
+        public List<TemplateMatch> getGroupMatches() {
+            return this.groupMatches;
         }
 
         public String getText() {

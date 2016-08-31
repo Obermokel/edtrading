@@ -26,12 +26,12 @@ public class TemplateMatcher {
 
     static final Logger logger = LogManager.getLogger(TemplateMatcher.class);
 
-    public static List<Template> loadTemplates() {
+    public static List<Template> loadTemplates(String type) {
         logger.debug("Loading templates");
 
         List<Template> result = new ArrayList<>();
 
-        File baseDir = Constants.TEMPLATES_DIR;
+        File baseDir = new File(Constants.TEMPLATES_DIR, type);
         File[] subDirs = baseDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {
@@ -50,8 +50,20 @@ public class TemplateMatcher {
                 boolean special = false;
                 if ("_punkt".equals(subDir.getName())) {
                     text = ".";
+                } else if ("_komma".equals(subDir.getName())) {
+                    text = ",";
+                } else if ("_prozent".equals(subDir.getName())) {
+                    text = "%";
                 } else if ("_strich".equals(subDir.getName())) {
                     text = "-";
+                } else if ("_doppelpunkt".equals(subDir.getName())) {
+                    text = ":";
+                } else if ("_klammer_auf".equals(subDir.getName())) {
+                    text = "(";
+                } else if ("_klammer_zu".equals(subDir.getName())) {
+                    text = ")";
+                } else if ("_grad".equals(subDir.getName())) {
+                    text = "°";
                 } else if ("_hoch".equals(subDir.getName())) {
                     text = "^3";
                 } else if ("_mittel".equals(subDir.getName())) {

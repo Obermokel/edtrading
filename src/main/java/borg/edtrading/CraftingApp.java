@@ -50,7 +50,7 @@ public class CraftingApp {
     static final Logger logger = LogManager.getLogger(CraftingApp.class);
 
     public static void main(String[] args) throws IOException {
-        List<Template> templates = TemplateMatcher.loadTemplates();
+        List<Template> templates = TemplateMatcher.loadTemplates("Inventory");
 
         scanNewInventoryScreenshots(templates);
     }

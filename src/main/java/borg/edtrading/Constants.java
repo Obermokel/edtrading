@@ -17,6 +17,11 @@ public interface Constants {
     File SCREENSHOTS_DIR = new File(System.getProperty("user.home"), "Google Drive\\Game Screenshots\\elitedangerous64");
 
     /**
+     * Where screenshots showing surface mats are stored
+     */
+    File SURFACE_MATS_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Surface Materials");
+
+    /**
      * Where this program stores its data
      */
     File EDTRADING_BASE_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\edtrading");
