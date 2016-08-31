@@ -198,7 +198,7 @@ public class ScreenshotScanner {
         Collections.sort(matches, new Comparator<TemplateMatch>() {
             @Override
             public int compare(TemplateMatch m1, TemplateMatch m2) {
-                return new Integer(m1.getMatchQuality()).compareTo(new Integer(m2.getMatchQuality()));
+                return new Double(m1.getErrorPerWidth()).compareTo(new Double(m2.getErrorPerWidth()));
             }
         });
 
@@ -213,11 +213,11 @@ public class ScreenshotScanner {
         // Use the best ones
         List<Integer> result = new ArrayList<>();
         for (TemplateMatch match : nonOverlapping) {
-            if (match.getMatchQuality() <= 25) {
-                logger.debug("Using <" + match.getTemplate().getText() + "> at y=" + match.getMatch().y + " with Q=" + match.getMatchQuality());
+            if (match.getErrorPerWidth() <= 25) {
+                logger.debug("Using <" + match.getTemplate().getText() + "> at y=" + match.getMatch().y + " with Q=" + match.getErrorPerWidth());
                 result.add(match.getMatch().y);
             } else {
-                logger.debug("Skipping <" + match.getTemplate().getText() + "> at y=" + match.getMatch().y + " with Q=" + match.getMatchQuality());
+                logger.debug("Skipping <" + match.getTemplate().getText() + "> at y=" + match.getMatch().y + " with Q=" + match.getErrorPerWidth());
             }
         }
 
@@ -283,7 +283,7 @@ public class ScreenshotScanner {
             Collections.sort(matches, new Comparator<TemplateMatch>() {
                 @Override
                 public int compare(TemplateMatch m1, TemplateMatch m2) {
-                    return new Integer(m1.getMatchQuality()).compareTo(new Integer(m2.getMatchQuality()));
+                    return new Double(m1.getErrorPerWidth()).compareTo(new Double(m2.getErrorPerWidth()));
                 }
             });
 
@@ -343,7 +343,7 @@ public class ScreenshotScanner {
             List<TemplateMatch> matches = TemplateMatcher.findTemplateMatches(image, template, 1);
             if (!matches.isEmpty()) {
                 TemplateMatch match = matches.get(0);
-                if (bestMatch == null || bestMatch.getMatchQuality() > match.getMatchQuality()) {
+                if (bestMatch == null || bestMatch.getErrorPerWidth() > match.getErrorPerWidth()) {
                     bestMatch = match;
                 }
             }

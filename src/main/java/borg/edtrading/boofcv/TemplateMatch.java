@@ -27,18 +27,21 @@ public class TemplateMatch {
     /**
      * The closer to 0 the better
      */
-    public int getErrorPerPixel() {
+    public double getErrorPerPixel() {
         int pixels = this.getTemplate().getImage().getWidth() * this.getTemplate().getImage().getHeight();
         double error = -1 * this.getMatch().score;
 
-        return (int) (error / pixels);
+        return error / pixels;
     }
 
     /**
      * The closer to 0 the better
      */
-    public int getMatchQuality() {
-        return this.getErrorPerPixel() / this.getTemplate().getImage().getWidth();
+    public double getErrorPerWidth() {
+        int width = this.getTemplate().getImage().getWidth();
+        double error = -1 * this.getMatch().score;
+
+        return error / width;
     }
 
     public boolean overlapsWithAny(List<TemplateMatch> other) {

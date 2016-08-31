@@ -52,7 +52,7 @@ public class SurfaceMatsApp {
 
     static final Logger logger = LogManager.getLogger(SurfaceMatsApp.class);
 
-    private static final Pattern MATERIAL_PATTERN = Pattern.compile("(\\w+)\\((\\d+\\.\\d)%\\).?");
+    private static final Pattern MATERIAL_PATTERN = Pattern.compile("([A-Z]+)\\((\\d+\\.\\d)%\\).?");
 
     public static void main(String[] args) throws IOException {
         List<Template> matsTemplates = TemplateMatcher.loadTemplates("Surface Mats");
@@ -92,7 +92,7 @@ public class SurfaceMatsApp {
             //            ImageIO.write(whiteTextNameImage, "PNG", new File(Constants.TEMP_DIR, screenshotFile.getName().replace(".png", "_3b_whiteText.png")));
             //            ImageIO.write(outlinedTextImage, "PNG", new File(Constants.TEMP_DIR, screenshotFile.getName().replace(".png", "_4a_outlinedText.png")));
             //            ImageIO.write(outlinedTextNameImage, "PNG", new File(Constants.TEMP_DIR, screenshotFile.getName().replace(".png", "_4b_outlinedText.png")));
-            //            ImageIO.write(blurredTextImage, "PNG", new File(Constants.TEMP_DIR, screenshotFile.getName().replace(".png", "_5a_blurredText.png")));
+            ImageIO.write(blurredTextImage, "PNG", new File(Constants.TEMP_DIR, screenshotFile.getName().replace(".png", "_5a_blurredText.png")));
             ImageIO.write(blurredTextNameImage, "PNG", new File(Constants.TEMP_DIR, screenshotFile.getName().replace(".png", "_5b_blurredText.png")));
             // <<<< END DEBUG <<<<
 
@@ -101,6 +101,7 @@ public class SurfaceMatsApp {
                 List<MatchGroup> matchGroups = MatchSorter.sortMatches(matches);
 
                 String planetName = extractPlanetName(blurredTextNameImage, nameTemplates);
+                ImageIO.write(blurredTextNameImage, "PNG", new File(Constants.TEMP_DIR, planetName + ".png"));
 
                 //                // >>>> START DEBUG >>>>
                 //                BufferedImage out = new BufferedImage(blurredTextImage.getWidth(), blurredTextImage.getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -182,8 +183,7 @@ public class SurfaceMatsApp {
         // Identify highest occurences
         Map<Item, ScannedSurfaceMat> highestOccurences = new TreeMap<>();
         Map<Item, List<BigDecimal>> allOccurences = new TreeMap<>();
-        int nScreenshots = screenshotFiles.size(); // TODO Each system has more than one screenshot. Would be nice to OCR the system name, too.
-        int nMats = 0; // Every detected mat on every planet. So quite a lot per system.
+        int nPlanets = screenshotFiles.size(); // Each screenshot represents a planet
         for (ScannedSurfaceMat current : scannedSurfaceMats) {
             ScannedSurfaceMat bestSoFar = highestOccurences.get(current.getElement());
             if (bestSoFar == null || current.isHigher(bestSoFar)) {
@@ -195,9 +195,8 @@ public class SurfaceMatsApp {
                 allOccurences.put(current.getElement(), all);
             }
             all.add(current.getPercentage());
-            nMats++;
         }
-        System.out.println("\n>>>> >>>> >>>> >>>> RESULTS FROM " + nScreenshots + " SCREENSHOTS <<<< <<<< <<<< <<<<\n");
+        System.out.println("\n>>>> >>>> >>>> >>>> RESULTS FROM " + nPlanets + " PLANETS <<<< <<<< <<<< <<<<\n");
         System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "ELEMENT", "HIGHEST", "MEDIAN", "OCCURENCE"));
         System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "---------------", "----------", "----------", "----------"));
         for (Item element : highestOccurences.keySet()) {
@@ -206,9 +205,9 @@ public class SurfaceMatsApp {
             List<BigDecimal> all = allOccurences.get(element);
             Collections.sort(all);
             BigDecimal median = all.get(all.size() / 2);
-            BigDecimal frequency = new BigDecimal(all.size()).multiply(new BigDecimal(100)).divide(new BigDecimal(nMats), 1, BigDecimal.ROUND_HALF_UP);
+            BigDecimal frequency = new BigDecimal(all.size()).multiply(new BigDecimal(100)).divide(new BigDecimal(nPlanets), 1, BigDecimal.ROUND_HALF_UP);
 
-            System.out.println(String.format(Locale.US, "%-15s %9.1f%% %9.1f%% %9.1f%% %s", element.getName(), highest, median, frequency, name));
+            System.out.println(String.format(Locale.US, "%-15s %9.1f%% %9.1f%% %9.1f%%    %s", element.getName(), highest, median, frequency, name));
         }
     }
 
@@ -223,9 +222,7 @@ public class SurfaceMatsApp {
             //            logger.debug(name);
             //            for (MatchGroup mg : matchGroups) {
             //                for (TemplateMatch m : mg.getGroupMatches()) {
-            //                    if ("-".equals(m.getTemplate().getText())) {
-            //                        logger.debug((-1 * m.getMatch().score / (m.getTemplate().getImage().width * m.getTemplate().getImage().height)));
-            //                    }
+            //                    logger.debug(m.getTemplate().getText() + "    " + m.getErrorPerPixel());
             //                }
             //            }
             return name.toString().trim();
@@ -255,6 +252,10 @@ public class SurfaceMatsApp {
         } else if (StringUtils.getLevenshteinDistance(lowerCaseText, "tilt:") <= 2) {
             return false;
         } else if (StringUtils.getLevenshteinDistance(lowerCaseText, "axial:tilt:") <= 3) {
+            return false;
+        } else if (StringUtils.getLevenshteinDistance(lowerCaseText, "arg") <= 1) {
+            return false;
+        } else if (StringUtils.getLevenshteinDistance(lowerCaseText, "periapsis") <= 2) {
             return false;
         } else if (StringUtils.getLevenshteinDistance(lowerCaseText, "planet") <= 2) {
             return false;
@@ -374,15 +375,15 @@ public class SurfaceMatsApp {
                 //                        .compareTo(new Double(-1 * m2.getMatch().score / (m2.getTemplate().getImage().width * m2.getTemplate().getImage().height)));
 
                 // Precise score/width
-                return new Double(-1 * m1.getMatch().score / m1.getTemplate().getImage().width).compareTo(new Double(-1 * m2.getMatch().score / m2.getTemplate().getImage().width));
+                return new Double(m1.getErrorPerWidth()).compareTo(new Double(m2.getErrorPerWidth()));
             }
         });
 
         // Select all non-overlapping with a good quality
-        final double goodQuality = 10000;
         List<TemplateMatch> nonOverlapping = new ArrayList<>();
         for (TemplateMatch m : matches) {
-            if ((-1 * m.getMatch().score / (m.getTemplate().getImage().width * m.getTemplate().getImage().height)) < goodQuality) {
+            double goodQuality = m.getTemplate().getText().matches("\\w+") ? 10000 : 2000; // Non-text must have a much lower error/pixel
+            if (m.getErrorPerPixel() < goodQuality) {
                 if (!m.overlapsWithAny(nonOverlapping)) {
                     nonOverlapping.add(m);
                 }
