@@ -80,6 +80,34 @@ public abstract class ImageUtil {
         }
     }
 
+    public static BufferedImage toDoubleFourK(BufferedImage original) {
+        if (original.getWidth() == 7680 && original.getHeight() == 4320) {
+            return original;
+        } else {
+            float scale = original.getHeight() / 4320.0f;
+            int targetHeight = Math.round(original.getHeight() / scale);
+            int targetWidth = Math.round(original.getWidth() / scale);
+
+            if (targetWidth < 7680) {
+                scale = original.getWidth() / 7680.0f;
+                targetWidth = Math.round(original.getWidth() / scale);
+                targetHeight = Math.round(original.getHeight() / scale);
+            }
+
+            BufferedImage scaled = scaleImage(original, targetWidth, targetHeight);
+
+            if (scaled.getWidth() > 7680) {
+                int x = (scaled.getWidth() - 7680) / 2;
+                return scaled.getSubimage(x, 0, 7680, 4320);
+            } else if (scaled.getHeight() > 4320) {
+                int y = (scaled.getHeight() - 4320) / 2;
+                return scaled.getSubimage(0, y, 7680, 4320);
+            } else {
+                return scaled;
+            }
+        }
+    }
+
     public static BufferedImage fourKToHd(BufferedImage original) {
         float scale = 3840 / 1280.0f;
         int targetWidth = Math.round(original.getWidth() / scale);

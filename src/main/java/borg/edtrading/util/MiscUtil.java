@@ -1,15 +1,20 @@
 package borg.edtrading.util;
 
-import java.math.BigDecimal;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * MiscUtil
@@ -343,6 +348,41 @@ public abstract class MiscUtil {
         }
 
         return defaultValue;
+    }
+
+    /**
+     * Sorts a map by its values. The map must be a <code>LinkedHashMap</code>, because only this type of map has a predictable iteration order.
+     *
+     * @param map
+     *            Map to be sorted
+     * @param comparator
+     *            Comparator for comparing the map's values or <code>null</code> for natural ordering of the values.
+     * @since 3.5
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static void sortMapByValue(LinkedHashMap map, Comparator comparator) {
+        // Make two copies of the original map: A list of all keys and one of all values
+        List mapKeys = new ArrayList(map.keySet());
+        List mapValues = new ArrayList(map.values());
+
+        // Sort all values
+        List sortedValues = new ArrayList();
+        sortedValues.addAll(mapValues);
+        Collections.sort(sortedValues, comparator);
+
+        // Clear the original map
+        map.clear();
+
+        // Re-fill the original map in a sorted order
+        for (Object value : sortedValues) {
+            int index = mapValues.indexOf(value); // Index within the original map
+            Object key = mapKeys.get(index); // Key from the original map
+
+            map.put(key, value); // Re-fill
+
+            mapValues.remove(index); // Do not find this key/value again
+            mapKeys.remove(index); // Do not find this key/value again
+        }
     }
 
 }
