@@ -62,7 +62,7 @@ public class FittingTest {
         Map<String, CharDescription> referenceDescriptions = readReferenceDescriptions(new File(Constants.EDTRADING_BASE_DIR, "Feature Refs"));
 
         BufferedImage originalImage = ImageIO.read(sourceFile);
-        BufferedImage fourKImage = ImageUtil.toDoubleFourK(originalImage);
+        BufferedImage fourKImage = ImageUtil.scaleAndCrop(originalImage, 2 * 3840, 2 * 2160);
         BufferedImage croppedImage = fourKImage.getSubimage(2 * 20, 2 * 20, 2 * 820, 2 * 2120);
 
         GrayF32 grayImage = ConvertBufferedImage.convertFromSingle(croppedImage, null, GrayF32.class);

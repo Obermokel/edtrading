@@ -91,23 +91,28 @@ public class TemplateMatcher {
     }
 
     public static List<TemplateMatch> findTemplateMatches(BufferedImage image, Template template, int maxMatches) {
-        logger.trace("Searching max " + maxMatches + " match(es) of <" + template.getText() + ">");
+        try {
+            logger.trace("Searching max " + maxMatches + " match(es) of <" + template.getText() + ">");
 
-        TemplateMatching<GrayF32> matcher = FactoryTemplateMatching.createMatcher(TemplateScoreType.SUM_DIFF_SQ, GrayF32.class);
-        matcher.setTemplate(template.getImage(), template.getMask(), maxMatches);
-        matcher.process(ConvertBufferedImage.convertFrom(image, (GrayF32) null));
+            TemplateMatching<GrayF32> matcher = FactoryTemplateMatching.createMatcher(TemplateScoreType.SUM_DIFF_SQ, GrayF32.class);
+            matcher.setTemplate(template.getImage(), template.getMask(), maxMatches);
+            matcher.process(ConvertBufferedImage.convertFrom(image, (GrayF32) null));
 
-        //int templatePixels = template.getImage().getWidth() * template.getImage().getHeight();
-        //double maxScore = 1000.0 * templatePixels;
+            //int templatePixels = template.getImage().getWidth() * template.getImage().getHeight();
+            //double maxScore = 1000.0 * templatePixels;
 
-        List<TemplateMatch> result = new ArrayList<>(maxMatches);
-        for (Match match : matcher.getResults().toList()) {
-            //if (match.score < maxScore) {
-            result.add(new TemplateMatch(template, match));
-            //}
+            List<TemplateMatch> result = new ArrayList<>(maxMatches);
+            for (Match match : matcher.getResults().toList()) {
+                //if (match.score < maxScore) {
+                result.add(new TemplateMatch(template, match));
+                //}
+            }
+
+            return result;
+        } catch (Exception e) {
+            logger.error("Failed to find max " + maxMatches + " matches for " + template + " in BufferedImage", e);
+            return new ArrayList<>(0);
         }
-
-        return result;
     }
 
 }

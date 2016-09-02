@@ -25,6 +25,11 @@ public class Template {
         this.setSpecial(special);
     }
 
+    @Override
+    public String toString() {
+        return "Template: '" + this.getText() + "'";
+    }
+
     public String getText() {
         return this.text;
     }
