@@ -24,6 +24,8 @@ import boofcv.struct.ConnectRule;
 import boofcv.struct.feature.BrightFeature;
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU8;
+import borg.edtrading.ocr.ScreenshotCropper;
+import borg.edtrading.ocr.ScreenshotPreprocessor;
 import borg.edtrading.util.ImageUtil;
 import borg.edtrading.util.MiscUtil;
 import georegression.struct.point.Point2D_F64;
@@ -64,6 +66,11 @@ public class FittingTest {
         BufferedImage originalImage = ImageIO.read(sourceFile);
         BufferedImage fourKImage = ImageUtil.scaleAndCrop(originalImage, 2 * 3840, 2 * 2160);
         BufferedImage croppedImage = fourKImage.getSubimage(2 * 20, 2 * 20, 2 * 820, 2 * 2120);
+
+        BufferedImage fullThreshold = ScreenshotCropper.cropSystemMapToPlanetMaterials(ScreenshotPreprocessor.localSquareThresholdForSystemMap(originalImage));
+        ImageIO.write(fullThreshold, "PNG", new File(Constants.TEMP_DIR, "fullThreshold.png"));
+        BufferedImage regionThreshold = ScreenshotPreprocessor.localSquareThresholdForSystemMap(ScreenshotCropper.cropSystemMapToPlanetMaterials(originalImage));
+        ImageIO.write(regionThreshold, "PNG", new File(Constants.TEMP_DIR, "regionThreshold.png"));
 
         GrayF32 grayImage = ConvertBufferedImage.convertFromSingle(croppedImage, null, GrayF32.class);
         ImageIO.write(VisualizeImageData.grayMagnitude(grayImage, null, 255), "PNG", new File(Constants.TEMP_DIR, "gray.png"));
