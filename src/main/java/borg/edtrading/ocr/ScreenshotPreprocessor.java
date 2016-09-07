@@ -1,7 +1,9 @@
 package borg.edtrading.ocr;
 
 import boofcv.alg.filter.binary.GThresholdImageOps;
+import boofcv.alg.filter.blur.BlurImageOps;
 import boofcv.gui.binary.VisualizeBinaryData;
+import boofcv.gui.image.VisualizeImageData;
 import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU8;
@@ -20,6 +22,12 @@ import java.awt.image.BufferedImage;
 public abstract class ScreenshotPreprocessor {
 
     static final Logger logger = LogManager.getLogger(ScreenshotPreprocessor.class);
+
+    public static BufferedImage gaussian(BufferedImage originalImage) {
+        GrayU8 gray = ConvertBufferedImage.convertFrom(originalImage, (GrayU8) null);
+        GrayU8 gaussian = BlurImageOps.gaussian(gray, null, /* sigma = */ -1, /* radius = */ 2, null);
+        return VisualizeImageData.grayMagnitude(gaussian, null, -1);
+    }
 
     /**
      * Tuned for the white text on mostly black background of system map screenshots.

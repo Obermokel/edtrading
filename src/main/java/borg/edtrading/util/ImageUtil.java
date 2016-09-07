@@ -28,6 +28,10 @@ public abstract class ImageUtil {
         return scaleAndCrop(original, 3840, 2160);
     }
 
+    public static BufferedImage toQuadFourK(BufferedImage original) {
+        return scaleAndCrop(original, 7680, 4320);
+    }
+
     public static BufferedImage scaleAndCrop(BufferedImage original, int targetWidth, int targetHeight) {
         if (original.getWidth() == targetWidth && original.getHeight() == targetHeight) {
             // Perfect!

@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.awt.Rectangle;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * TemplateMatch
@@ -22,6 +23,11 @@ public class TemplateMatch {
     public TemplateMatch(Template template, Match match) {
         this.setTemplate(template);
         this.setMatch(match);
+    }
+
+    @Override
+    public String toString() {
+        return String.format(Locale.US, "%s (%.3f->%.3f)", this.getTemplate().getText(), this.getMatch().score, this.getErrorPerPixel());
     }
 
     /**

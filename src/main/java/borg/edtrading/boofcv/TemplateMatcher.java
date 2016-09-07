@@ -115,4 +115,40 @@ public class TemplateMatcher {
         }
     }
 
+    public static TemplateMatch findBestTemplateMatch(BufferedImage image, List<Template> templates) {
+        try {
+            GrayF32 grayImage = ConvertBufferedImage.convertFrom(image, (GrayF32) null);
+            float imageAR = (float) image.getWidth() / (float) image.getHeight();
+
+            //final double pixels = image.getWidth() * image.getHeight();
+            final double minScorePerPixel = -10000;
+            double bestScorePerPixel = minScorePerPixel;
+            TemplateMatch bestMatch = null;
+            for (Template template : templates) {
+                if (template.getImage().width <= image.getWidth() && template.getImage().height <= image.getHeight()) {
+                    float templateAR = (float) template.getImage().width / (float) template.getImage().height;
+                    if (templateAR <= 2 * imageAR && templateAR >= imageAR / 2) {
+                        TemplateMatching<GrayF32> matcher = FactoryTemplateMatching.createMatcher(TemplateScoreType.SUM_DIFF_SQ, GrayF32.class);
+                        matcher.setTemplate(template.getImage(), template.getMask(), 1);
+                        matcher.process(grayImage);
+                        if (matcher.getResults().getSize() >= 1) {
+                            Match match = matcher.getResults().get(0);
+                            final double pixels = template.getImage().getWidth() * template.getImage().getHeight();
+                            double scorePerPixel = match.score / pixels;
+                            if (scorePerPixel > minScorePerPixel && scorePerPixel > bestScorePerPixel) {
+                                bestScorePerPixel = scorePerPixel;
+                                bestMatch = new TemplateMatch(template, match);
+                            }
+                        }
+                    }
+                }
+            }
+            logger.debug(bestScorePerPixel);
+            return bestMatch;
+        } catch (Exception e) {
+            logger.error("Failed to find best match in BufferedImage", e);
+            return null;
+        }
+    }
+
 }
