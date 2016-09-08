@@ -49,7 +49,7 @@ public abstract class CharacterFinder {
         // Get the median height of all found boxes. Because most characters have a similar height, the median height should be
         // almost the text height. This way we can filter out small dots or large boxes which very likely are not characters.
         int medianHeight = calculateMedianHeight(characterCandidateBoxes);
-        logger.debug("medianHeight=" + medianHeight);
+        logger.debug("median candidate height = " + medianHeight);
 
         // This will remove all candidate boxes which are to small/large. The remaining boxes are very likely boxes around characters.
         List<Rectangle> medianBoxes = findBoxesCloseToMedianHeight(characterCandidateBoxes, medianHeight);
@@ -60,6 +60,12 @@ public abstract class CharacterFinder {
         // Expand all character boxes a bit so they do overlap. This allows us to again find bounding boxes, but this time the bounding
         // boxes will be around a whole line of characters.
         List<Rectangle> textLineBoxes = groupToTextLineBoxes(medianBoxes, cannySuitableImage.getWidth(), cannySuitableImage.getHeight());
+
+        // Expand all text lines to 2x median line height, so they all have the same height.
+        // This is because not all text lines have characters which go below the baseline or higher than usual.
+        medianHeight = calculateMedianHeight(textLineBoxes);
+        logger.debug("median line height = " + medianHeight);
+        textLineBoxes = expandTextLineBoxes(textLineBoxes, 2 * medianHeight);
         if (writeDebugImages) {
             ImageIO.write(markBoxes(cannySuitableImage, textLineBoxes, Color.YELLOW, 1), "PNG", new File(Constants.TEMP_DIR, "CharacterFinder 02 Lines.png"));
         }
@@ -81,16 +87,28 @@ public abstract class CharacterFinder {
         return characterLocations;
     }
 
+    private static List<Rectangle> expandTextLineBoxes(List<Rectangle> textLineBoxes, int targetHeight) {
+        List<Rectangle> result = new ArrayList<>(textLineBoxes.size());
+
+        for (Rectangle r : textLineBoxes) {
+            int diff = targetHeight - r.height;
+            int newY = r.y - (diff / 2);
+            result.add(new Rectangle(r.x, newY, r.width, targetHeight));
+        }
+
+        return result;
+    }
+
     private static List<Rectangle> extractCharBoxesFromTextLines(GrayF32 grayImage, List<Rectangle> textLineBoxes) {
         List<Rectangle> charBoxes = new ArrayList<>();
 
         for (Rectangle textLineBox : textLineBoxes) {
-            int x = textLineBox.x;
+            int x = Math.max(0, textLineBox.x);
 
-            while (x < textLineBox.x + textLineBox.width) {
+            while (x < Math.min(grayImage.width, textLineBox.x + textLineBox.width)) {
                 // Search for char start, which is the first vertical line which is not all black
                 boolean isAllBlack = true;
-                for (int y = textLineBox.y; y < textLineBox.y + textLineBox.height; y++) {
+                for (int y = Math.max(0, textLineBox.y); y < Math.min(grayImage.height, textLineBox.y + textLineBox.height); y++) {
                     if (grayImage.unsafe_get(x, y) != 0f) {
                         isAllBlack = false;
                         break;
@@ -102,10 +120,10 @@ public abstract class CharacterFinder {
                 } else {
                     int xFirstWhite = x; // Start pos (x) of char
 
-                    while (x < textLineBox.x + textLineBox.width) {
+                    while (x < Math.min(grayImage.width, textLineBox.x + textLineBox.width)) {
                         // Search for char end, which is the first vertical line which again is all black
                         isAllBlack = true;
-                        for (int y = textLineBox.y; y < textLineBox.y + textLineBox.height; y++) {
+                        for (int y = Math.max(0, textLineBox.y); y < Math.min(grayImage.height, textLineBox.y + textLineBox.height); y++) {
                             if (grayImage.unsafe_get(x, y) != 0f) {
                                 isAllBlack = false;
                                 break;
@@ -216,8 +234,8 @@ public abstract class CharacterFinder {
         GrayF32 grayF32 = new GrayF32(imageWidth, imageHeight);
         ImageMiscOps.fill(grayF32, 0);
         for (Rectangle r : medianBoxes) {
-            int expandedWidth = Math.round(2f * r.width);
-            int movedLeft = r.x - (expandedWidth - r.width) / 2;
+            int expandedWidth = 3 * r.width;
+            int movedLeft = r.x - r.width;
             ImageMiscOps.fillRectangle(grayF32, 1, movedLeft, r.y, expandedWidth, r.height);
         }
         return findBoundingBoxes(grayF32, 4, 4096, 16, 128);

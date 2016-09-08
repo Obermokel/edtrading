@@ -18,8 +18,10 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.RasterFormatException;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 
@@ -35,9 +37,9 @@ public class Mats2 {
     public static void main(String[] args) throws IOException {
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
 
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-08-31 21-40-10 Altair.png");
+        File sourceFile = selectRandomScreenshot();
         BufferedImage originalImage = ImageIO.read(sourceFile);
-        BufferedImage fourK = ImageUtil.toQuadFourK(originalImage);
+        BufferedImage fourK = ImageUtil.toFourK(originalImage);
         //ImageIO.write(fourK, "PNG", new File(Constants.TEMP_DIR, "fourK.png"));
         BufferedImage planetMaterialsImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourK);
         BufferedImage thresholdedImage = ScreenshotPreprocessor.localSquareThresholdForSystemMap(planetMaterialsImage);
@@ -53,26 +55,36 @@ public class Mats2 {
         Graphics2D g = ocrImage.createGraphics();
         g.drawImage(blurredImage, 0, 0, null);
         g.setColor(Color.RED);
-        g.setFont(new Font("Arial", Font.PLAIN, 14));
+        g.setFont(new Font("Consolas", Font.PLAIN, 16));
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
         for (Rectangle r : characterLocations) {
             try {
-                BufferedImage surroundedCharImage = blurredImage.getSubimage(r.x - r.width / 2, r.y - r.height / 2, r.width + r.width, r.height + r.height);
-                surroundedCharImage = ImageUtil.scaleTo(surroundedCharImage, surroundedCharImage.getWidth() / 2, surroundedCharImage.getHeight() / 2);
+                //BufferedImage surroundedCharImage = blurredImage.getSubimage(r.x - r.width / 2, r.y - r.height / 2, r.width + r.width, r.height + r.height);
+                BufferedImage surroundedCharImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
+                ImageIO.write(surroundedCharImage, "PNG", new File(unknownDir, String.format("%05d_%05d_%d.png", (r.y / 10) * 10, r.x, r.hashCode())));
+                //surroundedCharImage = ImageUtil.scaleTo(surroundedCharImage, surroundedCharImage.getWidth() / 2, surroundedCharImage.getHeight() / 2);
                 TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(surroundedCharImage, templates);
-                if (bestMatch == null) {
-                    BufferedImage rawCharImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
-                    rawCharImage = ImageUtil.scaleTo(rawCharImage, rawCharImage.getWidth() / 2, rawCharImage.getHeight() / 2);
-                    ImageIO.write(rawCharImage, "PNG", new File(unknownDir, String.format("%05d_%05d_%d.png", (r.y / 10) * 10, r.x, r.hashCode())));
-                } else {
+                if (bestMatch != null) {
                     g.drawString(bestMatch.getTemplate().getText(), r.x, r.y);
-                    System.out.print(bestMatch.getTemplate().getText());
+                    System.out.println(bestMatch.getTemplate().getText());
                 }
             } catch (RasterFormatException e) {
                 // Too close to border
             }
         }
         ImageIO.write(ocrImage, "PNG", new File(Constants.TEMP_DIR, "OCR.png"));
+    }
+
+    private static File selectRandomScreenshot() {
+        File dir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
+        File[] files = dir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                return f.getName().endsWith(".png");
+            }
+        });
+        Random rand = new Random();
+        return files[rand.nextInt(files.length)];
     }
 
 }

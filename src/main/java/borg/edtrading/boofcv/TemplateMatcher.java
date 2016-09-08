@@ -1,6 +1,8 @@
 package borg.edtrading.boofcv;
 
+import boofcv.abst.distort.FDistort;
 import boofcv.alg.feature.detect.template.TemplateMatching;
+import boofcv.alg.interpolate.TypeInterpolate;
 import boofcv.factory.feature.detect.template.FactoryTemplateMatching;
 import boofcv.factory.feature.detect.template.TemplateScoreType;
 import boofcv.io.image.ConvertBufferedImage;
@@ -48,7 +50,9 @@ public class TemplateMatcher {
             for (File pngFile : pngFiles) {
                 String text = subDir.getName();
                 boolean special = false;
-                if ("_punkt".equals(subDir.getName())) {
+                if (subDir.getName().endsWith("_")) {
+                    text = text.substring(0, text.length() - 1).toLowerCase();
+                } else if ("_punkt".equals(subDir.getName())) {
                     text = ".";
                 } else if ("_komma".equals(subDir.getName())) {
                     text = ",";
@@ -120,30 +124,30 @@ public class TemplateMatcher {
             GrayF32 grayImage = ConvertBufferedImage.convertFrom(image, (GrayF32) null);
             float imageAR = (float) image.getWidth() / (float) image.getHeight();
 
-            //final double pixels = image.getWidth() * image.getHeight();
-            final double minScorePerPixel = -10000;
-            double bestScorePerPixel = minScorePerPixel;
+            final double pixels = image.getWidth() * image.getHeight();
+            final double maxErrorPerPixel = 1000;
+            double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {
-                if (template.getImage().width <= image.getWidth() && template.getImage().height <= image.getHeight()) {
-                    float templateAR = (float) template.getImage().width / (float) template.getImage().height;
-                    if (templateAR <= 2 * imageAR && templateAR >= imageAR / 2) {
-                        TemplateMatching<GrayF32> matcher = FactoryTemplateMatching.createMatcher(TemplateScoreType.SUM_DIFF_SQ, GrayF32.class);
-                        matcher.setTemplate(template.getImage(), template.getMask(), 1);
-                        matcher.process(grayImage);
-                        if (matcher.getResults().getSize() >= 1) {
-                            Match match = matcher.getResults().get(0);
-                            final double pixels = template.getImage().getWidth() * template.getImage().getHeight();
-                            double scorePerPixel = match.score / pixels;
-                            if (scorePerPixel > minScorePerPixel && scorePerPixel > bestScorePerPixel) {
-                                bestScorePerPixel = scorePerPixel;
-                                bestMatch = new TemplateMatch(template, match);
-                            }
+                float templateAR = (float) template.getImage().width / (float) template.getImage().height;
+                if (templateAR <= 2 * imageAR && templateAR >= imageAR / 2) {
+                    GrayF32 scaledTemplate = new GrayF32(grayImage.width, grayImage.height);
+                    new FDistort().input(template.getImage()).output(scaledTemplate).interp(TypeInterpolate.BICUBIC).scale().apply();
+                    double error = 0.0;
+                    for (int y = 0; y < grayImage.height; y++) {
+                        for (int x = 0; x < grayImage.width; x++) {
+                            float diff = grayImage.unsafe_get(x, y) - scaledTemplate.unsafe_get(x, y);
+                            error += (diff * diff);
                         }
+                    }
+                    double errorPerPixel = error / pixels;
+                    if (errorPerPixel < bestErrorPerPixel) {
+                        bestErrorPerPixel = errorPerPixel;
+                        bestMatch = new TemplateMatch(template, null);
                     }
                 }
             }
-            logger.debug(bestScorePerPixel);
+            //logger.debug(bestErrorPerPixel);
             return bestMatch;
         } catch (Exception e) {
             logger.error("Failed to find best match in BufferedImage", e);
