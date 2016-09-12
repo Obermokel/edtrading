@@ -1,5 +1,9 @@
 package borg.edtrading;
 
+import boofcv.gui.binary.VisualizeBinaryData;
+import boofcv.io.image.ConvertBufferedImage;
+import boofcv.struct.image.GrayF32;
+import boofcv.struct.image.GrayU8;
 import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
@@ -36,16 +40,18 @@ public class Mats2 {
 
     public static void main(String[] args) throws IOException {
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
+        //testAllImages();
 
         File sourceFile = selectRandomScreenshot();
         BufferedImage originalImage = ImageIO.read(sourceFile);
-        BufferedImage fourK = ImageUtil.toFourK(originalImage);
-        //ImageIO.write(fourK, "PNG", new File(Constants.TEMP_DIR, "fourK.png"));
+        BufferedImage darkened = ScreenshotPreprocessor.darkenSaturatedAreas(originalImage);
+        BufferedImage fourK = ImageUtil.toFourK(darkened);
+        ImageIO.write(fourK, "PNG", new File(Constants.TEMP_DIR, "fourK.png"));
         BufferedImage planetMaterialsImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourK);
         BufferedImage thresholdedImage = ScreenshotPreprocessor.localSquareThresholdForSystemMap(planetMaterialsImage);
         ImageIO.write(thresholdedImage, "PNG", new File(Constants.TEMP_DIR, "thresholdedImage.png"));
         List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(thresholdedImage, true);
-        BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(thresholdedImage);
+        BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(thresholdedImage, 2);
         ImageIO.write(blurredImage, "PNG", new File(Constants.TEMP_DIR, "blurredImage.png"));
 
         // TODO Extract from here!
@@ -54,8 +60,8 @@ public class Mats2 {
         BufferedImage ocrImage = new BufferedImage(blurredImage.getWidth(), blurredImage.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = ocrImage.createGraphics();
         g.drawImage(blurredImage, 0, 0, null);
-        g.setColor(Color.RED);
-        g.setFont(new Font("Consolas", Font.PLAIN, 16));
+        g.setColor(Color.GREEN);
+        g.setFont(new Font("Consolas", Font.BOLD, 20));
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
         for (Rectangle r : characterLocations) {
             try {
@@ -85,6 +91,47 @@ public class Mats2 {
         });
         Random rand = new Random();
         return files[rand.nextInt(files.length)];
+    }
+
+    private static void testAllImages() throws IOException {
+        File dir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
+        File[] files = dir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                return f.getName().endsWith(".png");
+            }
+        });
+        int i = 0;
+        for (File file : files) {
+            System.out.println(++i + " of " + files.length);
+            BufferedImage originalImage = ImageIO.read(file);
+            BufferedImage darkened = ScreenshotPreprocessor.darkenSaturatedAreas(originalImage);
+            BufferedImage fourK = ImageUtil.toFourK(darkened);
+            BufferedImage planetMaterialsImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourK);
+            GrayF32 grayImage = ConvertBufferedImage.convertFromSingle(planetMaterialsImage, null, GrayF32.class);
+            //            for (int radius = 10; radius <= 160; radius += 10) {
+            //                for (double scale = 0.5; scale <= 0.5; scale += 0.1) {
+            double scale = 0.5;
+            //2016-09-01 22-47-22 Hruntia
+            GrayU8 t20 = ScreenshotPreprocessor.localSquareThreshold(grayImage, 20, scale, false);
+            GrayU8 t80 = ScreenshotPreprocessor.localSquareThreshold(grayImage, 540, scale, false);
+            GrayU8 t160 = ScreenshotPreprocessor.localSquareThreshold(grayImage, 160, scale, false);
+            GrayU8 tAll = t20.createSameShape();
+            for (int y = 0; y < t20.height; y++) {
+                for (int x = 0; x < t20.width; x++) {
+                    if (t20.unsafe_get(x, y) > 0 && t80.unsafe_get(x, y) > 0 && t160.unsafe_get(x, y) > 0) {
+                        tAll.unsafe_set(x, y, t20.unsafe_get(x, y));
+                    } else {
+                        tAll.unsafe_set(x, y, 0);
+                    }
+                }
+            }
+            BufferedImage thresholdedImage = VisualizeBinaryData.renderBinary(tAll, false, null);
+            ImageIO.write(thresholdedImage, "PNG", new File(Constants.TEMP_DIR, file.getName().replace(".png", "_rAll_s" + scale + ".png")));
+            //                }
+            //            }
+        }
+        throw new RuntimeException();
     }
 
 }

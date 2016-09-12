@@ -14,7 +14,6 @@ import boofcv.struct.image.Planar;
 import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
-import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.util.ImageUtil;
@@ -56,7 +55,7 @@ public class SurfaceMatsApp {
     private static final Pattern MATERIAL_PATTERN = Pattern.compile("([A-Z]+)\\((\\d+\\.\\d)%\\).?");
 
     public static void main(String[] args) throws IOException {
-        Galaxy galaxy = Galaxy.readDataFromFiles();
+        //Galaxy galaxy = Galaxy.readDataFromFiles();
         List<Template> matsTemplates = TemplateMatcher.loadTemplates("Surface Mats");
         List<Template> nameTemplates = TemplateMatcher.loadTemplates("Planet Names");
 
@@ -69,6 +68,7 @@ public class SurfaceMatsApp {
         //List<Template> templates = templates.stream().filter(t -> t.getText().matches("\\w")).collect(Collectors.toList());
         List<File> screenshotFiles = getScreenshotsFromAllDir();
         for (File screenshotFile : screenshotFiles) {
+            logger.info(screenshotFile.getName());
             BufferedImage originalImage = ImageIO.read(screenshotFile);
             BufferedImage fourKImage = ImageUtil.toFourK(originalImage); // Scale up to 4K to make canny edge detection easier
 
