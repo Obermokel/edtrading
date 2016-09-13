@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -62,8 +63,10 @@ public abstract class CharacterFinder {
 
         // Expand all text lines to 2x median line height, so they all have the same height.
         // This is because not all text lines have characters which go below the baseline or higher than usual.
+        // Also move text lines which are only a few pixel away in y-direction to the same y-coord.
         medianHeight = calculateMedianHeight(textLineBoxes);
         textLineBoxes = expandTextLineBoxes(textLineBoxes, 2 * medianHeight);
+        textLineBoxes = moveSimilarTextLineBoxes(textLineBoxes);
         if (writeDebugImages) {
             ImageIO.write(markBoxes(cannySuitableImage, textLineBoxes, Color.YELLOW, 1), "PNG", new File(Constants.TEMP_DIR, "CharacterFinder 02 Lines.png"));
         }
@@ -83,6 +86,36 @@ public abstract class CharacterFinder {
             ImageIO.write(combined, "PNG", new File(Constants.TEMP_DIR, "CharacterFinder 99 Combined.png"));
         }
         return characterLocations;
+    }
+
+    private static List<Rectangle> moveSimilarTextLineBoxes(List<Rectangle> textLineBoxes) {
+        List<Rectangle> result = new ArrayList<>(textLineBoxes.size());
+
+        while (!textLineBoxes.isEmpty()) {
+            // Find
+            Rectangle referenceBox = textLineBoxes.remove(0);
+            int sumY = referenceBox.y;
+            int avgY = sumY;
+            List<Rectangle> similarBoxes = new ArrayList<>();
+            ListIterator<Rectangle> it = textLineBoxes.listIterator();
+            while (it.hasNext()) {
+                Rectangle otherBox = it.next();
+                if (Math.abs(otherBox.y - avgY) <= 10) {
+                    similarBoxes.add(otherBox);
+                    it.remove();
+                    sumY += otherBox.y;
+                    avgY = Math.round(sumY / (1.0f + similarBoxes.size()));
+                }
+            }
+            similarBoxes.add(referenceBox);
+
+            // Move
+            for (Rectangle r : similarBoxes) {
+                result.add(new Rectangle(r.x, avgY, r.width, r.height));
+            }
+        }
+
+        return result;
     }
 
     private static List<Rectangle> expandTextLineBoxes(List<Rectangle> textLineBoxes, int targetHeight) {

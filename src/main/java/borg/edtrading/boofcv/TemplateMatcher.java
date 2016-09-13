@@ -29,8 +29,6 @@ public class TemplateMatcher {
     static final Logger logger = LogManager.getLogger(TemplateMatcher.class);
 
     public static List<Template> loadTemplates(String type) {
-        logger.debug("Loading templates");
-
         List<Template> result = new ArrayList<>();
 
         File baseDir = new File(Constants.TEMPLATES_DIR, type);
@@ -93,6 +91,8 @@ public class TemplateMatcher {
             }
         }
 
+        logger.info("Loaded " + result.size() + " template(s) from " + type);
+
         return result;
     }
 
@@ -127,7 +127,7 @@ public class TemplateMatcher {
             float imageAR = (float) image.getWidth() / (float) image.getHeight();
 
             final double pixels = image.getWidth() * image.getHeight();
-            final double maxErrorPerPixel = 2000;
+            final double maxErrorPerPixel = 1234;
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {

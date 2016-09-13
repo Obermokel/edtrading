@@ -294,7 +294,7 @@ public class ScannedBodyInfo {
                         text += lowercasedScannedWords.set(i, null);
                     }
                 }
-                scannedBodyInfo.setEarthMasses(new BigDecimal(text.replace("o", "0").replace("b", "8")));
+                scannedBodyInfo.setEarthMasses(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to earth masses");
             }
@@ -309,7 +309,7 @@ public class ScannedBodyInfo {
                         text += lowercasedScannedWords.set(i, null);
                     }
                 }
-                scannedBodyInfo.setRadiusKm(new BigDecimal(text.replace("o", "0").replace("b", "8").replace("k", "").replace("m", "")));
+                scannedBodyInfo.setRadiusKm(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "").replace("k", "").replace("m", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to radius");
             }
@@ -324,7 +324,7 @@ public class ScannedBodyInfo {
                         text += lowercasedScannedWords.set(i, null);
                     }
                 }
-                scannedBodyInfo.setGravityG(new BigDecimal(text.replace("o", "0").replace("b", "8").replace("g", "")));
+                scannedBodyInfo.setGravityG(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "").replace("g", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to gravity");
             }
@@ -339,7 +339,7 @@ public class ScannedBodyInfo {
                         text += lowercasedScannedWords.set(i, null);
                     }
                 }
-                scannedBodyInfo.setSurfaceTempK(new BigDecimal(text.replace("o", "0").replace("b", "8").replace("k", "")));
+                scannedBodyInfo.setSurfaceTempK(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "").replace("k", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to surface temp");
             }
@@ -392,17 +392,19 @@ public class ScannedBodyInfo {
                     if (materialText == null) {
                         materialText = lowercasedScannedWords.set(++i, null);
                     }
-                    BodyInfo material = BodyInfo.findBestMatching(materialText.replace("0", "o").replace("8", "b"));
-                    if (material == null) {
-                        logger.warn(screenshotFilename + ": Unknown body composition '" + materialText + "'");
-                    } else {
-                        try {
-                            BigDecimal percent = new BigDecimal(percentText.replace("o", "0").replace("b", "8").replace("%", "").replace(",", ""));
-                            scannedBodyInfo.getComposition().put(material, percent);
-                            sumPercent = sumPercent.add(percent);
-                        } catch (NumberFormatException e) {
-                            logger.warn(screenshotFilename + ": Cannot parse '" + percentText + "' to percentage for " + material);
-                            scannedBodyInfo.getComposition().put(material, null);
+                    if (materialText != null) {
+                        BodyInfo material = BodyInfo.findBestMatching(materialText.replace("0", "o").replace("8", "b"));
+                        if (material == null) {
+                            logger.warn(screenshotFilename + ": Unknown body composition '" + materialText + "'");
+                        } else {
+                            try {
+                                BigDecimal percent = new BigDecimal(percentText.replace("o", "0").replace("b", "8").replace("%", "").replace(",", ""));
+                                scannedBodyInfo.getComposition().put(material, percent);
+                                sumPercent = sumPercent.add(percent);
+                            } catch (NumberFormatException e) {
+                                logger.warn(screenshotFilename + ": Cannot parse '" + percentText + "' to percentage for " + material);
+                                scannedBodyInfo.getComposition().put(material, null);
+                            }
                         }
                     }
                 }
@@ -421,7 +423,7 @@ public class ScannedBodyInfo {
                         text += lowercasedScannedWords.set(i, null);
                     }
                 }
-                scannedBodyInfo.setOrbitalPeriodD(new BigDecimal(text.replace("o", "0").replace("b", "8").replace("d", "")));
+                scannedBodyInfo.setOrbitalPeriodD(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "").replace("d", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to orbital period");
             }
@@ -436,7 +438,7 @@ public class ScannedBodyInfo {
                         text += lowercasedScannedWords.set(i, null);
                     }
                 }
-                scannedBodyInfo.setSemiMajorAxisAU(new BigDecimal(text.replace("o", "0").replace("b", "8").replace("a", "").replace("u", "")));
+                scannedBodyInfo.setSemiMajorAxisAU(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "").replace("a", "").replace("u", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to semi major axis");
             }
@@ -451,7 +453,7 @@ public class ScannedBodyInfo {
                         text += lowercasedScannedWords.set(i, null);
                     }
                 }
-                scannedBodyInfo.setOrbitalEccentricity(new BigDecimal(text.replace("o", "0").replace("b", "8")));
+                scannedBodyInfo.setOrbitalEccentricity(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to orbital eccentricity");
             }
@@ -466,9 +468,10 @@ public class ScannedBodyInfo {
                         text += lowercasedScannedWords.set(i, null);
                     }
                 }
-                scannedBodyInfo.setOrbitalInclinationDeg(new BigDecimal(text.replace("o", "0").replace("b", "8").replace("°", "")));
+                scannedBodyInfo.setOrbitalInclinationDeg(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "").replace("°", "")));
             } catch (NumberFormatException e) {
                 // Often orbital inclination and arg of periapsis are combined. Both have 2 decimal places, so try to split them.
+                // TODO Should be obsolete without line jitter.
                 if (text.replace("o", "0").replace("b", "8").replace("°", "").matches("\\-?\\d+\\.\\d{3,5}\\.\\d{2}")) {
                     String textOrbitalInclination = text.substring(0, text.indexOf(".") + 3).replace("o", "0").replace("b", "8").replace("°", "");
                     String textArgOfPeriapsis = text.substring(text.indexOf(".") + 3, text.length()).replace("o", "0").replace("b", "8").replace("°", "");
