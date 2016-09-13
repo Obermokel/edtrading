@@ -1,5 +1,7 @@
 package borg.edtrading.data;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * Item
  *
@@ -111,6 +113,25 @@ public enum Item {
         this.name = name;
         this.type = type;
         this.grade = grade;
+    }
+
+    public static Item findBestMatching(String name, ItemType type) {
+        Item bestItem = null;
+        float bestItemError = Float.MAX_VALUE;
+        for (Item item : Item.values()) {
+            if (item.getType() == type) {
+                float dist = StringUtils.getLevenshteinDistance(name.toLowerCase(), item.getName().toLowerCase());
+                float len = item.getName().length();
+                float err = dist / len;
+                if (err <= 0.25f) {
+                    if (err < bestItemError) {
+                        bestItem = item;
+                        bestItemError = err;
+                    }
+                }
+            }
+        }
+        return bestItem;
     }
 
     public String getName() {

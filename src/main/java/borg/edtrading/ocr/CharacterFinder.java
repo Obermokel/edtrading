@@ -49,7 +49,6 @@ public abstract class CharacterFinder {
         // Get the median height of all found boxes. Because most characters have a similar height, the median height should be
         // almost the text height. This way we can filter out small dots or large boxes which very likely are not characters.
         int medianHeight = calculateMedianHeight(characterCandidateBoxes);
-        logger.debug("median candidate height = " + medianHeight);
 
         // This will remove all candidate boxes which are to small/large. The remaining boxes are very likely boxes around characters.
         List<Rectangle> medianBoxes = findBoxesCloseToMedianHeight(characterCandidateBoxes, medianHeight);
@@ -64,7 +63,6 @@ public abstract class CharacterFinder {
         // Expand all text lines to 2x median line height, so they all have the same height.
         // This is because not all text lines have characters which go below the baseline or higher than usual.
         medianHeight = calculateMedianHeight(textLineBoxes);
-        logger.debug("median line height = " + medianHeight);
         textLineBoxes = expandTextLineBoxes(textLineBoxes, 2 * medianHeight);
         if (writeDebugImages) {
             ImageIO.write(markBoxes(cannySuitableImage, textLineBoxes, Color.YELLOW, 1), "PNG", new File(Constants.TEMP_DIR, "CharacterFinder 02 Lines.png"));

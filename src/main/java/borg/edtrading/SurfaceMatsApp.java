@@ -144,7 +144,7 @@ public class SurfaceMatsApp {
                         String elementText = m.group(1);
                         String percentText = m.group(2);
 
-                        Item element = findBestMatchingElement(elementText);
+                        Item element = Item.findBestMatching(elementText, ItemType.ELEMENT);
                         if (element == null) {
                             if (elementText.length() > 1) {
                                 logger.debug("Unknown element '" + elementText + "' in screenshot " + screenshotFile.getName());
@@ -266,25 +266,6 @@ public class SurfaceMatsApp {
         } else {
             return true;
         }
-    }
-
-    private static Item findBestMatchingElement(String name) {
-        Item bestItem = null;
-        float bestItemError = Float.MAX_VALUE;
-        for (Item item : Item.values()) {
-            if (item.getType() == ItemType.ELEMENT) {
-                float dist = StringUtils.getLevenshteinDistance(name.toLowerCase(), item.getName().toLowerCase());
-                float len = item.getName().length();
-                float err = dist / len;
-                if (err <= 0.25f) {
-                    if (err < bestItemError) {
-                        bestItem = item;
-                        bestItemError = err;
-                    }
-                }
-            }
-        }
-        return bestItem;
     }
 
     private static BufferedImage cannyEdge(BufferedImage originalImage) {

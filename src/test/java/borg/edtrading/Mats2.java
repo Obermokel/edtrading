@@ -47,7 +47,7 @@ public class Mats2 {
         BufferedImage darkened = ScreenshotPreprocessor.darkenSaturatedAreas(originalImage);
         BufferedImage fourK = ImageUtil.toFourK(darkened);
         ImageIO.write(fourK, "PNG", new File(Constants.TEMP_DIR, "fourK.png"));
-        BufferedImage planetMaterialsImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourK);
+        BufferedImage planetMaterialsImage = ScreenshotCropper.cropSystemMapToBodyName(fourK);
         BufferedImage thresholdedImage = ScreenshotPreprocessor.localSquareThresholdForSystemMap(planetMaterialsImage);
         ImageIO.write(thresholdedImage, "PNG", new File(Constants.TEMP_DIR, "thresholdedImage.png"));
         List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(thresholdedImage, true);
@@ -62,17 +62,19 @@ public class Mats2 {
         g.drawImage(blurredImage, 0, 0, null);
         g.setColor(Color.GREEN);
         g.setFont(new Font("Consolas", Font.BOLD, 20));
-        List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
+        List<Template> templates = TemplateMatcher.loadTemplates("Body Name");
         for (Rectangle r : characterLocations) {
             try {
                 //BufferedImage surroundedCharImage = blurredImage.getSubimage(r.x - r.width / 2, r.y - r.height / 2, r.width + r.width, r.height + r.height);
                 BufferedImage surroundedCharImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
                 ImageIO.write(surroundedCharImage, "PNG", new File(unknownDir, String.format("%05d_%05d_%d.png", (r.y / 10) * 10, r.x, r.hashCode())));
                 //surroundedCharImage = ImageUtil.scaleTo(surroundedCharImage, surroundedCharImage.getWidth() / 2, surroundedCharImage.getHeight() / 2);
-                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(surroundedCharImage, templates);
+                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(surroundedCharImage, templates, r.x, r.y);
                 if (bestMatch != null) {
                     g.drawString(bestMatch.getTemplate().getText(), r.x, r.y);
-                    System.out.println(bestMatch.getTemplate().getText());
+                    System.out.print(bestMatch.getTemplate().getText());
+                } else {
+                    System.out.print("☒");
                 }
             } catch (RasterFormatException e) {
                 // Too close to border

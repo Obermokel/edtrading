@@ -34,60 +34,62 @@ public class TemplateMatcher {
         List<Template> result = new ArrayList<>();
 
         File baseDir = new File(Constants.TEMPLATES_DIR, type);
-        File[] subDirs = baseDir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return file.isDirectory();
-            }
-        });
-        for (File subDir : subDirs) {
-            File[] pngFiles = subDir.listFiles(new FileFilter() {
+        if (baseDir.exists()) {
+            File[] subDirs = baseDir.listFiles(new FileFilter() {
                 @Override
                 public boolean accept(File file) {
-                    return file.getName().toLowerCase().endsWith(".png") && !file.getName().toLowerCase().endsWith("_mask.png");
+                    return file.isDirectory();
                 }
             });
-            for (File pngFile : pngFiles) {
-                String text = subDir.getName();
-                boolean special = false;
-                if (subDir.getName().endsWith("_")) {
-                    text = text.substring(0, text.length() - 1).toLowerCase();
-                } else if ("_punkt".equals(subDir.getName())) {
-                    text = ".";
-                } else if ("_komma".equals(subDir.getName())) {
-                    text = ",";
-                } else if ("_prozent".equals(subDir.getName())) {
-                    text = "%";
-                } else if ("_strich".equals(subDir.getName())) {
-                    text = "-";
-                } else if ("_doppelpunkt".equals(subDir.getName())) {
-                    text = ":";
-                } else if ("_klammer_auf".equals(subDir.getName())) {
-                    text = "(";
-                } else if ("_klammer_zu".equals(subDir.getName())) {
-                    text = ")";
-                } else if ("_grad".equals(subDir.getName())) {
-                    text = "°";
-                } else if ("_hoch".equals(subDir.getName())) {
-                    text = "^3";
-                } else if ("_mittel".equals(subDir.getName())) {
-                    text = "^2";
-                } else if ("_niedrig".equals(subDir.getName())) {
-                    text = "^1";
-                } else if ("_space".equals(subDir.getName())) {
-                    text = "";
-                    continue; // FIXME
-                } else if ("__border".equals(subDir.getName())) {
-                    text = pngFile.getName().replace(".png", "").replaceAll("\\d", "");
-                    special = true;
+            for (File subDir : subDirs) {
+                File[] pngFiles = subDir.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        return file.getName().toLowerCase().endsWith(".png") && !file.getName().toLowerCase().endsWith("_mask.png");
+                    }
+                });
+                for (File pngFile : pngFiles) {
+                    String text = subDir.getName();
+                    boolean special = false;
+                    if (subDir.getName().endsWith("_")) {
+                        text = text.substring(0, text.length() - 1).toLowerCase();
+                    } else if ("_punkt".equals(subDir.getName())) {
+                        text = ".";
+                    } else if ("_komma".equals(subDir.getName())) {
+                        text = ",";
+                    } else if ("_prozent".equals(subDir.getName())) {
+                        text = "%";
+                    } else if ("_strich".equals(subDir.getName())) {
+                        text = "-";
+                    } else if ("_doppelpunkt".equals(subDir.getName())) {
+                        text = ":";
+                    } else if ("_klammer_auf".equals(subDir.getName())) {
+                        text = "(";
+                    } else if ("_klammer_zu".equals(subDir.getName())) {
+                        text = ")";
+                    } else if ("_grad".equals(subDir.getName())) {
+                        text = "°";
+                    } else if ("_hoch".equals(subDir.getName())) {
+                        text = "^3";
+                    } else if ("_mittel".equals(subDir.getName())) {
+                        text = "^2";
+                    } else if ("_niedrig".equals(subDir.getName())) {
+                        text = "^1";
+                    } else if ("_space".equals(subDir.getName())) {
+                        text = "";
+                        continue; // FIXME
+                    } else if ("__border".equals(subDir.getName())) {
+                        text = pngFile.getName().replace(".png", "").replaceAll("\\d", "");
+                        special = true;
+                    }
+                    GrayF32 image = UtilImageIO.loadImage(pngFile.getAbsolutePath(), GrayF32.class);
+                    GrayF32 mask = null;
+                    File maskFile = new File(pngFile.getParentFile(), pngFile.getName().replace(".png", "_mask.png"));
+                    if (maskFile.exists()) {
+                        mask = UtilImageIO.loadImage(maskFile.getAbsolutePath(), GrayF32.class);
+                    }
+                    result.add(new Template(text, image, mask, special));
                 }
-                GrayF32 image = UtilImageIO.loadImage(pngFile.getAbsolutePath(), GrayF32.class);
-                GrayF32 mask = null;
-                File maskFile = new File(pngFile.getParentFile(), pngFile.getName().replace(".png", "_mask.png"));
-                if (maskFile.exists()) {
-                    mask = UtilImageIO.loadImage(maskFile.getAbsolutePath(), GrayF32.class);
-                }
-                result.add(new Template(text, image, mask, special));
             }
         }
 
@@ -119,18 +121,18 @@ public class TemplateMatcher {
         }
     }
 
-    public static TemplateMatch findBestTemplateMatch(BufferedImage image, List<Template> templates) {
+    public static TemplateMatch findBestTemplateMatch(BufferedImage image, List<Template> templates, int xWithinImage, int yWithinImage) {
         try {
             GrayF32 grayImage = ConvertBufferedImage.convertFrom(image, (GrayF32) null);
             float imageAR = (float) image.getWidth() / (float) image.getHeight();
 
             final double pixels = image.getWidth() * image.getHeight();
-            final double maxErrorPerPixel = 1000;
+            final double maxErrorPerPixel = 2000;
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {
                 float templateAR = (float) template.getImage().width / (float) template.getImage().height;
-                if (templateAR <= 2 * imageAR && templateAR >= imageAR / 2) {
+                if (templateAR <= 1.5 * imageAR && templateAR >= imageAR / 1.5) {
                     GrayF32 scaledTemplate = new GrayF32(grayImage.width, grayImage.height);
                     new FDistort().input(template.getImage()).output(scaledTemplate).interp(TypeInterpolate.BICUBIC).scale().apply();
                     double error = 0.0;
@@ -143,7 +145,7 @@ public class TemplateMatcher {
                     double errorPerPixel = error / pixels;
                     if (errorPerPixel < bestErrorPerPixel) {
                         bestErrorPerPixel = errorPerPixel;
-                        bestMatch = new TemplateMatch(template, null);
+                        bestMatch = new TemplateMatch(template, new Match(xWithinImage, yWithinImage, -1 * errorPerPixel));
                     }
                 }
             }
