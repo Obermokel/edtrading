@@ -12,6 +12,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * ScannedBodyInfo
@@ -21,6 +23,8 @@ import java.util.List;
 public class ScannedBodyInfo {
 
     static final Logger logger = LogManager.getLogger(ScannedBodyInfo.class);
+
+    private static final Pattern BODY_DESIGNATION_PATTERN = Pattern.compile("^(.+?) ([A-Fa-f]{1,5} [0-9]{1,2} ?[A-Fa-f]?)$");
 
     private String screenshotFilename = null;
     private String systemName = null;
@@ -116,7 +120,6 @@ public class ScannedBodyInfo {
         String bodyName = null;
         BodyInfo bodyType = null;
         BigDecimal distanceLs = null;
-        LinkedList<String> originalScannedNameWords = new LinkedList<>(bodyNameWords);
         LinkedList<String> lowercasedScannedNameWords = new LinkedList<>();
         for (String w : bodyNameWords) {
             lowercasedScannedNameWords.add(w.toLowerCase());
@@ -617,6 +620,65 @@ public class ScannedBodyInfo {
         }
 
         return startIndex;
+    }
+
+    public PlausiCheckResult checkPlausi() {
+        PlausiCheckResult result = new PlausiCheckResult(this.getScreenshotFilename());
+        if (StringUtils.isBlank(this.getSystemName())) {
+            result.addErrorField("systemName", "missing"); // TODO We could try to extract it from the body name. System name = body name - body designation.
+        }
+        if (StringUtils.isBlank(this.getBodyName())) {
+            result.addErrorField("bodyName", "missing");
+        }
+        if (StringUtils.isNotEmpty(this.getBodyName()) && StringUtils.isNotEmpty(this.getSystemName())) {
+            // See if the body name is a generated one.
+            // For example, if the system is named 'Eoch Prou RS-T d3-94' and the body is simply the system name plus a designation, like 'Eoch Prou RS-T d3-94 A 4'.
+            // However it is not generated if it has its own name, for example the body name 'Colonia Foobar' in the system name 'Eoch Prou RS-T d3-94'.
+            //
+            // First, try to split the body name into a system name and a designation.
+            String systemPart = null;
+            String designationPart = null;
+            Matcher matcher = BODY_DESIGNATION_PATTERN.matcher(this.getBodyName().trim());
+            if (matcher.matches()) {
+                systemPart = matcher.group(1);
+                designationPart = matcher.group(2);
+                String withUppercasedDesignation = systemPart + " " + designationPart.toUpperCase();
+                if (!withUppercasedDesignation.equals(this.getBodyName())) {
+                    result.addFixedField("bodyName", "Uppercased designation: " + this.getBodyName() + " -> " + withUppercasedDesignation);
+                    this.setBodyName(withUppercasedDesignation);
+                }
+                // Now see if the extracted system name and the real system name are very similar. If so, replace the extracted with the real one.
+                float error = (float) StringUtils.getLevenshteinDistance(this.getSystemName().toLowerCase(), systemPart.toLowerCase()) / (float) this.getSystemName().length();
+                if (error <= 0.25f) {
+                    // We most likely have a system name + designation
+                    String withRealSystemName = this.getSystemName() + " " + designationPart.toUpperCase();
+                    if (!withRealSystemName.equals(this.getBodyName())) {
+                        result.addFixedField("bodyName", "Used real system name: " + this.getBodyName() + " -> " + withRealSystemName);
+                        this.setBodyName(withRealSystemName);
+                    }
+                }
+            }
+
+            // Finally, see if the first parts of the real system name and the extracted body name are very similar.
+            // This of course only works if the body name is longer than the system name.
+            if (this.getBodyName().length() > this.getSystemName().length()) {
+                String systemOfBody = this.getBodyName().substring(0, this.getSystemName().length());
+                float error = (float) StringUtils.getLevenshteinDistance(this.getSystemName().toLowerCase(), systemOfBody.toLowerCase()) / (float) this.getSystemName().length();
+                if (error <= 0.25f) {
+                    // We most likely have a system name + designation
+                    if (designationPart == null) {
+                        result.addErrorField("bodyName", "Looks like system+designation, but designation pattern not found in " + this.getBodyName());
+                    } else {
+                        String withRealSystemName = this.getSystemName() + " " + designationPart.toUpperCase();
+                        if (!withRealSystemName.equals(this.getBodyName())) {
+                            result.addFixedField("bodyName", "Used real system name: " + this.getBodyName() + " -> " + withRealSystemName);
+                            this.setBodyName(withRealSystemName);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     public String getScreenshotFilename() {

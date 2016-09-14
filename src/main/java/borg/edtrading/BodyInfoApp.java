@@ -5,6 +5,7 @@ import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
 import borg.edtrading.data.Item;
+import borg.edtrading.data.PlausiCheckResult;
 import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.eddb.BodyUpdater;
 import borg.edtrading.ocr.CharacterFinder;
@@ -46,7 +47,7 @@ public class BodyInfoApp {
     static final Logger logger = LogManager.getLogger(BodyInfoApp.class);
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        final boolean doEddbUpdate = true;
+        final boolean doEddbUpdate = false;
 
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
         BodyUpdater bodyUpdater = doEddbUpdate ? new BodyUpdater("Mokel DeLorean", "jExx8sT") : null;
@@ -61,10 +62,7 @@ public class BodyInfoApp {
                 //logger.debug(screenshotFile.getName());
 
                 // Extract system name from filename
-                String systemName = null;
-                if (screenshotFile.getName().matches("\\d{4}\\-\\d{2}\\-\\d{2} \\d{2}\\-\\d{2}\\-\\d{2} .+\\.png")) {
-                    systemName = screenshotFile.getName().substring("0000-00-00 00-00-00 ".length()).replace(".png", "");
-                }
+                String systemName = systemNameFromFilename(screenshotFile);
 
                 // Darken and scale to 4k
                 BufferedImage originalImage = ImageIO.read(screenshotFile);
@@ -86,7 +84,9 @@ public class BodyInfoApp {
                 if (doEddbUpdate) {
                     bodyUpdater.updateBody(scannedBodyInfo);
                 } else {
-                    System.out.println(scannedBodyInfo);
+                    PlausiCheckResult plausiResult = scannedBodyInfo.checkPlausi();
+                    System.out.println(">>>> " + scannedBodyInfo.getBodyName() + " <<<<");
+                    System.out.println(plausiResult);
                 }
             }
 
@@ -126,7 +126,15 @@ public class BodyInfoApp {
         }
     }
 
-    private static List<String> scanWords(BufferedImage croppedfourK, List<Template> templates) throws IOException {
+    static String systemNameFromFilename(File screenshotFile) {
+        String systemName = null;
+        if (screenshotFile.getName().matches("\\d{4}\\-\\d{2}\\-\\d{2} \\d{2}\\-\\d{2}\\-\\d{2} .+\\.png")) {
+            systemName = screenshotFile.getName().substring("0000-00-00 00-00-00 ".length()).replace(".png", "");
+        }
+        return systemName;
+    }
+
+    static List<String> scanWords(BufferedImage croppedfourK, List<Template> templates) throws IOException {
         BufferedImage thresholdedImage = ScreenshotPreprocessor.localSquareThresholdForSystemMap(croppedfourK);
         List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(thresholdedImage, false);
         BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(thresholdedImage, 2);

@@ -7,6 +7,7 @@ import boofcv.struct.image.GrayU8;
 import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
+import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.ocr.CharacterFinder;
 import borg.edtrading.ocr.ScreenshotCropper;
 import borg.edtrading.ocr.ScreenshotPreprocessor;
@@ -42,49 +43,62 @@ public class Mats2 {
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
         //testAllImages();
 
-        final String testType = "Body Info";
-        //final String testType = "Body Name";
         //File sourceFile = selectRandomScreenshot();
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-08-31 21-28-47 LP 298-52.png");
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-08-31 21-28-56 LP 298-52.png");
 
+        String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
+        List<Template> infoTemplates = TemplateMatcher.loadTemplates("Body Info");
+        List<Template> nameTemplates = TemplateMatcher.loadTemplates("Body Name");
         BufferedImage originalImage = ImageIO.read(sourceFile);
-        BufferedImage darkened = ScreenshotPreprocessor.darkenSaturatedAreas(originalImage);
-        BufferedImage fourK = ImageUtil.toFourK(darkened);
-        ImageIO.write(fourK, "PNG", new File(Constants.TEMP_DIR, "fourK.png"));
-        BufferedImage croppedImage = "Body Info".equals(testType) ? ScreenshotCropper.cropSystemMapToBodyInfo(fourK) : ScreenshotCropper.cropSystemMapToBodyName(fourK);
-        BufferedImage thresholdedImage = ScreenshotPreprocessor.localSquareThresholdForSystemMap(croppedImage);
-        ImageIO.write(thresholdedImage, "PNG", new File(Constants.TEMP_DIR, "thresholdedImage.png"));
-        List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(thresholdedImage, true);
-        BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(thresholdedImage, 2);
-        ImageIO.write(blurredImage, "PNG", new File(Constants.TEMP_DIR, "blurredImage.png"));
+        BufferedImage darkenedImage = ScreenshotPreprocessor.darkenSaturatedAreas(originalImage);
+        BufferedImage fourKImage = ImageUtil.toFourK(darkenedImage);
+        //ImageIO.write(fourKImage, "PNG", new File(Constants.TEMP_DIR, "fourKImage.png"));
+        BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
+        BufferedImage thresholdedBodyInfoImage = ScreenshotPreprocessor.localSquareThresholdForSystemMap(bodyInfoImage);
+        //ImageIO.write(thresholdedBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "thresholdedBodyInfoImage.png"));
+        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(thresholdedBodyInfoImage, 2);
+        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+        BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
+        BufferedImage thresholdedBodyNameImage = ScreenshotPreprocessor.localSquareThresholdForSystemMap(bodyNameImage);
+        //ImageIO.write(thresholdedBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "thresholdedBodyNameImage.png"));
+        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(thresholdedBodyNameImage, 2);
+        ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
 
-        // TODO Extract from here!
-        File unknownDir = new File(Constants.TEMP_DIR, "unknown");
+        List<String> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, nameTemplates);
+        List<String> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, infoTemplates);
+        ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
+        System.out.println(scannedBodyInfo);
+
+        writeDebugImages("Body Name", false, nameTemplates, thresholdedBodyNameImage, blurredBodyNameImage);
+        writeDebugImages("Body Info", false, infoTemplates, thresholdedBodyInfoImage, blurredBodyInfoImage);
+    }
+
+    private static void writeDebugImages(String debugType, boolean debugImages, List<Template> templates, BufferedImage thresholdedImage, BufferedImage blurredImage) throws IOException {
+        List<Rectangle> bodyInfoCharacterLocations = CharacterFinder.findCharacterLocations(thresholdedImage, debugImages);
+        File unknownDir = new File(Constants.TEMP_DIR, "Unknown " + debugType);
         unknownDir.mkdirs();
         BufferedImage ocrImage = new BufferedImage(blurredImage.getWidth(), blurredImage.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = ocrImage.createGraphics();
         g.drawImage(blurredImage, 0, 0, null);
         g.setColor(Color.GREEN);
-        g.setFont(new Font("Consolas", Font.BOLD, 20));
-        List<Template> templates = TemplateMatcher.loadTemplates(testType);
-        for (Rectangle r : characterLocations) {
+        g.setFont(new Font("Consolas", Font.PLAIN, 18));
+        for (Rectangle r : bodyInfoCharacterLocations) {
             try {
-                //BufferedImage surroundedCharImage = blurredImage.getSubimage(r.x - r.width / 2, r.y - r.height / 2, r.width + r.width, r.height + r.height);
-                BufferedImage surroundedCharImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
-                ImageIO.write(surroundedCharImage, "PNG", new File(unknownDir, String.format("%05d_%05d_%d.png", (r.y / 10) * 10, r.x, r.hashCode())));
-                //surroundedCharImage = ImageUtil.scaleTo(surroundedCharImage, surroundedCharImage.getWidth() / 2, surroundedCharImage.getHeight() / 2);
-                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(surroundedCharImage, templates, r.x, r.y);
+                BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
+                ImageIO.write(charImage, "PNG", new File(unknownDir, String.format("%05d_%05d_%d.png", (r.y / 10) * 10, r.x, r.hashCode())));
+                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y);
                 if (bestMatch != null) {
                     g.drawString(bestMatch.getTemplate().getText(), r.x, r.y);
                     System.out.print(bestMatch.getTemplate().getText());
                 } else {
-                    System.out.print("☒");
+                    System.out.print("▪");
                 }
             } catch (RasterFormatException e) {
                 // Too close to border
             }
         }
-        ImageIO.write(ocrImage, "PNG", new File(Constants.TEMP_DIR, "OCR.png"));
+        System.out.println();
+        ImageIO.write(ocrImage, "PNG", new File(Constants.TEMP_DIR, debugType + " OCR.png"));
     }
 
     private static File selectRandomScreenshot() {

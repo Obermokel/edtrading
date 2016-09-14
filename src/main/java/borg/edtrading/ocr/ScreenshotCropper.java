@@ -50,10 +50,10 @@ public abstract class ScreenshotCropper {
     public static BufferedImage cropSystemMapToBodyName(BufferedImage systemMapScreenshot) {
         BufferedImage defaultAspectRatio = ImageUtil.to16by9(systemMapScreenshot);
 
-        final float xPercent = 2050f / 3840f; // x=2050 on 4k
-        final float yPercent = 600f / 2160f; // y=600 on 4k
-        final float wPercent = 800f / 3840f; // width=800 on 4k
-        final float hPercent = 240f / 2160f; // height=240 on 4k
+        final float xPercent = 2110f / 3840f; // x=2110 on 4k
+        final float yPercent = 635f / 2160f; // y=635 on 4k
+        final float wPercent = 695f / 3840f; // width=695 on 4k
+        final float hPercent = 185f / 2160f; // height=185 on 4k
 
         int x = Math.round(xPercent * defaultAspectRatio.getWidth());
         int y = Math.round(yPercent * defaultAspectRatio.getHeight());
