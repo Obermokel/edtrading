@@ -116,6 +116,7 @@ public class ScannedBodyInfo {
         String bodyName = null;
         BodyInfo bodyType = null;
         BigDecimal distanceLs = null;
+        LinkedList<String> originalScannedNameWords = new LinkedList<>(bodyNameWords);
         LinkedList<String> lowercasedScannedNameWords = new LinkedList<>();
         for (String w : bodyNameWords) {
             lowercasedScannedNameWords.add(w.toLowerCase());
@@ -131,7 +132,7 @@ public class ScannedBodyInfo {
             for (int i = 0; i < indexArrivalPoint; i++) {
                 String word = lowercasedScannedNameWords.set(i, null);
                 if (!looksLikeDistanceLs(word)) {
-                    sb.append(word).append(" ");
+                    sb.append(bodyNameWords.get(i)).append(" ");
                 } else {
                     distanceBeforeArrival = true;
                     try {

@@ -42,13 +42,17 @@ public class Mats2 {
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
         //testAllImages();
 
-        File sourceFile = selectRandomScreenshot();
+        final String testType = "Body Info";
+        //final String testType = "Body Name";
+        //File sourceFile = selectRandomScreenshot();
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-08-31 21-28-47 LP 298-52.png");
+
         BufferedImage originalImage = ImageIO.read(sourceFile);
         BufferedImage darkened = ScreenshotPreprocessor.darkenSaturatedAreas(originalImage);
         BufferedImage fourK = ImageUtil.toFourK(darkened);
         ImageIO.write(fourK, "PNG", new File(Constants.TEMP_DIR, "fourK.png"));
-        BufferedImage planetMaterialsImage = ScreenshotCropper.cropSystemMapToBodyName(fourK);
-        BufferedImage thresholdedImage = ScreenshotPreprocessor.localSquareThresholdForSystemMap(planetMaterialsImage);
+        BufferedImage croppedImage = "Body Info".equals(testType) ? ScreenshotCropper.cropSystemMapToBodyInfo(fourK) : ScreenshotCropper.cropSystemMapToBodyName(fourK);
+        BufferedImage thresholdedImage = ScreenshotPreprocessor.localSquareThresholdForSystemMap(croppedImage);
         ImageIO.write(thresholdedImage, "PNG", new File(Constants.TEMP_DIR, "thresholdedImage.png"));
         List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(thresholdedImage, true);
         BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(thresholdedImage, 2);
@@ -62,7 +66,7 @@ public class Mats2 {
         g.drawImage(blurredImage, 0, 0, null);
         g.setColor(Color.GREEN);
         g.setFont(new Font("Consolas", Font.BOLD, 20));
-        List<Template> templates = TemplateMatcher.loadTemplates("Body Name");
+        List<Template> templates = TemplateMatcher.loadTemplates(testType);
         for (Rectangle r : characterLocations) {
             try {
                 //BufferedImage surroundedCharImage = blurredImage.getSubimage(r.x - r.width / 2, r.y - r.height / 2, r.width + r.width, r.height + r.height);

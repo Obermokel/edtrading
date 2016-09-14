@@ -6,6 +6,7 @@ import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.ScannedBodyInfo;
+import borg.edtrading.eddb.BodyUpdater;
 import borg.edtrading.ocr.CharacterFinder;
 import borg.edtrading.ocr.ScreenshotCropper;
 import borg.edtrading.ocr.ScreenshotPreprocessor;
@@ -44,68 +45,84 @@ public class BodyInfoApp {
 
     static final Logger logger = LogManager.getLogger(BodyInfoApp.class);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
+        final boolean doEddbUpdate = true;
+
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
-        List<Template> bodyInfoTemplates = TemplateMatcher.loadTemplates("Body Info");
-        List<Template> bodyNameTemplates = TemplateMatcher.loadTemplates("Body Name");
+        BodyUpdater bodyUpdater = doEddbUpdate ? new BodyUpdater("Mokel DeLorean", "jExx8sT") : null;
+        try {
+            List<Template> bodyInfoTemplates = TemplateMatcher.loadTemplates("Body Info");
+            List<Template> bodyNameTemplates = TemplateMatcher.loadTemplates("Body Name");
 
-        List<ScannedSurfaceMat> scannedSurfaceMats = new ArrayList<>();
+            List<ScannedSurfaceMat> scannedSurfaceMats = new ArrayList<>();
 
-        List<File> screenshotFiles = getScreenshotsFromAllDir();
-        for (File screenshotFile : screenshotFiles) {
-            //logger.debug(screenshotFile.getName());
+            List<File> screenshotFiles = getScreenshotsFromAllDir();
+            for (File screenshotFile : screenshotFiles) {
+                //logger.debug(screenshotFile.getName());
 
-            // Extract system name from filename
-            String systemName = null;
-            if (screenshotFile.getName().matches("\\d{4}\\-\\d{2}\\-\\d{2} \\d{2}\\-\\d{2}\\-\\d{2} .+\\.png")) {
-                systemName = screenshotFile.getName().substring("0000-00-00 00-00-00 ".length()).replace(".png", "");
+                // Extract system name from filename
+                String systemName = null;
+                if (screenshotFile.getName().matches("\\d{4}\\-\\d{2}\\-\\d{2} \\d{2}\\-\\d{2}\\-\\d{2} .+\\.png")) {
+                    systemName = screenshotFile.getName().substring("0000-00-00 00-00-00 ".length()).replace(".png", "");
+                }
+
+                // Darken and scale to 4k
+                BufferedImage originalImage = ImageIO.read(screenshotFile);
+                BufferedImage darkened = ScreenshotPreprocessor.darkenSaturatedAreas(originalImage);
+                BufferedImage fourK = ImageUtil.toFourK(darkened);
+
+                // Extract planet name, type and distance from arrival
+                BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourK);
+                List<String> bodyNameWords = scanWords(bodyNameImage, bodyNameTemplates);
+
+                // Extract body info
+                BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourK);
+                List<String> bodyInfoWords = scanWords(bodyInfoImage, bodyInfoTemplates);
+
+                // Parse!
+                ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(screenshotFile.getName(), systemName, bodyNameWords, bodyInfoWords);
+
+                // Update!
+                if (doEddbUpdate) {
+                    bodyUpdater.updateBody(scannedBodyInfo);
+                } else {
+                    System.out.println(scannedBodyInfo);
+                }
             }
 
-            // Darken and scale to 4k
-            BufferedImage originalImage = ImageIO.read(screenshotFile);
-            BufferedImage darkened = ScreenshotPreprocessor.darkenSaturatedAreas(originalImage);
-            BufferedImage fourK = ImageUtil.toFourK(darkened);
-
-            // Extract planet name, type and distance from arrival
-            BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourK);
-            List<String> bodyNameWords = scanWords(bodyNameImage, bodyNameTemplates);
-
-            // Extract body info
-            BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourK);
-            List<String> bodyInfoWords = scanWords(bodyInfoImage, bodyInfoTemplates);
-
-            // Parse!
-            ScannedBodyInfo.fromScannedAndSortedWords(screenshotFile.getName(), systemName, bodyNameWords, bodyInfoWords);
-        }
-
-        // Identify highest occurences
-        Map<Item, ScannedSurfaceMat> highestOccurences = new TreeMap<>();
-        Map<Item, List<BigDecimal>> allOccurences = new TreeMap<>();
-        int nPlanets = screenshotFiles.size(); // Each screenshot represents a planet
-        for (ScannedSurfaceMat current : scannedSurfaceMats) {
-            ScannedSurfaceMat bestSoFar = highestOccurences.get(current.getElement());
-            if (bestSoFar == null || current.isHigher(bestSoFar)) {
-                highestOccurences.put(current.getElement(), current);
+            // Identify highest occurences
+            Map<Item, ScannedSurfaceMat> highestOccurences = new TreeMap<>();
+            Map<Item, List<BigDecimal>> allOccurences = new TreeMap<>();
+            int nPlanets = screenshotFiles.size(); // Each screenshot represents a planet
+            for (ScannedSurfaceMat current : scannedSurfaceMats) {
+                ScannedSurfaceMat bestSoFar = highestOccurences.get(current.getElement());
+                if (bestSoFar == null || current.isHigher(bestSoFar)) {
+                    highestOccurences.put(current.getElement(), current);
+                }
+                List<BigDecimal> all = allOccurences.get(current.getElement());
+                if (all == null) {
+                    all = new ArrayList<>();
+                    allOccurences.put(current.getElement(), all);
+                }
+                all.add(current.getPercentage());
             }
-            List<BigDecimal> all = allOccurences.get(current.getElement());
-            if (all == null) {
-                all = new ArrayList<>();
-                allOccurences.put(current.getElement(), all);
-            }
-            all.add(current.getPercentage());
-        }
-        System.out.println("\n>>>> >>>> >>>> >>>> RESULTS FROM " + nPlanets + " PLANETS <<<< <<<< <<<< <<<<\n");
-        System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "ELEMENT", "HIGHEST", "MEDIAN", "OCCURENCE"));
-        System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "---------------", "----------", "----------", "----------"));
-        for (Item element : highestOccurences.keySet()) {
-            String name = highestOccurences.get(element).getPlanetName();
-            BigDecimal highest = highestOccurences.get(element).getPercentage();
-            List<BigDecimal> all = allOccurences.get(element);
-            Collections.sort(all);
-            BigDecimal median = all.get(all.size() / 2);
-            BigDecimal frequency = new BigDecimal(all.size()).multiply(new BigDecimal(100)).divide(new BigDecimal(nPlanets), 1, BigDecimal.ROUND_HALF_UP);
+            System.out.println("\n>>>> >>>> >>>> >>>> RESULTS FROM " + nPlanets + " PLANETS <<<< <<<< <<<< <<<<\n");
+            System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "ELEMENT", "HIGHEST", "MEDIAN", "OCCURENCE"));
+            System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "---------------", "----------", "----------", "----------"));
+            for (Item element : highestOccurences.keySet()) {
+                String name = highestOccurences.get(element).getPlanetName();
+                BigDecimal highest = highestOccurences.get(element).getPercentage();
+                List<BigDecimal> all = allOccurences.get(element);
+                Collections.sort(all);
+                BigDecimal median = all.get(all.size() / 2);
+                BigDecimal frequency = new BigDecimal(all.size()).multiply(new BigDecimal(100)).divide(new BigDecimal(nPlanets), 1, BigDecimal.ROUND_HALF_UP);
 
-            System.out.println(String.format(Locale.US, "%-15s %9.1f%% %9.1f%% %9.1f%%    %s", element.getName(), highest, median, frequency, name));
+                System.out.println(String.format(Locale.US, "%-15s %9.1f%% %9.1f%% %9.1f%%    %s", element.getName(), highest, median, frequency, name));
+            }
+        } finally {
+            if (bodyUpdater != null) {
+                bodyUpdater.close();
+            }
         }
     }
 

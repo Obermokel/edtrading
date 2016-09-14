@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
@@ -85,6 +86,20 @@ public abstract class CharacterFinder {
             combined = markBoxes(combined, characterLocations, null, 1);
             ImageIO.write(combined, "PNG", new File(Constants.TEMP_DIR, "CharacterFinder 99 Combined.png"));
         }
+
+        // Sort and return
+        Collections.sort(characterLocations, new Comparator<Rectangle>() {
+            @Override
+            public int compare(Rectangle r1, Rectangle r2) {
+                int y = new Integer(r1.y).compareTo(new Integer(r2.y));
+                if (y != 0) {
+                    return y;
+                } else {
+                    int x = new Integer(r1.x).compareTo(new Integer(r2.x));
+                    return x;
+                }
+            }
+        });
         return characterLocations;
     }
 
