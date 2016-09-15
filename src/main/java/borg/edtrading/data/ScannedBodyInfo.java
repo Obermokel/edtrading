@@ -678,6 +678,7 @@ public class ScannedBodyInfo {
                 }
             }
         }
+        // TODO Check all single percentages for being over 100%, for example 32.6% scanned as 32,6% parsed as 326%
         return result;
     }
 

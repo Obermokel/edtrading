@@ -1,9 +1,5 @@
 package borg.edtrading;
 
-import boofcv.gui.binary.VisualizeBinaryData;
-import boofcv.io.image.ConvertBufferedImage;
-import boofcv.struct.image.GrayF32;
-import boofcv.struct.image.GrayU8;
 import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
@@ -43,52 +39,49 @@ public class Mats2 {
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
         //testAllImages();
 
-        //File sourceFile = selectRandomScreenshot();
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-08-31 21-28-56 LP 298-52.png");
+        File sourceFile = selectRandomScreenshot();
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-08-31 21-47-01 LHS 1197.png");
 
         String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
         List<Template> infoTemplates = TemplateMatcher.loadTemplates("Body Info");
         List<Template> nameTemplates = TemplateMatcher.loadTemplates("Body Name");
         BufferedImage originalImage = ImageIO.read(sourceFile);
-        BufferedImage darkenedImage = ScreenshotPreprocessor.darkenSaturatedAreas(originalImage);
-        BufferedImage fourKImage = ImageUtil.toFourK(darkenedImage);
-        //ImageIO.write(fourKImage, "PNG", new File(Constants.TEMP_DIR, "fourKImage.png"));
-        BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
-        BufferedImage thresholdedBodyInfoImage = ScreenshotPreprocessor.localSquareThresholdForSystemMap(bodyInfoImage);
-        //ImageIO.write(thresholdedBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "thresholdedBodyInfoImage.png"));
-        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(thresholdedBodyInfoImage, 2);
-        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+        BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
         BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
-        BufferedImage thresholdedBodyNameImage = ScreenshotPreprocessor.localSquareThresholdForSystemMap(bodyNameImage);
-        //ImageIO.write(thresholdedBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "thresholdedBodyNameImage.png"));
-        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(thresholdedBodyNameImage, 2);
+        bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
+        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
         ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
+        BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
+        bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
+        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
+        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
         List<String> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, nameTemplates);
         List<String> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, infoTemplates);
         ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
         System.out.println(scannedBodyInfo);
 
-        writeDebugImages("Body Name", false, nameTemplates, thresholdedBodyNameImage, blurredBodyNameImage);
-        writeDebugImages("Body Info", false, infoTemplates, thresholdedBodyInfoImage, blurredBodyInfoImage);
+        writeDebugImages("Body Name", false, nameTemplates, bodyNameImage, blurredBodyNameImage);
+        writeDebugImages("Body Info", false, infoTemplates, bodyInfoImage, blurredBodyInfoImage);
     }
 
-    private static void writeDebugImages(String debugType, boolean debugImages, List<Template> templates, BufferedImage thresholdedImage, BufferedImage blurredImage) throws IOException {
-        List<Rectangle> bodyInfoCharacterLocations = CharacterFinder.findCharacterLocations(thresholdedImage, debugImages);
+    private static void writeDebugImages(String debugType, boolean writeCharFinderDebugImages, List<Template> templates, BufferedImage sharpImage, BufferedImage blurredImage) throws IOException {
+        List<Rectangle> bodyInfoCharacterLocations = CharacterFinder.findCharacterLocations(sharpImage, writeCharFinderDebugImages);
         File unknownDir = new File(Constants.TEMP_DIR, "Unknown " + debugType);
         unknownDir.mkdirs();
         BufferedImage ocrImage = new BufferedImage(blurredImage.getWidth(), blurredImage.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = ocrImage.createGraphics();
         g.drawImage(blurredImage, 0, 0, null);
-        g.setColor(Color.GREEN);
-        g.setFont(new Font("Consolas", Font.PLAIN, 18));
+        g.setColor(new Color(180, 0, 0));
+        g.setFont(new Font("Consolas", Font.PLAIN, 22));
+        //g.setFont(new Font("Arial", Font.PLAIN, 22));
         for (Rectangle r : bodyInfoCharacterLocations) {
             try {
                 BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
                 ImageIO.write(charImage, "PNG", new File(unknownDir, String.format("%05d_%05d_%d.png", (r.y / 10) * 10, r.x, r.hashCode())));
-                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y);
+                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, 1234);
                 if (bestMatch != null) {
-                    g.drawString(bestMatch.getTemplate().getText(), r.x, r.y);
+                    g.drawString(bestMatch.getTemplate().getText(), r.x, r.y + 18);
                     System.out.print(bestMatch.getTemplate().getText());
                 } else {
                     System.out.print("▪");
@@ -114,6 +107,7 @@ public class Mats2 {
     }
 
     private static void testAllImages() throws IOException {
+        List<Template> templates = TemplateMatcher.loadTemplates("Body Name");
         File dir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
         File[] files = dir.listFiles(new FileFilter() {
             @Override
@@ -125,31 +119,14 @@ public class Mats2 {
         for (File file : files) {
             System.out.println(++i + " of " + files.length);
             BufferedImage originalImage = ImageIO.read(file);
-            BufferedImage darkened = ScreenshotPreprocessor.darkenSaturatedAreas(originalImage);
-            BufferedImage fourK = ImageUtil.toFourK(darkened);
-            BufferedImage planetMaterialsImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourK);
-            GrayF32 grayImage = ConvertBufferedImage.convertFromSingle(planetMaterialsImage, null, GrayF32.class);
-            //            for (int radius = 10; radius <= 160; radius += 10) {
-            //                for (double scale = 0.5; scale <= 0.5; scale += 0.1) {
-            double scale = 0.5;
-            //2016-09-01 22-47-22 Hruntia
-            GrayU8 t20 = ScreenshotPreprocessor.localSquareThreshold(grayImage, 20, scale, false);
-            GrayU8 t80 = ScreenshotPreprocessor.localSquareThreshold(grayImage, 540, scale, false);
-            GrayU8 t160 = ScreenshotPreprocessor.localSquareThreshold(grayImage, 160, scale, false);
-            GrayU8 tAll = t20.createSameShape();
-            for (int y = 0; y < t20.height; y++) {
-                for (int x = 0; x < t20.width; x++) {
-                    if (t20.unsafe_get(x, y) > 0 && t80.unsafe_get(x, y) > 0 && t160.unsafe_get(x, y) > 0) {
-                        tAll.unsafe_set(x, y, t20.unsafe_get(x, y));
-                    } else {
-                        tAll.unsafe_set(x, y, 0);
-                    }
-                }
-            }
-            BufferedImage thresholdedImage = VisualizeBinaryData.renderBinary(tAll, false, null);
-            ImageIO.write(thresholdedImage, "PNG", new File(Constants.TEMP_DIR, file.getName().replace(".png", "_rAll_s" + scale + ".png")));
-            //                }
-            //            }
+            BufferedImage whiteText = ScreenshotPreprocessor.highlightWhiteText(originalImage);
+            BufferedImage fourK = ImageUtil.toFourK(whiteText);
+            //ImageIO.write(fourK, "PNG", new File(Constants.TEMP_DIR, file.getName().replace(".png", "_fourK.png")));
+            BufferedImage bodyName = ScreenshotCropper.cropSystemMapToBodyName(fourK);
+            ImageIO.write(bodyName, "PNG", new File(Constants.TEMP_DIR, file.getName().replace(".png", "_bodyName.png")));
+            BufferedImage threshold = ScreenshotPreprocessor.cannyEdge(bodyName);
+            ImageIO.write(threshold, "PNG", new File(Constants.TEMP_DIR, file.getName().replace(".png", "_threshold.png")));
+            //writeDebugImages("Body Name", true, templates, bodyName, bodyName);
         }
         throw new RuntimeException();
     }

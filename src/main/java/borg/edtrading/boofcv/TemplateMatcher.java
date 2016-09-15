@@ -55,6 +55,8 @@ public class TemplateMatcher {
                         text = ".";
                     } else if ("_komma".equals(subDir.getName())) {
                         text = ",";
+                    } else if ("_apostroph".equals(subDir.getName())) {
+                        text = "'";
                     } else if ("_prozent".equals(subDir.getName())) {
                         text = "%";
                     } else if ("_strich".equals(subDir.getName())) {
@@ -121,13 +123,12 @@ public class TemplateMatcher {
         }
     }
 
-    public static TemplateMatch findBestTemplateMatch(BufferedImage image, List<Template> templates, int xWithinImage, int yWithinImage) {
+    public static TemplateMatch findBestTemplateMatch(BufferedImage image, List<Template> templates, int xWithinImage, int yWithinImage, final double maxErrorPerPixel) {
         try {
             GrayF32 grayImage = ConvertBufferedImage.convertFrom(image, (GrayF32) null);
             float imageAR = (float) image.getWidth() / (float) image.getHeight();
 
             final double pixels = image.getWidth() * image.getHeight();
-            final double maxErrorPerPixel = 1234;
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {

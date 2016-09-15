@@ -66,15 +66,16 @@ public class BodyInfoApp {
 
                 // Darken and scale to 4k
                 BufferedImage originalImage = ImageIO.read(screenshotFile);
-                BufferedImage darkened = ScreenshotPreprocessor.darkenSaturatedAreas(originalImage);
-                BufferedImage fourK = ImageUtil.toFourK(darkened);
+                BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
 
                 // Extract planet name, type and distance from arrival
-                BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourK);
+                BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
+                bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
                 List<String> bodyNameWords = scanWords(bodyNameImage, bodyNameTemplates);
 
                 // Extract body info
-                BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourK);
+                BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
+                bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
                 List<String> bodyInfoWords = scanWords(bodyInfoImage, bodyInfoTemplates);
 
                 // Parse!
@@ -135,15 +136,14 @@ public class BodyInfoApp {
     }
 
     static List<String> scanWords(BufferedImage croppedfourK, List<Template> templates) throws IOException {
-        BufferedImage thresholdedImage = ScreenshotPreprocessor.localSquareThresholdForSystemMap(croppedfourK);
-        List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(thresholdedImage, false);
-        BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(thresholdedImage, 2);
+        List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(croppedfourK, false);
+        BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(croppedfourK, 2);
 
         List<TemplateMatch> matches = new ArrayList<>(characterLocations.size());
         for (Rectangle r : characterLocations) {
             try {
                 BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
-                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y);
+                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, 1234);
                 if (bestMatch != null) {
                     matches.add(bestMatch);
                 }
