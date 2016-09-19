@@ -39,30 +39,64 @@ public class Mats2 {
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
         //testAllImages();
 
+        List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
+
         File sourceFile = selectRandomScreenshot();
-        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-08-31 21-47-01 LHS 1197.png");
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-09-11 22-27-48 Ch'i Lingo.png");
+        //        for (File sourceFile : selectAllScreenshots()) {
 
         String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
-        List<Template> infoTemplates = TemplateMatcher.loadTemplates("Body Info");
-        List<Template> nameTemplates = TemplateMatcher.loadTemplates("Body Name");
         BufferedImage originalImage = ImageIO.read(sourceFile);
         BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
         BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
         bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
         BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
-        ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
+        //ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
         BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
         bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
         BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
-        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+        //ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
-        List<String> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, nameTemplates);
-        List<String> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, infoTemplates);
+        //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
+        //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
+
+        List<String> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
+        List<String> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
         ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
         System.out.println(scannedBodyInfo);
 
-        writeDebugImages("Body Name", false, nameTemplates, bodyNameImage, blurredBodyNameImage);
-        writeDebugImages("Body Info", false, infoTemplates, bodyInfoImage, blurredBodyInfoImage);
+        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
+        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
+        //        }
+    }
+
+    private static void groupSimilarChars(BufferedImage sharpImage, BufferedImage blurredImage) throws IOException {
+        List<Rectangle> bodyInfoCharacterLocations = CharacterFinder.findCharacterLocations(sharpImage, false);
+        File templatesDir = new File(Constants.TEMPLATES_DIR, "Similar Unknown");
+        templatesDir.mkdirs();
+        List<Template> templates = TemplateMatcher.loadTemplates("Similar Unknown");
+        //FileUtils.cleanDirectory(templatesDir);
+        StringBuilder chars = new StringBuilder();
+        for (Rectangle r : bodyInfoCharacterLocations) {
+            try {
+                BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
+                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, 1000);
+                if (bestMatch != null) {
+                    if (!bestMatch.getTemplate().getText().startsWith("_")) {
+                        chars.append(bestMatch.getTemplate().getText());
+                    }
+                } else {
+                    // Create a new reference dir+image
+                    File referenceDir = new File(templatesDir, "_" + System.currentTimeMillis());
+                    referenceDir.mkdirs();
+                    ImageIO.write(charImage, "PNG", new File(referenceDir, "REFERENCE_" + System.currentTimeMillis() + ".png"));
+                    templates = TemplateMatcher.loadTemplates("Similar Unknown");
+                }
+            } catch (RasterFormatException e) {
+                // Too close to border
+            }
+        }
+        logger.info("Grouped " + bodyInfoCharacterLocations.size() + " chars into " + templatesDir.list().length + " folders");
     }
 
     private static void writeDebugImages(String debugType, boolean writeCharFinderDebugImages, List<Template> templates, BufferedImage sharpImage, BufferedImage blurredImage) throws IOException {
@@ -104,6 +138,16 @@ public class Mats2 {
         });
         Random rand = new Random();
         return files[rand.nextInt(files.length)];
+    }
+
+    private static File[] selectAllScreenshots() {
+        File dir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
+        return dir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                return f.getName().endsWith(".png");
+            }
+        });
     }
 
     private static void testAllImages() throws IOException {
