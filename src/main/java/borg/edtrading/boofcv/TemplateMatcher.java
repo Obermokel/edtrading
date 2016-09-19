@@ -57,6 +57,8 @@ public class TemplateMatcher {
                         text = ",";
                     } else if ("_apostroph".equals(subDir.getName())) {
                         text = "'";
+                    } else if ("_mikro".equals(subDir.getName())) {
+                        text = "µ";
                     } else if ("_prozent".equals(subDir.getName())) {
                         text = "%";
                     } else if ("_strich".equals(subDir.getName())) {
