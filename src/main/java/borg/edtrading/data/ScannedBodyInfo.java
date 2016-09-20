@@ -366,40 +366,109 @@ public class ScannedBodyInfo {
             }
         }
         if (indexComposition < lowercasedScannedWords.size()) {
-            scannedBodyInfo.setComposition(new LinkedHashMap<>());
-            BigDecimal sumPercent = BigDecimal.ZERO;
+            // Concatenate the whole remaining text
+            // Remember the real start and end index for later auto-learning.
+            String wholeRemainingText = "";
             int z = sortedIndexes.indexOf(indexComposition) + 1;
             int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : lowercasedScannedWords.size();
+            Integer realStartIndexIncl = null;
+            Integer realEndEndexExcl = null;
             for (int i = indexComposition; i < nextIndex; i++) {
                 if (lowercasedScannedWords.get(i) != null) {
-                    String percentText = lowercasedScannedWords.set(i, null);
-                    String materialText = null;
-                    if (percentText.matches(".{3,4}%.{3,99}")) {
-                        materialText = percentText.substring(percentText.indexOf("%") + 1);
-                        percentText = percentText.replace(materialText, "");
+                    if (wholeRemainingText.length() > 0) {
+                        wholeRemainingText += " ";
                     }
-                    if (materialText == null) {
-                        materialText = lowercasedScannedWords.set(++i, null);
+                    wholeRemainingText += lowercasedScannedWords.set(i, null);
+                    if (realStartIndexIncl == null) {
+                        realStartIndexIncl = i;
                     }
-                    if (materialText != null) {
-                        BodyInfo material = BodyInfo.findBestMatching(materialText.replace("0", "o").replace("8", "b"));
-                        if (material == null) {
-                            logger.warn(screenshotFilename + ": Unknown body composition '" + materialText + "'");
-                        } else {
-                            try {
-                                BigDecimal percent = new BigDecimal(percentText.replace("o", "0").replace("b", "8").replace("%", "").replace(",", ""));
-                                scannedBodyInfo.getComposition().put(material, percent);
-                                sumPercent = sumPercent.add(percent);
-                            } catch (NumberFormatException e) {
-                                logger.warn(screenshotFilename + ": Cannot parse '" + percentText + "' to percentage for " + material);
-                                scannedBodyInfo.getComposition().put(material, null);
-                            }
-                        }
+                    realEndEndexExcl = i + 1;
+                }
+            }
+            // Now we should have s.th. like this:
+            // 70.0% ice 20.o% rock 10.0% meta1
+            // Split this at every whitespace
+            String[] percentagesAndNames = wholeRemainingText.split("\\s");
+            // Now we should have a list like this:
+            // [70.0%, ice, ,20.o%, ..., meta1]
+            // What we can do now is to fix wrongly detected chars as in
+            // 20.o%
+            // or
+            // meta1
+            boolean unfixableError = false;
+            List<String> fixedPercentagesAndNames = new ArrayList<>(percentagesAndNames.length);
+            for (int i = 0; i < percentagesAndNames.length; i++) {
+                if (i % 2 == 1) {
+                    // Should be a name
+                    String fixedName = percentagesAndNames[i].replace("0", "o").replace("5", "s").replace("8", "b");
+                    BodyInfo mat = BodyInfo.findBestMatching(fixedName);
+                    if (mat != null) {
+                        fixedPercentagesAndNames.add(mat.getName());
+                    } else {
+                        logger.warn(screenshotFilename + ": Unfixable solid: " + percentagesAndNames[i]);
+                        unfixableError = true;
+                    }
+                } else {
+                    // Should be a percentage
+                    String fixedPercentage = percentagesAndNames[i].replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8");
+                    if (fixedPercentage.indexOf(".") == fixedPercentage.length() - 3) {
+                        fixedPercentage = fixedPercentage.substring(0, fixedPercentage.length() - 1) + "%";
+                    }
+                    if (fixedPercentage.matches("\\d{1,3}\\.\\d%")) {
+                        fixedPercentagesAndNames.add(fixedPercentage);
+                    } else {
+                        logger.warn(screenshotFilename + ": Unfixable percentage: " + percentagesAndNames[i]);
+                        unfixableError = true;
                     }
                 }
             }
-            if (sumPercent.doubleValue() < 99.9) {
-                logger.warn(screenshotFilename + ": Only " + sumPercent + "% body composition total sum");
+            if (!unfixableError) {
+                // Now we now what the whole text should have been. We can build it together from the fixed parts.
+                String fixedWholeRemainingText = "";
+                for (int i = 0; i < fixedPercentagesAndNames.size(); i++) {
+                    if (fixedWholeRemainingText.length() > 0) {
+                        fixedWholeRemainingText += " ";
+                    }
+                    fixedWholeRemainingText += fixedPercentagesAndNames.get(i);
+                }
+                // The fixed text can later be used for auto-learning.
+                // First though parse all mats and do a plausi check. The sum of percentages should be 100% +/- 0.1%.
+                // If not we might haved missed something completely. This can happen if the text is too close to the border.
+                LinkedHashMap<BodyInfo, BigDecimal> composition = new LinkedHashMap<>();
+                BigDecimal totalPercentage = BigDecimal.ZERO;
+                for (int i = 0; i < fixedPercentagesAndNames.size(); i += 2) {
+                    BigDecimal percentage = new BigDecimal(fixedPercentagesAndNames.get(i).replace("%", ""));
+                    BodyInfo mat = BodyInfo.findBestMatching(fixedPercentagesAndNames.get(i + 1));
+                    composition.put(mat, percentage);
+                    totalPercentage = totalPercentage.add(percentage);
+                }
+                if (Math.abs(100.0 - totalPercentage.doubleValue()) > 0.1) {
+                    logger.warn(screenshotFilename + ": Sum of body composition is " + totalPercentage + ": " + fixedWholeRemainingText);
+                } else {
+                    scannedBodyInfo.setComposition(composition);
+                    // >>>> BEGIN AUTO LEARNING >>>>
+                    if (fixedWholeRemainingText.length() == wholeRemainingText.length()) {
+                        String autoLearnText = fixedWholeRemainingText.replaceAll("\\s", "");
+                        for (int i = realStartIndexIncl; i < realEndEndexExcl; i++) {
+                            MatchGroup mg = bodyInfoWords.get(i);
+                            for (TemplateMatch m : mg.getGroupMatches()) {
+                                String shouldHaveBeen = autoLearnText.substring(0, m.getTemplate().getText().length());
+                                autoLearnText = autoLearnText.substring(m.getTemplate().getText().length());
+                                if (!m.getTemplate().getText().equals(shouldHaveBeen)) {
+                                    File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
+                                    autoLearnFolder.mkdirs();
+                                    try {
+                                        ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
+                                        logger.info("Learned new '" + shouldHaveBeen + "'");
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // <<<< END AUTO LEARNING <<<<
+                }
             }
         }
         if (indexOrbitalPeriod < lowercasedScannedWords.size()) {
