@@ -45,7 +45,7 @@ public class Mats2 {
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
 
         //File sourceFile = selectRandomScreenshot();
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-08-31 21-28-56 LP 298-52.png");
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-09-16 13-14-26 Kandama.png");
         //for (File sourceFile : selectAllScreenshots()) {
         logger.info("Testing " + sourceFile.getName());
         String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
@@ -71,7 +71,7 @@ public class Mats2 {
         System.out.println(scannedBodyInfo);
 
         writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
-        writeDebugImages("Body Info", true, templates, bodyInfoImage, blurredBodyInfoImage);
+        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
 
         //templates = copyLearnedChars();
         //}

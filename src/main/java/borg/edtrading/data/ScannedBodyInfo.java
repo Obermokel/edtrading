@@ -402,7 +402,7 @@ public class ScannedBodyInfo {
                     }
                 } else {
                     // Should be a percentage
-                    String fixedPercentage = percentagesAndNames[i].replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8");
+                    String fixedPercentage = percentagesAndNames[i].replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8").replace(",", ".");
                     if (fixedPercentage.indexOf(".") == fixedPercentage.length() - 3) {
                         fixedPercentage = fixedPercentage.substring(0, fixedPercentage.length() - 1) + "%";
                     }
@@ -594,7 +594,7 @@ public class ScannedBodyInfo {
                         }
                     } else {
                         // Should be a percentage
-                        String fixedPercentage = matsAndPercentagesSeparated.get(i).replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8");
+                        String fixedPercentage = matsAndPercentagesSeparated.get(i).replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8").replace(",", ".");
                         if (fixedPercentage.indexOf(".") == fixedPercentage.length() - 3) {
                             fixedPercentage = fixedPercentage.substring(0, fixedPercentage.length() - 1) + "%";
                         }
@@ -618,7 +618,7 @@ public class ScannedBodyInfo {
                         }
                     }
                     // The fixed text can later be used for auto-learning.
-                    // First though parse all mats and do a plausi check. The sum of percentages should be 100% +/- 1%.
+                    // First though parse all mats and do a plausi check. The sum of percentages should be 100% +/- 0.1%.
                     // If not we might haved missed something completely. This can happen if the text is too close to the border.
                     LinkedHashMap<Item, BigDecimal> planetMaterials = new LinkedHashMap<>();
                     BigDecimal totalPercentage = BigDecimal.ZERO;
@@ -628,7 +628,7 @@ public class ScannedBodyInfo {
                         planetMaterials.put(mat, percentage);
                         totalPercentage = totalPercentage.add(percentage);
                     }
-                    if (Math.abs(100.0 - totalPercentage.doubleValue()) > 1.0) {
+                    if (Math.abs(100.0 - totalPercentage.doubleValue()) > 0.1) {
                         logger.warn(screenshotFilename + ": Sum of planet materials is " + totalPercentage + ": " + fixedWholeRemainingText);
                     } else {
                         scannedBodyInfo.setPlanetMaterials(planetMaterials);
