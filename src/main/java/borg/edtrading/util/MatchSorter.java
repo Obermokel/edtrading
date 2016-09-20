@@ -100,10 +100,26 @@ public class MatchSorter {
         }
 
         private boolean areMatchesAdjacent(TemplateMatch m1, TemplateMatch m2) {
-            final int h1 = m1.getTemplate().getImage().getHeight();
-            final int h2 = m2.getTemplate().getImage().getHeight();
+            final int h1 = m1.getTemplate().getImage().height;
+            final int h2 = m2.getTemplate().getImage().height;
             final int y1 = m1.getMatch().y;
             final int y2 = m2.getMatch().y;
+            int x1 = m1.getMatch().x;
+            int x2 = m2.getMatch().x;
+            int w1 = m1.getTemplate().getImage().width;
+            int w2 = m2.getTemplate().getImage().width;
+            if ("1".equals(m1.getTemplate().getText())) {
+                int doubleWidth = w1 * 2;
+                int twoThirdsLeft = Math.round(x1 - w1 * 0.667f);
+                x1 = twoThirdsLeft;
+                w1 = doubleWidth;
+            }
+            if ("1".equals(m2.getTemplate().getText())) {
+                int doubleWidth = w2 * 2;
+                int twoThirdsLeft = Math.round(x2 - w2 * 0.667f);
+                x2 = twoThirdsLeft;
+                w2 = doubleWidth;
+            }
 
             // Check they are at the same line (y-axis)
             double maxYDiff = Math.max(h1, h2) / 4.0; // Max y-axis diff is 1/4th of the highest of both
@@ -112,8 +128,8 @@ public class MatchSorter {
             if (avgYDiff <= maxYDiff) {
                 // Check there is only a small gap between them
                 double maxXGap = Math.max(h1, h2) / 6.0; // Max x-axis gap is 1/6th of the highest of both
-                double xGap1 = Math.abs(m2.getMatch().x - (m1.getMatch().x + m1.getTemplate().getImage().width));
-                double xGap2 = Math.abs(m1.getMatch().x - (m2.getMatch().x + m2.getTemplate().getImage().width));
+                double xGap1 = Math.abs(x2 - (x1 + w1));
+                double xGap2 = Math.abs(x1 - (x2 + w2));
                 double minXGap = Math.min(xGap1, xGap2);
 
                 if (minXGap <= maxXGap) {
