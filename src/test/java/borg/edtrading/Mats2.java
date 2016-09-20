@@ -22,6 +22,8 @@ import java.awt.image.RasterFormatException;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -42,33 +44,63 @@ public class Mats2 {
 
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
 
-        File sourceFile = selectRandomScreenshot();
+        //File sourceFile = selectRandomScreenshot();
         //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-09-11 23-15-05 Achelous.png");
-        //        for (File sourceFile : selectAllScreenshots()) {
+        for (File sourceFile : selectAllScreenshots()) {
+            logger.info("Testing " + sourceFile.getName());
+            String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
+            BufferedImage originalImage = ImageIO.read(sourceFile);
+            BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
+            BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
+            bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
+            //BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
+            //ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
+            BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
+            bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
+            //BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
+            //ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
-        String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
-        BufferedImage originalImage = ImageIO.read(sourceFile);
-        BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
-        BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
-        bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
-        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
-        //ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
-        BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
-        bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
-        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
-        //ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+            //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
+            //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
 
-        //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
-        //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
+            List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
+            List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
+            ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
+            //System.out.println(scannedBodyInfo);
 
-        List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
-        List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
-        ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
-        System.out.println(scannedBodyInfo);
+            //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
+            //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
 
-        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
-        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
-        //        }
+            templates = copyLearnedChars();
+        }
+    }
+
+    private static List<Template> copyLearnedChars() throws IOException {
+        final Random random = new Random(System.currentTimeMillis());
+        File[] subdirs = Constants.AUTO_LEARNED_DIR.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.isDirectory();
+            }
+        });
+        for (File subdir : subdirs) {
+            // Learn max 1 per type
+            File[] pngFiles = subdir.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File file) {
+                    return file.getName().endsWith(".png");
+                }
+            });
+            if (pngFiles != null && pngFiles.length >= 1) {
+                File randomPngFile = pngFiles[random.nextInt(pngFiles.length)];
+                File targetDir = new File(Constants.TEMPLATES_DIR, "Body Info\\" + subdir.getName());
+                FileUtils.copyFileToDirectory(randomPngFile, targetDir);
+            }
+        }
+        // Clean auto-learned
+        FileUtils.cleanDirectory(Constants.AUTO_LEARNED_DIR);
+
+        return TemplateMatcher.loadTemplates("Body Info");
     }
 
     private static void groupSimilarChars(BufferedImage sharpImage, BufferedImage blurredImage) throws IOException {
@@ -143,12 +175,20 @@ public class Mats2 {
 
     private static File[] selectAllScreenshots() {
         File dir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
-        return dir.listFiles(new FileFilter() {
+        File[] files = dir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File f) {
                 return f.getName().endsWith(".png");
             }
         });
+        final Random random = new Random(System.currentTimeMillis());
+        Arrays.sort(files, new Comparator<File>() {
+            @Override
+            public int compare(File f1, File f2) {
+                return random.nextDouble() < 0.5 ? -1 : 1;
+            }
+        });
+        return files;
     }
 
     private static void testAllImages() throws IOException {
