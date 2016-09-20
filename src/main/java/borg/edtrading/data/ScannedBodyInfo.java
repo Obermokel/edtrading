@@ -463,38 +463,136 @@ public class ScannedBodyInfo {
             }
         }
         if (indexPlanetMaterials < lowercasedScannedWords.size()) {
-            scannedBodyInfo.setPlanetMaterials(new LinkedHashMap<>());
-            BigDecimal sumPercent = BigDecimal.ZERO;
+            // Concatenate the whole remaining text
+            // Remember the real start and end index for later auto-learning.
+            String wholeRemainingText = "";
             int z = sortedIndexes.indexOf(indexPlanetMaterials) + 1;
             int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : lowercasedScannedWords.size();
+            Integer realStartIndexIncl = null;
+            Integer realEndEndexExcl = null;
             for (int i = indexPlanetMaterials; i < nextIndex; i++) {
                 if (lowercasedScannedWords.get(i) != null) {
-                    String materialText = lowercasedScannedWords.set(i, null);
-                    String percentText = null;
-                    if (materialText.matches(".+\\(.+%\\).*")) {
-                        percentText = materialText.substring(materialText.indexOf("("));
-                        materialText = materialText.replace(percentText, "");
+                    wholeRemainingText += lowercasedScannedWords.set(i, null);
+                    if (realStartIndexIncl == null) {
+                        realStartIndexIncl = i;
                     }
-                    Item material = Item.findBestMatching(materialText.replace("0", "o").replace("8", "b"), ItemType.ELEMENT);
-                    if (material == null) {
-                        logger.warn(screenshotFilename + ": Unknown material '" + materialText + "'");
-                    } else {
-                        if (percentText == null) {
-                            percentText = lowercasedScannedWords.set(++i, null);
+                    realEndEndexExcl = i + 1;
+                }
+            }
+            // Sometimes the back button has been successfully scanned. Remove everything starting at the back button.
+            if (wholeRemainingText.endsWith("%)back")) {
+                wholeRemainingText = wholeRemainingText.substring(0, wholeRemainingText.length() - 4);
+                realEndEndexExcl--;
+            }
+            // Now we should have s.th. like this:
+            // iron(19.1%),sulphur(18.5%),carbon(15.6%),nickel(14.5%),ph0sph0rus(10.o%),chromium(8.6%).oermanium(5.5%),zinc(5.2%)niobium(1.3%),tungsten(1.1%),technetium(0.7%)
+            // Split this at every closing bracket.
+            // !!! IT IS VERY IMPORTANT THAT BRACKETS ARE DETECTED CORRECTLY, OTHERWISE THIS WILL NOT WORK !!!
+            String[] matsAndPercentages = wholeRemainingText.split("\\)");
+            // Now we should have a lot of these:
+            // iron(19.1%
+            // ,sulphur(18.5%
+            // ,carbon(15.6%
+            // ...
+            // ,technetium(0.7%
+            // Split each of them at the opening bracket in order to separate the material from the percentage.
+            // !!! IT IS VERY IMPORTANT THAT BRACKETS ARE DETECTED CORRECTLY, OTHERWISE THIS WILL NOT WORK !!!
+            boolean bracketError = false;
+            List<String> matsAndPercentagesSeparated = new ArrayList<>(2 * matsAndPercentages.length);
+            for (String s : matsAndPercentages) {
+                String[] matAndPercentage = s.split("\\(");
+                if (matAndPercentage.length != 2) {
+                    bracketError = true;
+                    break;
+                } else {
+                    matsAndPercentagesSeparated.add(matAndPercentage[0].replace(".", ",")); // fix . to ,
+                    matsAndPercentagesSeparated.add(matAndPercentage[1].replace(",", ".")); // fix , to .
+                }
+            }
+            if (bracketError) {
+                logger.warn(screenshotFilename + ": Bracket error for planet materials: " + wholeRemainingText);
+            } else {
+                // Now we should have a list like this:
+                // [iron, 19.1%, ,sulphur, 18.5%, ,carbon, 15.6%, ... ,technetium, 0.7%]
+                // What we can do now is to fix wrongly detected chars as in
+                // ph0sph0rus(10.o%)
+                boolean unfixableError = false;
+                List<String> fixedMatsAndPercentages = new ArrayList<>(matsAndPercentagesSeparated.size());
+                for (int i = 0; i < matsAndPercentagesSeparated.size(); i++) {
+                    if (i % 2 == 0) {
+                        // Should be a mat
+                        String fixedName = matsAndPercentagesSeparated.get(i).replace("0", "o").replace("5", "s").replace("8", "b");
+                        Item mat = Item.findBestMatching(fixedName.replace(",", ""), ItemType.ELEMENT);
+                        if (mat != null) {
+                            fixedMatsAndPercentages.add((fixedName.startsWith(",") ? "," : "") + mat.getName());
+                        } else {
+                            logger.warn(screenshotFilename + ": Unfixable material: " + matsAndPercentagesSeparated.get(i));
+                            unfixableError = true;
                         }
-                        try {
-                            BigDecimal percent = new BigDecimal(percentText.replace("o", "0").replace("b", "8").replace("(", "").replace(")", "").replace("%", "").replace(",", ""));
-                            scannedBodyInfo.getPlanetMaterials().put(material, percent);
-                            sumPercent = sumPercent.add(percent);
-                        } catch (NumberFormatException e) {
-                            logger.warn(screenshotFilename + ": Cannot parse '" + percentText + "' to percentage for " + material);
-                            scannedBodyInfo.getPlanetMaterials().put(material, null);
+                    } else {
+                        // Should be a percentage
+                        String fixedPercentage = matsAndPercentagesSeparated.get(i).replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8");
+                        if (fixedPercentage.indexOf(".") == fixedPercentage.length() - 3) {
+                            fixedPercentage = fixedPercentage.substring(0, fixedPercentage.length() - 1) + "%";
+                        }
+                        if (fixedPercentage.matches("\\d{1,2}\\.\\d%")) {
+                            fixedMatsAndPercentages.add(fixedPercentage);
+                        } else {
+                            logger.warn(screenshotFilename + ": Unfixable percentage: " + matsAndPercentagesSeparated.get(i));
+                            unfixableError = true;
                         }
                     }
                 }
-            }
-            if (sumPercent.doubleValue() < 99.9) {
-                logger.warn(screenshotFilename + ": Only " + sumPercent + "% materials total sum");
+                if (!unfixableError) {
+                    // Now we now what the whole text should have been. We can build it together from the fixed parts.
+                    // The brackets must be inserted again as they have been lost when using the split() function.
+                    String fixedWholeRemainingText = "";
+                    for (int i = 0; i < fixedMatsAndPercentages.size(); i++) {
+                        if (i % 2 == 0) {
+                            fixedWholeRemainingText += fixedMatsAndPercentages.get(i);
+                        } else {
+                            fixedWholeRemainingText += ("(" + fixedMatsAndPercentages.get(i) + ")");
+                        }
+                    }
+                    // The fixed text can later be used for auto-learning.
+                    // First though parse all mats and do a plausi check. The sum of percentages should be 100% +/- 1%.
+                    // If not we might haved missed something completely. This can happen if the text is too close to the border.
+                    LinkedHashMap<Item, BigDecimal> planetMaterials = new LinkedHashMap<>();
+                    BigDecimal totalPercentage = BigDecimal.ZERO;
+                    for (int i = 0; i < fixedMatsAndPercentages.size(); i += 2) {
+                        Item mat = Item.findBestMatching(fixedMatsAndPercentages.get(i).replace(",", ""), ItemType.ELEMENT);
+                        BigDecimal percentage = new BigDecimal(fixedMatsAndPercentages.get(i + 1).replace("%", ""));
+                        planetMaterials.put(mat, percentage);
+                        totalPercentage = totalPercentage.add(percentage);
+                    }
+                    if (Math.abs(100.0 - totalPercentage.doubleValue()) > 1.0) {
+                        logger.warn(screenshotFilename + ": Sum of planet materials is " + totalPercentage + ": " + fixedWholeRemainingText);
+                    } else {
+                        scannedBodyInfo.setPlanetMaterials(planetMaterials);
+                        // >>>> BEGIN AUTO LEARNING >>>>
+                        if (fixedWholeRemainingText.length() == wholeRemainingText.length()) {
+                            String autoLearnText = fixedWholeRemainingText;
+                            for (int i = realStartIndexIncl; i < realEndEndexExcl; i++) {
+                                MatchGroup mg = bodyInfoWords.get(i);
+                                for (TemplateMatch m : mg.getGroupMatches()) {
+                                    String shouldHaveBeen = autoLearnText.substring(0, m.getTemplate().getText().length());
+                                    autoLearnText = autoLearnText.substring(m.getTemplate().getText().length());
+                                    if (!m.getTemplate().getText().equals(shouldHaveBeen)) {
+                                        File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
+                                        autoLearnFolder.mkdirs();
+                                        try {
+                                            ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
+                                            logger.info("Learned new '" + shouldHaveBeen + "'");
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // <<<< END AUTO LEARNING <<<<
+                    }
+                }
             }
         }
 

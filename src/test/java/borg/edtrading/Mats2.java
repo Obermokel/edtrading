@@ -43,7 +43,7 @@ public class Mats2 {
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
 
         File sourceFile = selectRandomScreenshot();
-        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-09-11 23-13-35 Achelous.png");
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-09-11 23-15-05 Achelous.png");
         //        for (File sourceFile : selectAllScreenshots()) {
 
         String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
