@@ -16,6 +16,7 @@ import borg.edtrading.ocr.fixer.RadiusFixer;
 import borg.edtrading.ocr.fixer.RotationalPeriodFixer;
 import borg.edtrading.ocr.fixer.SemiMajorAxisFixer;
 import borg.edtrading.ocr.fixer.SurfaceTempFixer;
+import borg.edtrading.ocr.fixer.TidallyLockedFixer;
 import borg.edtrading.ocr.fixer.ValueFixer;
 import borg.edtrading.ocr.fixer.VolcanismFixer;
 import borg.edtrading.util.MatchSorter.MatchGroup;
@@ -451,6 +452,7 @@ public class ScannedBodyInfo {
         }
         if (indexTidallyLocked < lowercasedScannedWords.size()) {
             scannedBodyInfo.setTidallyLocked(true);
+            valueForLabel(indexTidallyLocked, "(TIDALLYLOCKED)", new TidallyLockedFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
         } else if (indexRotationalPeriod < lowercasedScannedWords.size()) {
             scannedBodyInfo.setTidallyLocked(false); // If we have info about the rotational period, but the text "(tidally locked)" is missing, then it is not locked
         }
