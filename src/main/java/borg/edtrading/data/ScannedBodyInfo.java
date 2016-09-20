@@ -147,7 +147,7 @@ public class ScannedBodyInfo {
         for (MatchGroup w : bodyNameWords) {
             lowercasedScannedNameWords.add(w.getText().toLowerCase());
         }
-        int indexArrivalPoint = indexOfWords(lowercasedScannedNameWords, "arrival", "point:", "arrival point:");
+        int indexArrivalPoint = indexOfWords(lowercasedScannedNameWords, "arrival", "point:");
         if (indexArrivalPoint >= lowercasedScannedNameWords.size()) {
             logger.warn("indexArrivalPoint not found in " + screenshotFilename);
         } else {
@@ -201,7 +201,7 @@ public class ScannedBodyInfo {
         }
 
         // Search the start indexes of labels, also replacing the found words with NULL entries
-        int indexEarthMasses = indexOfWords(lowercasedScannedWords, "earth", "masses:", "earth masses:");
+        int indexEarthMasses = indexOfWords(lowercasedScannedWords, "earth", "masses:");
         if (indexEarthMasses < lowercasedScannedWords.size()) {
             // Clear everything before earth masses
             for (int i = 0; i < indexEarthMasses; i++) {
@@ -210,19 +210,19 @@ public class ScannedBodyInfo {
         }
         int indexRadius = indexOfWords(lowercasedScannedWords, "radius:");
         int indexGravity = indexOfWords(lowercasedScannedWords, "gravity:");
-        int indexSurfaceTemp = indexOfWords(lowercasedScannedWords, "surface", "temp:", "surface temp:");
+        int indexSurfaceTemp = indexOfWords(lowercasedScannedWords, "surface", "temp:");
         int indexVolcanism = indexOfWords(lowercasedScannedWords, "volcanism:");
-        int indexAtmosphereType = indexOfWords(lowercasedScannedWords, "atmosphere", "type:", "atmosphere type:");
+        int indexAtmosphereType = indexOfWords(lowercasedScannedWords, "atmosphere", "type:");
         int indexComposition = indexOfWords(lowercasedScannedWords, "composition:");
-        int indexOrbitalPeriod = indexOfWords(lowercasedScannedWords, "orbital", "period:", "orbital period:");
-        int indexSemiMajorAxis = indexOfWords(lowercasedScannedWords, "semi", "major", "axis:", "semi major", "major axis:", "semi major axis:");
-        int indexOrbitalEccentricity = indexOfWords(lowercasedScannedWords, "orbital", "eccentricity:", "orbital eccentricity:");
-        int indexOrbitalInclination = indexOfWords(lowercasedScannedWords, "orbital", "inclination:", "orbital inclination:");
-        int indexArgOfPeriapsis = indexOfWords(lowercasedScannedWords, "arg", "of", "periapsis:", "arg of", "of periapsis:", "arg of periapsis:");
-        int indexRotationalPeriod = indexOfWords(lowercasedScannedWords, "rotational", "period:", "rotational period:");
-        int indexTidallyLocked = indexOfWords(lowercasedScannedWords, "(tidally", "locked)", "(tidally locked)");
-        int indexAxialTilt = indexOfWords(lowercasedScannedWords, "axial", "tilt:", "axial tilt:");
-        int indexPlanetMaterials = indexOfWords(lowercasedScannedWords, "planet", "materials:", "planet materials:");
+        int indexOrbitalPeriod = indexOfWords(lowercasedScannedWords, "orbital", "period:");
+        int indexSemiMajorAxis = indexOfWords(lowercasedScannedWords, "semi", "major", "axis:");
+        int indexOrbitalEccentricity = indexOfWords(lowercasedScannedWords, "orbital", "eccentricity:");
+        int indexOrbitalInclination = indexOfWords(lowercasedScannedWords, "orbital", "inclination:");
+        int indexArgOfPeriapsis = indexOfWords(lowercasedScannedWords, "arg", "of", "periapsis:");
+        int indexRotationalPeriod = indexOfWords(lowercasedScannedWords, "rotational", "period:");
+        int indexTidallyLocked = indexOfWords(lowercasedScannedWords, "(tidally", "locked)");
+        int indexAxialTilt = indexOfWords(lowercasedScannedWords, "axial", "tilt:");
+        int indexPlanetMaterials = indexOfWords(lowercasedScannedWords, "planet", "materials:");
 
         LinkedHashMap<String, Integer> indexByLabel = new LinkedHashMap<>();
         if (indexEarthMasses < lowercasedScannedWords.size()) {
@@ -747,18 +747,27 @@ public class ScannedBodyInfo {
     private static int indexOfWords(LinkedList<String> lowercasedScannedWords, String... wordsToSearch) {
         int startIndex = Integer.MAX_VALUE;
 
-        for (String wordToSearch : wordsToSearch) {
-            int maxLevenshteinDistance = wordToSearch.length() / 4;
-            for (int index = 0; index < lowercasedScannedWords.size(); index++) {
-                String scannedWord = lowercasedScannedWords.get(index);
-                if (scannedWord != null) {
-                    String digitsReplaced = scannedWord.replace("0", "o").replace("8", "b"); // We do not expect digits, so replace look-alike chars (0 and O, 8 and B)
-                    if (StringUtils.getLevenshteinDistance(wordToSearch, digitsReplaced) <= maxLevenshteinDistance) {
-                        startIndex = Math.min(index, startIndex);
-                        lowercasedScannedWords.set(index, null); // Do not interpret this as another word
-                        break; // Stop checking other scanned words, but continue with the next word to search
-                    }
+        String combinedWordsToSearch = "";
+        for (String w : wordsToSearch) {
+            combinedWordsToSearch += w.toLowerCase().replaceAll("\\s", "");
+        }
+        int numWords = wordsToSearch.length;
+
+        int maxLevenshteinDistance = combinedWordsToSearch.length() / 4;
+        for (int index = 0; index <= (lowercasedScannedWords.size() - numWords); index++) {
+            String combinedScannedWords = "";
+            for (int i = 0; i < numWords; i++) {
+                if (lowercasedScannedWords.get(index + i) != null) {
+                    combinedScannedWords += lowercasedScannedWords.get(index + i);
                 }
+            }
+            String digitsReplaced = combinedScannedWords.replace("0", "o").replace("5", "s").replace("8", "b"); // We do not expect digits, so replace look-alike chars (0 and O, 8 and B)
+            if (StringUtils.getLevenshteinDistance(combinedWordsToSearch, digitsReplaced) <= maxLevenshteinDistance) {
+                startIndex = Math.min(index, startIndex);
+                for (int i = 0; i < numWords; i++) {
+                    lowercasedScannedWords.set(index + i, null); // Do not interpret these as another word
+                }
+                break; // Stop checking other scanned words
             }
         }
 
