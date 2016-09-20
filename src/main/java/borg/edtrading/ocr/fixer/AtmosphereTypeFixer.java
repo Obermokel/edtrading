@@ -15,7 +15,7 @@ public class AtmosphereTypeFixer implements ValueFixer {
 
     @Override
     public String fixValue(String scannedText) {
-        String fixedValue = scannedText.toUpperCase().replace("0", "O").replace("8", "B");
+        String fixedValue = scannedText.toUpperCase().replace("0", "O").replace("5", "S").replace("8", "B");
         BodyInfo bodyInfo = BodyInfo.findBestMatching(fixedValue);
         if (bodyInfo != null && bodyInfo.name().startsWith("ATMOSPHERE_TYPE_")) {
             fixedValue = bodyInfo.getName().toUpperCase();

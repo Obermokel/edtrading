@@ -14,7 +14,7 @@ public class SurfaceTempFixer implements ValueFixer {
 
     @Override
     public String fixValue(String scannedText) {
-        return scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("B", "8").replace(".", ",");
+        return scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(".", ",");
     }
 
     @Override
