@@ -15,7 +15,7 @@ public class RotationalPeriodFixer implements ValueFixer {
     @Override
     public String fixValue(String scannedText) {
         String fixedValue = scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".");
-        if (fixedValue.indexOf(".") == fixedValue.length() - 3) {
+        if (fixedValue.contains(".") && fixedValue.indexOf(".") == fixedValue.length() - 3) {
             fixedValue = fixedValue.substring(0, fixedValue.length() - 1) + "D";
         }
         return fixedValue;

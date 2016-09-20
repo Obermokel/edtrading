@@ -14,7 +14,11 @@ public class GravityFixer implements ValueFixer {
 
     @Override
     public String fixValue(String scannedText) {
-        return scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".");
+        String fixedValue = scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".");
+        if (fixedValue.contains(".") && fixedValue.indexOf(".") == fixedValue.length() - 4) {
+            fixedValue = fixedValue.substring(0, fixedValue.length() - 1) + "G";
+        }
+        return fixedValue;
     }
 
     @Override

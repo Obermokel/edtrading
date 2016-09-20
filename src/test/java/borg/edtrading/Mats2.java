@@ -44,35 +44,37 @@ public class Mats2 {
 
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
 
-        //File sourceFile = selectRandomScreenshot();
-        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-09-11 23-15-05 Achelous.png");
-        for (File sourceFile : selectAllScreenshots()) {
-            logger.info("Testing " + sourceFile.getName());
-            String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
-            BufferedImage originalImage = ImageIO.read(sourceFile);
-            BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
-            BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
-            bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
-            //BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
-            //ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
-            BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
-            bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
-            //BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
-            //ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+        File sourceFile = selectRandomScreenshot();
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-09-11 22-27-33 Ch'i Lingo.png");
+        //for (File sourceFile : selectAllScreenshots()) {
+        logger.info("Testing " + sourceFile.getName());
+        String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
+        BufferedImage originalImage = ImageIO.read(sourceFile);
+        BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
+        BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
+        bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
+        ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
+        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
+        ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
+        BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
+        bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
+        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
+        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
+        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
-            //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
-            //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
+        //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
+        //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
 
-            List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
-            List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
-            ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
-            //System.out.println(scannedBodyInfo);
+        List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
+        List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
+        ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
+        //System.out.println(scannedBodyInfo);
 
-            //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
-            //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
+        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
+        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
 
-            templates = copyLearnedChars();
-        }
+        //templates = copyLearnedChars();
+        //}
     }
 
     private static List<Template> copyLearnedChars() throws IOException {

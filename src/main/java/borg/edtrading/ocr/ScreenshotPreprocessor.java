@@ -102,10 +102,12 @@ public abstract class ScreenshotPreprocessor {
     }
 
     public static BufferedImage highlightWhiteText(BufferedImage image) {
+        //        BufferedImage whiteTextImage = keepWhiteTextOnly(image);
+        //        BufferedImage cannyImage = cannyEdge(whiteTextImage);
+        //
+        //        return outlineText(whiteTextImage, cannyImage);
         BufferedImage whiteTextImage = keepWhiteTextOnly(image);
-        BufferedImage cannyImage = cannyEdge(whiteTextImage);
-
-        return outlineText(whiteTextImage, cannyImage);
+        return localSquareThresholdForSystemMap(whiteTextImage);
     }
 
     private static BufferedImage keepWhiteTextOnly(BufferedImage image) {
