@@ -44,8 +44,8 @@ public class Mats2 {
 
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
 
-        File sourceFile = selectRandomScreenshot();
-        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-09-11 22-27-33 Ch'i Lingo.png");
+        //File sourceFile = selectRandomScreenshot();
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-08-31 21-28-56 LP 298-52.png");
         //for (File sourceFile : selectAllScreenshots()) {
         logger.info("Testing " + sourceFile.getName());
         String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
@@ -67,11 +67,11 @@ public class Mats2 {
 
         List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
         List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
-        ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
-        //System.out.println(scannedBodyInfo);
+        ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
+        System.out.println(scannedBodyInfo);
 
         writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
-        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
+        writeDebugImages("Body Info", true, templates, bodyInfoImage, blurredBodyInfoImage);
 
         //templates = copyLearnedChars();
         //}
@@ -148,7 +148,7 @@ public class Mats2 {
             try {
                 BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
                 ImageIO.write(charImage, "PNG", new File(unknownDir, String.format("%05d_%05d_%d.png", (r.y / 10) * 10, r.x, r.hashCode())));
-                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, 1234);
+                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, 123456);
                 if (bestMatch != null) {
                     g.drawString(bestMatch.getTemplate().getText(), r.x, r.y + 18);
                     System.out.print(bestMatch.getTemplate().getText());
