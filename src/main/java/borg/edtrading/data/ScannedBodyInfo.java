@@ -151,38 +151,30 @@ public class ScannedBodyInfo {
         if (indexArrivalPoint >= lowercasedScannedNameWords.size()) {
             logger.warn("indexArrivalPoint not found in " + screenshotFilename);
         } else {
-            // Everything before arrival point is planet name.
-            // However, sometimes the distance is wrongly sorted before the arrival point...
+            // Everything before arrival point is planet name
             StringBuilder sb = new StringBuilder();
-            boolean distanceBeforeArrival = false;
             for (int i = 0; i < indexArrivalPoint; i++) {
-                String word = lowercasedScannedNameWords.set(i, null);
-                if (!looksLikeDistanceLs(word)) {
-                    sb.append(bodyNameWords.get(i).getText()).append(" ");
-                } else {
-                    distanceBeforeArrival = true;
-                    try {
-                        distanceLs = new BigDecimal(word.replace("o", "0").replace("b", "8").replace(",", "").replace("l", "").replace("s", ""));
-                    } catch (NumberFormatException e) {
-                        logger.warn(screenshotFilename + ": Cannot parse '" + word + "' to distance from arrival point (v1)");
-                    }
-                    break;
-                }
+                lowercasedScannedNameWords.set(i, null);
+                sb.append(bodyNameWords.get(i).getText()).append(" ");
             }
             bodyName = sb.toString().trim();
 
             // The first one after arrival point is the actual distance
-            if (!distanceBeforeArrival) {
-                for (int i = indexArrivalPoint; i < lowercasedScannedNameWords.size(); i++) {
-                    if (lowercasedScannedNameWords.get(i) != null) {
-                        String distanceText = lowercasedScannedNameWords.set(i, null);
-                        try {
-                            distanceLs = new BigDecimal(distanceText.replace("o", "0").replace("b", "8").replace(",", "").replace("l", "").replace("s", ""));
-                        } catch (NumberFormatException e) {
-                            logger.warn(screenshotFilename + ": Cannot parse '" + distanceText + "' to distance from arrival point (v2)");
+            for (int i = indexArrivalPoint; i < lowercasedScannedNameWords.size(); i++) {
+                if (lowercasedScannedNameWords.get(i) != null) {
+                    String distanceText = lowercasedScannedNameWords.set(i, null);
+                    try {
+                        String parseableText = distanceText.replace("ls", ""); // remove trailing LS
+                        parseableText = parseableText.replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8"); // fix digits
+                        if (!parseableText.matches("\\d{1,3}\\.\\d{2}") && !parseableText.matches("\\d{1,3},\\d{3}\\.\\d{2}")) {
+                            logger.warn(screenshotFilename + ": '" + distanceText + "' does not look like distance from arrival point");
+                        } else {
+                            distanceLs = new BigDecimal(parseableText.replace(",", ""));
                         }
-                        break;
+                    } catch (NumberFormatException e) {
+                        logger.warn(screenshotFilename + ": Cannot parse '" + distanceText + "' to distance from arrival point");
                     }
+                    break;
                 }
             }
 
@@ -730,10 +722,6 @@ public class ScannedBodyInfo {
             }
         }
         return valueFixer.fixValue(value);
-    }
-
-    private static boolean looksLikeDistanceLs(String word) {
-        return word.replace("o", "0").replace("b", "8").matches(".*[\\d\\,]+\\.\\d{2}ls.*");
     }
 
     /**
