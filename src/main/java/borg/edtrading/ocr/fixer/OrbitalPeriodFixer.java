@@ -14,7 +14,7 @@ public class OrbitalPeriodFixer implements ValueFixer {
 
     @Override
     public String fixValue(String scannedText) {
-        String fixedValue = scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".");
+        String fixedValue = scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8");
         if (fixedValue.contains(".") && fixedValue.indexOf(".") == fixedValue.length() - 3) {
             fixedValue = fixedValue.substring(0, fixedValue.length() - 1) + "D";
         }
@@ -23,7 +23,7 @@ public class OrbitalPeriodFixer implements ValueFixer {
 
     @Override
     public boolean seemsPlausible(String fixedValue) {
-        return fixedValue.matches("\\d{1,3}\\.\\dD"); // min 0.0D, max 999.9D, always one decimal place
+        return fixedValue.matches("\\d{1,3}\\.\\dD") || fixedValue.matches("\\d{1,2},\\d{3}\\.\\dD"); // min 0.0D, max 99,999.9D, always one decimal place
     }
 
 }

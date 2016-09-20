@@ -466,7 +466,7 @@ public class ScannedBodyInfo {
         if (indexOrbitalPeriod < lowercasedScannedWords.size()) {
             try {
                 String value = valueForLabel(indexOrbitalPeriod, "ORBITALPERIOD:", new OrbitalPeriodFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
-                scannedBodyInfo.setOrbitalPeriodD(new BigDecimal(value.replace("D", "")));
+                scannedBodyInfo.setOrbitalPeriodD(new BigDecimal(value.replace(",", "").replace("D", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
             }
