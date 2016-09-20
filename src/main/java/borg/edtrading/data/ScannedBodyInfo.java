@@ -543,7 +543,7 @@ public class ScannedBodyInfo {
                 }
             }
             // Sometimes the back button has been successfully scanned. Remove everything starting at the back button.
-            if (wholeRemainingText.endsWith("%)back")) {
+            if (wholeRemainingText.endsWith("%)back") || wholeRemainingText.endsWith("%)8ack")) {
                 wholeRemainingText = wholeRemainingText.substring(0, wholeRemainingText.length() - 4);
                 realEndEndexExcl--;
             }
