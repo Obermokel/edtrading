@@ -714,15 +714,19 @@ public class ScannedBodyInfo {
                 MatchGroup mg = bodyInfoWords.get(idx);
                 for (TemplateMatch m : mg.getGroupMatches()) {
                     if (!correctValue.startsWith(m.getTemplate().getText())) {
-                        String shouldHaveBeen = correctValue.substring(0, m.getTemplate().getText().length());
-                        correctValue = correctValue.substring(m.getTemplate().getText().length());
-                        File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
-                        autoLearnFolder.mkdirs();
                         try {
-                            ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
-                            logger.info("Learned new '" + shouldHaveBeen + "'");
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                            String shouldHaveBeen = correctValue.substring(0, m.getTemplate().getText().length());
+                            correctValue = correctValue.substring(m.getTemplate().getText().length());
+                            File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
+                            autoLearnFolder.mkdirs();
+                            try {
+                                ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
+                                logger.info("Learned new '" + shouldHaveBeen + "'");
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        } catch (StringIndexOutOfBoundsException e) {
+                            // Ignore
                         }
                     } else {
                         correctValue = correctValue.substring(m.getTemplate().getText().length());
