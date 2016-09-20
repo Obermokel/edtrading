@@ -677,23 +677,32 @@ public class ScannedBodyInfo {
             }
         }
         // START auto-learn
-        String correctLabelRemaining = correctLabel;
+        String actualLabel = "";
         for (int idx : labelIndexes) {
             MatchGroup mg = bodyInfoWords.get(idx);
             for (TemplateMatch m : mg.getGroupMatches()) {
-                if (!correctLabelRemaining.startsWith(m.getTemplate().getText())) {
-                    String shouldHaveBeen = correctLabelRemaining.substring(0, m.getTemplate().getText().length());
-                    correctLabelRemaining = correctLabelRemaining.substring(m.getTemplate().getText().length());
-                    File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
-                    autoLearnFolder.mkdirs();
-                    try {
-                        ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
-                        logger.info("Learned new '" + shouldHaveBeen + "'");
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                actualLabel += m.getTemplate().getText();
+            }
+        }
+        if (actualLabel.length() == correctLabel.length()) {
+            String correctLabelRemaining = correctLabel;
+            for (int idx : labelIndexes) {
+                MatchGroup mg = bodyInfoWords.get(idx);
+                for (TemplateMatch m : mg.getGroupMatches()) {
+                    if (!correctLabelRemaining.startsWith(m.getTemplate().getText())) {
+                        String shouldHaveBeen = correctLabelRemaining.substring(0, m.getTemplate().getText().length());
+                        correctLabelRemaining = correctLabelRemaining.substring(m.getTemplate().getText().length());
+                        File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
+                        autoLearnFolder.mkdirs();
+                        try {
+                            ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
+                            logger.info("Learned new '" + shouldHaveBeen + "'");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        correctLabelRemaining = correctLabelRemaining.substring(m.getTemplate().getText().length());
                     }
-                } else {
-                    correctLabelRemaining = correctLabelRemaining.substring(m.getTemplate().getText().length());
                 }
             }
         }
