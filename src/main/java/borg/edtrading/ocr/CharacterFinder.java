@@ -5,6 +5,7 @@ import boofcv.alg.filter.binary.BinaryImageOps;
 import boofcv.alg.filter.binary.Contour;
 import boofcv.alg.misc.ImageMiscOps;
 import boofcv.factory.feature.detect.edge.FactoryEdgeDetectors;
+import boofcv.gui.image.VisualizeImageData;
 import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.ConnectRule;
 import boofcv.struct.image.GrayF32;
@@ -61,6 +62,7 @@ public abstract class CharacterFinder {
         // Expand all character boxes a bit so they do overlap. This allows us to again find bounding boxes, but this time the bounding
         // boxes will be around a whole line of characters.
         List<Rectangle> textLineBoxes = groupToTextLineBoxes(medianBoxes, cannySuitableImage.getWidth(), cannySuitableImage.getHeight());
+        ImageIO.write(markBoxes(cannySuitableImage, textLineBoxes, Color.YELLOW, 1), "PNG", new File(Constants.TEMP_DIR, "CharacterFinder 02a Lines.png"));
 
         // Expand all text lines to 2x median line height, so they all have the same height.
         // This is because not all text lines have characters which go below the baseline or higher than usual.
@@ -69,7 +71,7 @@ public abstract class CharacterFinder {
         textLineBoxes = expandTextLineBoxes(textLineBoxes, 2 * medianHeight);
         textLineBoxes = moveSimilarTextLineBoxes(textLineBoxes);
         if (writeDebugImages) {
-            ImageIO.write(markBoxes(cannySuitableImage, textLineBoxes, Color.YELLOW, 1), "PNG", new File(Constants.TEMP_DIR, "CharacterFinder 02 Lines.png"));
+            ImageIO.write(markBoxes(cannySuitableImage, textLineBoxes, Color.YELLOW, 1), "PNG", new File(Constants.TEMP_DIR, "CharacterFinder 02b Lines.png"));
         }
 
         // Finally go back to the candidates and see which ones are inside the text line boxes. Expand those which are
@@ -276,14 +278,15 @@ public abstract class CharacterFinder {
         return result;
     }
 
-    private static List<Rectangle> groupToTextLineBoxes(List<Rectangle> medianBoxes, int imageWidth, int imageHeight) {
+    private static List<Rectangle> groupToTextLineBoxes(List<Rectangle> medianBoxes, int imageWidth, int imageHeight) throws IOException {
         GrayF32 grayF32 = new GrayF32(imageWidth, imageHeight);
         ImageMiscOps.fill(grayF32, 0);
         for (Rectangle r : medianBoxes) {
-            int expandedWidth = 3 * r.width;
-            int movedLeft = r.x - r.width;
+            int expandedWidth = 4 * r.width;
+            int movedLeft = Math.max(1, r.x - r.width);
             ImageMiscOps.fillRectangle(grayF32, 1, movedLeft, r.y, expandedWidth, r.height);
         }
+        ImageIO.write(VisualizeImageData.grayMagnitude(grayF32, null, -1), "PNG", new File(Constants.TEMP_DIR, "CharacterFinder 02ab Lines.png"));
         return findBoundingBoxes(grayF32, 4, 4096, 16, 128);
     }
 
