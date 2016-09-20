@@ -8,6 +8,7 @@ import borg.edtrading.ocr.CharacterFinder;
 import borg.edtrading.ocr.ScreenshotCropper;
 import borg.edtrading.ocr.ScreenshotPreprocessor;
 import borg.edtrading.util.ImageUtil;
+import borg.edtrading.util.MatchSorter.MatchGroup;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,7 +43,7 @@ public class Mats2 {
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
 
         File sourceFile = selectRandomScreenshot();
-        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-09-11 22-27-48 Ch'i Lingo.png");
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-09-11 23-13-35 Achelous.png");
         //        for (File sourceFile : selectAllScreenshots()) {
 
         String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
@@ -60,8 +61,8 @@ public class Mats2 {
         //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
         //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
 
-        List<String> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
-        List<String> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
+        List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
+        List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
         ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
         System.out.println(scannedBodyInfo);
 

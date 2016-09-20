@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -71,12 +70,12 @@ public class BodyInfoApp {
                 // Extract planet name, type and distance from arrival
                 BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
                 bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
-                List<String> bodyNameWords = scanWords(bodyNameImage, bodyNameTemplates);
+                List<MatchGroup> bodyNameWords = scanWords(bodyNameImage, bodyNameTemplates);
 
                 // Extract body info
                 BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
                 bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
-                List<String> bodyInfoWords = scanWords(bodyInfoImage, bodyInfoTemplates);
+                List<MatchGroup> bodyInfoWords = scanWords(bodyInfoImage, bodyInfoTemplates);
 
                 // Parse!
                 ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(screenshotFile.getName(), systemName, bodyNameWords, bodyInfoWords);
@@ -135,7 +134,7 @@ public class BodyInfoApp {
         return systemName;
     }
 
-    static List<String> scanWords(BufferedImage croppedfourK, List<Template> templates) throws IOException {
+    static List<MatchGroup> scanWords(BufferedImage croppedfourK, List<Template> templates) throws IOException {
         List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(croppedfourK, false);
         BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(croppedfourK, 2);
 
@@ -153,7 +152,8 @@ public class BodyInfoApp {
         }
 
         List<MatchGroup> matchGroups = MatchSorter.sortMatches(matches);
-        return matchGroups.stream().map(mg -> mg.getText()).collect(Collectors.toList());
+        //return matchGroups.stream().map(mg -> mg.getText()).collect(Collectors.toList());
+        return matchGroups;
     }
 
     private static List<File> getScreenshotsFromAllDir() {

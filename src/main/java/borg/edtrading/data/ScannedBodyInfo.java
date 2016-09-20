@@ -1,10 +1,30 @@
 package borg.edtrading.data;
 
+import borg.edtrading.Constants;
+import borg.edtrading.boofcv.TemplateMatch;
+import borg.edtrading.boofcv.TemplateMatcher;
 import borg.edtrading.data.Item.ItemType;
+import borg.edtrading.ocr.fixer.ArgOfPeriapsisFixer;
+import borg.edtrading.ocr.fixer.AtmosphereTypeFixer;
+import borg.edtrading.ocr.fixer.AxialTiltFixer;
+import borg.edtrading.ocr.fixer.EarthMassesFixer;
+import borg.edtrading.ocr.fixer.GravityFixer;
+import borg.edtrading.ocr.fixer.OrbitalEccentricityFixer;
+import borg.edtrading.ocr.fixer.OrbitalInclinationFixer;
+import borg.edtrading.ocr.fixer.OrbitalPeriodFixer;
+import borg.edtrading.ocr.fixer.RadiusFixer;
+import borg.edtrading.ocr.fixer.RotationalPeriodFixer;
+import borg.edtrading.ocr.fixer.SemiMajorAxisFixer;
+import borg.edtrading.ocr.fixer.SurfaceTempFixer;
+import borg.edtrading.ocr.fixer.ValueFixer;
+import borg.edtrading.ocr.fixer.VolcanismFixer;
+import borg.edtrading.util.MatchSorter.MatchGroup;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,6 +34,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.imageio.ImageIO;
 
 /**
  * ScannedBodyInfo
@@ -116,13 +138,13 @@ public class ScannedBodyInfo {
         this.setDistanceLs(distanceLs);
     }
 
-    public static ScannedBodyInfo fromScannedAndSortedWords(String screenshotFilename, String systemName, List<String> bodyNameWords, List<String> bodyInfoWords) {
+    public static ScannedBodyInfo fromScannedAndSortedWords(String screenshotFilename, String systemName, List<MatchGroup> bodyNameWords, List<MatchGroup> bodyInfoWords) {
         String bodyName = null;
         BodyInfo bodyType = null;
         BigDecimal distanceLs = null;
         LinkedList<String> lowercasedScannedNameWords = new LinkedList<>();
-        for (String w : bodyNameWords) {
-            lowercasedScannedNameWords.add(w.toLowerCase());
+        for (MatchGroup w : bodyNameWords) {
+            lowercasedScannedNameWords.add(w.getText().toLowerCase());
         }
         int indexArrivalPoint = indexOfWords(lowercasedScannedNameWords, "arrival", "point:", "arrival point:");
         if (indexArrivalPoint >= lowercasedScannedNameWords.size()) {
@@ -135,7 +157,7 @@ public class ScannedBodyInfo {
             for (int i = 0; i < indexArrivalPoint; i++) {
                 String word = lowercasedScannedNameWords.set(i, null);
                 if (!looksLikeDistanceLs(word)) {
-                    sb.append(bodyNameWords.get(i)).append(" ");
+                    sb.append(bodyNameWords.get(i).getText()).append(" ");
                 } else {
                     distanceBeforeArrival = true;
                     try {
@@ -181,12 +203,18 @@ public class ScannedBodyInfo {
 
         // Create a LinkedList which makes replacing found words easy, and also lowercase all scanned words in this step
         LinkedList<String> lowercasedScannedWords = new LinkedList<>();
-        for (String w : bodyInfoWords) {
-            lowercasedScannedWords.add(w.toLowerCase());
+        for (MatchGroup w : bodyInfoWords) {
+            lowercasedScannedWords.add(w.getText().toLowerCase());
         }
 
         // Search the start indexes of labels, also replacing the found words with NULL entries
         int indexEarthMasses = indexOfWords(lowercasedScannedWords, "earth", "masses:", "earth masses:");
+        if (indexEarthMasses < lowercasedScannedWords.size()) {
+            // Clear everything before earth masses
+            for (int i = 0; i < indexEarthMasses; i++) {
+                lowercasedScannedWords.set(i, null);
+            }
+        }
         int indexRadius = indexOfWords(lowercasedScannedWords, "radius:");
         int indexGravity = indexOfWords(lowercasedScannedWords, "gravity:");
         int indexSurfaceTemp = indexOfWords(lowercasedScannedWords, "surface", "temp:", "surface temp:");
@@ -289,95 +317,51 @@ public class ScannedBodyInfo {
         Collections.sort(sortedIndexes);
 
         if (indexEarthMasses < lowercasedScannedWords.size()) {
-            String text = "";
             try {
-                int z = sortedIndexes.indexOf(indexEarthMasses) + 1;
-                int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-                for (int i = indexEarthMasses; i < nextIndex; i++) {
-                    if (lowercasedScannedWords.get(i) != null) {
-                        text += lowercasedScannedWords.set(i, null);
-                    }
-                }
-                scannedBodyInfo.setEarthMasses(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "")));
+                String value = valueForLabel(indexEarthMasses, "EARTHMASSES:", new EarthMassesFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setEarthMasses(new BigDecimal(value));
             } catch (NumberFormatException e) {
-                logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to earth masses");
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexRadius < lowercasedScannedWords.size()) {
-            String text = "";
             try {
-                int z = sortedIndexes.indexOf(indexRadius) + 1;
-                int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-                for (int i = indexRadius; i < nextIndex; i++) {
-                    if (lowercasedScannedWords.get(i) != null) {
-                        text += lowercasedScannedWords.set(i, null);
-                    }
-                }
-                scannedBodyInfo.setRadiusKm(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "").replace("k", "").replace("m", "")));
+                String value = valueForLabel(indexRadius, "RADIUS:", new RadiusFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setRadiusKm(new BigDecimal(value.replace(",", "").replace("KM", "")));
             } catch (NumberFormatException e) {
-                logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to radius");
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexGravity < lowercasedScannedWords.size()) {
-            String text = "";
             try {
-                int z = sortedIndexes.indexOf(indexGravity) + 1;
-                int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-                for (int i = indexGravity; i < nextIndex; i++) {
-                    if (lowercasedScannedWords.get(i) != null) {
-                        text += lowercasedScannedWords.set(i, null);
-                    }
-                }
-                scannedBodyInfo.setGravityG(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "").replace("g", "")));
+                String value = valueForLabel(indexGravity, "GRAVITY:", new GravityFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setGravityG(new BigDecimal(value.replace("G", "")));
             } catch (NumberFormatException e) {
-                logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to gravity");
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexSurfaceTemp < lowercasedScannedWords.size()) {
-            String text = "";
             try {
-                int z = sortedIndexes.indexOf(indexSurfaceTemp) + 1;
-                int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-                for (int i = indexSurfaceTemp; i < nextIndex; i++) {
-                    if (lowercasedScannedWords.get(i) != null) {
-                        text += lowercasedScannedWords.set(i, null);
-                    }
-                }
-                scannedBodyInfo.setSurfaceTempK(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "").replace("k", "")));
+                String value = valueForLabel(indexSurfaceTemp, "SURFACETEMP:", new SurfaceTempFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setSurfaceTempK(new BigDecimal(value.replace("K", "")));
             } catch (NumberFormatException e) {
-                logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to surface temp");
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexVolcanism < lowercasedScannedWords.size()) {
-            String text = "";
-            int z = sortedIndexes.indexOf(indexVolcanism) + 1;
-            int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-            for (int i = indexVolcanism; i < nextIndex; i++) {
-                if (lowercasedScannedWords.get(i) != null) {
-                    text += lowercasedScannedWords.set(i, null) + " ";
-                }
-            }
-            BodyInfo bodyInfo = BodyInfo.findBestMatching(text.trim());
-            if (bodyInfo == null) {
-                logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to volcanism");
-            } else {
-                scannedBodyInfo.setVolcanism(bodyInfo);
+            try {
+                String value = valueForLabel(indexVolcanism, "VOLCANISM:", new VolcanismFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setVolcanism(BodyInfo.findBestMatching(value));
+            } catch (NumberFormatException e) {
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexAtmosphereType < lowercasedScannedWords.size()) {
-            String text = "";
-            int z = sortedIndexes.indexOf(indexAtmosphereType) + 1;
-            int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-            for (int i = indexAtmosphereType; i < nextIndex; i++) {
-                if (lowercasedScannedWords.get(i) != null) {
-                    text += lowercasedScannedWords.set(i, null) + " ";
-                }
-            }
-            BodyInfo bodyInfo = BodyInfo.findBestMatching(text.trim());
-            if (bodyInfo == null) {
-                logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to atmosphere type");
-            } else {
-                scannedBodyInfo.setAtmosphereType(bodyInfo);
+            try {
+                String value = valueForLabel(indexAtmosphereType, "ATMOSPHERETYPE:", new AtmosphereTypeFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setAtmosphereType(BodyInfo.findBestMatching(value));
+            } catch (NumberFormatException e) {
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexComposition < lowercasedScannedWords.size()) {
@@ -418,105 +402,51 @@ public class ScannedBodyInfo {
             }
         }
         if (indexOrbitalPeriod < lowercasedScannedWords.size()) {
-            String text = "";
             try {
-                int z = sortedIndexes.indexOf(indexOrbitalPeriod) + 1;
-                int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-                for (int i = indexOrbitalPeriod; i < nextIndex; i++) {
-                    if (lowercasedScannedWords.get(i) != null) {
-                        text += lowercasedScannedWords.set(i, null);
-                    }
-                }
-                scannedBodyInfo.setOrbitalPeriodD(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "").replace("d", "")));
+                String value = valueForLabel(indexOrbitalPeriod, "ORBITALPERIOD:", new OrbitalPeriodFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setOrbitalPeriodD(new BigDecimal(value.replace("D", "")));
             } catch (NumberFormatException e) {
-                logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to orbital period");
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexSemiMajorAxis < lowercasedScannedWords.size()) {
-            String text = "";
             try {
-                int z = sortedIndexes.indexOf(indexSemiMajorAxis) + 1;
-                int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-                for (int i = indexSemiMajorAxis; i < nextIndex; i++) {
-                    if (lowercasedScannedWords.get(i) != null) {
-                        text += lowercasedScannedWords.set(i, null);
-                    }
-                }
-                scannedBodyInfo.setSemiMajorAxisAU(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "").replace("a", "").replace("u", "")));
+                String value = valueForLabel(indexSemiMajorAxis, "SEMIMAJORAXIS:", new SemiMajorAxisFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setSemiMajorAxisAU(new BigDecimal(value.replace("AU", "")));
             } catch (NumberFormatException e) {
-                logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to semi major axis");
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexOrbitalEccentricity < lowercasedScannedWords.size()) {
-            String text = "";
             try {
-                int z = sortedIndexes.indexOf(indexOrbitalEccentricity) + 1;
-                int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-                for (int i = indexOrbitalEccentricity; i < nextIndex; i++) {
-                    if (lowercasedScannedWords.get(i) != null) {
-                        text += lowercasedScannedWords.set(i, null);
-                    }
-                }
-                scannedBodyInfo.setOrbitalEccentricity(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "")));
+                String value = valueForLabel(indexOrbitalEccentricity, "ORBITALECCENTRICITY:", new OrbitalEccentricityFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setOrbitalEccentricity(new BigDecimal(value));
             } catch (NumberFormatException e) {
-                logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to orbital eccentricity");
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexOrbitalInclination < lowercasedScannedWords.size()) {
-            String text = "";
             try {
-                int z = sortedIndexes.indexOf(indexOrbitalInclination) + 1;
-                int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-                for (int i = indexOrbitalInclination; i < nextIndex; i++) {
-                    if (lowercasedScannedWords.get(i) != null) {
-                        text += lowercasedScannedWords.set(i, null);
-                    }
-                }
-                scannedBodyInfo.setOrbitalInclinationDeg(new BigDecimal(text.replace("o", "0").replace("b", "8").replace(",", "").replace("°", "")));
+                String value = valueForLabel(indexOrbitalInclination, "ORBITALINCLINATION:", new OrbitalInclinationFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setOrbitalInclinationDeg(new BigDecimal(value.replace("°", "")));
             } catch (NumberFormatException e) {
-                // Often orbital inclination and arg of periapsis are combined. Both have 2 decimal places, so try to split them.
-                // TODO Should be obsolete without line jitter.
-                if (text.replace("o", "0").replace("b", "8").replace("°", "").matches("\\-?\\d+\\.\\d{3,5}\\.\\d{2}")) {
-                    String textOrbitalInclination = text.substring(0, text.indexOf(".") + 3).replace("o", "0").replace("b", "8").replace("°", "");
-                    String textArgOfPeriapsis = text.substring(text.indexOf(".") + 3, text.length()).replace("o", "0").replace("b", "8").replace("°", "");
-                    scannedBodyInfo.setOrbitalInclinationDeg(new BigDecimal(textOrbitalInclination));
-                    scannedBodyInfo.setArgOfPeriapsisDeg(new BigDecimal(textArgOfPeriapsis));
-                } else {
-                    logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to orbital inclination");
-                }
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexArgOfPeriapsis < lowercasedScannedWords.size()) {
-            String text = "";
             try {
-                int z = sortedIndexes.indexOf(indexArgOfPeriapsis) + 1;
-                int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-                for (int i = indexArgOfPeriapsis; i < nextIndex; i++) {
-                    if (lowercasedScannedWords.get(i) != null) {
-                        text += lowercasedScannedWords.set(i, null);
-                    }
-                }
-                scannedBodyInfo.setArgOfPeriapsisDeg(new BigDecimal(text.replace("o", "0").replace("b", "8").replace("°", "")));
+                String value = valueForLabel(indexArgOfPeriapsis, "ARGOFPERIAPSIS:", new ArgOfPeriapsisFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setArgOfPeriapsisDeg(new BigDecimal(value.replace("°", "")));
             } catch (NumberFormatException e) {
-                // Maybe arg of periapsis has already been set by the above.
-                if (scannedBodyInfo.getArgOfPeriapsisDeg() == null) {
-                    logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to arg of periapsis");
-                }
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexRotationalPeriod < lowercasedScannedWords.size()) {
-            String text = "";
             try {
-                int z = sortedIndexes.indexOf(indexRotationalPeriod) + 1;
-                int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-                for (int i = indexRotationalPeriod; i < nextIndex; i++) {
-                    if (lowercasedScannedWords.get(i) != null) {
-                        text += lowercasedScannedWords.set(i, null);
-                    }
-                }
-                scannedBodyInfo.setRotationalPeriodD(new BigDecimal(text.replace("o", "0").replace("b", "8").replace("d", "")));
+                String value = valueForLabel(indexRotationalPeriod, "ROTATIONALPERIOD:", new RotationalPeriodFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setRotationalPeriodD(new BigDecimal(value.replace("D", "")));
             } catch (NumberFormatException e) {
-                logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to rotational period");
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexTidallyLocked < lowercasedScannedWords.size()) {
@@ -525,18 +455,11 @@ public class ScannedBodyInfo {
             scannedBodyInfo.setTidallyLocked(false); // If we have info about the rotational period, but the text "(tidally locked)" is missing, then it is not locked
         }
         if (indexAxialTilt < lowercasedScannedWords.size()) {
-            String text = "";
             try {
-                int z = sortedIndexes.indexOf(indexAxialTilt) + 1;
-                int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
-                for (int i = indexAxialTilt; i < nextIndex; i++) {
-                    if (lowercasedScannedWords.get(i) != null) {
-                        text += lowercasedScannedWords.set(i, null);
-                    }
-                }
-                scannedBodyInfo.setAxialTiltDeg(new BigDecimal(text.replace("o", "0").replace("b", "8").replace("°", "")));
+                String value = valueForLabel(indexAxialTilt, "AXIALTILT:", new AxialTiltFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                scannedBodyInfo.setAxialTiltDeg(new BigDecimal(value.replace("°", "")));
             } catch (NumberFormatException e) {
-                logger.warn(screenshotFilename + ": Cannot parse '" + text + "' to axial tilt");
+                logger.warn(screenshotFilename + ": " + e.getMessage());
             }
         }
         if (indexPlanetMaterials < lowercasedScannedWords.size()) {
@@ -575,15 +498,69 @@ public class ScannedBodyInfo {
             }
         }
 
-        // TODO debug code from here
-        //        System.out.println(scannedBodyInfo);
-        //        for (String w : lowercasedScannedWords) {
-        //            if (w != null && w.trim().length() > 1) {
-        //                System.out.println("*** UNKNOWN ***: '" + w + "'");
-        //            }
-        //        }
-
         return scannedBodyInfo;
+    }
+
+    private static String valueForLabel(int labelStartIndex, String correctLabel, ValueFixer valueFixer, List<MatchGroup> bodyInfoWords, LinkedList<String> lowercasedScannedWords, List<Integer> sortedIndexes) {
+        String value = "";
+        int z = sortedIndexes.indexOf(labelStartIndex) + 1;
+        int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
+        List<Integer> labelIndexes = new ArrayList<>();
+        List<Integer> valueIndexes = new ArrayList<>();
+        for (int i = labelStartIndex; i < nextIndex; i++) {
+            if (lowercasedScannedWords.get(i) != null) {
+                value += lowercasedScannedWords.set(i, null);
+                valueIndexes.add(i);
+            } else {
+                labelIndexes.add(i);
+            }
+        }
+        // START auto-learn
+        String correctLabelRemaining = correctLabel;
+        for (int idx : labelIndexes) {
+            MatchGroup mg = bodyInfoWords.get(idx);
+            for (TemplateMatch m : mg.getGroupMatches()) {
+                if (!correctLabelRemaining.startsWith(m.getTemplate().getText())) {
+                    String shouldHaveBeen = correctLabelRemaining.substring(0, m.getTemplate().getText().length());
+                    correctLabelRemaining = correctLabelRemaining.substring(m.getTemplate().getText().length());
+                    File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
+                    autoLearnFolder.mkdirs();
+                    try {
+                        ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
+                        logger.info("Learned new '" + shouldHaveBeen + "'");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    correctLabelRemaining = correctLabelRemaining.substring(m.getTemplate().getText().length());
+                }
+            }
+        }
+        String correctValue = valueFixer.fixValue(value);
+        if (!valueFixer.seemsPlausible(correctValue)) {
+            throw new NumberFormatException(value + " does not seem plausible for " + correctLabel.replace(":", ""));
+        } else {
+            for (int idx : valueIndexes) {
+                MatchGroup mg = bodyInfoWords.get(idx);
+                for (TemplateMatch m : mg.getGroupMatches()) {
+                    if (!correctValue.startsWith(m.getTemplate().getText())) {
+                        String shouldHaveBeen = correctValue.substring(0, m.getTemplate().getText().length());
+                        correctValue = correctValue.substring(m.getTemplate().getText().length());
+                        File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
+                        autoLearnFolder.mkdirs();
+                        try {
+                            ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
+                            logger.info("Learned new '" + shouldHaveBeen + "'");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        correctValue = correctValue.substring(m.getTemplate().getText().length());
+                    }
+                }
+            }
+        }
+        return valueFixer.fixValue(value);
     }
 
     private static boolean looksLikeDistanceLs(String word) {

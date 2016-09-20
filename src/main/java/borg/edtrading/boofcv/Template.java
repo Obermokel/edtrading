@@ -16,13 +16,11 @@ public class Template {
     private String text = null;
     private GrayF32 image = null;
     private GrayF32 mask = null;
-    private boolean special = false;
 
-    public Template(String text, GrayF32 image, GrayF32 mask, boolean special) {
+    public Template(String text, GrayF32 image, GrayF32 mask) {
         this.setText(text);
         this.setImage(image);
         this.setMask(mask);
-        this.setSpecial(special);
     }
 
     @Override
@@ -52,14 +50,6 @@ public class Template {
 
     public void setMask(GrayF32 mask) {
         this.mask = mask;
-    }
-
-    public boolean isSpecial() {
-        return this.special;
-    }
-
-    public void setSpecial(boolean special) {
-        this.special = special;
     }
 
 }

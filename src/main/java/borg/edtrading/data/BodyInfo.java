@@ -34,7 +34,7 @@ public enum BodyInfo {
 
     VOLCANISM_NO_VOLCANISM("NO VOLCANISM"),
     VOLCANISM_AMMONIA_MAGMA("AMMONIA MAGMA"),
-    VOLCANISM_CARBON_DIOXIDE_GEYSER("CARBON DIOXIDE GEYSER"),
+    VOLCANISM_CARBON_DIOXIDE_GEYSERS("CARBON DIOXIDE GEYSERS"),
     VOLCANISM_IRON_MAGMA("IRON MAGMA"),
     VOLCANISM_METHANE_MAGMA("METHANE MAGMA"),
     VOLCANISM_NITROGEN_MAGMA("NITROGEN MAGMA"),
@@ -56,8 +56,8 @@ public enum BodyInfo {
         BodyInfo bestBodyInfo = null;
         float bestBodyInfoError = Float.MAX_VALUE;
         for (BodyInfo bodyInfo : BodyInfo.values()) {
-            float dist = StringUtils.getLevenshteinDistance(name.toLowerCase(), bodyInfo.getName().toLowerCase());
-            float len = bodyInfo.getName().length();
+            float dist = StringUtils.getLevenshteinDistance(name.toLowerCase().replaceAll("\\s", ""), bodyInfo.getName().toLowerCase().replaceAll("\\s", ""));
+            float len = bodyInfo.getName().replaceAll("\\s", "").length();
             float err = dist / len;
             if (err <= 0.25f) {
                 if (err < bestBodyInfoError) {

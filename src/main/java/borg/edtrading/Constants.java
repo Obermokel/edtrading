@@ -26,6 +26,7 @@ public interface Constants {
      */
     File EDTRADING_BASE_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\edtrading");
     File TEMPLATES_DIR = new File(EDTRADING_BASE_DIR, "Templates");
+    File AUTO_LEARNED_DIR = new File(TEMP_DIR, "Auto-Learned");
     File INVENTORY_SCREENSHOTS_DIR = new File(EDTRADING_BASE_DIR, "Inventory Screenshots");
 
     File RARES_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\edrares.csv");

@@ -47,50 +47,15 @@ public class TemplateMatcher {
                     }
                 });
                 for (File pngFile : pngFiles) {
-                    String text = subDir.getName();
-                    boolean special = false;
-                    if (subDir.getName().endsWith("_")) {
-                        text = text.substring(0, text.length() - 1).toLowerCase();
-                    } else if ("_punkt".equals(subDir.getName())) {
-                        text = ".";
-                    } else if ("_komma".equals(subDir.getName())) {
-                        text = ",";
-                    } else if ("_apostroph".equals(subDir.getName())) {
-                        text = "'";
-                    } else if ("_mikro".equals(subDir.getName())) {
-                        text = "µ";
-                    } else if ("_prozent".equals(subDir.getName())) {
-                        text = "%";
-                    } else if ("_strich".equals(subDir.getName())) {
-                        text = "-";
-                    } else if ("_doppelpunkt".equals(subDir.getName())) {
-                        text = ":";
-                    } else if ("_klammer_auf".equals(subDir.getName())) {
-                        text = "(";
-                    } else if ("_klammer_zu".equals(subDir.getName())) {
-                        text = ")";
-                    } else if ("_grad".equals(subDir.getName())) {
-                        text = "°";
-                    } else if ("_hoch".equals(subDir.getName())) {
-                        text = "^3";
-                    } else if ("_mittel".equals(subDir.getName())) {
-                        text = "^2";
-                    } else if ("_niedrig".equals(subDir.getName())) {
-                        text = "^1";
-                    } else if ("_space".equals(subDir.getName())) {
-                        text = "";
-                        continue; // FIXME
-                    } else if ("__border".equals(subDir.getName())) {
-                        text = pngFile.getName().replace(".png", "").replaceAll("\\d", "");
-                        special = true;
-                    }
+                    String folder = subDir.getName();
+                    String text = folderToText(folder);
                     GrayF32 image = UtilImageIO.loadImage(pngFile.getAbsolutePath(), GrayF32.class);
                     GrayF32 mask = null;
                     File maskFile = new File(pngFile.getParentFile(), pngFile.getName().replace(".png", "_mask.png"));
                     if (maskFile.exists()) {
                         mask = UtilImageIO.loadImage(maskFile.getAbsolutePath(), GrayF32.class);
                     }
-                    result.add(new Template(text, image, mask, special));
+                    result.add(new Template(text, image, mask));
                 }
             }
         }
@@ -114,7 +79,7 @@ public class TemplateMatcher {
             List<TemplateMatch> result = new ArrayList<>(maxMatches);
             for (Match match : matcher.getResults().toList()) {
                 //if (match.score < maxScore) {
-                result.add(new TemplateMatch(template, match));
+                result.add(new TemplateMatch(template, match, null));
                 //}
             }
 
@@ -148,7 +113,7 @@ public class TemplateMatcher {
                     double errorPerPixel = error / pixels;
                     if (errorPerPixel < bestErrorPerPixel) {
                         bestErrorPerPixel = errorPerPixel;
-                        bestMatch = new TemplateMatch(template, new Match(xWithinImage, yWithinImage, -1 * errorPerPixel));
+                        bestMatch = new TemplateMatch(template, new Match(xWithinImage, yWithinImage, -1 * errorPerPixel), image);
                     }
                 }
             }
@@ -158,6 +123,62 @@ public class TemplateMatcher {
             logger.error("Failed to find best match in BufferedImage", e);
             return null;
         }
+    }
+
+    public static String folderToText(String folder) {
+        String text = folder;
+        if (folder.endsWith("_")) {
+            text = text.substring(0, text.length() - 1).toLowerCase();
+        } else if ("_punkt".equals(folder)) {
+            text = ".";
+        } else if ("_komma".equals(folder)) {
+            text = ",";
+        } else if ("_apostroph".equals(folder)) {
+            text = "'";
+        } else if ("_mikro".equals(folder)) {
+            text = "µ";
+        } else if ("_prozent".equals(folder)) {
+            text = "%";
+        } else if ("_strich".equals(folder)) {
+            text = "-";
+        } else if ("_doppelpunkt".equals(folder)) {
+            text = ":";
+        } else if ("_klammer_auf".equals(folder)) {
+            text = "(";
+        } else if ("_klammer_zu".equals(folder)) {
+            text = ")";
+        } else if ("_grad".equals(folder)) {
+            text = "°";
+        }
+        return text;
+    }
+
+    public static String textToFolder(String text) {
+        String folder = text;
+        if (text.matches("[a-z]+")) {
+            folder = folder + "_";
+        } else if (".".equals(text)) {
+            folder = "_punkt";
+        } else if (",".equals(text)) {
+            folder = "_komma";
+        } else if ("'".equals(text)) {
+            folder = "_apostroph";
+        } else if ("µ".equals(text)) {
+            folder = "_mikro";
+        } else if ("%".equals(text)) {
+            folder = "_prozent";
+        } else if ("-".equals(text)) {
+            folder = "_strich";
+        } else if (":".equals(text)) {
+            folder = "_doppelpunkt";
+        } else if ("(".equals(text)) {
+            folder = "_klammer_auf";
+        } else if (")".equals(text)) {
+            folder = "_klammer_zu";
+        } else if ("°".equals(text)) {
+            folder = "_grad";
+        }
+        return folder;
     }
 
 }

@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Locale;
 
@@ -19,10 +20,12 @@ public class TemplateMatch {
 
     private Template template = null;
     private Match match = null;
+    private BufferedImage subimage = null;
 
-    public TemplateMatch(Template template, Match match) {
+    public TemplateMatch(Template template, Match match, BufferedImage subimage) {
         this.setTemplate(template);
         this.setMatch(match);
+        this.setSubimage(subimage);
     }
 
     @Override
@@ -102,6 +105,14 @@ public class TemplateMatch {
 
     public void setMatch(Match match) {
         this.match = match;
+    }
+
+    public BufferedImage getSubimage() {
+        return this.subimage;
+    }
+
+    public void setSubimage(BufferedImage subimage) {
+        this.subimage = subimage;
     }
 
 }
