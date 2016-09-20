@@ -281,7 +281,7 @@ public abstract class CharacterFinder {
         ImageMiscOps.fill(grayF32, 0);
         for (Rectangle r : medianBoxes) {
             int expandedWidth = 4 * r.width;
-            int movedLeft = Math.max(1, r.x - r.width);
+            int movedLeft = Math.max(1, Math.round(r.x - 1.2f * r.width));
             ImageMiscOps.fillRectangle(grayF32, 1, movedLeft, r.y, expandedWidth, r.height);
         }
         //ImageIO.write(VisualizeImageData.grayMagnitude(grayF32, null, -1), "PNG", new File(Constants.TEMP_DIR, "CharacterFinder 02ab Lines.png"));

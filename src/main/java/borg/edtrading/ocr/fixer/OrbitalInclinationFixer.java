@@ -19,7 +19,7 @@ public class OrbitalInclinationFixer implements ValueFixer {
 
     @Override
     public boolean seemsPlausible(String fixedValue) {
-        return fixedValue.matches("\\-?\\d\\.\\d{2}°?"); // min -9.99°, max 9.99°, always two decimal places, ° optional
+        return fixedValue.matches("\\-?\\d{1,2}\\.\\d{2}°?"); // min -99.99°, max 99.99°, always two decimal places, ° optional
     }
 
 }
