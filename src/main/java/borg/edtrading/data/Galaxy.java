@@ -5,6 +5,7 @@ import borg.edtrading.json.BooleanDigitDeserializer;
 import borg.edtrading.json.SecondsSinceEpochDeserializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -12,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -32,6 +34,7 @@ public class Galaxy {
     //    private final List<Rare> rares;
     //    private final Map<Long, Commodity> commoditiesById;
     private final Map<Long, StarSystem> starSystemsById;
+    private final Map<Long, Body> bodiesById;
     //    private final Map<Long, Station> stationsById;
     //    private final Map<Long, List<Station>> stationsByStarSystemId;
     //    private final Map<Long, List<MarketEntry>> marketEntriesByStationId;
@@ -44,8 +47,9 @@ public class Galaxy {
     //        this.stationsByStarSystemId = Collections.unmodifiableMap(stationsById.values().stream().collect(Collectors.groupingBy(Station::getStarSystemId)));
     //        this.marketEntriesByStationId = Collections.unmodifiableMap(marketEntriesByStationId);
     //    }
-    private Galaxy(Map<Long, StarSystem> starSystemsById) {
+    private Galaxy(Map<Long, StarSystem> starSystemsById, Map<Long, Body> bodiesById) {
         this.starSystemsById = Collections.unmodifiableMap(starSystemsById);
+        this.bodiesById = Collections.unmodifiableMap(bodiesById);
     }
 
     public static Galaxy readDataFromFiles() throws IOException {
@@ -57,6 +61,7 @@ public class Galaxy {
         //        List<Rare> rares = readRares();
         //        Map<Long, Commodity> commoditiesById = readCommodities(gson);
         Map<Long, StarSystem> starSystemsById = readStarSystems(gson);
+        Map<Long, Body> bodiesById = readBodies(gson, starSystemsById);
         //        Map<Long, Station> stationsById = readStations(gson, starSystemsById);
         //        Map<Long, List<MarketEntry>> marketEntriesByStationId = readMarketEntries(stationsById, commoditiesById);
         //        setSoldRaresForStations(rares, commoditiesById.values(), starSystemsById.values(), stationsByStarSystemId);
@@ -64,7 +69,7 @@ public class Galaxy {
         logger.info("Loaded data in " + (end - start) + " ms");
 
         //        return new Galaxy(rares, commoditiesById, starSystemsById, stationsById, marketEntriesByStationId);
-        return new Galaxy(starSystemsById);
+        return new Galaxy(starSystemsById, bodiesById);
     }
 
     //    private static List<Rare> readRares() throws IOException {
@@ -93,6 +98,15 @@ public class Galaxy {
             List<StarSystem> starSystems = Arrays.asList(gson.fromJson(reader, StarSystem[].class));
             starSystems.forEach(o -> o.setCoord(new Coord(o.getX(), o.getY(), o.getZ())));
             return starSystems.stream().collect(Collectors.toMap(StarSystem::getId, Function.identity()));
+        }
+    }
+
+    private static Map<Long, Body> readBodies(Gson gson, Map<Long, StarSystem> starSystems) throws IOException {
+        logger.debug("Loading bodies...");
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.BODIES_FILE), "UTF-8"))) {
+            List<Body> bodies = Arrays.asList(gson.fromJson(reader, Body[].class));
+            bodies.forEach(b -> b.setStarSystem(starSystems.get(b.getStarSystemId())));
+            return bodies.stream().collect(Collectors.toMap(Body::getId, Function.identity()));
         }
     }
 
@@ -129,6 +143,10 @@ public class Galaxy {
         return this.starSystemsById;
     }
 
+    public Map<Long, Body> getBodiesById() {
+        return this.bodiesById;
+    }
+
     //    public Map<Long, Station> getStationsById() {
     //        return this.stationsById;
     //    }
@@ -140,5 +158,31 @@ public class Galaxy {
     //    public Map<Long, List<MarketEntry>> getMarketEntriesByStationId() {
     //        return this.marketEntriesByStationId;
     //    }
+
+    public StarSystem searchStarSystemByExactName(String name) {
+        if (StringUtils.isNotEmpty(name)) {
+            for (StarSystem s : this.starSystemsById.values()) {
+                if (name.equals(s.getName())) {
+                    return s;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public List<Body> searchBodiesOfStarSystem(Long starSystemId) {
+        List<Body> result = new ArrayList<>();
+
+        if (starSystemId != null) {
+            for (Body b : this.bodiesById.values()) {
+                if (starSystemId.equals(b.getStarSystemId())) {
+                    result.add(b);
+                }
+            }
+        }
+
+        return result;
+    }
 
 }

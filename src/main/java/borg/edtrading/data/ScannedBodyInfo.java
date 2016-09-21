@@ -65,8 +65,8 @@ public class ScannedBodyInfo {
     private BigDecimal orbitalPeriodD = null;
     private BigDecimal semiMajorAxisAU = null;
     private BigDecimal orbitalEccentricity = null;
-    private BigDecimal orbitalInclinationDeg = null; // TODO unit?
-    private BigDecimal argOfPeriapsisDeg = null; // TODO unit?
+    private BigDecimal orbitalInclinationDeg = null;
+    private BigDecimal argOfPeriapsisDeg = null;
     private BigDecimal rotationalPeriodD = null;
     private Boolean tidallyLocked = null;
     private BigDecimal axialTiltDeg = null;

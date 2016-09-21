@@ -3,12 +3,13 @@ package borg.edtrading;
 import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
-import borg.edtrading.data.ScannedBodyInfo;
+import borg.edtrading.data.Body;
+import borg.edtrading.data.Galaxy;
+import borg.edtrading.data.StarSystem;
 import borg.edtrading.ocr.CharacterFinder;
 import borg.edtrading.ocr.ScreenshotCropper;
 import borg.edtrading.ocr.ScreenshotPreprocessor;
 import borg.edtrading.util.ImageUtil;
-import borg.edtrading.util.MatchSorter.MatchGroup;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,41 +41,53 @@ public class Mats2 {
 
     public static void main(String[] args) throws IOException {
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
+        Galaxy galaxy = Galaxy.readDataFromFiles();
         //testAllImages();
 
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
 
-        File sourceFile = selectRandomScreenshot();
+        //File sourceFile = selectRandomScreenshot();
         //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_4k_\\2016-09-16 14-33-32 Obotrima.png");
-        //for (File sourceFile : selectAllScreenshots()) {
-        logger.info("Testing " + sourceFile.getName());
-        String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
-        BufferedImage originalImage = ImageIO.read(sourceFile);
-        BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
-        BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
-        bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
-        ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
-        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
-        ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
-        BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
-        bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
-        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
-        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
-        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+        for (File sourceFile : selectAllScreenshots()) {
+            logger.info("Testing " + sourceFile.getName());
+            String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
+            StarSystem starSystem = galaxy.searchStarSystemByExactName(systemName);
+            if (starSystem == null) {
+                logger.debug("Did not find system '" + systemName + "'");
+            } else {
+                logger.debug("Found system: " + starSystem);
+                List<Body> bodies = galaxy.searchBodiesOfStarSystem(starSystem.getId());
+                logger.debug("Found " + bodies.size() + " bodies");
+                for (Body b : bodies) {
+                    logger.debug("    " + b);
+                }
+            }
+            BufferedImage originalImage = ImageIO.read(sourceFile);
+            BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
+            BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
+            bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
+            ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
+            BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
+            ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
+            BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
+            bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
+            ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
+            BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
+            ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
-        //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
-        //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
+            //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
+            //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
 
-        List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
-        List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
-        ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
-        System.out.println(scannedBodyInfo);
+            //            List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
+            //            List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
+            //            ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
+            //            System.out.println(scannedBodyInfo);
 
-        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
-        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
+            //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
+            //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
 
-        //templates = copyLearnedChars();
-        //}
+            //templates = copyLearnedChars();
+        }
     }
 
     private static List<Template> copyLearnedChars() throws IOException {
