@@ -44,8 +44,8 @@ public class Mats2 {
 
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
 
-        //File sourceFile = selectRandomScreenshot();
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-09-16 14-33-32 Obotrima.png");
+        File sourceFile = selectRandomScreenshot();
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_4k_\\2016-09-16 14-33-32 Obotrima.png");
         //for (File sourceFile : selectAllScreenshots()) {
         logger.info("Testing " + sourceFile.getName());
         String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
@@ -164,7 +164,7 @@ public class Mats2 {
     }
 
     private static File selectRandomScreenshot() {
-        File dir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
+        File dir = new File(Constants.SURFACE_MATS_DIR, "_4k_");
         File[] files = dir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File f) {
@@ -176,7 +176,7 @@ public class Mats2 {
     }
 
     private static File[] selectAllScreenshots() {
-        File dir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
+        File dir = new File(Constants.SURFACE_MATS_DIR, "_4k_");
         File[] files = dir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File f) {
@@ -195,7 +195,7 @@ public class Mats2 {
 
     private static void testAllImages() throws IOException {
         List<Template> templates = TemplateMatcher.loadTemplates("Body Name");
-        File dir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
+        File dir = new File(Constants.SURFACE_MATS_DIR, "_4k_");
         File[] files = dir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File f) {
