@@ -186,6 +186,7 @@ public class ScannedBodyInfo {
                 }
             }
             String bodyTypeText = sb.toString().trim();
+            bodyTypeText = bodyTypeText.replace("ocly", "ody"); // d broken into c and l
             bodyType = BodyInfo.findBestMatching(bodyTypeText);
             if (bodyType == null) {
                 logger.warn(screenshotFilename + ": Cannot parse '" + bodyTypeText + "' to body type");

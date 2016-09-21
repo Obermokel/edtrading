@@ -19,7 +19,7 @@ public class AxialTiltFixer implements ValueFixer {
 
     @Override
     public boolean seemsPlausible(String fixedValue) {
-        return fixedValue.matches("\\-?\\d{1,2}\\.\\d{2}°?"); // min -99.99°, max 99.99°, always two decimal places, ° optional
+        return fixedValue.matches("\\-?\\d{1,3}\\.\\d{2}°?"); // min -999.99°, max 999.99°, always two decimal places, ° optional
     }
 
 }
