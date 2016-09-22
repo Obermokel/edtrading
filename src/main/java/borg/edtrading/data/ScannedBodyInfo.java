@@ -525,8 +525,12 @@ public class ScannedBodyInfo {
             }
         }
         if (indexTidallyLocked < lowercasedScannedWords.size()) {
-            scannedBodyInfo.setTidallyLocked(true);
-            valueForLabel(indexTidallyLocked, "(TIDALLYLOCKED)", new TidallyLockedFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+            try {
+                scannedBodyInfo.setTidallyLocked(true);
+                valueForLabel(indexTidallyLocked, "(TIDALLYLOCKED)", new TidallyLockedFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+            } catch (NumberFormatException e) {
+                logger.warn(screenshotFilename + ": " + e.getMessage());
+            }
         } else if (indexRotationalPeriod < lowercasedScannedWords.size()) {
             scannedBodyInfo.setTidallyLocked(false); // If we have info about the rotational period, but the text "(tidally locked)" is missing, then it is not locked
         }
