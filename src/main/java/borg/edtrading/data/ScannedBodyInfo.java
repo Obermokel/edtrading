@@ -27,12 +27,16 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -199,7 +203,8 @@ public class ScannedBodyInfo {
             logger.debug(screenshotFilename + ": Did not find body on EDDB: " + bodyName);
         } else {
             logger.debug(screenshotFilename + ": Found body on EDDB: " + eddbBody);
-            // TODO: Auto-learn name, distance and type
+            Double scannedArrivalFraction = distanceLs == null ? null : (distanceLs.doubleValue() - distanceLs.longValue());
+            autoLearnBody(eddbBody, scannedArrivalFraction, bodyNameWords, indexArrivalPoint);
         }
 
         ScannedBodyInfo scannedBodyInfo = new ScannedBodyInfo(screenshotFilename, systemName, bodyName, bodyType, distanceLs);
@@ -724,7 +729,13 @@ public class ScannedBodyInfo {
             }
         }
 
-        return exactMatch != null ? exactMatch : bestMatch;
+        if (exactMatch != null) {
+            return exactMatch;
+        } else if (bestMatch != null) {
+            return bestMatch;
+        } else {
+            return null;
+        }
     }
 
     private static String valueForLabel(int labelStartIndex, String correctLabel, ValueFixer valueFixer, List<MatchGroup> bodyInfoWords, LinkedList<String> lowercasedScannedWords, List<Integer> sortedIndexes) {
@@ -800,6 +811,50 @@ public class ScannedBodyInfo {
             }
         }
         return valueFixer.fixValue(value);
+    }
+
+    private static void autoLearnBody(Body eddbBody, Double scannedArrivalFraction, List<MatchGroup> bodyNameWords, int indexArrivalPoint) {
+        try {
+            if (eddbBody.getName() != null && eddbBody.getName().length() > 0) {
+                learnText(eddbBody.getName().replaceAll("\\s", ""), bodyNameWords.subList(0, indexArrivalPoint));
+            }
+            learnText("ARRIVAL", Arrays.asList(bodyNameWords.get(indexArrivalPoint)));
+            learnText("POINT:", Arrays.asList(bodyNameWords.get(indexArrivalPoint + 1)));
+            if (eddbBody.getDistance_to_arrival() != null && eddbBody.getDistance_to_arrival() > 0.0 && scannedArrivalFraction != null) {
+                learnText(new DecimalFormat("#,##0.00LS", new DecimalFormatSymbols(Locale.US)).format(eddbBody.getDistance_to_arrival().doubleValue() + scannedArrivalFraction), Arrays.asList(bodyNameWords.get(indexArrivalPoint + 2)));
+            }
+            if (eddbBody.getTypeName() != null && eddbBody.getTypeName().length() > 0) {
+                learnText(eddbBody.getTypeName().replaceAll("\\s", ""), bodyNameWords.subList(indexArrivalPoint + 3, bodyNameWords.size()));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void learnText(final String correctText, List<MatchGroup> matchGroups) {
+        String correctValue = correctText;
+        for (MatchGroup mg : matchGroups) {
+            for (TemplateMatch m : mg.getGroupMatches()) {
+                if (!correctValue.startsWith(m.getTemplate().getText())) {
+                    try {
+                        String shouldHaveBeen = correctValue.substring(0, m.getTemplate().getText().length());
+                        correctValue = correctValue.substring(m.getTemplate().getText().length());
+                        File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
+                        autoLearnFolder.mkdirs();
+                        try {
+                            ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
+                            logger.info("Learned new '" + shouldHaveBeen + "'");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } catch (StringIndexOutOfBoundsException e) {
+                        // Ignore
+                    }
+                } else {
+                    correctValue = correctValue.substring(m.getTemplate().getText().length());
+                }
+            }
+        }
     }
 
     /**
