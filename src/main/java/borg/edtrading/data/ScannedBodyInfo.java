@@ -161,7 +161,7 @@ public class ScannedBodyInfo {
                 lowercasedScannedNameWords.set(i, null);
                 sb.append(bodyNameWords.get(i).getText()).append(" ");
             }
-            bodyName = sb.toString().trim();
+            bodyName = fixGeneratedBodyName(systemName, sb.toString().trim());
 
             // The first one after arrival point is the actual distance
             for (int i = indexArrivalPoint; i < lowercasedScannedNameWords.size(); i++) {
@@ -675,6 +675,24 @@ public class ScannedBodyInfo {
         }
 
         return scannedBodyInfo;
+    }
+
+    private static String fixGeneratedBodyName(final String systemName, final String scannedBodyName) {
+        if (StringUtils.isNotBlank(systemName) && StringUtils.isNotBlank(scannedBodyName)) {
+            String bodyNameWithoutDesignation = scannedBodyName.trim();
+            while (bodyNameWithoutDesignation.matches("^.+ [0-9]{1,2}$") || bodyNameWithoutDesignation.matches("^.+ [A-H]{1,4}$")) {
+                bodyNameWithoutDesignation = bodyNameWithoutDesignation.substring(0, bodyNameWithoutDesignation.lastIndexOf(" ")).trim();
+            }
+            float dist = StringUtils.getLevenshteinDistance(systemName.toLowerCase(), bodyNameWithoutDesignation.toLowerCase());
+            float err = dist / systemName.length();
+            if (err <= 0.25f) {
+                String designationOnly = scannedBodyName.replace(bodyNameWithoutDesignation, "").trim();
+                String fixedName = (systemName + " " + designationOnly).trim().toUpperCase();
+                logger.info("Fixed '" + scannedBodyName + "' to '" + fixedName + "'");
+                return fixedName;
+            }
+        }
+        return scannedBodyName;
     }
 
     private static Body lookupEddbBody(List<Body> eddbBodies, String bodyName, BigDecimal distanceLs, BodyInfo bodyType) {
