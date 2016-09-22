@@ -60,7 +60,7 @@ public class FittingTest {
     static final Logger logger = LogManager.getLogger(FittingTest.class);
 
     public static void main(String[] args) throws Exception {
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-08-31 21-52-21 HIP 11131.png");
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_4k_\\2016-08-31 21-52-21 HIP 11131.png");
         Map<String, CharDescription> referenceDescriptions = readReferenceDescriptions(new File(Constants.EDTRADING_BASE_DIR, "Feature Refs"));
 
         BufferedImage originalImage = ImageIO.read(sourceFile);

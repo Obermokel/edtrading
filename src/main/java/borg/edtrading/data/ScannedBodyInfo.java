@@ -27,8 +27,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,7 +34,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -695,7 +692,7 @@ public class ScannedBodyInfo {
     private static String fixGeneratedBodyName(final String systemName, final String scannedBodyName) {
         if (StringUtils.isNotBlank(systemName) && StringUtils.isNotBlank(scannedBodyName)) {
             String bodyNameWithoutDesignation = scannedBodyName.trim();
-            while (bodyNameWithoutDesignation.matches("^.+ [0-9]{1,2}$") || bodyNameWithoutDesignation.matches("^.+ [A-H]{1,4}$")) {
+            while (bodyNameWithoutDesignation.matches("^.+ [0-9OS]{1,2}$") || bodyNameWithoutDesignation.matches("^.+ [A-J]{1,4}$")) {
                 bodyNameWithoutDesignation = bodyNameWithoutDesignation.substring(0, bodyNameWithoutDesignation.lastIndexOf(" ")).trim();
             }
             float dist = StringUtils.getLevenshteinDistance(systemName.toLowerCase(), bodyNameWithoutDesignation.toLowerCase());
@@ -716,45 +713,97 @@ public class ScannedBodyInfo {
     private static String fixDesignation(String scannedDesignation) {
         if (StringUtils.isNotBlank(scannedDesignation)) {
             String[] parts = scannedDesignation.split("\\s");
-            int votesForStartsWithDigits = 0;
-            int votesForStartsWithLetters = 0;
+            int votesForEvenIndexMustBeDigits = 0;
+            int votesForEvenIndexMustBeLetters = 0;
             for (int i = 0; i < parts.length; i++) {
                 if (parts[i].replace("O", "0").replace("S", "5").matches("\\d+")) {
-                    // Digits only
+                    // Digits only (assuming O and S cannot occur)
                     if (i % 2 == 0) {
-                        votesForStartsWithDigits++;
+                        votesForEvenIndexMustBeDigits++;
                     } else {
-                        votesForStartsWithLetters++;
+                        votesForEvenIndexMustBeLetters++;
                     }
-                } else if (parts[i].replace("0", "D").replace("8", "B").matches("[A-H]+")) {
+                } else if (parts[i].matches("[A-J]+")) {
                     // Letters only
                     if (i % 2 == 0) {
-                        votesForStartsWithLetters++;
+                        votesForEvenIndexMustBeLetters++;
                     } else {
-                        votesForStartsWithDigits++;
+                        votesForEvenIndexMustBeDigits++;
                     }
                 }
             }
-            boolean startsWithDigits = votesForStartsWithDigits > votesForStartsWithLetters;
+            boolean evenIndexMustBeDigits = votesForEvenIndexMustBeDigits > votesForEvenIndexMustBeLetters;
             String fixedDesignation = "";
             for (int i = 0; i < parts.length; i++) {
-                if (startsWithDigits) {
+                if (evenIndexMustBeDigits) {
                     if (i % 2 == 0) {
-                        fixedDesignation += (" " + parts[i].replace("O", "0").replace("S", "5").replace("B", "8"));
+                        // Even indexes must be digits, and we have an even index => convert to digits
+                        // O,D,C to 0, S to 5, B to 8
+                        fixedDesignation += (" " + parts[i].replace("O", "0").replace("D", "0").replace("C", "0").replace("S", "5").replace("B", "8"));
                     } else {
+                        // Even indexes must be digits, but we have an odd index => convert to letters
+                        // 0 to D because it is likelier than C and O is too far in the alphabet. 8 to B obviously.
                         fixedDesignation += (" " + parts[i].replace("0", "D").replace("8", "B"));
                     }
                 } else {
                     if (i % 2 == 0) {
+                        // Even indexes must not be digits, but we have an even index => convert to letters
+                        // 0 to D because it is likelier than C and O is too far in the alphabet. 8 to B obviously.
                         fixedDesignation += (" " + parts[i].replace("0", "D").replace("8", "B"));
                     } else {
-                        fixedDesignation += (" " + parts[i].replace("O", "0").replace("S", "5").replace("B", "8"));
+                        // Even indexes must not be digits, but we have an odd index => convert to digits
+                        // O,D,C to 0, S to 5, B to 8
+                        fixedDesignation += (" " + parts[i].replace("O", "0").replace("D", "0").replace("C", "0").replace("S", "5").replace("B", "8"));
                     }
                 }
             }
             fixedDesignation = fixedDesignation.trim();
+            // Now we should have blocks of plain digits and plain letters, no mixed ones
+            boolean hasMixed = false;
+            for (String s : fixedDesignation.split("\\s")) {
+                if (!s.matches("[0-9]+") && !s.matches("[A-J]+")) {
+                    logger.warn("Failed to fix '" + scannedDesignation + "' to '" + fixedDesignation + "' - trying the other way round");
+                    evenIndexMustBeDigits = !evenIndexMustBeDigits; // Try the other way round
+                    hasMixed = true;
+                    break;
+                }
+            }
+            if (hasMixed) {
+                fixedDesignation = "";
+                for (int i = 0; i < parts.length; i++) {
+                    if (evenIndexMustBeDigits) {
+                        if (i % 2 == 0) {
+                            // Even indexes must be digits, and we have an even index => convert to digits
+                            // O,D,C to 0, S to 5, B to 8
+                            fixedDesignation += (" " + parts[i].replace("O", "0").replace("D", "0").replace("C", "0").replace("S", "5").replace("B", "8"));
+                        } else {
+                            // Even indexes must be digits, but we have an odd index => convert to letters
+                            // 0 to D because it is likelier than C and O is too far in the alphabet. 8 to B obviously.
+                            fixedDesignation += (" " + parts[i].replace("0", "D").replace("8", "B"));
+                        }
+                    } else {
+                        if (i % 2 == 0) {
+                            // Even indexes must not be digits, but we have an even index => convert to letters
+                            // 0 to D because it is likelier than C and O is too far in the alphabet. 8 to B obviously.
+                            fixedDesignation += (" " + parts[i].replace("0", "D").replace("8", "B"));
+                        } else {
+                            // Even indexes must not be digits, but we have an odd index => convert to digits
+                            // O,D,C to 0, S to 5, B to 8
+                            fixedDesignation += (" " + parts[i].replace("O", "0").replace("D", "0").replace("C", "0").replace("S", "5").replace("B", "8"));
+                        }
+                    }
+                }
+                fixedDesignation = fixedDesignation.trim();
+                // Now we REALLY should have blocks of plain digits and plain letters, no mixed ones
+                for (String s : fixedDesignation.split("\\s")) {
+                    if (!s.matches("[0-9]+") && !s.matches("[A-J]+")) {
+                        logger.warn("Failed to fix '" + scannedDesignation + "' to '" + fixedDesignation + "' - using the scanned one");
+                        return scannedDesignation; // Use the scanned one instead of messing it up even more
+                    }
+                }
+            }
             if (!fixedDesignation.equals(scannedDesignation)) {
-                logger.info("Fixed '" + scannedDesignation + "' to '" + fixedDesignation + "' (" + votesForStartsWithDigits + ":" + votesForStartsWithLetters + " votes for start with digits)");
+                logger.info("Fixed '" + scannedDesignation + "' to '" + fixedDesignation + "' (" + votesForEvenIndexMustBeDigits + ":" + votesForEvenIndexMustBeLetters + " votes for start with digits)");
             }
             return fixedDesignation;
         }
@@ -912,9 +961,10 @@ public class ScannedBodyInfo {
             }
             learnText("ARRIVAL", Arrays.asList(bodyNameWords.get(indexArrivalPoint)));
             learnText("POINT:", Arrays.asList(bodyNameWords.get(indexArrivalPoint + 1)));
-            if (eddbBody.getDistance_to_arrival() != null && eddbBody.getDistance_to_arrival() > 0.0 && scannedArrivalFraction != null) {
-                learnText(new DecimalFormat("#,##0.00LS", new DecimalFormatSymbols(Locale.US)).format(eddbBody.getDistance_to_arrival().doubleValue() + scannedArrivalFraction), Arrays.asList(bodyNameWords.get(indexArrivalPoint + 2)));
-            }
+            // TODO Is distance buggy on EDDB? Other OCR users?
+            //            if (eddbBody.getDistance_to_arrival() != null && eddbBody.getDistance_to_arrival() > 0.0 && scannedArrivalFraction != null) {
+            //                learnText(new DecimalFormat("#,##0.00LS", new DecimalFormatSymbols(Locale.US)).format(eddbBody.getDistance_to_arrival().doubleValue() + scannedArrivalFraction), Arrays.asList(bodyNameWords.get(indexArrivalPoint + 2)));
+            //            }
             if (eddbBody.getTypeName() != null && eddbBody.getTypeName().length() > 0) {
                 learnText(eddbBody.getTypeName().replaceAll("\\s", ""), bodyNameWords.subList(indexArrivalPoint + 3, bodyNameWords.size()));
             }
