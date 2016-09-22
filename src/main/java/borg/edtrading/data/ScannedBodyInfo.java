@@ -461,7 +461,7 @@ public class ScannedBodyInfo {
                             for (TemplateMatch m : mg.getGroupMatches()) {
                                 String shouldHaveBeen = autoLearnText.substring(0, m.getTemplate().getText().length());
                                 autoLearnText = autoLearnText.substring(m.getTemplate().getText().length());
-                                if (!m.getTemplate().getText().equals(shouldHaveBeen)) {
+                                if (!m.getTemplate().getText().equals(shouldHaveBeen) && (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText()))) {
                                     File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
                                     autoLearnFolder.mkdirs();
                                     try {
@@ -655,7 +655,7 @@ public class ScannedBodyInfo {
                                 for (TemplateMatch m : mg.getGroupMatches()) {
                                     String shouldHaveBeen = autoLearnText.substring(0, m.getTemplate().getText().length());
                                     autoLearnText = autoLearnText.substring(m.getTemplate().getText().length());
-                                    if (!m.getTemplate().getText().equals(shouldHaveBeen)) {
+                                    if (!m.getTemplate().getText().equals(shouldHaveBeen) && (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText()))) {
                                         File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
                                         autoLearnFolder.mkdirs();
                                         try {
@@ -786,13 +786,15 @@ public class ScannedBodyInfo {
                     if (!correctLabelRemaining.startsWith(m.getTemplate().getText())) {
                         String shouldHaveBeen = correctLabelRemaining.substring(0, m.getTemplate().getText().length());
                         correctLabelRemaining = correctLabelRemaining.substring(m.getTemplate().getText().length());
-                        File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
-                        autoLearnFolder.mkdirs();
-                        try {
-                            ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
-                            logger.info("Learned new '" + shouldHaveBeen + "'");
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                        if (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText())) {
+                            File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
+                            autoLearnFolder.mkdirs();
+                            try {
+                                ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
+                                logger.info("Learned new '" + shouldHaveBeen + "'");
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     } else {
                         correctLabelRemaining = correctLabelRemaining.substring(m.getTemplate().getText().length());
@@ -811,13 +813,15 @@ public class ScannedBodyInfo {
                         try {
                             String shouldHaveBeen = correctValue.substring(0, m.getTemplate().getText().length());
                             correctValue = correctValue.substring(m.getTemplate().getText().length());
-                            File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
-                            autoLearnFolder.mkdirs();
-                            try {
-                                ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
-                                logger.info("Learned new '" + shouldHaveBeen + "'");
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                            if (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText())) {
+                                File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
+                                autoLearnFolder.mkdirs();
+                                try {
+                                    ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
+                                    logger.info("Learned new '" + shouldHaveBeen + "'");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
                             }
                         } catch (StringIndexOutOfBoundsException e) {
                             // Ignore
@@ -829,6 +833,10 @@ public class ScannedBodyInfo {
             }
         }
         return valueFixer.fixValue(value);
+    }
+
+    private static boolean is0vsO(String shouldHaveBeen, String actuallyIs) {
+        return ("0".equals(shouldHaveBeen) || "O".equals(shouldHaveBeen)) && ("0".equals(actuallyIs) || "O".equals(actuallyIs));
     }
 
     private static void autoLearnBody(Body eddbBody, Double scannedArrivalFraction, List<MatchGroup> bodyNameWords, int indexArrivalPoint) {
@@ -857,13 +865,15 @@ public class ScannedBodyInfo {
                     try {
                         String shouldHaveBeen = correctValue.substring(0, m.getTemplate().getText().length());
                         correctValue = correctValue.substring(m.getTemplate().getText().length());
-                        File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
-                        autoLearnFolder.mkdirs();
-                        try {
-                            ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
-                            logger.info("Learned new '" + shouldHaveBeen + "'");
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                        if (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText())) {
+                            File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
+                            autoLearnFolder.mkdirs();
+                            try {
+                                ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
+                                logger.info("Learned new '" + shouldHaveBeen + "'");
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     } catch (StringIndexOutOfBoundsException e) {
                         // Ignore

@@ -37,4 +37,10 @@ public interface Constants {
     File STATIONS_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\stations.json");
     File LISTINGS_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\listings.csv");
 
+    /**
+     * Auto-learn if a 0 has been detected as O or vice versa? Should usually be set to false.
+     * If set to false C, D or any other char detected as O or 0 will still be auto-learned.
+     */
+    boolean LEARN_0_VS_O = false;
+
 }
