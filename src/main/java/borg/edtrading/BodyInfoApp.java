@@ -148,7 +148,7 @@ public class BodyInfoApp {
         for (Rectangle r : characterLocations) {
             try {
                 BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
-                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, 123456);
+                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y);
                 if (bestMatch != null) {
                     matches.add(bestMatch);
                 }

@@ -122,7 +122,7 @@ public class Mats2 {
         for (Rectangle r : bodyInfoCharacterLocations) {
             try {
                 BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
-                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, 1000);
+                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y);
                 if (bestMatch != null) {
                     if (!bestMatch.getTemplate().getText().startsWith("_")) {
                         chars.append(bestMatch.getTemplate().getText());
@@ -155,7 +155,7 @@ public class Mats2 {
             try {
                 BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
                 ImageIO.write(charImage, "PNG", new File(unknownDir, String.format("%05d_%05d_%d.png", (r.y / 10) * 10, r.x, r.hashCode())));
-                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, 123456);
+                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y);
                 if (bestMatch != null) {
                     g.drawString(bestMatch.getTemplate().getText(), r.x, r.y + 18);
                     System.out.print(bestMatch.getTemplate().getText());
