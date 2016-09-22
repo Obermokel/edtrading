@@ -4,9 +4,12 @@ import borg.edtrading.SurfaceMatsApp.ScannedSurfaceMat;
 import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
+import borg.edtrading.data.Body;
+import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.PlausiCheckResult;
 import borg.edtrading.data.ScannedBodyInfo;
+import borg.edtrading.data.StarSystem;
 import borg.edtrading.eddb.BodyUpdater;
 import borg.edtrading.ocr.CharacterFinder;
 import borg.edtrading.ocr.ScreenshotCropper;
@@ -49,6 +52,7 @@ public class BodyInfoApp {
         final boolean doEddbUpdate = false;
 
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
+        Galaxy galaxy = Galaxy.readDataFromFiles();
         BodyUpdater bodyUpdater = doEddbUpdate ? new BodyUpdater("Mokel DeLorean", "jExx8sT") : null;
         try {
             List<Template> bodyInfoTemplates = TemplateMatcher.loadTemplates("Body Info");
@@ -62,6 +66,8 @@ public class BodyInfoApp {
 
                 // Extract system name from filename
                 String systemName = systemNameFromFilename(screenshotFile);
+                StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
+                List<Body> eddbBodies = eddbStarSystem == null ? Collections.emptyList() : galaxy.searchBodiesOfStarSystem(eddbStarSystem.getId());
 
                 // Darken and scale to 4k
                 BufferedImage originalImage = ImageIO.read(screenshotFile);
@@ -78,7 +84,7 @@ public class BodyInfoApp {
                 List<MatchGroup> bodyInfoWords = scanWords(bodyInfoImage, bodyInfoTemplates);
 
                 // Parse!
-                ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(screenshotFile.getName(), systemName, bodyNameWords, bodyInfoWords);
+                ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(screenshotFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
 
                 // Update!
                 if (doEddbUpdate) {
@@ -157,7 +163,7 @@ public class BodyInfoApp {
     }
 
     private static List<File> getScreenshotsFromAllDir() {
-        File allDir = new File(Constants.SURFACE_MATS_DIR, "_4k_");
+        File allDir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
         File[] screenshotFiles = allDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {

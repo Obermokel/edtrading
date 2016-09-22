@@ -7,6 +7,8 @@ package borg.edtrading.ocr.fixer;
  */
 public interface ValueFixer {
 
+    boolean ONLY_FIX_WITH_EDDB_DATA = true;
+
     /**
      * Must return the correct value, including case, but w/o whitespaces.
      * <br>

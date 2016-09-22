@@ -5,11 +5,13 @@ import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
 import borg.edtrading.data.Body;
 import borg.edtrading.data.Galaxy;
+import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.data.StarSystem;
 import borg.edtrading.ocr.CharacterFinder;
 import borg.edtrading.ocr.ScreenshotCropper;
 import borg.edtrading.ocr.ScreenshotPreprocessor;
 import borg.edtrading.util.ImageUtil;
+import borg.edtrading.util.MatchSorter.MatchGroup;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +26,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
@@ -47,46 +50,37 @@ public class Mats2 {
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
 
         //File sourceFile = selectRandomScreenshot();
-        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_4k_\\2016-09-16 14-33-32 Obotrima.png");
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_ALL_\\2016-09-16 14-33-32 Obotrima.png");
         for (File sourceFile : selectAllScreenshots()) {
             logger.info("Testing " + sourceFile.getName());
             String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
-            StarSystem starSystem = galaxy.searchStarSystemByExactName(systemName);
-            if (starSystem == null) {
-                logger.debug("Did not find system '" + systemName + "'");
-            } else {
-                logger.debug("Found system: " + starSystem);
-                List<Body> bodies = galaxy.searchBodiesOfStarSystem(starSystem.getId());
-                logger.debug("Found " + bodies.size() + " bodies");
-                for (Body b : bodies) {
-                    logger.debug("    " + b);
-                }
-            }
+            StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
+            List<Body> eddbBodies = eddbStarSystem == null ? Collections.emptyList() : galaxy.searchBodiesOfStarSystem(eddbStarSystem.getId());
             BufferedImage originalImage = ImageIO.read(sourceFile);
             BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
             BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
             bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
-            ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
+            //            ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
             BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
-            ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
+            //            ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
             BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
             bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
-            ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
+            //            ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
             BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
-            ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+            //            ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
             //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
             //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
 
-            //            List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
-            //            List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
-            //            ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords);
-            //            System.out.println(scannedBodyInfo);
+            List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
+            List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
+            ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
+            System.out.println(scannedBodyInfo);
 
-            //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
-            //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
+            //            writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
+            //            writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
 
-            //templates = copyLearnedChars();
+            templates = copyLearnedChars();
         }
     }
 
@@ -177,7 +171,7 @@ public class Mats2 {
     }
 
     private static File selectRandomScreenshot() {
-        File dir = new File(Constants.SURFACE_MATS_DIR, "_4k_");
+        File dir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
         File[] files = dir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File f) {
@@ -189,7 +183,7 @@ public class Mats2 {
     }
 
     private static File[] selectAllScreenshots() {
-        File dir = new File(Constants.SURFACE_MATS_DIR, "_4k_");
+        File dir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
         File[] files = dir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File f) {
@@ -208,7 +202,7 @@ public class Mats2 {
 
     private static void testAllImages() throws IOException {
         List<Template> templates = TemplateMatcher.loadTemplates("Body Name");
-        File dir = new File(Constants.SURFACE_MATS_DIR, "_4k_");
+        File dir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
         File[] files = dir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File f) {

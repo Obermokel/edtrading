@@ -1,9 +1,14 @@
 package borg.edtrading.ocr.fixer;
 
+import borg.edtrading.data.Body;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 /**
  * RadiusFixer
@@ -15,10 +20,22 @@ public class ArgOfPeriapsisFixer implements ValueFixer {
     static final Logger logger = LogManager.getLogger(ArgOfPeriapsisFixer.class);
 
     private static final BigDecimal MAX_VALUE = new BigDecimal("360.00");
+    private static final NumberFormat NF = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.US));
+    private final Body eddbBody;
+
+    public ArgOfPeriapsisFixer(Body eddbBody) {
+        this.eddbBody = eddbBody;
+    }
 
     @Override
     public String fixValue(String scannedText) {
-        return scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".").replaceAll("\\.?°\\.?", "°");
+        if (this.eddbBody != null && this.eddbBody.getArg_of_periapsis() != null) {
+            return NF.format(this.eddbBody.getArg_of_periapsis()) + (scannedText.contains("°") ? "°" : "");
+        } else if (ONLY_FIX_WITH_EDDB_DATA) {
+            return scannedText; // Do not try to fix
+        } else {
+            return scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".").replaceAll("\\.?°\\.?", "°");
+        }
     }
 
     @Override

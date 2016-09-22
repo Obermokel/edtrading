@@ -139,7 +139,7 @@ public class ScannedBodyInfo {
         this.setDistanceLs(distanceLs);
     }
 
-    public static ScannedBodyInfo fromScannedAndSortedWords(String screenshotFilename, String systemName, List<MatchGroup> bodyNameWords, List<MatchGroup> bodyInfoWords) {
+    public static ScannedBodyInfo fromScannedAndSortedWords(String screenshotFilename, String systemName, List<MatchGroup> bodyNameWords, List<MatchGroup> bodyInfoWords, List<Body> eddbBodies) {
         String bodyName = null;
         BodyInfo bodyType = null;
         BigDecimal distanceLs = null;
@@ -193,6 +193,15 @@ public class ScannedBodyInfo {
             }
         }
 
+        // See if it is a known body on EDDB, in which case we can greatly improve auto-learning from the correct values (assuming EDDB has correct info^^)
+        Body eddbBody = lookupEddbBody(eddbBodies, bodyName, distanceLs, bodyType);
+        if (eddbBody == null) {
+            logger.debug(screenshotFilename + ": Did not find body on EDDB: " + bodyName);
+        } else {
+            logger.debug(screenshotFilename + ": Found body on EDDB: " + eddbBody);
+            // TODO: Auto-learn name, distance and type
+        }
+
         ScannedBodyInfo scannedBodyInfo = new ScannedBodyInfo(screenshotFilename, systemName, bodyName, bodyType, distanceLs);
 
         // Create a LinkedList which makes replacing found words easy, and also lowercase all scanned words in this step
@@ -204,7 +213,7 @@ public class ScannedBodyInfo {
         // Search the start indexes of labels, also replacing the found words with NULL entries
         int indexEarthMasses = indexOfWords(lowercasedScannedWords, "earth", "masses:");
         if (indexEarthMasses < lowercasedScannedWords.size()) {
-            // Clear everything before earth masses
+            // Clear everything before earth masses because it is only bla bla about the body
             for (int i = 0; i < indexEarthMasses; i++) {
                 lowercasedScannedWords.set(i, null);
             }
@@ -312,7 +321,7 @@ public class ScannedBodyInfo {
 
         if (indexEarthMasses < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexEarthMasses, "EARTHMASSES:", new EarthMassesFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexEarthMasses, "EARTHMASSES:", new EarthMassesFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
                 scannedBodyInfo.setEarthMasses(new BigDecimal(value));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -320,7 +329,7 @@ public class ScannedBodyInfo {
         }
         if (indexRadius < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexRadius, "RADIUS:", new RadiusFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexRadius, "RADIUS:", new RadiusFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
                 scannedBodyInfo.setRadiusKm(new BigDecimal(value.replace(",", "").replace("KM", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -328,7 +337,7 @@ public class ScannedBodyInfo {
         }
         if (indexGravity < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexGravity, "GRAVITY:", new GravityFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexGravity, "GRAVITY:", new GravityFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
                 scannedBodyInfo.setGravityG(new BigDecimal(value.replace("G", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -336,7 +345,7 @@ public class ScannedBodyInfo {
         }
         if (indexSurfaceTemp < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexSurfaceTemp, "SURFACETEMP:", new SurfaceTempFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexSurfaceTemp, "SURFACETEMP:", new SurfaceTempFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
                 scannedBodyInfo.setSurfaceTempK(new BigDecimal(value.replace("K", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -466,7 +475,7 @@ public class ScannedBodyInfo {
         }
         if (indexOrbitalPeriod < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexOrbitalPeriod, "ORBITALPERIOD:", new OrbitalPeriodFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexOrbitalPeriod, "ORBITALPERIOD:", new OrbitalPeriodFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
                 scannedBodyInfo.setOrbitalPeriodD(new BigDecimal(value.replace(",", "").replace("D", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -474,7 +483,7 @@ public class ScannedBodyInfo {
         }
         if (indexSemiMajorAxis < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexSemiMajorAxis, "SEMIMAJORAXIS:", new SemiMajorAxisFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexSemiMajorAxis, "SEMIMAJORAXIS:", new SemiMajorAxisFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
                 scannedBodyInfo.setSemiMajorAxisAU(new BigDecimal(value.replace("AU", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -482,7 +491,7 @@ public class ScannedBodyInfo {
         }
         if (indexOrbitalEccentricity < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexOrbitalEccentricity, "ORBITALECCENTRICITY:", new OrbitalEccentricityFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexOrbitalEccentricity, "ORBITALECCENTRICITY:", new OrbitalEccentricityFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
                 scannedBodyInfo.setOrbitalEccentricity(new BigDecimal(value));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -490,7 +499,7 @@ public class ScannedBodyInfo {
         }
         if (indexOrbitalInclination < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexOrbitalInclination, "ORBITALINCLINATION:", new OrbitalInclinationFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexOrbitalInclination, "ORBITALINCLINATION:", new OrbitalInclinationFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
                 scannedBodyInfo.setOrbitalInclinationDeg(new BigDecimal(value.replace("°", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -498,7 +507,7 @@ public class ScannedBodyInfo {
         }
         if (indexArgOfPeriapsis < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexArgOfPeriapsis, "ARGOFPERIAPSIS:", new ArgOfPeriapsisFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexArgOfPeriapsis, "ARGOFPERIAPSIS:", new ArgOfPeriapsisFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
                 scannedBodyInfo.setArgOfPeriapsisDeg(new BigDecimal(value.replace("°", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -506,7 +515,7 @@ public class ScannedBodyInfo {
         }
         if (indexRotationalPeriod < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexRotationalPeriod, "ROTATIONALPERIOD:", new RotationalPeriodFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexRotationalPeriod, "ROTATIONALPERIOD:", new RotationalPeriodFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
                 scannedBodyInfo.setRotationalPeriodD(new BigDecimal(value.replace("D", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -520,7 +529,7 @@ public class ScannedBodyInfo {
         }
         if (indexAxialTilt < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexAxialTilt, "AXIALTILT:", new AxialTiltFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexAxialTilt, "AXIALTILT:", new AxialTiltFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
                 scannedBodyInfo.setAxialTiltDeg(new BigDecimal(value.replace("°", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -661,6 +670,61 @@ public class ScannedBodyInfo {
         }
 
         return scannedBodyInfo;
+    }
+
+    private static Body lookupEddbBody(List<Body> eddbBodies, String bodyName, BigDecimal distanceLs, BodyInfo bodyType) {
+        Body bestMatch = null;
+        Body exactMatch = null;
+
+        if (eddbBodies != null && bodyName != null && distanceLs != null) {
+            for (Body eddbBody : eddbBodies) {
+                if ("Planet".equalsIgnoreCase(eddbBody.getGroupName()) && eddbBody.getName() != null && eddbBody.getDistance_to_arrival() != null) {
+                    // The name is allowed to have 2 errors if the distance has 0 errors.
+                    // If the name has more than 2 errors, or if the distance also has errors, we cannot be certain!
+                    //
+                    // The distance is allowed to have 1 error if the name has 0 errors.
+                    // If the distance has more than 1 error, or if the name also has errors, we cannot be certain!
+                    //
+                    // Tricky: Our scanned distance always has two decimal places, whereas EDDB has none.
+                    // Therefore we test both rounded up and down and use the better one.
+                    String scannedName = bodyName.toLowerCase();
+                    String eddbName = eddbBody.getName().toLowerCase();
+                    String scannedDistanceDown = String.valueOf(distanceLs.longValue()); // w/o fraction = rounded down
+                    String scannedDistanceUp = String.valueOf(distanceLs.longValue() + 1); // w/o fraction+1 = rounded up
+                    String eddbDistance = String.valueOf(eddbBody.getDistance_to_arrival());
+
+                    int nameError = StringUtils.getLevenshteinDistance(scannedName, eddbName);
+                    int distanceErrorDown = StringUtils.getLevenshteinDistance(scannedDistanceDown, eddbDistance);
+                    int distanceErrorUp = StringUtils.getLevenshteinDistance(scannedDistanceUp, eddbDistance);
+                    int distanceError = Math.min(distanceErrorDown, distanceErrorUp);
+
+                    if (nameError == 0 && distanceError == 0) {
+                        exactMatch = eddbBody;
+                    } else {
+                        if (nameError > 2) {
+                            continue; // Name too bad, no matter what
+                        } else {
+                            // Name has 2 or less errors. If the distance has no error we can be quite certain.
+                            if (distanceError > 0) {
+                                continue; // We cannot be certain
+                            }
+                        }
+                        if (distanceError > 1) {
+                            continue; // Distance too bad, no matter what
+                        } else {
+                            // Distance has 1 or less errors. If the name has no error we can be quite certain.
+                            if (nameError > 0) {
+                                continue; // We cannot be certain
+                            }
+                        }
+                        // Still there? Then use as best match!
+                        bestMatch = eddbBody;
+                    }
+                }
+            }
+        }
+
+        return exactMatch != null ? exactMatch : bestMatch;
     }
 
     private static String valueForLabel(int labelStartIndex, String correctLabel, ValueFixer valueFixer, List<MatchGroup> bodyInfoWords, LinkedList<String> lowercasedScannedWords, List<Integer> sortedIndexes) {

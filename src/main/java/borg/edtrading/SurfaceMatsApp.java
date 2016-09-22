@@ -378,7 +378,7 @@ public class SurfaceMatsApp {
     }
 
     private static List<File> getScreenshotsFromAllDir() {
-        File allDir = new File(Constants.SURFACE_MATS_DIR, "_4k_");
+        File allDir = new File(Constants.SURFACE_MATS_DIR, "_ALL_");
         File[] screenshotFiles = allDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {

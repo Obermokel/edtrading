@@ -32,7 +32,7 @@ public class Body {
     @SerializedName("type_name")
     private String typeName = null; // Rocky body, High metal content world, ...
     private Long distance_to_arrival = null; // Ls, Missing decimal places
-    private Double solar_masses = null;
+    private Double earth_masses = null;
     private Double radius = null; // KM
     private Double gravity = null; // G
     private Long surface_temperature = null; // K
@@ -136,12 +136,12 @@ public class Body {
         this.distance_to_arrival = distance_to_arrival;
     }
 
-    public Double getSolar_masses() {
-        return this.solar_masses;
+    public Double getEarth_masses() {
+        return this.earth_masses;
     }
 
-    public void setSolar_masses(Double solar_masses) {
-        this.solar_masses = solar_masses;
+    public void setEarth_masses(Double earth_masses) {
+        this.earth_masses = earth_masses;
     }
 
     public Double getRadius() {
