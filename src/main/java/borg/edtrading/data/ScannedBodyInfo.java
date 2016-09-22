@@ -161,7 +161,8 @@ public class ScannedBodyInfo {
                 lowercasedScannedNameWords.set(i, null);
                 sb.append(bodyNameWords.get(i).getText()).append(" ");
             }
-            bodyName = fixGeneratedBodyName(systemName, sb.toString().trim());
+            bodyName = removePixelErrorsFromBodyName(sb.toString().trim());
+            bodyName = fixGeneratedBodyName(systemName, bodyName);
 
             // The first one after arrival point is the actual distance
             for (int i = indexArrivalPoint; i < lowercasedScannedNameWords.size(); i++) {
@@ -677,6 +678,20 @@ public class ScannedBodyInfo {
         return scannedBodyInfo;
     }
 
+    private static String removePixelErrorsFromBodyName(final String scannedBodyName) {
+        if (StringUtils.isNotBlank(scannedBodyName)) {
+            String fixedName = scannedBodyName;
+            while (fixedName.startsWith(".") || fixedName.startsWith(",") || fixedName.startsWith(":") || fixedName.startsWith("-") || fixedName.startsWith("'") || fixedName.startsWith("°")) {
+                fixedName = fixedName.substring(1, fixedName.length()).trim();
+            }
+            while (fixedName.endsWith(".") || fixedName.endsWith(",") || fixedName.endsWith(":") || fixedName.endsWith("-") || fixedName.endsWith("'") || fixedName.endsWith("°")) {
+                fixedName = fixedName.substring(0, fixedName.length() - 1).trim();
+            }
+            return fixedName;
+        }
+        return scannedBodyName;
+    }
+
     private static String fixGeneratedBodyName(final String systemName, final String scannedBodyName) {
         if (StringUtils.isNotBlank(systemName) && StringUtils.isNotBlank(scannedBodyName)) {
             String bodyNameWithoutDesignation = scannedBodyName.trim();
@@ -686,13 +701,64 @@ public class ScannedBodyInfo {
             float dist = StringUtils.getLevenshteinDistance(systemName.toLowerCase(), bodyNameWithoutDesignation.toLowerCase());
             float err = dist / systemName.length();
             if (err <= 0.25f) {
-                String designationOnly = scannedBodyName.replace(bodyNameWithoutDesignation, "").trim();
-                String fixedName = (systemName + " " + designationOnly).trim().toUpperCase();
-                logger.info("Fixed '" + scannedBodyName + "' to '" + fixedName + "'");
+                String designationWithoutBodyName = scannedBodyName.replace(bodyNameWithoutDesignation, "").trim();
+                String fixedDesignation = fixDesignation(designationWithoutBodyName);
+                String fixedName = (systemName + " " + fixedDesignation).trim().toUpperCase();
+                if (!fixedName.equals(scannedBodyName)) {
+                    logger.info("Fixed '" + scannedBodyName + "' to '" + fixedName + "'");
+                }
                 return fixedName;
             }
         }
         return scannedBodyName;
+    }
+
+    private static String fixDesignation(String scannedDesignation) {
+        if (StringUtils.isNotBlank(scannedDesignation)) {
+            String[] parts = scannedDesignation.split("\\s");
+            int votesForStartsWithDigits = 0;
+            int votesForStartsWithLetters = 0;
+            for (int i = 0; i < parts.length; i++) {
+                if (parts[i].replace("O", "0").replace("S", "5").matches("\\d+")) {
+                    // Digits only
+                    if (i % 2 == 0) {
+                        votesForStartsWithDigits++;
+                    } else {
+                        votesForStartsWithLetters++;
+                    }
+                } else if (parts[i].replace("0", "D").replace("8", "B").matches("[A-H]+")) {
+                    // Letters only
+                    if (i % 2 == 0) {
+                        votesForStartsWithLetters++;
+                    } else {
+                        votesForStartsWithDigits++;
+                    }
+                }
+            }
+            boolean startsWithDigits = votesForStartsWithDigits > votesForStartsWithLetters;
+            String fixedDesignation = "";
+            for (int i = 0; i < parts.length; i++) {
+                if (startsWithDigits) {
+                    if (i % 2 == 0) {
+                        fixedDesignation += (" " + parts[i].replace("O", "0").replace("S", "5").replace("B", "8"));
+                    } else {
+                        fixedDesignation += (" " + parts[i].replace("0", "D").replace("8", "B"));
+                    }
+                } else {
+                    if (i % 2 == 0) {
+                        fixedDesignation += (" " + parts[i].replace("0", "D").replace("8", "B"));
+                    } else {
+                        fixedDesignation += (" " + parts[i].replace("O", "0").replace("S", "5").replace("B", "8"));
+                    }
+                }
+            }
+            fixedDesignation = fixedDesignation.trim();
+            if (!fixedDesignation.equals(scannedDesignation)) {
+                logger.info("Fixed '" + scannedDesignation + "' to '" + fixedDesignation + "' (" + votesForStartsWithDigits + ":" + votesForStartsWithLetters + " votes for start with digits)");
+            }
+            return fixedDesignation;
+        }
+        return scannedDesignation;
     }
 
     private static Body lookupEddbBody(List<Body> eddbBodies, String bodyName, BigDecimal distanceLs, BodyInfo bodyType) {
@@ -863,6 +929,9 @@ public class ScannedBodyInfo {
             for (TemplateMatch m : mg.getGroupMatches()) {
                 if (!correctValue.startsWith(m.getTemplate().getText())) {
                     try {
+                        if (m.getTemplate().getText().matches("[\\.,:'°\\-]") && correctValue.substring(0, 1).matches("\\w")) {
+                            continue; // We have scanned a pixel error to a punctuation char
+                        }
                         String shouldHaveBeen = correctValue.substring(0, m.getTemplate().getText().length());
                         correctValue = correctValue.substring(m.getTemplate().getText().length());
                         if (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText())) {

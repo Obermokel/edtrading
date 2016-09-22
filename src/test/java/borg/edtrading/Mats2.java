@@ -75,7 +75,7 @@ public class Mats2 {
             List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
             List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
             ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
-            System.out.println(scannedBodyInfo);
+            //System.out.println(scannedBodyInfo);
 
             //            writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
             //            writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
@@ -92,22 +92,24 @@ public class Mats2 {
                 return file.isDirectory();
             }
         });
-        for (File subdir : subdirs) {
-            // Learn max 1 per type
-            File[] pngFiles = subdir.listFiles(new FileFilter() {
-                @Override
-                public boolean accept(File file) {
-                    return file.getName().endsWith(".png");
+        if (subdirs != null) {
+            for (File subdir : subdirs) {
+                // Learn max 1 per type
+                File[] pngFiles = subdir.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        return file.getName().endsWith(".png");
+                    }
+                });
+                if (pngFiles != null && pngFiles.length >= 1) {
+                    File randomPngFile = pngFiles[random.nextInt(pngFiles.length)];
+                    File targetDir = new File(Constants.TEMPLATES_DIR, "Body Info\\" + subdir.getName());
+                    FileUtils.copyFileToDirectory(randomPngFile, targetDir);
                 }
-            });
-            if (pngFiles != null && pngFiles.length >= 1) {
-                File randomPngFile = pngFiles[random.nextInt(pngFiles.length)];
-                File targetDir = new File(Constants.TEMPLATES_DIR, "Body Info\\" + subdir.getName());
-                FileUtils.copyFileToDirectory(randomPngFile, targetDir);
             }
+            // Clean auto-learned
+            FileUtils.cleanDirectory(Constants.AUTO_LEARNED_DIR);
         }
-        // Clean auto-learned
-        FileUtils.cleanDirectory(Constants.AUTO_LEARNED_DIR);
 
         return TemplateMatcher.loadTemplates("Body Info");
     }
