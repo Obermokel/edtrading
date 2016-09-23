@@ -20,6 +20,8 @@ import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
+
 /**
  * TemplateMatcher
  *
@@ -91,13 +93,13 @@ public class TemplateMatcher {
         }
     }
 
-    public static TemplateMatch findBestTemplateMatch(BufferedImage image, List<Template> templates, int xWithinImage, int yWithinImage) {
+    public static TemplateMatch findBestTemplateMatch(BufferedImage image, List<Template> templates, int xWithinImage, int yWithinImage, String screenshotFilename) {
         try {
             GrayF32 grayImage = ConvertBufferedImage.convertFrom(image, (GrayF32) null);
             float imageAR = (float) image.getWidth() / (float) image.getHeight();
 
             final double pixels = image.getWidth() * image.getHeight();
-            final double maxErrorPerPixel = ValueFixer.ONLY_FIX_WITH_EDDB_DATA ? 100000.0 : 1000.0; // High allowed error when learning from EDDB, low allowed error when self-learning
+            final double maxErrorPerPixel = ValueFixer.ONLY_FIX_WITH_EDDB_DATA ? 1000.0 : 500.0; // High allowed error when learning from EDDB, low allowed error when self-learning
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {
@@ -118,6 +120,10 @@ public class TemplateMatcher {
                         bestMatch = new TemplateMatch(template, new Match(xWithinImage, yWithinImage, -1 * errorPerPixel), image);
                     }
                 }
+            }
+            if (bestMatch == null) {
+                Constants.UNKNOWN_DIR.mkdirs();
+                ImageIO.write(image, "PNG", new File(Constants.UNKNOWN_DIR, "UNKNOWN#" + xWithinImage + "#" + yWithinImage + "#" + screenshotFilename));
             }
             //logger.debug(bestErrorPerPixel);
             return bestMatch;

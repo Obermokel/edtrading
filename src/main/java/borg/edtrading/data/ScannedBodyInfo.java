@@ -27,6 +27,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,6 +36,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -202,7 +205,7 @@ public class ScannedBodyInfo {
         } else {
             logger.debug(screenshotFilename + ": Found body on EDDB: " + eddbBody);
             Double scannedArrivalFraction = distanceLs == null ? null : (distanceLs.doubleValue() - distanceLs.longValue());
-            autoLearnBody(eddbBody, scannedArrivalFraction, bodyNameWords, indexArrivalPoint);
+            autoLearnBody(eddbBody, scannedArrivalFraction, bodyNameWords, indexArrivalPoint, screenshotFilename);
         }
 
         ScannedBodyInfo scannedBodyInfo = new ScannedBodyInfo(screenshotFilename, systemName, bodyName, bodyType, distanceLs);
@@ -324,7 +327,7 @@ public class ScannedBodyInfo {
 
         if (indexEarthMasses < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexEarthMasses, "EARTHMASSES:", new EarthMassesFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexEarthMasses, "EARTHMASSES:", new EarthMassesFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setEarthMasses(new BigDecimal(value));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -332,7 +335,7 @@ public class ScannedBodyInfo {
         }
         if (indexRadius < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexRadius, "RADIUS:", new RadiusFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexRadius, "RADIUS:", new RadiusFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setRadiusKm(new BigDecimal(value.replace(",", "").replace("KM", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -340,7 +343,7 @@ public class ScannedBodyInfo {
         }
         if (indexGravity < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexGravity, "GRAVITY:", new GravityFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexGravity, "GRAVITY:", new GravityFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setGravityG(new BigDecimal(value.replace("G", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -348,7 +351,7 @@ public class ScannedBodyInfo {
         }
         if (indexSurfaceTemp < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexSurfaceTemp, "SURFACETEMP:", new SurfaceTempFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexSurfaceTemp, "SURFACETEMP:", new SurfaceTempFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setSurfaceTempK(new BigDecimal(value.replace("K", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -356,7 +359,7 @@ public class ScannedBodyInfo {
         }
         if (indexVolcanism < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexVolcanism, "VOLCANISM:", new VolcanismFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexVolcanism, "VOLCANISM:", new VolcanismFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setVolcanism(BodyInfo.findBestMatching(value));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -364,7 +367,7 @@ public class ScannedBodyInfo {
         }
         if (indexAtmosphereType < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexAtmosphereType, "ATMOSPHERETYPE:", new AtmosphereTypeFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexAtmosphereType, "ATMOSPHERETYPE:", new AtmosphereTypeFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setAtmosphereType(BodyInfo.findBestMatching(value));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -459,15 +462,8 @@ public class ScannedBodyInfo {
                             for (TemplateMatch m : mg.getGroupMatches()) {
                                 String shouldHaveBeen = autoLearnText.substring(0, m.getTemplate().getText().length());
                                 autoLearnText = autoLearnText.substring(m.getTemplate().getText().length());
-                                if (!m.getTemplate().getText().equals(shouldHaveBeen) && (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText()))) {
-                                    File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
-                                    autoLearnFolder.mkdirs();
-                                    try {
-                                        ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
-                                        logger.info("Learned new '" + shouldHaveBeen + "'");
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
+                                if (!m.getTemplate().getText().equals(shouldHaveBeen)) {
+                                    doAutoLearn(m, shouldHaveBeen, screenshotFilename);
                                 }
                             }
                         }
@@ -478,7 +474,7 @@ public class ScannedBodyInfo {
         }
         if (indexOrbitalPeriod < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexOrbitalPeriod, "ORBITALPERIOD:", new OrbitalPeriodFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexOrbitalPeriod, "ORBITALPERIOD:", new OrbitalPeriodFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setOrbitalPeriodD(new BigDecimal(value.replace(",", "").replace("D", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -486,7 +482,7 @@ public class ScannedBodyInfo {
         }
         if (indexSemiMajorAxis < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexSemiMajorAxis, "SEMIMAJORAXIS:", new SemiMajorAxisFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexSemiMajorAxis, "SEMIMAJORAXIS:", new SemiMajorAxisFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setSemiMajorAxisAU(new BigDecimal(value.replace("AU", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -494,7 +490,7 @@ public class ScannedBodyInfo {
         }
         if (indexOrbitalEccentricity < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexOrbitalEccentricity, "ORBITALECCENTRICITY:", new OrbitalEccentricityFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexOrbitalEccentricity, "ORBITALECCENTRICITY:", new OrbitalEccentricityFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setOrbitalEccentricity(new BigDecimal(value));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -502,7 +498,7 @@ public class ScannedBodyInfo {
         }
         if (indexOrbitalInclination < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexOrbitalInclination, "ORBITALINCLINATION:", new OrbitalInclinationFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexOrbitalInclination, "ORBITALINCLINATION:", new OrbitalInclinationFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setOrbitalInclinationDeg(new BigDecimal(value.replace("°", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -510,7 +506,7 @@ public class ScannedBodyInfo {
         }
         if (indexArgOfPeriapsis < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexArgOfPeriapsis, "ARGOFPERIAPSIS:", new ArgOfPeriapsisFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexArgOfPeriapsis, "ARGOFPERIAPSIS:", new ArgOfPeriapsisFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setArgOfPeriapsisDeg(new BigDecimal(value.replace("°", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -518,7 +514,7 @@ public class ScannedBodyInfo {
         }
         if (indexRotationalPeriod < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexRotationalPeriod, "ROTATIONALPERIOD:", new RotationalPeriodFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexRotationalPeriod, "ROTATIONALPERIOD:", new RotationalPeriodFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setRotationalPeriodD(new BigDecimal(value.replace("D", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -527,7 +523,7 @@ public class ScannedBodyInfo {
         if (indexTidallyLocked < lowercasedScannedWords.size()) {
             try {
                 scannedBodyInfo.setTidallyLocked(true);
-                valueForLabel(indexTidallyLocked, "(TIDALLYLOCKED)", new TidallyLockedFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                valueForLabel(indexTidallyLocked, "(TIDALLYLOCKED)", new TidallyLockedFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
             }
@@ -536,7 +532,7 @@ public class ScannedBodyInfo {
         }
         if (indexAxialTilt < lowercasedScannedWords.size()) {
             try {
-                String value = valueForLabel(indexAxialTilt, "AXIALTILT:", new AxialTiltFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes);
+                String value = valueForLabel(indexAxialTilt, "AXIALTILT:", new AxialTiltFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setAxialTiltDeg(new BigDecimal(value.replace("°", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
@@ -661,15 +657,8 @@ public class ScannedBodyInfo {
                                 for (TemplateMatch m : mg.getGroupMatches()) {
                                     String shouldHaveBeen = autoLearnText.substring(0, m.getTemplate().getText().length());
                                     autoLearnText = autoLearnText.substring(m.getTemplate().getText().length());
-                                    if (!m.getTemplate().getText().equals(shouldHaveBeen) && (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText()))) {
-                                        File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
-                                        autoLearnFolder.mkdirs();
-                                        try {
-                                            ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
-                                            logger.info("Learned new '" + shouldHaveBeen + "'");
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
-                                        }
+                                    if (!m.getTemplate().getText().equals(shouldHaveBeen)) {
+                                        doAutoLearn(m, shouldHaveBeen, screenshotFilename);
                                     }
                                 }
                             }
@@ -879,7 +868,7 @@ public class ScannedBodyInfo {
         }
     }
 
-    private static String valueForLabel(int labelStartIndex, String correctLabel, ValueFixer valueFixer, List<MatchGroup> bodyInfoWords, LinkedList<String> lowercasedScannedWords, List<Integer> sortedIndexes) {
+    private static String valueForLabel(int labelStartIndex, String correctLabel, ValueFixer valueFixer, List<MatchGroup> bodyInfoWords, LinkedList<String> lowercasedScannedWords, List<Integer> sortedIndexes, String screenshotFilename) {
         String value = "";
         int z = sortedIndexes.indexOf(labelStartIndex) + 1;
         int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
@@ -909,16 +898,7 @@ public class ScannedBodyInfo {
                     if (!correctLabelRemaining.startsWith(m.getTemplate().getText())) {
                         String shouldHaveBeen = correctLabelRemaining.substring(0, m.getTemplate().getText().length());
                         correctLabelRemaining = correctLabelRemaining.substring(m.getTemplate().getText().length());
-                        if (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText())) {
-                            File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
-                            autoLearnFolder.mkdirs();
-                            try {
-                                ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
-                                logger.info("Learned new '" + shouldHaveBeen + "'");
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
+                        doAutoLearn(m, shouldHaveBeen, screenshotFilename);
                     } else {
                         correctLabelRemaining = correctLabelRemaining.substring(m.getTemplate().getText().length());
                     }
@@ -936,16 +916,7 @@ public class ScannedBodyInfo {
                         try {
                             String shouldHaveBeen = correctValue.substring(0, m.getTemplate().getText().length());
                             correctValue = correctValue.substring(m.getTemplate().getText().length());
-                            if (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText())) {
-                                File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
-                                autoLearnFolder.mkdirs();
-                                try {
-                                    ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
-                                    logger.info("Learned new '" + shouldHaveBeen + "'");
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
+                            doAutoLearn(m, shouldHaveBeen, screenshotFilename);
                         } catch (StringIndexOutOfBoundsException e) {
                             // Ignore
                         }
@@ -962,26 +933,25 @@ public class ScannedBodyInfo {
         return ("0".equals(shouldHaveBeen) || "O".equals(shouldHaveBeen)) && ("0".equals(actuallyIs) || "O".equals(actuallyIs));
     }
 
-    private static void autoLearnBody(Body eddbBody, Double scannedArrivalFraction, List<MatchGroup> bodyNameWords, int indexArrivalPoint) {
+    private static void autoLearnBody(Body eddbBody, Double scannedArrivalFraction, List<MatchGroup> bodyNameWords, int indexArrivalPoint, String screenshotFilename) {
         try {
             if (eddbBody.getName() != null && eddbBody.getName().length() > 0) {
-                learnText(eddbBody.getName().replaceAll("\\s", ""), bodyNameWords.subList(0, indexArrivalPoint));
+                learnText(eddbBody.getName().replaceAll("\\s", ""), bodyNameWords.subList(0, indexArrivalPoint), screenshotFilename);
             }
-            learnText("ARRIVAL", Arrays.asList(bodyNameWords.get(indexArrivalPoint)));
-            learnText("POINT:", Arrays.asList(bodyNameWords.get(indexArrivalPoint + 1)));
-            // TODO Is distance buggy on EDDB? Other OCR users?
-            //            if (eddbBody.getDistance_to_arrival() != null && eddbBody.getDistance_to_arrival() > 0.0 && scannedArrivalFraction != null) {
-            //                learnText(new DecimalFormat("#,##0.00LS", new DecimalFormatSymbols(Locale.US)).format(eddbBody.getDistance_to_arrival().doubleValue() + scannedArrivalFraction), Arrays.asList(bodyNameWords.get(indexArrivalPoint + 2)));
-            //            }
+            learnText("ARRIVAL", Arrays.asList(bodyNameWords.get(indexArrivalPoint)), screenshotFilename);
+            learnText("POINT:", Arrays.asList(bodyNameWords.get(indexArrivalPoint + 1)), screenshotFilename);
+            if (eddbBody.getDistance_to_arrival() != null && eddbBody.getDistance_to_arrival() > 0.0 && scannedArrivalFraction != null) {
+                learnText(new DecimalFormat("#,##0.00LS", new DecimalFormatSymbols(Locale.US)).format(eddbBody.getDistance_to_arrival().doubleValue() + scannedArrivalFraction), Arrays.asList(bodyNameWords.get(indexArrivalPoint + 2)), screenshotFilename);
+            }
             if (eddbBody.getTypeName() != null && eddbBody.getTypeName().length() > 0) {
-                learnText(eddbBody.getTypeName().replaceAll("\\s", ""), bodyNameWords.subList(indexArrivalPoint + 3, bodyNameWords.size()));
+                learnText(eddbBody.getTypeName().replaceAll("\\s", ""), bodyNameWords.subList(indexArrivalPoint + 3, bodyNameWords.size()), screenshotFilename);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static void learnText(final String correctText, List<MatchGroup> matchGroups) {
+    private static void learnText(final String correctText, List<MatchGroup> matchGroups, String screenshotFilename) {
         String correctValue = correctText;
         for (MatchGroup mg : matchGroups) {
             for (TemplateMatch m : mg.getGroupMatches()) {
@@ -992,22 +962,26 @@ public class ScannedBodyInfo {
                         }
                         String shouldHaveBeen = correctValue.substring(0, m.getTemplate().getText().length());
                         correctValue = correctValue.substring(m.getTemplate().getText().length());
-                        if (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText())) {
-                            File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
-                            autoLearnFolder.mkdirs();
-                            try {
-                                ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "Auto-Learned " + System.currentTimeMillis() + ".png"));
-                                logger.info("Learned new '" + shouldHaveBeen + "'");
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
+                        doAutoLearn(m, shouldHaveBeen, screenshotFilename);
                     } catch (StringIndexOutOfBoundsException e) {
                         // Ignore
                     }
                 } else {
                     correctValue = correctValue.substring(m.getTemplate().getText().length());
                 }
+            }
+        }
+    }
+
+    private static void doAutoLearn(TemplateMatch m, String shouldHaveBeen, String screenshotFilename) {
+        if (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText())) {
+            File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
+            autoLearnFolder.mkdirs();
+            try {
+                ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, autoLearnFolder.getName() + "#" + m.getMatch().x + "#" + m.getMatch().y + "#" + screenshotFilename));
+                logger.info("Learned new '" + shouldHaveBeen + "'");
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

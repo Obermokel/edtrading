@@ -72,8 +72,8 @@ public class Mats2 {
             //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
             //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
 
-            List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
-            List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
+            List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates, sourceFile.getName());
+            List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates, sourceFile.getName());
             ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
             System.out.println(scannedBodyInfo);
 
@@ -114,7 +114,7 @@ public class Mats2 {
         return TemplateMatcher.loadTemplates("Body Info");
     }
 
-    private static void groupSimilarChars(BufferedImage sharpImage, BufferedImage blurredImage) throws IOException {
+    private static void groupSimilarChars(BufferedImage sharpImage, BufferedImage blurredImage, String screenshotFilename) throws IOException {
         List<Rectangle> bodyInfoCharacterLocations = CharacterFinder.findCharacterLocations(sharpImage, false);
         File templatesDir = new File(Constants.TEMPLATES_DIR, "Similar Unknown");
         templatesDir.mkdirs();
@@ -124,7 +124,7 @@ public class Mats2 {
         for (Rectangle r : bodyInfoCharacterLocations) {
             try {
                 BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
-                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y);
+                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, screenshotFilename);
                 if (bestMatch != null) {
                     if (!bestMatch.getTemplate().getText().startsWith("_")) {
                         chars.append(bestMatch.getTemplate().getText());
@@ -143,7 +143,7 @@ public class Mats2 {
         logger.info("Grouped " + bodyInfoCharacterLocations.size() + " chars into " + templatesDir.list().length + " folders");
     }
 
-    private static void writeDebugImages(String debugType, boolean writeCharFinderDebugImages, List<Template> templates, BufferedImage sharpImage, BufferedImage blurredImage) throws IOException {
+    private static void writeDebugImages(String debugType, boolean writeCharFinderDebugImages, List<Template> templates, BufferedImage sharpImage, BufferedImage blurredImage, String screenshotFilename) throws IOException {
         List<Rectangle> bodyInfoCharacterLocations = CharacterFinder.findCharacterLocations(sharpImage, writeCharFinderDebugImages);
         File unknownDir = new File(Constants.TEMP_DIR, "Unknown " + debugType);
         unknownDir.mkdirs();
@@ -157,7 +157,7 @@ public class Mats2 {
             try {
                 BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
                 ImageIO.write(charImage, "PNG", new File(unknownDir, String.format("%05d_%05d_%d.png", (r.y / 10) * 10, r.x, r.hashCode())));
-                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y);
+                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, screenshotFilename);
                 if (bestMatch != null) {
                     g.drawString(bestMatch.getTemplate().getText(), r.x, r.y + 18);
                     System.out.print(bestMatch.getTemplate().getText());
