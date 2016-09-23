@@ -99,7 +99,7 @@ public class TemplateMatcher {
             float imageAR = (float) image.getWidth() / (float) image.getHeight();
 
             final double pixels = image.getWidth() * image.getHeight();
-            final double maxErrorPerPixel = ValueFixer.ONLY_FIX_WITH_EDDB_DATA ? 1000.0 : 500.0; // High allowed error when learning from EDDB, low allowed error when self-learning
+            final double maxErrorPerPixel = ValueFixer.ONLY_FIX_WITH_EDDB_DATA ? 1500.0 : 6666.7; // High allowed error when learning from EDDB, low allowed error when self-learning
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {

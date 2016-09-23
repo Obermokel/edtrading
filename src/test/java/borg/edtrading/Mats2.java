@@ -4,6 +4,7 @@ import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
 import borg.edtrading.data.Body;
+import borg.edtrading.data.BodyPlausiChecker;
 import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.data.StarSystem;
@@ -76,6 +77,10 @@ public class Mats2 {
             List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates, sourceFile.getName());
             ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
             System.out.println(scannedBodyInfo);
+            List<String> plausiMessages = BodyPlausiChecker.checkPlanet(scannedBodyInfo.getRadiusKm(), scannedBodyInfo.getEarthMasses(), scannedBodyInfo.getGravityG());
+            for (String msg : plausiMessages) {
+                System.out.println("!!! " + msg + " !!!");
+            }
 
             //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
             //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);

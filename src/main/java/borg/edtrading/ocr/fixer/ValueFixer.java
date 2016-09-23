@@ -11,7 +11,7 @@ public interface ValueFixer {
      * If false we will still prefer data from EDDB, but if no data is available we will
      * try to fix it ourself. For example, if we know the number of fraction places, the unit, etc.
      */
-    boolean ONLY_FIX_WITH_EDDB_DATA = true;
+    boolean ONLY_FIX_WITH_EDDB_DATA = false;
 
     /**
      * Must return the correct value, including case, but w/o whitespaces.
