@@ -1,6 +1,5 @@
 package borg.edtrading;
 
-import borg.edtrading.SurfaceMatsApp.ScannedSurfaceMat;
 import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
@@ -58,7 +57,7 @@ public class BodyInfoApp {
             List<Template> bodyInfoTemplates = TemplateMatcher.loadTemplates("Body Info");
             List<Template> bodyNameTemplates = TemplateMatcher.loadTemplates("Body Name");
 
-            List<ScannedSurfaceMat> scannedSurfaceMats = new ArrayList<>();
+            List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
             List<File> screenshotFiles = getScreenshotsFromAllDir();
             for (File screenshotFile : screenshotFiles) {
@@ -96,39 +95,50 @@ public class BodyInfoApp {
                 }
             }
 
-            // Identify highest occurences
-            Map<Item, ScannedSurfaceMat> highestOccurences = new TreeMap<>();
-            Map<Item, List<BigDecimal>> allOccurences = new TreeMap<>();
-            int nPlanets = screenshotFiles.size(); // Each screenshot represents a planet
-            for (ScannedSurfaceMat current : scannedSurfaceMats) {
-                ScannedSurfaceMat bestSoFar = highestOccurences.get(current.getElement());
-                if (bestSoFar == null || current.isHigher(bestSoFar)) {
-                    highestOccurences.put(current.getElement(), current);
-                }
-                List<BigDecimal> all = allOccurences.get(current.getElement());
-                if (all == null) {
-                    all = new ArrayList<>();
-                    allOccurences.put(current.getElement(), all);
-                }
-                all.add(current.getPercentage());
-            }
-            System.out.println("\n>>>> >>>> >>>> >>>> RESULTS FROM " + nPlanets + " PLANETS <<<< <<<< <<<< <<<<\n");
-            System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "ELEMENT", "HIGHEST", "MEDIAN", "OCCURENCE"));
-            System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "---------------", "----------", "----------", "----------"));
-            for (Item element : highestOccurences.keySet()) {
-                String name = highestOccurences.get(element).getPlanetName();
-                BigDecimal highest = highestOccurences.get(element).getPercentage();
-                List<BigDecimal> all = allOccurences.get(element);
-                Collections.sort(all);
-                BigDecimal median = all.get(all.size() / 2);
-                BigDecimal frequency = new BigDecimal(all.size()).multiply(new BigDecimal(100)).divide(new BigDecimal(nPlanets), 1, BigDecimal.ROUND_HALF_UP);
-
-                System.out.println(String.format(Locale.US, "%-15s %9.1f%% %9.1f%% %9.1f%%    %s", element.getName(), highest, median, frequency, name));
-            }
+            printStats(scannedBodyInfos);
         } finally {
             if (bodyUpdater != null) {
                 bodyUpdater.close();
             }
+        }
+    }
+
+    static void printStats(List<ScannedBodyInfo> scannedBodyInfos) {
+        Map<Item, ScannedBodyInfo> highestOccurences = new TreeMap<>();
+        Map<Item, List<BigDecimal>> allOccurences = new TreeMap<>();
+        int nPlanets = 0; // Each screenshot represents a planet. However we only count successfully scanned screenshots.
+        for (ScannedBodyInfo bi : scannedBodyInfos) {
+            if (bi.getPlanetMaterials() != null && bi.getPlanetMaterials().size() > 0) {
+                nPlanets++;
+                for (Item element : bi.getPlanetMaterials().keySet()) {
+                    BigDecimal percentage = bi.getPlanetMaterials().get(element);
+
+                    ScannedBodyInfo bestSoFar = highestOccurences.get(element);
+                    if (bestSoFar == null || percentage.compareTo(bestSoFar.getPlanetMaterials().get(element)) > 0) {
+                        highestOccurences.put(element, bi);
+                    }
+
+                    List<BigDecimal> all = allOccurences.get(element);
+                    if (all == null) {
+                        all = new ArrayList<>();
+                        allOccurences.put(element, all);
+                    }
+                    all.add(percentage);
+                }
+            }
+        }
+        System.out.println("\n>>>> >>>> >>>> >>>> RESULTS FROM " + nPlanets + " PLANETS <<<< <<<< <<<< <<<<\n");
+        System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "ELEMENT", "HIGHEST", "MEDIAN", "OCCURENCE"));
+        System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "---------------", "----------", "----------", "----------"));
+        for (Item element : highestOccurences.keySet()) {
+            String name = highestOccurences.get(element).getBodyName();
+            BigDecimal highest = highestOccurences.get(element).getPlanetMaterials().get(element);
+            List<BigDecimal> all = allOccurences.get(element);
+            Collections.sort(all);
+            BigDecimal median = all.get(all.size() / 2);
+            BigDecimal frequency = new BigDecimal(all.size()).multiply(new BigDecimal(100)).divide(new BigDecimal(nPlanets), 1, BigDecimal.ROUND_HALF_UP);
+
+            System.out.println(String.format(Locale.US, "%-15s %9.1f%% %9.1f%% %9.1f%%    %s", element.getName(), highest, median, frequency, name));
         }
     }
 
