@@ -8,10 +8,10 @@ package borg.edtrading.ocr.fixer;
 public interface ValueFixer {
 
     /**
-     * If false we will still prefer data from EDDB, but if no data is available we will
-     * try to fix it ourself. For example, if we know the number of fraction places, the unit, etc.
+     * If true and EDDB data is available we will use the EDDB data to fix the scanned data.
+     * Otherwise we will try to fix it ourselves.
      */
-    boolean ONLY_FIX_WITH_EDDB_DATA = false;
+    boolean TRUST_EDDB = System.currentTimeMillis() < 0L;
 
     /**
      * Must return the correct value, including case, but w/o whitespaces.

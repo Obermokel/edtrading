@@ -27,10 +27,8 @@ public class EarthMassesFixer implements ValueFixer {
 
     @Override
     public String fixValue(String scannedText) {
-        if (this.eddbBody != null && this.eddbBody.getEarth_masses() != null) {
+        if (TRUST_EDDB && this.eddbBody != null && this.eddbBody.getEarth_masses() != null) {
             return NF.format(this.eddbBody.getEarth_masses());
-        } else if (ONLY_FIX_WITH_EDDB_DATA) {
-            return scannedText; // Do not try to fix
         } else {
             return scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".");
         }

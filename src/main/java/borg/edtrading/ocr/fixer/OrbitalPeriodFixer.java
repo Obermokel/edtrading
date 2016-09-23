@@ -27,10 +27,8 @@ public class OrbitalPeriodFixer implements ValueFixer {
 
     @Override
     public String fixValue(String scannedText) {
-        if (this.eddbBody != null && this.eddbBody.getOrbital_period() != null) {
+        if (TRUST_EDDB && this.eddbBody != null && this.eddbBody.getOrbital_period() != null) {
             return NF.format(this.eddbBody.getOrbital_period());
-        } else if (ONLY_FIX_WITH_EDDB_DATA) {
-            return scannedText; // Do not try to fix
         } else {
             String fixedValue = scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8");
             if (fixedValue.contains(".") && fixedValue.indexOf(".") == fixedValue.length() - 3) {

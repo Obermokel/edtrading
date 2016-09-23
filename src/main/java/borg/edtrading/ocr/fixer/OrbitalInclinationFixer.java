@@ -27,10 +27,8 @@ public class OrbitalInclinationFixer implements ValueFixer {
 
     @Override
     public String fixValue(String scannedText) {
-        if (this.eddbBody != null && this.eddbBody.getOrbital_inclination() != null) {
+        if (TRUST_EDDB && this.eddbBody != null && this.eddbBody.getOrbital_inclination() != null) {
             return NF.format(this.eddbBody.getOrbital_inclination()) + (scannedText.contains("°") ? "°" : "");
-        } else if (ONLY_FIX_WITH_EDDB_DATA) {
-            return scannedText; // Do not try to fix
         } else {
             return scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".").replaceAll("\\.?°\\.?", "°");
         }

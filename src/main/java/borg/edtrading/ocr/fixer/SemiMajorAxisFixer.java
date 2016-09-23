@@ -27,10 +27,8 @@ public class SemiMajorAxisFixer implements ValueFixer {
 
     @Override
     public String fixValue(String scannedText) {
-        if (this.eddbBody != null && this.eddbBody.getSemi_major_axis() != null) {
+        if (TRUST_EDDB && this.eddbBody != null && this.eddbBody.getSemi_major_axis() != null) {
             return NF.format(this.eddbBody.getSemi_major_axis());
-        } else if (ONLY_FIX_WITH_EDDB_DATA) {
-            return scannedText; // Do not try to fix
         } else {
             String fixedValue = scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".");
             if (fixedValue.contains(".") && fixedValue.indexOf(".") == fixedValue.length() - 5) {

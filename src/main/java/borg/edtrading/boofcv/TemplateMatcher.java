@@ -10,7 +10,6 @@ import boofcv.io.image.UtilImageIO;
 import boofcv.struct.feature.Match;
 import boofcv.struct.image.GrayF32;
 import borg.edtrading.Constants;
-import borg.edtrading.ocr.fixer.ValueFixer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -99,7 +98,7 @@ public class TemplateMatcher {
             float imageAR = (float) image.getWidth() / (float) image.getHeight();
 
             final double pixels = image.getWidth() * image.getHeight();
-            final double maxErrorPerPixel = ValueFixer.ONLY_FIX_WITH_EDDB_DATA ? 1500.0 : 1234.7; // High allowed error when learning from EDDB, low allowed error when self-learning
+            final double maxErrorPerPixel = 1000.0;
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {
