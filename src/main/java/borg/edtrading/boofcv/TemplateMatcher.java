@@ -98,7 +98,7 @@ public class TemplateMatcher {
             float imageAR = (float) image.getWidth() / (float) image.getHeight();
 
             final double pixels = image.getWidth() * image.getHeight();
-            final double maxErrorPerPixel = 1000.0;
+            final double maxErrorPerPixel = 999.0;
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {

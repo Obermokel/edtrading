@@ -638,7 +638,7 @@ public class ScannedBodyInfo {
                         }
                     }
                     // The fixed text can later be used for auto-learning.
-                    // First though parse all mats and do a plausi check. The sum of percentages should be 100% +/- 0.1%.
+                    // First though parse all mats and do a plausi check. The sum of percentages should be 100% +/- 0.3%. (Cavins B 2 has 99.7%)
                     // If not we might haved missed something completely. This can happen if the text is too close to the border.
                     LinkedHashMap<Item, BigDecimal> planetMaterials = new LinkedHashMap<>();
                     BigDecimal totalPercentage = BigDecimal.ZERO;
@@ -648,7 +648,7 @@ public class ScannedBodyInfo {
                         planetMaterials.put(mat, percentage);
                         totalPercentage = totalPercentage.add(percentage);
                     }
-                    if (Math.abs(100.0 - totalPercentage.doubleValue()) > 0.1) {
+                    if (Math.abs(100.0 - totalPercentage.doubleValue()) > 0.3) {
                         logger.warn(screenshotFilename + ": Sum of planet materials is " + totalPercentage + ": " + fixedWholeRemainingText);
                     } else {
                         scannedBodyInfo.setPlanetMaterials(planetMaterials);
