@@ -205,7 +205,7 @@ public class ScannedBodyInfo {
         } else {
             logger.debug(screenshotFilename + ": Found body on EDDB: " + eddbBody);
             Double scannedArrivalFraction = distanceLs == null ? null : (distanceLs.doubleValue() - distanceLs.longValue());
-            autoLearnBody(eddbBody, scannedArrivalFraction, bodyNameWords, indexArrivalPoint, screenshotFilename);
+            autoLearnBody(eddbBody, bodyName, scannedArrivalFraction, bodyNameWords, indexArrivalPoint, screenshotFilename);
         }
 
         ScannedBodyInfo scannedBodyInfo = new ScannedBodyInfo(screenshotFilename, systemName, bodyName, bodyType, distanceLs);
@@ -933,10 +933,13 @@ public class ScannedBodyInfo {
         return ("0".equals(shouldHaveBeen) || "O".equals(shouldHaveBeen)) && ("0".equals(actuallyIs) || "O".equals(actuallyIs));
     }
 
-    private static void autoLearnBody(Body eddbBody, Double scannedArrivalFraction, List<MatchGroup> bodyNameWords, int indexArrivalPoint, String screenshotFilename) {
+    private static void autoLearnBody(Body eddbBody, String scannedBodyName, Double scannedArrivalFraction, List<MatchGroup> bodyNameWords, int indexArrivalPoint, String screenshotFilename) {
         try {
             if (eddbBody.getName() != null && eddbBody.getName().length() > 0) {
-                learnText(eddbBody.getName().replaceAll("\\s", ""), bodyNameWords.subList(0, indexArrivalPoint), screenshotFilename);
+                // Ignore case and whitespaces for body name
+                if (!scannedBodyName.toLowerCase().replaceAll("\\s", "").equals(eddbBody.getName().toLowerCase().replaceAll("\\s", ""))) {
+                    learnText(eddbBody.getName().toUpperCase().replaceAll("\\s", ""), bodyNameWords.subList(0, indexArrivalPoint), screenshotFilename);
+                }
             }
             learnText("ARRIVAL", Arrays.asList(bodyNameWords.get(indexArrivalPoint)), screenshotFilename);
             learnText("POINT:", Arrays.asList(bodyNameWords.get(indexArrivalPoint + 1)), screenshotFilename);
