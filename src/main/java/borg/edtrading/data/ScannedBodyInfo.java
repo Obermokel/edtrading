@@ -169,8 +169,12 @@ public class ScannedBodyInfo {
                 if (lowercasedScannedNameWords.get(i) != null) {
                     String distanceText = lowercasedScannedNameWords.set(i, null);
                     try {
-                        String parseableText = distanceText.replace("ls", ""); // remove trailing LS
+                        String parseableText = distanceText.replace("l5", "").replace("ls", ""); // remove trailing LS (with S possibly detected as 5)
                         parseableText = parseableText.replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8"); // fix digits
+                        parseableText = parseableText.replace(".", ","); // make all to comma
+                        if (parseableText.length() >= 4 && parseableText.lastIndexOf(",") == parseableText.length() - 3) {
+                            parseableText = parseableText.substring(0, parseableText.lastIndexOf(",")) + "." + parseableText.substring(parseableText.lastIndexOf(",") + 1); // Replace last comma with dot
+                        }
                         if (!parseableText.matches("\\d{1,3}\\.\\d{2}") && !parseableText.matches("\\d{1,3},\\d{3}\\.\\d{2}")) {
                             logger.warn(screenshotFilename + ": '" + distanceText + "' does not look like distance from arrival point");
                         } else {
