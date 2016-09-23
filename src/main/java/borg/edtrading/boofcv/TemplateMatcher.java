@@ -99,7 +99,7 @@ public class TemplateMatcher {
             float imageAR = (float) image.getWidth() / (float) image.getHeight();
 
             final double pixels = image.getWidth() * image.getHeight();
-            final double maxErrorPerPixel = ValueFixer.ONLY_FIX_WITH_EDDB_DATA ? 1500.0 : 6666.7; // High allowed error when learning from EDDB, low allowed error when self-learning
+            final double maxErrorPerPixel = ValueFixer.ONLY_FIX_WITH_EDDB_DATA ? 1500.0 : 1234.7; // High allowed error when learning from EDDB, low allowed error when self-learning
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {
@@ -149,6 +149,8 @@ public class TemplateMatcher {
             text = "%";
         } else if ("_strich".equals(folder)) {
             text = "-";
+        } else if ("_plus".equals(folder)) {
+            text = "+";
         } else if ("_doppelpunkt".equals(folder)) {
             text = ":";
         } else if ("_klammer_auf".equals(folder)) {
@@ -177,6 +179,8 @@ public class TemplateMatcher {
             folder = "_prozent";
         } else if ("-".equals(text)) {
             folder = "_strich";
+        } else if ("+".equals(text)) {
+            folder = "_plus";
         } else if (":".equals(text)) {
             folder = "_doppelpunkt";
         } else if ("(".equals(text)) {
