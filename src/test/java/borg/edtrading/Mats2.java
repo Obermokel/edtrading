@@ -50,38 +50,38 @@ public class Mats2 {
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
 
         //File sourceFile = selectRandomScreenshot();
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_4k_\\2016-09-22 19-18-31 Toolfa.png");
-        //for (File sourceFile : selectAllScreenshots()) {
-        logger.info("Testing " + sourceFile.getName());
-        String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
-        StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
-        List<Body> eddbBodies = eddbStarSystem == null ? Collections.emptyList() : galaxy.searchBodiesOfStarSystem(eddbStarSystem.getId());
-        BufferedImage originalImage = ImageIO.read(sourceFile);
-        BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
-        BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
-        bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
-        //            ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
-        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
-        //            ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
-        BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
-        bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
-        //            ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
-        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
-        //            ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_4k_\\2016-09-22 19-28-38 Wolf 562.png");
+        for (File sourceFile : selectAllScreenshots()) {
+            logger.info("Testing " + sourceFile.getName());
+            String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
+            StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
+            List<Body> eddbBodies = eddbStarSystem == null ? Collections.emptyList() : galaxy.searchBodiesOfStarSystem(eddbStarSystem.getId());
+            BufferedImage originalImage = ImageIO.read(sourceFile);
+            BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
+            BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
+            bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
+            //            ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
+            BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
+            //            ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
+            BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
+            bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
+            //            ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
+            BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
+            //            ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
-        //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
-        //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
+            //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
+            //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
 
-        List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
-        List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
-        ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
-        System.out.println(scannedBodyInfo);
+            List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates);
+            List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates);
+            ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
+            System.out.println(scannedBodyInfo);
 
-        //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
-        //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
+            //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage);
+            //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage);
 
-        templates = copyLearnedChars();
-        //}
+            templates = copyLearnedChars();
+        }
     }
 
     private static List<Template> copyLearnedChars() throws IOException {

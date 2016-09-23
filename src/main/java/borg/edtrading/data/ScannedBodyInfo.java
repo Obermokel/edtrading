@@ -580,17 +580,21 @@ public class ScannedBodyInfo {
             boolean bracketError = false;
             List<String> matsAndPercentagesSeparated = new ArrayList<>(2 * matsAndPercentages.length);
             for (String s : matsAndPercentages) {
-                String[] matAndPercentage = s.split("\\(");
-                if (matAndPercentage.length != 2) {
-                    bracketError = true;
-                    break;
+                if (",".equals(s)) {
+                    logger.warn(screenshotFilename + ": Incomplete planet materials screenshot: " + wholeRemainingText);
                 } else {
-                    matsAndPercentagesSeparated.add(matAndPercentage[0].replace(".", ",")); // fix . to ,
-                    matsAndPercentagesSeparated.add(matAndPercentage[1].replace(",", ".")); // fix , to .
+                    String[] matAndPercentage = s.split("\\(");
+                    if (matAndPercentage.length != 2) {
+                        bracketError = true;
+                        break;
+                    } else {
+                        matsAndPercentagesSeparated.add(matAndPercentage[0].replace(".", ",")); // fix . to ,
+                        matsAndPercentagesSeparated.add(matAndPercentage[1].replace(",", ".")); // fix , to .
+                    }
                 }
             }
             if (bracketError) {
-                logger.warn(screenshotFilename + ": Bracket error for planet materials: " + wholeRemainingText);
+                throw new RuntimeException(screenshotFilename + ": Bracket error for planet materials: " + wholeRemainingText);
             } else {
                 // Now we should have a list like this:
                 // [iron, 19.1%, ,sulphur, 18.5%, ,carbon, 15.6%, ... ,technetium, 0.7%]
