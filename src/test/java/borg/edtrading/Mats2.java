@@ -4,7 +4,6 @@ import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
 import borg.edtrading.data.Body;
-import borg.edtrading.data.BodyPlausiChecker;
 import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.data.StarSystem;
@@ -55,7 +54,7 @@ public class Mats2 {
         //File sourceFile = selectRandomScreenshot();
         //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_4k_\\2016-09-22 20-10-09 LHS 417.png");
         for (File sourceFile : selectAllScreenshots()) {
-            logger.trace("Testing " + sourceFile.getName());
+            logger.trace("Testing " + sourceFile.getName() + " (Already finished: " + scannedBodyInfos.size() + ")");
             String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
             StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
             List<Body> eddbBodies = eddbStarSystem == null ? Collections.emptyList() : galaxy.searchBodiesOfStarSystem(eddbStarSystem.getId());
@@ -79,13 +78,13 @@ public class Mats2 {
             List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates, sourceFile.getName());
             ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
             scannedBodyInfos.add(scannedBodyInfo);
-            if (logger.isDebugEnabled()) {
-                logger.debug(scannedBodyInfo);
-            }
-            List<String> plausiMessages = BodyPlausiChecker.checkPlanet(scannedBodyInfo.getRadiusKm(), scannedBodyInfo.getEarthMasses(), scannedBodyInfo.getGravityG());
-            for (String msg : plausiMessages) {
-                logger.warn("!!! " + sourceFile.getName() + " !!! " + msg + " !!!");
-            }
+            //            if (logger.isDebugEnabled()) {
+            //                logger.debug(scannedBodyInfo);
+            //            }
+            //            List<String> plausiMessages = BodyPlausiChecker.checkPlanet(scannedBodyInfo.getRadiusKm(), scannedBodyInfo.getEarthMasses(), scannedBodyInfo.getGravityG());
+            //            for (String msg : plausiMessages) {
+            //                logger.warn("!!! " + sourceFile.getName() + " !!! " + msg + " !!!");
+            //            }
 
             //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
             //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
