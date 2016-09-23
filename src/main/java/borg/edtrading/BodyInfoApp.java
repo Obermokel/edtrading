@@ -49,10 +49,12 @@ public class BodyInfoApp {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         final boolean doEddbUpdate = false;
+        System.out.println(args[0]);
+        // TODO Permanently remember successfully created/updated bodies and do not update them again! Otherwise we might end in a battle with other OCR users...
 
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
         Galaxy galaxy = Galaxy.readDataFromFiles();
-        BodyUpdater bodyUpdater = doEddbUpdate ? new BodyUpdater("Mokel DeLorean", "jExx8sT") : null;
+        BodyUpdater bodyUpdater = doEddbUpdate ? new BodyUpdater(args[0], args[1]) : null;
         try {
             List<Template> bodyInfoTemplates = TemplateMatcher.loadTemplates("Body Info");
             List<Template> bodyNameTemplates = TemplateMatcher.loadTemplates("Body Name");

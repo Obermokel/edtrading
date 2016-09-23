@@ -39,15 +39,15 @@ public class BodyPlausiChecker {
 
             // Checks...
             double earthDensity = densityG_cm3.doubleValue() / EARTH_DENSITY_G_CM3.doubleValue();
-            if (earthDensity < 0.35) {
-                messages.add("Very low density: " + densityG_cm3 + " g/cm³, earth has " + EARTH_DENSITY_G_CM3 + " g/cm³, factor " + earthDensity);
-            } else if (earthDensity > 1.7) {
-                messages.add("Very high density: " + densityG_cm3 + " g/cm³, earth has " + EARTH_DENSITY_G_CM3 + " g/cm³, factor " + earthDensity);
+            if (earthDensity < 0.3) {
+                messages.add("Very low density: " + densityG_cm3 + " g/cm³, earth has " + EARTH_DENSITY_G_CM3 + " g/cm³");
+            } else if (earthDensity > 1.8) {
+                messages.add("Very high density: " + densityG_cm3 + " g/cm³, earth has " + EARTH_DENSITY_G_CM3 + " g/cm³");
             }
             double gravityOffsetFactor = gravityM_s2.doubleValue() / expectedGravityM_s2.doubleValue();
-            if (gravityOffsetFactor < 0.9) {
+            if (gravityOffsetFactor < 0.9 && expectedGravityG.doubleValue() > 0.07) {
                 messages.add("Very low gravity: " + gravityM_s2 + " m/s² (" + gravityG + "G), expected " + expectedGravityM_s2 + " m/s² (" + expectedGravityG + "G)");
-            } else if (gravityOffsetFactor > 1.1) {
+            } else if (gravityOffsetFactor > 1.1 && expectedGravityG.doubleValue() > 0.07) {
                 messages.add("Very high gravity: " + gravityM_s2 + " m/s² (" + gravityG + "G), expected " + expectedGravityM_s2 + " m/s² (" + expectedGravityG + "G)");
             }
         }
