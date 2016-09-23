@@ -6,6 +6,7 @@ import borg.edtrading.boofcv.TemplateMatcher;
 import borg.edtrading.data.Body;
 import borg.edtrading.data.BodyPlausiChecker;
 import borg.edtrading.data.Galaxy;
+import borg.edtrading.data.Item;
 import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.data.StarSystem;
 import borg.edtrading.ocr.CharacterFinder;
@@ -26,11 +27,16 @@ import java.awt.image.RasterFormatException;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 
 import javax.imageio.ImageIO;
 
@@ -49,11 +55,12 @@ public class Mats2 {
         //testAllImages();
 
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
+        List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
         //File sourceFile = selectRandomScreenshot();
         //File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_4k_\\2016-09-22 20-10-09 LHS 417.png");
         for (File sourceFile : selectAllScreenshots()) {
-            logger.info("Testing " + sourceFile.getName());
+            logger.trace("Testing " + sourceFile.getName());
             String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
             StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
             List<Body> eddbBodies = eddbStarSystem == null ? Collections.emptyList() : galaxy.searchBodiesOfStarSystem(eddbStarSystem.getId());
@@ -76,16 +83,60 @@ public class Mats2 {
             List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates, sourceFile.getName());
             List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates, sourceFile.getName());
             ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
-            System.out.println(scannedBodyInfo);
+            scannedBodyInfos.add(scannedBodyInfo);
+            if (logger.isDebugEnabled()) {
+                logger.debug(scannedBodyInfo);
+            }
             List<String> plausiMessages = BodyPlausiChecker.checkPlanet(scannedBodyInfo.getRadiusKm(), scannedBodyInfo.getEarthMasses(), scannedBodyInfo.getGravityG());
             for (String msg : plausiMessages) {
-                System.out.println("!!! " + msg + " !!!");
+                logger.warn("!!! " + sourceFile.getName() + " !!! " + msg + " !!!");
             }
 
             //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
             //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
 
             templates = copyLearnedChars();
+        }
+
+        printStats(scannedBodyInfos);
+    }
+
+    private static void printStats(List<ScannedBodyInfo> scannedBodyInfos) {
+        Map<Item, ScannedBodyInfo> highestOccurences = new TreeMap<>();
+        Map<Item, List<BigDecimal>> allOccurences = new TreeMap<>();
+        int nPlanets = 0; // Each screenshot represents a planet. However we only count successfully scanned screenshots.
+        for (ScannedBodyInfo bi : scannedBodyInfos) {
+            if (bi.getPlanetMaterials() != null && bi.getPlanetMaterials().size() > 0) {
+                nPlanets++;
+                for (Item element : bi.getPlanetMaterials().keySet()) {
+                    BigDecimal percentage = bi.getPlanetMaterials().get(element);
+
+                    ScannedBodyInfo bestSoFar = highestOccurences.get(element);
+                    if (bestSoFar == null || percentage.compareTo(bestSoFar.getPlanetMaterials().get(element)) > 0) {
+                        highestOccurences.put(element, bi);
+                    }
+
+                    List<BigDecimal> all = allOccurences.get(element);
+                    if (all == null) {
+                        all = new ArrayList<>();
+                        allOccurences.put(element, all);
+                    }
+                    all.add(percentage);
+                }
+            }
+        }
+        System.out.println("\n>>>> >>>> >>>> >>>> RESULTS FROM " + nPlanets + " PLANETS <<<< <<<< <<<< <<<<\n");
+        System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "ELEMENT", "HIGHEST", "MEDIAN", "OCCURENCE"));
+        System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "---------------", "----------", "----------", "----------"));
+        for (Item element : highestOccurences.keySet()) {
+            String name = highestOccurences.get(element).getBodyName();
+            BigDecimal highest = highestOccurences.get(element).getPlanetMaterials().get(element);
+            List<BigDecimal> all = allOccurences.get(element);
+            Collections.sort(all);
+            BigDecimal median = all.get(all.size() / 2);
+            BigDecimal frequency = new BigDecimal(all.size()).multiply(new BigDecimal(100)).divide(new BigDecimal(nPlanets), 1, BigDecimal.ROUND_HALF_UP);
+
+            System.out.println(String.format(Locale.US, "%-15s %9.1f%% %9.1f%% %9.1f%%    %s", element.getName(), highest, median, frequency, name));
         }
     }
 
