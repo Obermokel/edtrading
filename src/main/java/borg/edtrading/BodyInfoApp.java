@@ -6,7 +6,6 @@ import borg.edtrading.boofcv.TemplateMatcher;
 import borg.edtrading.data.Body;
 import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.Item;
-import borg.edtrading.data.PlausiCheckResult;
 import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.data.StarSystem;
 import borg.edtrading.eddb.BodyUpdater;
@@ -57,7 +56,6 @@ public class BodyInfoApp {
         BodyUpdater bodyUpdater = doEddbUpdate ? new BodyUpdater(args[0], args[1]) : null;
         try {
             List<Template> bodyInfoTemplates = TemplateMatcher.loadTemplates("Body Info");
-            List<Template> bodyNameTemplates = TemplateMatcher.loadTemplates("Body Name");
 
             List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
@@ -77,7 +75,7 @@ public class BodyInfoApp {
                 // Extract planet name, type and distance from arrival
                 BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
                 bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
-                List<MatchGroup> bodyNameWords = scanWords(bodyNameImage, bodyNameTemplates, screenshotFile.getName());
+                List<MatchGroup> bodyNameWords = scanWords(bodyNameImage, bodyInfoTemplates, screenshotFile.getName());
 
                 // Extract body info
                 BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
@@ -91,9 +89,7 @@ public class BodyInfoApp {
                 if (doEddbUpdate) {
                     bodyUpdater.updateBody(scannedBodyInfo);
                 } else {
-                    PlausiCheckResult plausiResult = scannedBodyInfo.checkPlausi();
-                    System.out.println(">>>> " + scannedBodyInfo.getBodyName() + " <<<<");
-                    System.out.println(plausiResult);
+                    System.out.println(scannedBodyInfo);
                 }
             }
 
