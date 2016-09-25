@@ -15,6 +15,7 @@ public class Template {
 
     private String text = null;
     private GrayF32 image = null;
+    private GrayF32 croppedImage = null;
     private GrayF32 mask = null;
 
     public Template(String text, GrayF32 image, GrayF32 mask) {
@@ -42,6 +43,14 @@ public class Template {
 
     public void setImage(GrayF32 image) {
         this.image = image;
+    }
+
+    public GrayF32 getCroppedImage() {
+        return this.croppedImage;
+    }
+
+    public void setCroppedImage(GrayF32 croppedImage) {
+        this.croppedImage = croppedImage;
     }
 
     public GrayF32 getMask() {

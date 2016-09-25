@@ -57,7 +57,9 @@ public class TemplateMatcher {
                     if (maskFile.exists()) {
                         mask = UtilImageIO.loadImage(maskFile.getAbsolutePath(), GrayF32.class);
                     }
-                    result.add(new Template(text, image, mask));
+                    Template t = new Template(text, image, mask);
+                    t.setCroppedImage(cropCharToHeight(image));
+                    result.add(t);
                 }
             }
         }
@@ -94,22 +96,23 @@ public class TemplateMatcher {
 
     public static TemplateMatch findBestTemplateMatch(BufferedImage image, List<Template> templates, int xWithinImage, int yWithinImage, String screenshotFilename) {
         try {
-            GrayF32 grayImage = ConvertBufferedImage.convertFrom(image, (GrayF32) null);
-            float imageAR = (float) image.getWidth() / (float) image.getHeight();
+            GrayF32 originalGrayImage = ConvertBufferedImage.convertFrom(image, (GrayF32) null);
+            GrayF32 croppedGrayImage = cropCharToHeight(originalGrayImage);
+            float imageAR = (float) croppedGrayImage.width / (float) croppedGrayImage.height;
 
-            final double pixels = image.getWidth() * image.getHeight();
-            final double maxErrorPerPixel = 999.0;
+            final double pixels = croppedGrayImage.width * croppedGrayImage.height;
+            final double maxErrorPerPixel = 1000.0;
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {
-                float templateAR = (float) template.getImage().width / (float) template.getImage().height;
+                float templateAR = (float) template.getCroppedImage().width / (float) template.getCroppedImage().height;
                 if (templateAR <= 1.5 * imageAR && templateAR >= imageAR / 1.5) {
-                    GrayF32 scaledTemplate = new GrayF32(grayImage.width, grayImage.height);
-                    new FDistort().input(template.getImage()).output(scaledTemplate).interp(TypeInterpolate.BICUBIC).scale().apply();
+                    GrayF32 scaledTemplate = new GrayF32(croppedGrayImage.width, croppedGrayImage.height);
+                    new FDistort().input(template.getCroppedImage()).output(scaledTemplate).interp(TypeInterpolate.BICUBIC).scale().apply();
                     double error = 0.0;
-                    for (int y = 0; y < grayImage.height; y++) {
-                        for (int x = 0; x < grayImage.width; x++) {
-                            float diff = grayImage.unsafe_get(x, y) - scaledTemplate.unsafe_get(x, y);
+                    for (int y = 0; y < croppedGrayImage.height; y++) {
+                        for (int x = 0; x < croppedGrayImage.width; x++) {
+                            float diff = croppedGrayImage.unsafe_get(x, y) - scaledTemplate.unsafe_get(x, y);
                             error += (diff * diff);
                         }
                     }
@@ -129,6 +132,36 @@ public class TemplateMatcher {
         } catch (Exception e) {
             logger.error("Failed to find best match in BufferedImage", e);
             return null;
+        }
+    }
+
+    private static GrayF32 cropCharToHeight(GrayF32 originalCharImage) {
+        int lastBlackLineFromTop = 0;
+        boolean foundTopBoundary = false;
+        for (int y = 0; y < originalCharImage.height && !foundTopBoundary; y++) {
+            for (int x = 0; x < originalCharImage.width && !foundTopBoundary; x++) {
+                if (originalCharImage.unsafe_get(x, y) != 0f) {
+                    foundTopBoundary = true;
+                }
+            }
+            lastBlackLineFromTop = y;
+        }
+
+        int lastBlackLineFromBottom = originalCharImage.height - 1;
+        boolean foundBottomBoundary = false;
+        for (int y = originalCharImage.height - 1; y >= 0 && !foundBottomBoundary; y--) {
+            for (int x = 0; x < originalCharImage.width && !foundBottomBoundary; x++) {
+                if (originalCharImage.unsafe_get(x, y) != 0f) {
+                    foundBottomBoundary = true;
+                }
+            }
+            lastBlackLineFromBottom = y;
+        }
+
+        if (foundTopBoundary && foundBottomBoundary && lastBlackLineFromTop < lastBlackLineFromBottom) {
+            return originalCharImage.subimage(0, lastBlackLineFromTop, originalCharImage.width, lastBlackLineFromBottom + 1);
+        } else {
+            return originalCharImage;
         }
     }
 
