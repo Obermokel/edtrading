@@ -52,7 +52,7 @@ public class Mats2 {
         List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
         //File sourceFile = selectRandomScreenshot();
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_4k_\\2016-09-22 19-33-31 2MASS 1503+2525.png");
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_4k_\\2016-09-21 07-00-00 Obotrima.png");
         //for (File sourceFile : selectAllScreenshots()) {
         logger.trace("Testing " + sourceFile.getName() + " (Already finished: " + scannedBodyInfos.size() + ")");
         String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);

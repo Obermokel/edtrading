@@ -354,7 +354,7 @@ public class ScannedBodyInfo {
         if (indexSurfaceTemp < lowercasedScannedWords.size()) {
             try {
                 String value = valueForLabel(indexSurfaceTemp, "SURFACETEMP:", new SurfaceTempFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
-                scannedBodyInfo.setSurfaceTempK(new BigDecimal(value.replace("K", "")));
+                scannedBodyInfo.setSurfaceTempK(new BigDecimal(value.replace(",", "").replace("K", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
             }

@@ -47,7 +47,7 @@ public class BodyInfoApp {
     static final Logger logger = LogManager.getLogger(BodyInfoApp.class);
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        final boolean doEddbUpdate = false;
+        final boolean doEddbUpdate = true;
         System.out.println(args[0]);
         // TODO Permanently remember successfully created/updated bodies and do not update them again! Otherwise we might end in a battle with other OCR users...
 

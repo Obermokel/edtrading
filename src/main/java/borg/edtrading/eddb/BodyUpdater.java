@@ -19,6 +19,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.io.Closeable;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * BodyUpdater
@@ -180,21 +181,56 @@ public class BodyUpdater implements Closeable {
                 this.driver.findElement(By.id("bodyform-rotational_period")).sendKeys(String.valueOf(scannedBodyInfo.getRotationalPeriodD()));
             }
 
-            //            if (scannedBodyInfo.getTidallyLocked() != null) {
-            //                new Actions(driver).moveToElement(driver.findElement(By.cssSelector("footer.footer")), 0, 0).build().perform();
-            //                new Actions(driver).moveToElement(driver.findElement(By.id("bodysolidcomposition-0-share")), 0, 0).build().perform();
-            //                this.driver.findElement(By.id("s2id_bodyform-is_rotational_period_tidally_locked")).click();
-            //                WebElement searchInput = new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.cssSelector("#select2-drop input")));
-            //                searchInput.click();
-            //                searchInput.sendKeys(scannedBodyInfo.getTidallyLocked().booleanValue() ? "Yes" : "No");
-            //                searchInput.sendKeys(Keys.ENTER);
-            //            }
-
-            if (scannedBodyInfo.getAxialTiltDeg() != null) {
-                this.driver.findElement(By.id("bodyform-axis_tilt")).sendKeys(String.valueOf(scannedBodyInfo.getAxialTiltDeg()));
+            if (scannedBodyInfo.getTidallyLocked() != null) {
+                new Actions(driver).moveToElement(driver.findElement(By.cssSelector("footer.footer")), 0, 0).build().perform();
+                new Actions(driver).moveToElement(driver.findElement(By.id("bodysolidcomposition-0-share")), 0, 0).build().perform();
+                this.driver.findElement(By.id("s2id_bodyform-is_rotational_period_tidally_locked")).click();
+                Thread.sleep(10000L);
+                List<WebElement> options = this.driver.findElements(By.cssSelector("div.select2-drop-active div.select2-result-label"));
+                if (scannedBodyInfo.getTidallyLocked().booleanValue()) {
+                    for (WebElement we : options) {
+                        if (we.getText().equalsIgnoreCase("yes")) {
+                            System.out.println("clicked yes");
+                            we.click();
+                            break;
+                        }
+                    }
+                } else {
+                    for (WebElement we : options) {
+                        if (we.getText().equalsIgnoreCase("no")) {
+                            System.out.println("clicked no");
+                            we.click();
+                            break;
+                        }
+                    }
+                }
             }
 
-            Thread.sleep(30000L);
+            if (scannedBodyInfo.getAxialTiltDeg() != null) {
+                WebElement input = this.driver.findElement(By.id("bodyform-axis_tilt"));
+                input.click();
+                Thread.sleep(10000L);
+                if (input.getAttribute("value") != null && input.getAttribute("value").length() > 0) {
+                    System.out.println("Won't overwrite " + input.getText() + " of axial tilt with " + scannedBodyInfo.getAxialTiltDeg());
+                } else {
+                    input.sendKeys(String.valueOf(scannedBodyInfo.getAxialTiltDeg()));
+                }
+            }
+
+            if (scannedBodyInfo.getPlanetMaterials() != null) {
+                this.driver.findElement(By.cssSelector("div#elementMaterialEditorController a.btn")).click();
+                List<WebElement> elementRows = this.driver.findElements(By.cssSelector("div#elementMaterialEditorController div.elementRow"));
+                for (WebElement elementRow : elementRows) {
+                    String cssClass = elementRow.getAttribute("class");
+                    boolean markedAsExisting = cssClass.contains("userSelected");
+                    String elementName = elementRow.findElement(By.cssSelector("div.elementDataRow div.elementName")).getText().replaceAll("\\s", " ");
+                    elementName = elementName.substring(elementName.indexOf(" ")).trim();
+                    WebElement shareInput = elementRow.findElement(By.cssSelector("div.elementDataRow div.elementShare input"));
+                    System.out.println(elementName + "=" + markedAsExisting + " (" + shareInput.getAttribute("value") + ")");
+                }
+            }
+
+            Thread.sleep(10000L);
             this.driver.findElement(By.id("bodyform-name")).submit();
             throw new RuntimeException("testing");
         }
