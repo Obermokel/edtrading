@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -89,9 +88,13 @@ public class BodyUpdater implements Closeable {
         final String bodyName = fixBodyName(systemName, scannedBodyInfo.getBodyName());
         final String filename = scannedBodyInfo.getScreenshotFilename();
 
+        BigDecimal distanceLsInteger = scannedBodyInfo.getDistanceLs() == null ? null : new BigDecimal(scannedBodyInfo.getDistanceLs().intValue());
+
         logger.info("Updating body '" + bodyName + "' in system '" + systemName + "'");
 
-        // TODO distance and reserve
+        this.updateTextField("bodyform-name", systemName, bodyName, EddbHistory.FIELD_BODY_NAME, bodyName, filename);
+        this.updateNumericField("bodyform-distance_to_spawn", systemName, bodyName, EddbHistory.FIELD_DISTANCE_FROM_ARRIVAL, distanceLsInteger, filename);
+        // TODO reserve, terraforming
         this.updateSearchableDropdown("s2id_bodyform-type_id", null, systemName, bodyName, EddbHistory.FIELD_BODY_TYPE, scannedBodyInfo.getBodyType(), filename);
         this.updateNumericField("bodyform-earth_masses", systemName, bodyName, EddbHistory.FIELD_EARTH_MASSES, scannedBodyInfo.getEarthMasses(), filename);
         this.updateNumericField("bodyform-radius", systemName, bodyName, EddbHistory.FIELD_RADIUS, scannedBodyInfo.getRadiusKm(), filename);
@@ -306,6 +309,50 @@ public class BodyUpdater implements Closeable {
         }
     }
 
+    private void updateTextField(String cssId, String systemName, String bodyName, String fieldName, String newValue, String screenshotFilename) throws IOException {
+        this.updateTextField(this.driver.findElement(By.id(cssId)), systemName, bodyName, fieldName, newValue, screenshotFilename);
+    }
+
+    private void updateTextField(WebElement input, String systemName, String bodyName, String fieldName, String newValue, String screenshotFilename) throws IOException {
+        String historyEntry = this.history.lookup(systemName, bodyName, fieldName);
+
+        if (historyEntry != null) {
+            logger.trace("Skipping " + fieldName + "=" + newValue + " of body " + bodyName + " in system " + systemName + ". Entry from history: " + historyEntry);
+        } else {
+            logger.trace("Setting " + fieldName + "=" + newValue + " of body " + bodyName + " in system " + systemName);
+
+            String oldValue = StringUtils.isEmpty(input.getAttribute("value")) ? null : input.getAttribute("value");
+
+            if (oldValue == null) {
+                if (newValue == null) {
+                    // No change
+                } else {
+                    // Set
+                    this.history.set(systemName, bodyName, fieldName, newValue, screenshotFilename);
+                    input.click();
+                    input.sendKeys(newValue);
+                }
+            } else {
+                if (newValue == null) {
+                    // Erase
+                    this.history.erase(systemName, bodyName, fieldName, oldValue, screenshotFilename);
+                    input.click();
+                    input.sendKeys(Keys.chord(Keys.LEFT_CONTROL, "a"));
+                    input.sendKeys(Keys.BACK_SPACE);
+                } else if (newValue.equals(oldValue)) {
+                    // No change
+                } else {
+                    // Change
+                    this.history.change(systemName, bodyName, fieldName, oldValue, newValue, screenshotFilename);
+                    input.click();
+                    input.sendKeys(Keys.chord(Keys.LEFT_CONTROL, "a"));
+                    input.sendKeys(Keys.BACK_SPACE);
+                    input.sendKeys(newValue);
+                }
+            }
+        }
+    }
+
     private void updateNumericField(String cssId, String systemName, String bodyName, String fieldName, BigDecimal newValue, String screenshotFilename) throws IOException {
         this.updateNumericField(this.driver.findElement(By.id(cssId)), systemName, bodyName, fieldName, newValue, screenshotFilename);
     }
@@ -375,53 +422,56 @@ public class BodyUpdater implements Closeable {
 
         // Wait for the search result to display the current system and click on it
         try {
-            WebElement systemLink = new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.linkText(systemName)));
-            logger.trace("Clicking on link to system '" + systemName + "': " + systemLink.getAttribute("href"));
-            systemLink.click();
-        } catch (TimeoutException e) {
+            Thread.sleep(1000L);
+            List<WebElement> systemLinks = this.driver.findElements(By.cssSelector("div.system-index table.table tbody a"));
+            for (WebElement systemLink : systemLinks) {
+                if (systemLink.getText().equalsIgnoreCase(systemName)) {
+                    logger.trace("Clicking on link to system '" + systemName + "': " + systemLink.getAttribute("href"));
+                    systemLink.click();
+                    return;
+                }
+            }
             String msg = "System '" + systemName + "' not found on ROSS";
             logger.warn(msg);
             throw new SystemNotFoundException(msg);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
     private void openOrCreateBodyPage(ScannedBodyInfo scannedBodyInfo) throws IOException {
         try {
             String bodyName = fixBodyName(scannedBodyInfo.getSystemName(), scannedBodyInfo.getBodyName());
-            WebElement bodyLink = new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.linkText(bodyName)));
-            logger.trace("Clicking on link to body '" + bodyName + "': " + bodyLink.getAttribute("href"));
-            bodyLink.click();
-        } catch (TimeoutException e) {
+            Thread.sleep(1000L);
+            List<WebElement> allLinks = this.driver.findElements(By.tagName("a"));
+            for (WebElement link : allLinks) {
+                if (link.getText().equalsIgnoreCase(bodyName)) {
+                    logger.trace("Clicking on link to body '" + bodyName + "': " + link.getAttribute("href"));
+                    link.click();
+                    return;
+                }
+            }
             this.createBody(scannedBodyInfo);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
     private void createBody(ScannedBodyInfo scannedBodyInfo) throws IOException {
         final String systemName = scannedBodyInfo.getSystemName();
         final String bodyName = fixBodyName(systemName, scannedBodyInfo.getBodyName());
+        final String filename = scannedBodyInfo.getScreenshotFilename();
+
+        BigDecimal distanceLsInteger = scannedBodyInfo.getDistanceLs() == null ? null : new BigDecimal(scannedBodyInfo.getDistanceLs().intValue());
 
         logger.info("Creating new body '" + bodyName + "' in system '" + systemName + "'");
 
         logger.trace("Clicking on 'Add new body to system " + systemName + "' link");
         this.driver.findElement(By.linkText("Add new body to system " + systemName)).click();
 
-        logger.trace("Entering '" + bodyName + "' into body name field");
-        this.history.set(systemName, bodyName, EddbHistory.FIELD_BODY_NAME, bodyName, scannedBodyInfo.getScreenshotFilename());
-        this.driver.findElement(By.id("bodyform-name")).sendKeys(bodyName);
-
-        String bodyGroup = "Planet"; // TODO Support other body types like star or belt
-        logger.trace("Entering '" + bodyGroup + "' into body group field");
-        this.history.set(systemName, bodyName, EddbHistory.FIELD_BODY_GROUP, bodyGroup, scannedBodyInfo.getScreenshotFilename());
-        this.driver.findElement(By.id("s2id_bodyform-group_id")).click();
-        this.driver.findElement(By.id("s2id_autogen1_search")).sendKeys(bodyGroup);
-        this.driver.findElement(By.id("s2id_autogen1_search")).sendKeys(Keys.ENTER);
-
-        if (scannedBodyInfo.getDistanceLs() != null) {
-            String distanceFromArrival = String.valueOf(scannedBodyInfo.getDistanceLs().intValue());
-            logger.trace("Entering '" + distanceFromArrival + "' into distance from arrival field");
-            this.history.set(systemName, bodyName, EddbHistory.FIELD_DISTANCE_FROM_ARRIVAL, distanceFromArrival, scannedBodyInfo.getScreenshotFilename());
-            this.driver.findElement(By.id("bodyform-distance_to_spawn")).sendKeys(distanceFromArrival);
-        }
+        this.updateTextField("bodyform-name", systemName, bodyName, EddbHistory.FIELD_BODY_NAME, bodyName, filename);
+        this.updateSearchableDropdown("s2id_bodyform-group_id", null, systemName, bodyName, EddbHistory.FIELD_BODY_GROUP, "Planet", filename);
+        this.updateNumericField("bodyform-distance_to_spawn", systemName, bodyName, EddbHistory.FIELD_DISTANCE_FROM_ARRIVAL, distanceLsInteger, filename);
 
         logger.trace("Submitting 'Add new body to system " + systemName + "' form");
         submitBodyPage();
@@ -433,11 +483,11 @@ public class BodyUpdater implements Closeable {
     }
 
     private static String fixBodyName(String systemName, String bodyName) {
-        //        if (bodyName.toLowerCase().startsWith(systemName.toLowerCase() + " ")) {
-        //            return systemName + bodyName.substring(systemName.length());
-        //        } else {
-        return bodyName;
-        //        }
+        if (bodyName.toLowerCase().startsWith(systemName.toLowerCase() + " ")) {
+            return systemName + bodyName.substring(systemName.length());
+        } else {
+            return bodyName;
+        }
     }
 
 }
