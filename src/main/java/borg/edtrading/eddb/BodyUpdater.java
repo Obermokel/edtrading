@@ -61,23 +61,13 @@ public class BodyUpdater implements Closeable {
         }
     }
 
-    public void updateBody(ScannedBodyInfo scannedBodyInfo) throws InterruptedException {
+    public void updateBody(ScannedBodyInfo scannedBodyInfo) throws InterruptedException, SystemNotFoundException {
         if (StringUtils.isEmpty(scannedBodyInfo.getSystemName())) {
             throw new IllegalArgumentException("scannedBodyInfo has no systemName");
         } else if (StringUtils.isEmpty(scannedBodyInfo.getBodyName())) {
             throw new IllegalArgumentException("scannedBodyInfo has no bodyName");
         } else {
-            this.driver.findElement(By.linkText("Systems")).click();
-
-            WebElement systemSearchInput = this.driver.findElement(By.name("SystemSearch[name]"));
-            systemSearchInput.sendKeys(scannedBodyInfo.getSystemName());
-            systemSearchInput.sendKeys(Keys.ENTER);
-
-            try {
-                new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.linkText(scannedBodyInfo.getSystemName()))).click();
-            } catch (TimeoutException e) {
-                throw new RuntimeException("System '" + scannedBodyInfo.getSystemName() + "' not found on ROSS");
-            }
+            this.openSystemPage(scannedBodyInfo.getSystemName());
 
             try {
                 new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.linkText(scannedBodyInfo.getBodyName()))).click();
@@ -223,6 +213,35 @@ public class BodyUpdater implements Closeable {
             Thread.sleep(10000L);
             this.driver.findElement(By.id("bodyform-name")).submit();
             throw new RuntimeException("testing");
+        }
+    }
+
+    /**
+     * Clicks on the 'Systems' link in the header, enters the given <code>systemName</code> into the search
+     * field, waits for the search result, and clicks on the link which has exactly the <code>systemName</code>
+     * as text.
+     *
+     * <p>
+     * If successful we should be on the system detail page after this method.
+     * </p>
+     *
+     * @param systemName
+     * @throws SystemNotFoundException
+     */
+    private void openSystemPage(String systemName) throws SystemNotFoundException {
+        // Go to systems page
+        this.driver.findElement(By.linkText("Systems")).click();
+
+        // Search the current system
+        WebElement systemSearchInput = this.driver.findElement(By.name("SystemSearch[name]"));
+        systemSearchInput.sendKeys(systemName);
+        systemSearchInput.sendKeys(Keys.ENTER);
+
+        // Wait for the search result to display the current system and click on it
+        try {
+            new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.linkText(systemName))).click();
+        } catch (TimeoutException e) {
+            throw new SystemNotFoundException("System '" + systemName + "' not found on ROSS");
         }
     }
 

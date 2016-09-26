@@ -9,6 +9,7 @@ import borg.edtrading.data.Item;
 import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.data.StarSystem;
 import borg.edtrading.eddb.BodyUpdater;
+import borg.edtrading.eddb.SystemNotFoundException;
 import borg.edtrading.ocr.CharacterFinder;
 import borg.edtrading.ocr.ScreenshotCropper;
 import borg.edtrading.ocr.ScreenshotPreprocessor;
@@ -48,52 +49,57 @@ public class BodyInfoApp {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         final boolean doEddbUpdate = true;
-        System.out.println(args[0]);
+
         // TODO Permanently remember successfully created/updated bodies and do not update them again! Otherwise we might end in a battle with other OCR users...
 
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
         Galaxy galaxy = Galaxy.readDataFromFiles();
         BodyUpdater bodyUpdater = doEddbUpdate ? new BodyUpdater(args[0], args[1]) : null;
+
         try {
-            List<Template> bodyInfoTemplates = TemplateMatcher.loadTemplates("Body Info");
+            List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
 
             List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
             List<File> screenshotFiles = getScreenshotsFromAllDir();
             for (File screenshotFile : screenshotFiles) {
-                //logger.debug(screenshotFile.getName());
+                try {
+                    //logger.debug(screenshotFile.getName());
 
-                // Extract system name from filename
-                String systemName = systemNameFromFilename(screenshotFile);
-                StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
-                List<Body> eddbBodies = eddbStarSystem == null ? Collections.emptyList() : galaxy.searchBodiesOfStarSystem(eddbStarSystem.getId());
+                    // Extract system name from filename
+                    String systemName = systemNameFromFilename(screenshotFile);
+                    StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
+                    List<Body> eddbBodies = eddbStarSystem == null ? Collections.emptyList() : galaxy.searchBodiesOfStarSystem(eddbStarSystem.getId());
 
-                // Darken and scale to 4k
-                BufferedImage originalImage = ImageIO.read(screenshotFile);
-                BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
+                    // Darken and scale to 4k
+                    BufferedImage originalImage = ImageIO.read(screenshotFile);
+                    BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
 
-                // Extract planet name, type and distance from arrival
-                BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
-                bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
-                List<MatchGroup> bodyNameWords = scanWords(bodyNameImage, bodyInfoTemplates, screenshotFile.getName());
+                    // Extract planet name, type and distance from arrival
+                    BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
+                    bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
+                    List<MatchGroup> bodyNameWords = scanWords(bodyNameImage, templates, screenshotFile.getName());
 
-                // Extract body info
-                BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
-                bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
-                List<MatchGroup> bodyInfoWords = scanWords(bodyInfoImage, bodyInfoTemplates, screenshotFile.getName());
+                    // Extract body info
+                    BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
+                    bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
+                    List<MatchGroup> bodyInfoWords = scanWords(bodyInfoImage, templates, screenshotFile.getName());
 
-                // Parse!
-                ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(screenshotFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
+                    // Parse!
+                    ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(screenshotFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
 
-                // Update!
-                if (doEddbUpdate) {
-                    bodyUpdater.updateBody(scannedBodyInfo);
-                } else {
+                    // sysout
                     System.out.println(scannedBodyInfo);
+                    printStats(scannedBodyInfos);
+
+                    // Update!
+                    if (doEddbUpdate) {
+                        bodyUpdater.updateBody(scannedBodyInfo);
+                    }
+                } catch (SystemNotFoundException e) {
+                    logger.error("Failed to update body info for " + screenshotFile.getName(), e);
                 }
             }
-
-            printStats(scannedBodyInfos);
         } finally {
             if (bodyUpdater != null) {
                 bodyUpdater.close();
