@@ -32,16 +32,6 @@ public class BodyUpdater implements Closeable {
 
     private WebDriver driver = null;
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        BodyUpdater bodyUpdater = new BodyUpdater("Mokel DeLorean", "foobar");
-
-        try {
-            bodyUpdater.updateBody(null);
-        } finally {
-            bodyUpdater.close();
-        }
-    }
-
     public BodyUpdater(String username, String password) {
         //this.driver = new ChromeDriver();
         this.driver = new FirefoxDriver();
