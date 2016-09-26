@@ -88,14 +88,14 @@ public class ScannedBodyInfo {
         if (this.getTerraforming() != null) {
             sb.append(" // ").append(this.getTerraforming().getName());
         }
-        sb.append(" // ").append(String.format("%.2fLs", this.getDistanceLs())).append("\n");
-        sb.append(String.format("%-21s\t%.4f", "EARTH MASSES:", this.getEarthMasses())).append("\n");
-        sb.append(String.format("%-21s\t%.0fKM", "RADIUS:", this.getRadiusKm())).append("\n");
-        sb.append(String.format("%-21s\t%.2fG", "GRAVITY:", this.getGravityG())).append("\n");
-        sb.append(String.format("%-21s\t%.0fK", "SURFACE TEMP:", this.getSurfaceTempK())).append("\n");
-        sb.append(String.format("%-21s\t%s", "VOLCANISM:", this.getVolcanism() == null ? null : this.getVolcanism().getName())).append("\n");
-        sb.append(String.format("%-21s\t%s", "ATMOSPHERE TYPE:", this.getAtmosphereType() == null ? null : this.getAtmosphereType().getName())).append("\n");
-        sb.append(String.format("%-21s\t", "COMPOSITION:"));
+        sb.append(" // ").append(String.format(Locale.US, "%.2fLs", this.getDistanceLs())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%.4f", "EARTH MASSES:", this.getEarthMasses())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%.0fKM", "RADIUS:", this.getRadiusKm())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%.2fG", "GRAVITY:", this.getGravityG())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%.0fK", "SURFACE TEMP:", this.getSurfaceTempK())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%s", "VOLCANISM:", this.getVolcanism() == null ? null : this.getVolcanism().getName())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%s", "ATMOSPHERE TYPE:", this.getAtmosphereType() == null ? null : this.getAtmosphereType().getName())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t", "COMPOSITION:"));
         if (this.getComposition() == null) {
             sb.append("null").append("\n");
         } else {
@@ -103,15 +103,15 @@ public class ScannedBodyInfo {
             while (it.hasNext()) {
                 BodyInfo material = it.next();
                 BigDecimal percent = this.getComposition().get(material);
-                sb.append(String.format("%.1f%% %s", percent, material.getName())).append(it.hasNext() ? ", " : "\n");
+                sb.append(String.format(Locale.US, "%.1f%% %s", percent, material.getName())).append(it.hasNext() ? ", " : "\n");
             }
         }
-        sb.append(String.format("%-21s\t%.1fD", "ORBITAL PERIOD:", this.getOrbitalPeriodD())).append("\n");
-        sb.append(String.format("%-21s\t%.2fAU", "SEMI MAJOR AXIS:", this.getSemiMajorAxisAU())).append("\n");
-        sb.append(String.format("%-21s\t%.4f", "ORBITAL ECCENTRICITY:", this.getOrbitalEccentricity())).append("\n");
-        sb.append(String.format("%-21s\t%.2f°", "ORBITAL INCLINATION:", this.getOrbitalInclinationDeg())).append("\n");
-        sb.append(String.format("%-21s\t%.2f°", "ARG OF PERIAPSIS:", this.getArgOfPeriapsisDeg())).append("\n");
-        sb.append(String.format("%-21s\t%.1fD", "ROTATIONAL PERIOD:", this.getRotationalPeriodD()));
+        sb.append(String.format(Locale.US, "%-21s\t%.1fD", "ORBITAL PERIOD:", this.getOrbitalPeriodD())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%.2fAU", "SEMI MAJOR AXIS:", this.getSemiMajorAxisAU())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%.4f", "ORBITAL ECCENTRICITY:", this.getOrbitalEccentricity())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%.2f°", "ORBITAL INCLINATION:", this.getOrbitalInclinationDeg())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%.2f°", "ARG OF PERIAPSIS:", this.getArgOfPeriapsisDeg())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%.1fD", "ROTATIONAL PERIOD:", this.getRotationalPeriodD()));
         if (Boolean.TRUE.equals(this.getTidallyLocked())) {
             sb.append(" (TIDALLY LOCKED)").append("\n");
         } else if (Boolean.FALSE.equals(this.getTidallyLocked())) {
@@ -119,8 +119,8 @@ public class ScannedBodyInfo {
         } else {
             sb.append(" (null)").append("\n");
         }
-        sb.append(String.format("%-21s\t%.2f°", "AXIAL TILT:", this.getAxialTiltDeg() == null ? null : this.getAxialTiltDeg().doubleValue())).append("\n");
-        sb.append(String.format("%-21s\t", "PLANET MATERIALS:"));
+        sb.append(String.format(Locale.US, "%-21s\t%.2f°", "AXIAL TILT:", this.getAxialTiltDeg() == null ? null : this.getAxialTiltDeg().doubleValue())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t", "PLANET MATERIALS:"));
         if (this.getPlanetMaterials() == null) {
             sb.append("null").append("\n");
         } else {
@@ -128,7 +128,7 @@ public class ScannedBodyInfo {
             while (it.hasNext()) {
                 Item material = it.next();
                 BigDecimal percent = this.getPlanetMaterials().get(material);
-                sb.append(String.format("%s(%.1f%%)", material.getName(), percent)).append(it.hasNext() ? ", " : "\n");
+                sb.append(String.format(Locale.US, "%s(%.1f%%)", material.getName(), percent)).append(it.hasNext() ? ", " : "\n");
             }
         }
         return sb.toString().trim();

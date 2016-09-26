@@ -3,23 +3,25 @@
 <Configuration>
 
     <Appenders>
-    
         <Console name="STDOUT" target="SYSTEM_OUT">
             <PatternLayout pattern="[%d] %-5p [%F:%L] :: %m%n" />
         </Console>
-        
+        <File name="EDDB_UPDATES" fileName="${sys:user.home}/BodyUpdater.log">
+            <PatternLayout pattern="[%d] %-5p :: %m%n" />
+        </File>
     </Appenders>
 
     <Loggers>
-        
         <logger name="borg" level="TRACE"></logger>
-        
         <logger name="borg.edtrading.boofcv.TemplateMatcher" level="DEBUG"></logger>
         
+        <logger name="borg.edtrading.eddb.BodyUpdater" level="TRACE">
+            <AppenderRef ref="EDDB_UPDATES" />
+        </logger>
+
         <Root level="ERROR">
             <AppenderRef ref="STDOUT" />
         </Root>
-        
     </Loggers>
 
 </Configuration>

@@ -1,0 +1,8 @@
+TODO:
+* System reserve
+* Terraforming
+* Support for other body types like stars, belts etc
+
+DONE:
+* Human readable logfile
+* Parseable logfile

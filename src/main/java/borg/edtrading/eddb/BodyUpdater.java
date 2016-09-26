@@ -1,6 +1,8 @@
 package borg.edtrading.eddb;
 
 import borg.edtrading.data.BodyInfo;
+import borg.edtrading.data.Item;
+import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.data.ScannedBodyInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -19,6 +21,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.io.Closeable;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -31,8 +34,11 @@ public class BodyUpdater implements Closeable {
     static final Logger logger = LogManager.getLogger(BodyUpdater.class);
 
     private WebDriver driver = null;
+    private EddbHistory history = null;
 
-    public BodyUpdater(String username, String password) {
+    public BodyUpdater(String username, String password) throws IOException {
+        this.history = EddbHistory.load();
+
         //this.driver = new ChromeDriver();
         this.driver = new FirefoxDriver();
         //this.driver = new HtmlUnitDriver(false);
@@ -61,158 +67,286 @@ public class BodyUpdater implements Closeable {
         }
     }
 
-    public void updateBody(ScannedBodyInfo scannedBodyInfo) throws InterruptedException, SystemNotFoundException {
+    public void updateBody(ScannedBodyInfo scannedBodyInfo) throws InterruptedException, SystemNotFoundException, IOException {
         if (StringUtils.isEmpty(scannedBodyInfo.getSystemName())) {
             throw new IllegalArgumentException("scannedBodyInfo has no systemName");
         } else if (StringUtils.isEmpty(scannedBodyInfo.getBodyName())) {
             throw new IllegalArgumentException("scannedBodyInfo has no bodyName");
         } else {
             this.openSystemPage(scannedBodyInfo.getSystemName());
+            this.openOrCreateBodyPage(scannedBodyInfo);
+            this.enterBasicBodyInformation(scannedBodyInfo);
+            this.updatePlanetMaterials(scannedBodyInfo);
 
-            try {
-                new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.linkText(scannedBodyInfo.getBodyName()))).click();
-            } catch (TimeoutException e) {
-                this.createBody(scannedBodyInfo);
+            Thread.sleep(60000L);
+            this.submitBodyPage();
+            throw new RuntimeException("testing");
+        }
+    }
+
+    private void enterBasicBodyInformation(ScannedBodyInfo scannedBodyInfo) throws InterruptedException, IOException {
+        final String systemName = scannedBodyInfo.getSystemName();
+        final String bodyName = fixBodyName(systemName, scannedBodyInfo.getBodyName());
+        final String filename = scannedBodyInfo.getScreenshotFilename();
+
+        logger.info("Updating body '" + bodyName + "' in system '" + systemName + "'");
+
+        // TODO distance and reserve
+        this.updateSearchableDropdown("s2id_bodyform-type_id", null, systemName, bodyName, EddbHistory.FIELD_BODY_TYPE, scannedBodyInfo.getBodyType(), filename);
+        this.updateNumericField("bodyform-earth_masses", systemName, bodyName, EddbHistory.FIELD_EARTH_MASSES, scannedBodyInfo.getEarthMasses(), filename);
+        this.updateNumericField("bodyform-radius", systemName, bodyName, EddbHistory.FIELD_RADIUS, scannedBodyInfo.getRadiusKm(), filename);
+        this.updateNumericField("bodyform-gravity", systemName, bodyName, EddbHistory.FIELD_GRAVITY, scannedBodyInfo.getGravityG(), filename);
+        this.updateNumericField("bodyform-surface_temperature", systemName, bodyName, EddbHistory.FIELD_SURFACE_TEMP, scannedBodyInfo.getSurfaceTempK(), filename);
+        this.updateSearchableDropdown("s2id_bodyform-volcanism_type_id", "bodyform-surface_temperature", systemName, bodyName, EddbHistory.FIELD_VOLCANISM, scannedBodyInfo.getVolcanism(), filename);
+        this.updateSearchableDropdown("s2id_bodyform-atmosphere_type_id", "bodyform-surface_temperature", systemName, bodyName, EddbHistory.FIELD_ATMOSPHERE_TYPE, scannedBodyInfo.getAtmosphereType(), filename);
+        this.updateSolidComposition(systemName, bodyName, scannedBodyInfo.getComposition(), filename);
+        this.updateNumericField("bodyform-orbital_period", systemName, bodyName, EddbHistory.FIELD_ORBITAL_PERIOD, scannedBodyInfo.getOrbitalPeriodD(), filename);
+        this.updateNumericField("bodyform-semi_major_axis", systemName, bodyName, EddbHistory.FIELD_SEMI_MAJOR_AXIS, scannedBodyInfo.getSemiMajorAxisAU(), filename);
+        this.updateNumericField("bodyform-orbital_eccentricity", systemName, bodyName, EddbHistory.FIELD_ORBITAL_ECCENTRICITY, scannedBodyInfo.getOrbitalEccentricity(), filename);
+        this.updateNumericField("bodyform-orbital_inclination", systemName, bodyName, EddbHistory.FIELD_ORBITAL_INCLINATION, scannedBodyInfo.getOrbitalInclinationDeg(), filename);
+        this.updateNumericField("bodyform-arg_of_periapsis", systemName, bodyName, EddbHistory.FIELD_ARG_OF_PERIAPSIS, scannedBodyInfo.getArgOfPeriapsisDeg(), filename);
+        this.updateNumericField("bodyform-rotational_period", systemName, bodyName, EddbHistory.FIELD_ROTATIONAL_PERIOD, scannedBodyInfo.getRotationalPeriodD(), filename);
+        if (scannedBodyInfo.getTidallyLocked() != null) {
+            String label = scannedBodyInfo.getTidallyLocked().booleanValue() ? "Yes" : "No";
+            this.updateClickableDropdown("s2id_bodyform-is_rotational_period_tidally_locked", "bodysolidcomposition-0-share", systemName, bodyName, EddbHistory.FIELD_TIDALLY_LOCKED, label, filename);
+        }
+        this.updateNumericField("bodyform-axis_tilt", systemName, bodyName, EddbHistory.FIELD_AXIAL_TILT, scannedBodyInfo.getAxialTiltDeg(), filename);
+    }
+
+    private void updateSolidComposition(final String systemName, final String bodyName, LinkedHashMap<BodyInfo, BigDecimal> composition, String screenshotFilename) throws IOException {
+        int idx = 0;
+        if (composition != null) {
+            for (BodyInfo material : composition.keySet()) {
+                BigDecimal percent = composition.get(material);
+                this.updateNumericField("bodysolidcomposition-" + idx + "-share", systemName, bodyName, EddbHistory.FIELD_SOLID_COMPOSITION_SHARE + idx, percent, screenshotFilename);
+                this.updateSearchableDropdown("s2id_bodysolidcomposition-" + idx + "-solid_component_id", null, systemName, bodyName, EddbHistory.FIELD_SOLID_COMPOSITION_NAME + idx, material, screenshotFilename);
+                idx++;
             }
+        }
+        for (; idx < 3; idx++) {
+            this.updateNumericField("bodysolidcomposition-" + idx + "-share", systemName, bodyName, EddbHistory.FIELD_SOLID_COMPOSITION_SHARE + idx, null, screenshotFilename);
+            this.updateSearchableDropdown("s2id_bodysolidcomposition-" + idx + "-solid_component_id", null, systemName, bodyName, EddbHistory.FIELD_SOLID_COMPOSITION_NAME + idx, (String) null, screenshotFilename);
+        }
+    }
 
-            logger.info("Updating body '" + scannedBodyInfo.getBodyName() + "' in system '" + scannedBodyInfo.getSystemName() + "'");
+    private void updatePlanetMaterials(ScannedBodyInfo scannedBodyInfo) throws IOException {
+        if (scannedBodyInfo.getPlanetMaterials() != null) {
+            final String systemName = scannedBodyInfo.getSystemName();
+            final String bodyName = fixBodyName(systemName, scannedBodyInfo.getBodyName());
+            final String filename = scannedBodyInfo.getScreenshotFilename();
 
-            if (scannedBodyInfo.getBodyType() != null) {
-                this.driver.findElement(By.id("s2id_bodyform-type_id")).click();
-                WebElement searchInput = new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.cssSelector("#select2-drop input")));
-                searchInput.click();
-                searchInput.sendKeys(scannedBodyInfo.getBodyType().getName());
-                searchInput.sendKeys(Keys.ENTER);
-            }
+            logger.trace("Opening planet materials editor");
+            this.driver.findElement(By.cssSelector("div#elementMaterialEditorController a.btn")).click();
 
-            if (scannedBodyInfo.getEarthMasses() != null) {
-                this.driver.findElement(By.id("bodyform-earth_masses")).sendKeys(String.valueOf(scannedBodyInfo.getEarthMasses()));
-            }
+            List<WebElement> elementRows = this.driver.findElements(By.cssSelector("div#elementMaterialEditorController div.elementRow"));
+            for (WebElement elementRow : elementRows) {
+                String cssClass = elementRow.getAttribute("class");
+                boolean markedAsExisting = cssClass.contains("userSelected");
 
-            if (scannedBodyInfo.getRadiusKm() != null) {
-                this.driver.findElement(By.id("bodyform-radius")).sendKeys(String.valueOf(scannedBodyInfo.getRadiusKm()));
-            }
+                String elementName = elementRow.findElement(By.cssSelector("div.elementDataRow div.elementName")).getText().replaceAll("\\s", " ");
+                elementName = elementName.substring(elementName.indexOf(" ")).trim();
 
-            if (scannedBodyInfo.getGravityG() != null) {
-                this.driver.findElement(By.id("bodyform-gravity")).sendKeys(String.valueOf(scannedBodyInfo.getGravityG()));
-            }
+                WebElement toggleLink = elementRow.findElement(By.cssSelector("div.elementDataRow div.elementName a"));
+                WebElement shareInput = elementRow.findElement(By.cssSelector("div.elementDataRow div.elementShare input"));
 
-            if (scannedBodyInfo.getSurfaceTempK() != null) {
-                this.driver.findElement(By.id("bodyform-surface_temperature")).sendKeys(String.valueOf(scannedBodyInfo.getSurfaceTempK()));
-            }
-
-            if (scannedBodyInfo.getVolcanism() != null) {
-                new Actions(driver).moveToElement(driver.findElement(By.cssSelector("footer.footer")), 0, 0).build().perform();
-                new Actions(driver).moveToElement(driver.findElement(By.id("bodyform-surface_temperature")), 0, 0).build().perform();
-                this.driver.findElement(By.id("s2id_bodyform-volcanism_type_id")).click();
-                WebElement searchInput = new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.cssSelector("#select2-drop input")));
-                searchInput.click();
-                searchInput.sendKeys(scannedBodyInfo.getVolcanism().getName());
-                searchInput.sendKeys(Keys.ENTER);
-            }
-
-            if (scannedBodyInfo.getAtmosphereType() != null) {
-                new Actions(driver).moveToElement(driver.findElement(By.cssSelector("footer.footer")), 0, 0).build().perform();
-                new Actions(driver).moveToElement(driver.findElement(By.id("bodyform-surface_temperature")), 0, 0).build().perform();
-                this.driver.findElement(By.id("s2id_bodyform-atmosphere_type_id")).click();
-                WebElement searchInput = new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.cssSelector("#select2-drop input")));
-                searchInput.click();
-                searchInput.sendKeys(scannedBodyInfo.getAtmosphereType().getName());
-                searchInput.sendKeys(Keys.ENTER);
-            }
-
-            if (scannedBodyInfo.getComposition() != null) {
-                int index = 0;
-                for (BodyInfo material : scannedBodyInfo.getComposition().keySet()) {
-                    BigDecimal percent = scannedBodyInfo.getComposition().get(material);
-                    if (percent != null) {
-                        this.driver.findElement(By.id("bodysolidcomposition-" + index + "-share")).sendKeys(String.valueOf(percent));
+                Item element = Item.findBestMatching(elementName, ItemType.ELEMENT);
+                if (element == null) {
+                    logger.warn("Unknown element: '" + elementName + "'");
+                } else {
+                    BigDecimal newValue = scannedBodyInfo.getPlanetMaterials().get(element);
+                    if (!markedAsExisting && newValue != null) {
+                        this.clickToggleLink(toggleLink, systemName, bodyName, EddbHistory.FIELD_PLANET_MATERIALS_NAME + element.getName(), true, filename);
                     }
-                    this.driver.findElement(By.id("s2id_bodysolidcomposition-" + index + "-solid_component_id")).click();
+                    this.updateNumericField(shareInput, systemName, bodyName, EddbHistory.FIELD_PLANET_MATERIALS_SHARE + element.getName(), newValue, filename);
+                    if (markedAsExisting && newValue == null) {
+                        this.clickToggleLink(toggleLink, systemName, bodyName, EddbHistory.FIELD_PLANET_MATERIALS_NAME + element.getName(), false, filename);
+                    }
+                }
+            }
+        }
+    }
+
+    private void clickToggleLink(WebElement toggleLink, String systemName, String bodyName, String fieldName, boolean turnOn, String screenshotFilename) throws IOException {
+        String historyEntry = this.history.lookup(systemName, bodyName, fieldName);
+
+        if (historyEntry != null) {
+            logger.trace("Skipping " + fieldName + "=" + turnOn + " of body " + bodyName + " in system " + systemName + ". Entry from history: " + historyEntry);
+        } else {
+            logger.trace("Setting " + fieldName + "=" + turnOn + " of body " + bodyName + " in system " + systemName);
+
+            this.history.toggle(systemName, bodyName, fieldName, turnOn, screenshotFilename);
+            toggleLink.click();
+        }
+    }
+
+    private void updateSearchableDropdown(String dropdownCssId, String inputAboveCssId, String systemName, String bodyName, String fieldName, BodyInfo newValue, String screenshotFilename) throws IOException {
+        this.updateSearchableDropdown(dropdownCssId, inputAboveCssId, systemName, bodyName, fieldName, newValue == null ? null : newValue.getName(), screenshotFilename);
+    }
+
+    private void updateSearchableDropdown(String dropdownCssId, String inputAboveCssId, String systemName, String bodyName, String fieldName, String newValue, String screenshotFilename) throws IOException {
+        String historyEntry = this.history.lookup(systemName, bodyName, fieldName);
+
+        if (historyEntry != null) {
+            logger.trace("Skipping " + fieldName + "=" + newValue + " of body " + bodyName + " in system " + systemName + ". Entry from history: " + historyEntry);
+        } else {
+            logger.trace("Setting " + fieldName + "=" + newValue + " of body " + bodyName + " in system " + systemName);
+
+            if (StringUtils.isNotEmpty(inputAboveCssId)) {
+                new Actions(driver).moveToElement(driver.findElement(By.cssSelector("footer.footer")), 0, 0).build().perform();
+                new Actions(driver).moveToElement(driver.findElement(By.id(inputAboveCssId)), 0, 0).build().perform();
+            }
+
+            String oldValue = null;
+            WebElement surroundingDiv = this.driver.findElement(By.id(dropdownCssId));
+            WebElement spanChosen = surroundingDiv.findElement(By.cssSelector("span.select2-chosen"));
+            WebElement abbrClear = null;
+            try {
+                abbrClear = surroundingDiv.findElement(By.cssSelector("abbr.select2-search-choice-close"));
+                if (abbrClear.isDisplayed()) {
+                    oldValue = spanChosen.getText();
+                }
+            } catch (NoSuchElementException e) {
+                // No value selected yet
+            }
+            WebElement spanDropDown = surroundingDiv.findElement(By.cssSelector("span.select2-arrow"));
+
+            if (oldValue == null) {
+                if (newValue == null) {
+                    // No change
+                } else {
+                    // Set
+                    this.history.set(systemName, bodyName, fieldName, newValue, screenshotFilename);
+                    spanDropDown.click();
                     WebElement searchInput = new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.cssSelector("#select2-drop input")));
                     searchInput.click();
-                    searchInput.sendKeys(material.getName());
+                    searchInput.sendKeys(newValue);
                     searchInput.sendKeys(Keys.ENTER);
-                    index++;
+                }
+            } else {
+                if (newValue == null) {
+                    // Erase
+                    this.history.erase(systemName, bodyName, fieldName, oldValue, screenshotFilename);
+                    abbrClear.click();
+                } else if (newValue.equalsIgnoreCase(oldValue)) {
+                    // No change
+                } else {
+                    // Change
+                    this.history.change(systemName, bodyName, fieldName, oldValue, newValue, screenshotFilename);
+                    abbrClear.click();
+                    spanDropDown.click();
+                    WebElement searchInput = new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.cssSelector("#select2-drop input")));
+                    searchInput.click();
+                    searchInput.sendKeys(newValue);
+                    searchInput.sendKeys(Keys.ENTER);
                 }
             }
+        }
+    }
 
-            if (scannedBodyInfo.getOrbitalPeriodD() != null) {
-                this.driver.findElement(By.id("bodyform-orbital_period")).sendKeys(String.valueOf(scannedBodyInfo.getOrbitalPeriodD()));
-            }
+    private void updateClickableDropdown(String dropdownCssId, String inputAboveCssId, String systemName, String bodyName, String fieldName, String newValue, String screenshotFilename) throws IOException {
+        String historyEntry = this.history.lookup(systemName, bodyName, fieldName);
 
-            if (scannedBodyInfo.getSemiMajorAxisAU() != null) {
-                this.driver.findElement(By.id("bodyform-semi_major_axis")).sendKeys(String.valueOf(scannedBodyInfo.getSemiMajorAxisAU()));
-            }
+        if (historyEntry != null) {
+            logger.trace("Skipping " + fieldName + "=" + newValue + " of body " + bodyName + " in system " + systemName + ". Entry from history: " + historyEntry);
+        } else {
+            logger.trace("Setting " + fieldName + "=" + newValue + " of body " + bodyName + " in system " + systemName);
 
-            if (scannedBodyInfo.getOrbitalEccentricity() != null) {
-                this.driver.findElement(By.id("bodyform-orbital_eccentricity")).sendKeys(String.valueOf(scannedBodyInfo.getOrbitalEccentricity()));
-            }
-
-            if (scannedBodyInfo.getOrbitalInclinationDeg() != null) {
-                this.driver.findElement(By.id("bodyform-orbital_inclination")).sendKeys(String.valueOf(scannedBodyInfo.getOrbitalInclinationDeg()));
-            }
-
-            if (scannedBodyInfo.getArgOfPeriapsisDeg() != null) {
-                this.driver.findElement(By.id("bodyform-arg_of_periapsis")).sendKeys(String.valueOf(scannedBodyInfo.getArgOfPeriapsisDeg()));
-            }
-
-            if (scannedBodyInfo.getRotationalPeriodD() != null) {
-                this.driver.findElement(By.id("bodyform-rotational_period")).sendKeys(String.valueOf(scannedBodyInfo.getRotationalPeriodD()));
-            }
-
-            if (scannedBodyInfo.getTidallyLocked() != null) {
+            if (StringUtils.isNotEmpty(inputAboveCssId)) {
                 new Actions(driver).moveToElement(driver.findElement(By.cssSelector("footer.footer")), 0, 0).build().perform();
-                new Actions(driver).moveToElement(driver.findElement(By.id("bodysolidcomposition-0-share")), 0, 0).build().perform();
-                this.driver.findElement(By.id("s2id_bodyform-is_rotational_period_tidally_locked")).click();
-                Thread.sleep(10000L);
-                List<WebElement> options = this.driver.findElements(By.cssSelector("div.select2-drop-active div.select2-result-label"));
-                if (scannedBodyInfo.getTidallyLocked().booleanValue()) {
-                    for (WebElement we : options) {
-                        if (we.getText().equalsIgnoreCase("yes")) {
-                            System.out.println("clicked yes");
-                            we.click();
-                            break;
-                        }
-                    }
+                new Actions(driver).moveToElement(driver.findElement(By.id(inputAboveCssId)), 0, 0).build().perform();
+            }
+
+            String oldValue = null;
+            WebElement surroundingDiv = this.driver.findElement(By.id(dropdownCssId));
+            WebElement spanChosen = surroundingDiv.findElement(By.cssSelector("span.select2-chosen"));
+            WebElement abbrClear = null;
+            try {
+                abbrClear = surroundingDiv.findElement(By.cssSelector("abbr.select2-search-choice-close"));
+                oldValue = spanChosen.getText();
+            } catch (NoSuchElementException e) {
+                // No value selected yet
+            }
+            WebElement spanDropDown = surroundingDiv.findElement(By.cssSelector("span.select2-arrow"));
+
+            if (oldValue == null) {
+                if (newValue == null) {
+                    // No change
                 } else {
-                    for (WebElement we : options) {
-                        if (we.getText().equalsIgnoreCase("no")) {
-                            System.out.println("clicked no");
-                            we.click();
-                            break;
-                        }
-                    }
+                    // Set
+                    this.history.set(systemName, bodyName, fieldName, newValue, screenshotFilename);
+                    spanDropDown.click();
+                    this.clickOption(newValue);
                 }
-            }
-
-            if (scannedBodyInfo.getAxialTiltDeg() != null) {
-                WebElement input = this.driver.findElement(By.id("bodyform-axis_tilt"));
-                input.click();
-                Thread.sleep(10000L);
-                if (input.getAttribute("value") != null && input.getAttribute("value").length() > 0) {
-                    System.out.println("Won't overwrite " + input.getText() + " of axial tilt with " + scannedBodyInfo.getAxialTiltDeg());
+            } else {
+                if (newValue == null) {
+                    // Erase
+                    this.history.erase(systemName, bodyName, fieldName, oldValue, screenshotFilename);
+                    abbrClear.click();
+                } else if (newValue.equalsIgnoreCase(oldValue)) {
+                    // No change
                 } else {
-                    input.sendKeys(String.valueOf(scannedBodyInfo.getAxialTiltDeg()));
+                    // Change
+                    this.history.change(systemName, bodyName, fieldName, oldValue, newValue, screenshotFilename);
+                    spanDropDown.click();
+                    this.clickOption(newValue);
                 }
             }
+        }
+    }
 
-            if (scannedBodyInfo.getPlanetMaterials() != null) {
-                this.driver.findElement(By.cssSelector("div#elementMaterialEditorController a.btn")).click();
-                List<WebElement> elementRows = this.driver.findElements(By.cssSelector("div#elementMaterialEditorController div.elementRow"));
-                for (WebElement elementRow : elementRows) {
-                    String cssClass = elementRow.getAttribute("class");
-                    boolean markedAsExisting = cssClass.contains("userSelected");
-                    String elementName = elementRow.findElement(By.cssSelector("div.elementDataRow div.elementName")).getText().replaceAll("\\s", " ");
-                    elementName = elementName.substring(elementName.indexOf(" ")).trim();
-                    WebElement shareInput = elementRow.findElement(By.cssSelector("div.elementDataRow div.elementShare input"));
-                    System.out.println(elementName + "=" + markedAsExisting + " (" + shareInput.getAttribute("value") + ")");
+    private void clickOption(String label) {
+        new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.cssSelector("div.select2-drop-active div.select2-result-label")));
+        List<WebElement> options = this.driver.findElements(By.cssSelector("div.select2-drop-active div.select2-result-label"));
+        for (WebElement we : options) {
+            if (we.getText().equalsIgnoreCase(label)) {
+                logger.trace("Clicking " + label);
+                we.click();
+                break;
+            }
+        }
+    }
+
+    private void updateNumericField(String cssId, String systemName, String bodyName, String fieldName, BigDecimal newValue, String screenshotFilename) throws IOException {
+        this.updateNumericField(this.driver.findElement(By.id(cssId)), systemName, bodyName, fieldName, newValue, screenshotFilename);
+    }
+
+    private void updateNumericField(WebElement input, String systemName, String bodyName, String fieldName, BigDecimal newValue, String screenshotFilename) throws IOException {
+        String historyEntry = this.history.lookup(systemName, bodyName, fieldName);
+
+        if (historyEntry != null) {
+            logger.trace("Skipping " + fieldName + "=" + newValue + " of body " + bodyName + " in system " + systemName + ". Entry from history: " + historyEntry);
+        } else {
+            logger.trace("Setting " + fieldName + "=" + newValue + " of body " + bodyName + " in system " + systemName);
+
+            BigDecimal oldValue = StringUtils.isEmpty(input.getAttribute("value")) ? null : new BigDecimal(input.getAttribute("value"));
+
+            if (oldValue == null) {
+                if (newValue == null) {
+                    // No change
+                } else {
+                    // Set
+                    this.history.set(systemName, bodyName, fieldName, String.valueOf(newValue), screenshotFilename);
+                    input.click();
+                    input.sendKeys(String.valueOf(newValue));
+                }
+            } else {
+                if (newValue == null) {
+                    // Erase
+                    this.history.erase(systemName, bodyName, fieldName, String.valueOf(oldValue), screenshotFilename);
+                    input.click();
+                    input.sendKeys(Keys.chord(Keys.LEFT_CONTROL, "a"));
+                    input.sendKeys(Keys.BACK_SPACE);
+                } else if (newValue.compareTo(oldValue) == 0) {
+                    // No change
+                } else {
+                    // Change
+                    this.history.change(systemName, bodyName, fieldName, String.valueOf(oldValue), String.valueOf(newValue), screenshotFilename);
+                    input.click();
+                    input.sendKeys(Keys.chord(Keys.LEFT_CONTROL, "a"));
+                    input.sendKeys(Keys.BACK_SPACE);
+                    input.sendKeys(String.valueOf(newValue));
                 }
             }
-
-            Thread.sleep(10000L);
-            this.driver.findElement(By.id("bodyform-name")).submit();
-            throw new RuntimeException("testing");
         }
     }
 
@@ -230,36 +364,80 @@ public class BodyUpdater implements Closeable {
      */
     private void openSystemPage(String systemName) throws SystemNotFoundException {
         // Go to systems page
+        logger.trace("Clicking on 'Systems' link in the header");
         this.driver.findElement(By.linkText("Systems")).click();
 
         // Search the current system
+        logger.trace("Submitting search for system '" + systemName + "'");
         WebElement systemSearchInput = this.driver.findElement(By.name("SystemSearch[name]"));
         systemSearchInput.sendKeys(systemName);
         systemSearchInput.sendKeys(Keys.ENTER);
 
         // Wait for the search result to display the current system and click on it
         try {
-            new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.linkText(systemName))).click();
+            WebElement systemLink = new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.linkText(systemName)));
+            logger.trace("Clicking on link to system '" + systemName + "': " + systemLink.getAttribute("href"));
+            systemLink.click();
         } catch (TimeoutException e) {
-            throw new SystemNotFoundException("System '" + systemName + "' not found on ROSS");
+            String msg = "System '" + systemName + "' not found on ROSS";
+            logger.warn(msg);
+            throw new SystemNotFoundException(msg);
         }
     }
 
-    private void createBody(ScannedBodyInfo scannedBodyInfo) {
-        logger.info("Creating new body '" + scannedBodyInfo.getBodyName() + "' in system '" + scannedBodyInfo.getSystemName() + "'");
+    private void openOrCreateBodyPage(ScannedBodyInfo scannedBodyInfo) throws IOException {
+        try {
+            String bodyName = fixBodyName(scannedBodyInfo.getSystemName(), scannedBodyInfo.getBodyName());
+            WebElement bodyLink = new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.linkText(bodyName)));
+            logger.trace("Clicking on link to body '" + bodyName + "': " + bodyLink.getAttribute("href"));
+            bodyLink.click();
+        } catch (TimeoutException e) {
+            this.createBody(scannedBodyInfo);
+        }
+    }
 
-        this.driver.findElement(By.linkText("Add new body to system " + scannedBodyInfo.getSystemName())).click();
+    private void createBody(ScannedBodyInfo scannedBodyInfo) throws IOException {
+        final String systemName = scannedBodyInfo.getSystemName();
+        final String bodyName = fixBodyName(systemName, scannedBodyInfo.getBodyName());
 
-        this.driver.findElement(By.id("bodyform-name")).sendKeys(scannedBodyInfo.getBodyName());
-        this.driver.findElement(By.id("s2id_bodyform-group_id")).click(); // Body type, i.e. star/belt/planet
-        this.driver.findElement(By.id("s2id_autogen1_search")).sendKeys("Planet");
+        logger.info("Creating new body '" + bodyName + "' in system '" + systemName + "'");
+
+        logger.trace("Clicking on 'Add new body to system " + systemName + "' link");
+        this.driver.findElement(By.linkText("Add new body to system " + systemName)).click();
+
+        logger.trace("Entering '" + bodyName + "' into body name field");
+        this.history.set(systemName, bodyName, EddbHistory.FIELD_BODY_NAME, bodyName, scannedBodyInfo.getScreenshotFilename());
+        this.driver.findElement(By.id("bodyform-name")).sendKeys(bodyName);
+
+        String bodyGroup = "Planet"; // TODO Support other body types like star or belt
+        logger.trace("Entering '" + bodyGroup + "' into body group field");
+        this.history.set(systemName, bodyName, EddbHistory.FIELD_BODY_GROUP, bodyGroup, scannedBodyInfo.getScreenshotFilename());
+        this.driver.findElement(By.id("s2id_bodyform-group_id")).click();
+        this.driver.findElement(By.id("s2id_autogen1_search")).sendKeys(bodyGroup);
         this.driver.findElement(By.id("s2id_autogen1_search")).sendKeys(Keys.ENTER);
 
         if (scannedBodyInfo.getDistanceLs() != null) {
-            this.driver.findElement(By.id("bodyform-distance_to_spawn")).sendKeys(String.valueOf(scannedBodyInfo.getDistanceLs().intValue()));
+            String distanceFromArrival = String.valueOf(scannedBodyInfo.getDistanceLs().intValue());
+            logger.trace("Entering '" + distanceFromArrival + "' into distance from arrival field");
+            this.history.set(systemName, bodyName, EddbHistory.FIELD_DISTANCE_FROM_ARRIVAL, distanceFromArrival, scannedBodyInfo.getScreenshotFilename());
+            this.driver.findElement(By.id("bodyform-distance_to_spawn")).sendKeys(distanceFromArrival);
         }
 
+        logger.trace("Submitting 'Add new body to system " + systemName + "' form");
+        submitBodyPage();
+    }
+
+    private void submitBodyPage() {
+        logger.trace("Submitting body form");
         this.driver.findElement(By.id("bodyform-name")).submit();
+    }
+
+    private static String fixBodyName(String systemName, String bodyName) {
+        //        if (bodyName.toLowerCase().startsWith(systemName.toLowerCase() + " ")) {
+        //            return systemName + bodyName.substring(systemName.length());
+        //        } else {
+        return bodyName;
+        //        }
     }
 
 }
