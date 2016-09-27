@@ -715,8 +715,13 @@ public class ScannedBodyInfo {
             while (bodyNameWithoutDesignation.matches("^.+ [0-9OS]{1,2}$") || bodyNameWithoutDesignation.matches("^.+ [A-J]{1,4}$")) {
                 bodyNameWithoutDesignation = bodyNameWithoutDesignation.substring(0, bodyNameWithoutDesignation.lastIndexOf(" ")).trim();
             }
-            float dist = StringUtils.getLevenshteinDistance(systemName.toLowerCase(), bodyNameWithoutDesignation.toLowerCase());
+            float dist = StringUtils.getLevenshteinDistance(systemName.toLowerCase(), bodyNameWithoutDesignation.replace("l", "I").toLowerCase());
             float err = dist / systemName.length();
+            if (err > 0.25f) {
+                // Try replacing 0 with O
+                dist = StringUtils.getLevenshteinDistance(systemName.toLowerCase(), bodyNameWithoutDesignation.replace("l", "I").replace("0", "O").toLowerCase());
+                err = dist / systemName.length();
+            }
             if (err <= 0.25f) {
                 String designationWithoutBodyName = scannedBodyName.replace(bodyNameWithoutDesignation, "").trim();
                 String fixedDesignation = fixDesignation(designationWithoutBodyName);
