@@ -17,6 +17,7 @@ import borg.edtrading.ocr.fixer.RadiusFixer;
 import borg.edtrading.ocr.fixer.RotationalPeriodFixer;
 import borg.edtrading.ocr.fixer.SemiMajorAxisFixer;
 import borg.edtrading.ocr.fixer.SolarMassesFixer;
+import borg.edtrading.ocr.fixer.SolarRadiusFixer;
 import borg.edtrading.ocr.fixer.SurfaceTempFixer;
 import borg.edtrading.ocr.fixer.TidallyLockedFixer;
 import borg.edtrading.ocr.fixer.ValueFixer;
@@ -60,7 +61,7 @@ public class ScannedBodyInfo {
     // Class G stars are...
     // age (1.656 million years)
     private BigDecimal solarMasses = null;
-    // solarRadius (1.0162)
+    private BigDecimal solarRadius = null;
     private BodyInfo bodyType = null; // Rocky, Icy, HMC, ...
     private BodyInfo terraforming = null;
     private BigDecimal distanceLs = null;
@@ -111,7 +112,11 @@ public class ScannedBodyInfo {
         } else {
             sb.append(String.format(Locale.US, "%-21s\t%.4f", "EARTH MASSES:", this.getEarthMasses())).append("\n");
         }
-        sb.append(String.format(Locale.US, "%-21s\t%.0fKM", "RADIUS:", this.getRadiusKm())).append("\n");
+        if (this.getSolarRadius() != null) {
+            sb.append(String.format(Locale.US, "%-21s\t%.4f", "SOLAR RADIUS:", this.getSolarRadius())).append("\n");
+        } else {
+            sb.append(String.format(Locale.US, "%-21s\t%.0fKM", "RADIUS:", this.getRadiusKm())).append("\n");
+        }
         sb.append(String.format(Locale.US, "%-21s\t%.2fG", "GRAVITY:", this.getGravityG())).append("\n");
         sb.append(String.format(Locale.US, "%-21s\t%.0fK", "SURFACE TEMP:", this.getSurfaceTempK())).append("\n");
         sb.append(String.format(Locale.US, "%-21s\t%s", "VOLCANISM:", this.getVolcanism() == null ? null : this.getVolcanism().getName())).append("\n");
@@ -285,6 +290,7 @@ public class ScannedBodyInfo {
                 lowercasedScannedWords.set(i, null);
             }
         }
+        int indexSolarRadius = indexOfWords(lowercasedScannedWords, "solar", "radius:");
         int indexRadius = indexOfWords(lowercasedScannedWords, "radius:");
         int indexGravity = indexOfWords(lowercasedScannedWords, "gravity:");
         int indexSurfaceTemp = indexOfWords(lowercasedScannedWords, "surface", "temp:");
@@ -314,10 +320,11 @@ public class ScannedBodyInfo {
             indexByLabel.put("moon masses:", indexMoonMasses);
             scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_BELT);
         }
+        if (indexSolarRadius < lowercasedScannedWords.size()) {
+            indexByLabel.put("solar radius:", indexSolarRadius);
+        }
         if (indexRadius < lowercasedScannedWords.size()) {
             indexByLabel.put("radius:", indexRadius);
-        } else {
-            logger.debug("indexRadius not found in " + screenshotFilename);
         }
         if (indexGravity < lowercasedScannedWords.size()) {
             indexByLabel.put("gravity:", indexGravity);
@@ -413,6 +420,14 @@ public class ScannedBodyInfo {
             try {
                 String value = valueForLabel(indexMoonMasses, "MOONMASSES:", new MoonMassesFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setMoonMasses(new BigDecimal(value));
+            } catch (NumberFormatException e) {
+                logger.warn(screenshotFilename + ": " + e.getMessage());
+            }
+        }
+        if (indexSolarRadius < lowercasedScannedWords.size()) {
+            try {
+                String value = valueForLabel(indexSolarRadius, "SOLARRADIUS:", new SolarRadiusFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
+                scannedBodyInfo.setSolarRadius(new BigDecimal(value));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
             }
@@ -1164,6 +1179,14 @@ public class ScannedBodyInfo {
 
     public void setSolarMasses(BigDecimal solarMasses) {
         this.solarMasses = solarMasses;
+    }
+
+    public BigDecimal getSolarRadius() {
+        return this.solarRadius;
+    }
+
+    public void setSolarRadius(BigDecimal solarRadius) {
+        this.solarRadius = solarRadius;
     }
 
     public BodyInfo getBodyType() {

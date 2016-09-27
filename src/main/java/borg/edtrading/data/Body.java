@@ -33,6 +33,7 @@ public class Body {
     private String typeName = null; // Rocky body, High metal content world, ...
     private Long distance_to_arrival = null; // Ls, Missing decimal places
     private Double solar_masses = null;
+    private Double solar_radius = null;
     private Double earth_masses = null;
     private Double moon_masses = null;
     private Double radius = null; // KM
@@ -144,6 +145,14 @@ public class Body {
 
     public void setSolar_masses(Double solar_masses) {
         this.solar_masses = solar_masses;
+    }
+
+    public Double getSolar_radius() {
+        return this.solar_radius;
+    }
+
+    public void setSolar_radius(Double solar_radius) {
+        this.solar_radius = solar_radius;
     }
 
     public Double getEarth_masses() {
