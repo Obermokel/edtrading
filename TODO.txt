@@ -17,3 +17,4 @@ DONE:
 * 2016-09-22 19-27-53 Wolf 562.png: '36.50l' does not look like distance from arrival point
 * 2016-09-22 19-51-08 LHS 380.png: '82,' does not look like distance from arrival point
 * Remember successfully processed screenshots
+* Selenium Timeout

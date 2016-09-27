@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * BodyUpdater
@@ -50,6 +51,7 @@ public class BodyUpdater implements Closeable {
         this.driver = new FirefoxDriver();
         //this.driver = new HtmlUnitDriver(false);
 
+        this.driver.manage().timeouts().pageLoadTimeout(1, TimeUnit.MINUTES);
         this.driver.get("http://ross.eddb.io");
         this.driver.manage().window().maximize();
 
