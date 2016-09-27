@@ -108,13 +108,13 @@ public class MatchSorter {
             int x2 = m2.getMatch().x;
             int w1 = m1.getTemplate().getImage().width;
             int w2 = m2.getTemplate().getImage().width;
-            if ("1".equals(m1.getTemplate().getText()) || "I".equals(m1.getTemplate().getText())) {
+            if ("1".equals(m1.getTemplate().getText()) || "I".equals(m1.getTemplate().getText()) || "l".equals(m1.getTemplate().getText())) {
                 int doubleWidth = w1 * 2;
                 int twoThirdsLeft = Math.round(x1 - w1 * 0.667f);
                 x1 = twoThirdsLeft;
                 w1 = doubleWidth;
             }
-            if ("1".equals(m2.getTemplate().getText()) || "I".equals(m2.getTemplate().getText())) {
+            if ("1".equals(m2.getTemplate().getText()) || "I".equals(m2.getTemplate().getText()) || "l".equals(m2.getTemplate().getText())) {
                 int doubleWidth = w2 * 2;
                 int twoThirdsLeft = Math.round(x2 - w2 * 0.667f);
                 x2 = twoThirdsLeft;

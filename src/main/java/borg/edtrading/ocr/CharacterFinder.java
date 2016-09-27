@@ -42,8 +42,8 @@ public abstract class CharacterFinder {
     public static List<Rectangle> findCharacterLocations(BufferedImage cannySuitableImage, boolean writeDebugImages) throws IOException {
         GrayF32 grayImage = ConvertBufferedImage.convertFromSingle(cannySuitableImage, null, GrayF32.class);
 
-        // Find areas which could be characters (boxes of size 4x4 to 128x128).
-        List<Rectangle> characterCandidateBoxes = findBoundingBoxes(grayImage, 4, 128, 4, 128); // TODO Won't detect very large or very small chars - either if they are really large/small, or because the resolution is high/low
+        // Find areas which could be characters (boxes of size 3x4 to 128x128).
+        List<Rectangle> characterCandidateBoxes = findBoundingBoxes(grayImage, 3, 128, 4, 128); // TODO Won't detect very large or very small chars - either if they are really large/small, or because the resolution is high/low
         if (writeDebugImages) {
             ImageIO.write(markBoxes(cannySuitableImage, characterCandidateBoxes, Color.RED, 1), "PNG", new File(Constants.TEMP_DIR, "CharacterFinder 00 Candidates.png"));
         }

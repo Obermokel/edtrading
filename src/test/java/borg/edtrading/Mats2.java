@@ -84,8 +84,8 @@ public class Mats2 {
         //                logger.warn("!!! " + sourceFile.getName() + " !!! " + msg + " !!!");
         //            }
 
-        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
-        writeDebugImages("Body Info", true, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
+        writeDebugImages("Body Name", true, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
+        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
 
         //templates = copyLearnedChars();
 
