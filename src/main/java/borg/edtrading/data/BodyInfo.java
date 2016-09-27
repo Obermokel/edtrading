@@ -28,6 +28,10 @@ public enum BodyInfo {
     TYPE_WATER_GIANT("Water giant"),
     TYPE_WATER_WORLD("Water world"),
 
+    GROUP_STAR("Star"),
+    GROUP_PLANET("Planet"),
+    GROUP_BELT("Belt"),
+
     COMPOSITION_ICE("ICE"),
     COMPOSITION_METAL("METAL"),
     COMPOSITION_ROCK("ROCK"),

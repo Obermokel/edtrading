@@ -9,12 +9,14 @@ import borg.edtrading.ocr.fixer.AtmosphereTypeFixer;
 import borg.edtrading.ocr.fixer.AxialTiltFixer;
 import borg.edtrading.ocr.fixer.EarthMassesFixer;
 import borg.edtrading.ocr.fixer.GravityFixer;
+import borg.edtrading.ocr.fixer.MoonMassesFixer;
 import borg.edtrading.ocr.fixer.OrbitalEccentricityFixer;
 import borg.edtrading.ocr.fixer.OrbitalInclinationFixer;
 import borg.edtrading.ocr.fixer.OrbitalPeriodFixer;
 import borg.edtrading.ocr.fixer.RadiusFixer;
 import borg.edtrading.ocr.fixer.RotationalPeriodFixer;
 import borg.edtrading.ocr.fixer.SemiMajorAxisFixer;
+import borg.edtrading.ocr.fixer.SolarMassesFixer;
 import borg.edtrading.ocr.fixer.SurfaceTempFixer;
 import borg.edtrading.ocr.fixer.TidallyLockedFixer;
 import borg.edtrading.ocr.fixer.ValueFixer;
@@ -52,29 +54,14 @@ public class ScannedBodyInfo {
     private String screenshotFilename = null;
     private String systemName = null;
     private String bodyName = null;
-    // bodyGroup (Planet, Star, Belt)
+    private BodyInfo bodyGroup = null; // Star, Planet, Belt
     // * Star
     // !no distance if arrival!
     // Class G stars are...
     // age (1.656 million years)
-    // solarMasses (0.9258)
+    private BigDecimal solarMasses = null;
     // solarRadius (1.0162)
-    // surfaceTemp (5,012.00K)
-    // orbitalPeriod (2,711.0D)
-    // semiMajorAxis (1.83AU)
-    // eccentricity
-    // inclination
-    // argOfPeriapsis
-    // * Belt
-    // !no distance if arrival!
-    // ringType (Metallic)
-    // moonMasses (0.4303)
-    // orbitalPeriod
-    // semiMajorAxis
-    // eccentricity
-    // inclination
-    // argOfPeriapsis
-    private BodyInfo bodyType = null;
+    private BodyInfo bodyType = null; // Rocky, Icy, HMC, ...
     private BodyInfo terraforming = null;
     private BigDecimal distanceLs = null;
     private BodyInfo systemReserves = null;
@@ -95,6 +82,10 @@ public class ScannedBodyInfo {
     private Boolean tidallyLocked = null;
     private BigDecimal axialTiltDeg = null;
     private LinkedHashMap<Item, BigDecimal> planetMaterials = null;
+    // * Belt
+    // !no distance if arrival!
+    // ringType (Metallic)
+    private BigDecimal moonMasses = null;
 
     @Override
     public String toString() {
@@ -113,7 +104,13 @@ public class ScannedBodyInfo {
         if (this.getSystemReserves() != null) {
             sb.append(this.getSystemReserves().getName()).append("\n");
         }
-        sb.append(String.format(Locale.US, "%-21s\t%.4f", "EARTH MASSES:", this.getEarthMasses())).append("\n");
+        if (this.getSolarMasses() != null) {
+            sb.append(String.format(Locale.US, "%-21s\t%.4f", "SOLAR MASSES:", this.getSolarMasses())).append("\n");
+        } else if (this.getMoonMasses() != null) {
+            sb.append(String.format(Locale.US, "%-21s\t%.4f", "MOON MASSES:", this.getMoonMasses())).append("\n");
+        } else {
+            sb.append(String.format(Locale.US, "%-21s\t%.4f", "EARTH MASSES:", this.getEarthMasses())).append("\n");
+        }
         sb.append(String.format(Locale.US, "%-21s\t%.0fKM", "RADIUS:", this.getRadiusKm())).append("\n");
         sb.append(String.format(Locale.US, "%-21s\t%.2fG", "GRAVITY:", this.getGravityG())).append("\n");
         sb.append(String.format(Locale.US, "%-21s\t%.0fK", "SURFACE TEMP:", this.getSurfaceTempK())).append("\n");
@@ -243,6 +240,21 @@ public class ScannedBodyInfo {
         }
 
         // Search the start indexes of labels, also replacing the found words with NULL entries
+        int indexSolarMasses = indexOfWords(lowercasedScannedWords, "solar", "masses:");
+        if (indexSolarMasses < lowercasedScannedWords.size()) {
+            // The two word before solar masses can be system reserves
+            if (indexSolarMasses >= 2) {
+                String w1 = lowercasedScannedWords.get(indexSolarMasses - 2);
+                String w2 = lowercasedScannedWords.get(indexSolarMasses - 1);
+                if (w1 != null && w2 != null) {
+                    scannedBodyInfo.setSystemReserves(BodyInfo.findBestMatching(w1 + w2, "RESERVES_"));
+                }
+            }
+            // Clear everything before solar masses because it is only bla bla about the body
+            for (int i = 0; i < indexSolarMasses; i++) {
+                lowercasedScannedWords.set(i, null);
+            }
+        }
         int indexEarthMasses = indexOfWords(lowercasedScannedWords, "earth", "masses:");
         if (indexEarthMasses < lowercasedScannedWords.size()) {
             // The two word before earth masses can be system reserves
@@ -255,6 +267,21 @@ public class ScannedBodyInfo {
             }
             // Clear everything before earth masses because it is only bla bla about the body
             for (int i = 0; i < indexEarthMasses; i++) {
+                lowercasedScannedWords.set(i, null);
+            }
+        }
+        int indexMoonMasses = indexOfWords(lowercasedScannedWords, "moon", "masses:");
+        if (indexMoonMasses < lowercasedScannedWords.size()) {
+            // The two word before moon masses can be system reserves
+            if (indexMoonMasses >= 2) {
+                String w1 = lowercasedScannedWords.get(indexMoonMasses - 2);
+                String w2 = lowercasedScannedWords.get(indexMoonMasses - 1);
+                if (w1 != null && w2 != null) {
+                    scannedBodyInfo.setSystemReserves(BodyInfo.findBestMatching(w1 + w2, "RESERVES_"));
+                }
+            }
+            // Clear everything before moon masses because it is only bla bla about the body
+            for (int i = 0; i < indexMoonMasses; i++) {
                 lowercasedScannedWords.set(i, null);
             }
         }
@@ -275,10 +302,17 @@ public class ScannedBodyInfo {
         int indexPlanetMaterials = indexOfWords(lowercasedScannedWords, "planet", "materials:");
 
         LinkedHashMap<String, Integer> indexByLabel = new LinkedHashMap<>();
+        if (indexSolarMasses < lowercasedScannedWords.size()) {
+            indexByLabel.put("solar masses:", indexSolarMasses);
+            scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_STAR);
+        }
         if (indexEarthMasses < lowercasedScannedWords.size()) {
             indexByLabel.put("earth masses:", indexEarthMasses);
-        } else {
-            logger.debug("indexEarthMasses not found in " + screenshotFilename);
+            scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_PLANET);
+        }
+        if (indexMoonMasses < lowercasedScannedWords.size()) {
+            indexByLabel.put("moon masses:", indexMoonMasses);
+            scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_BELT);
         }
         if (indexRadius < lowercasedScannedWords.size()) {
             indexByLabel.put("radius:", indexRadius);
@@ -359,10 +393,26 @@ public class ScannedBodyInfo {
         List<Integer> sortedIndexes = new ArrayList<>(indexByLabel.values());
         Collections.sort(sortedIndexes);
 
+        if (indexSolarMasses < lowercasedScannedWords.size()) {
+            try {
+                String value = valueForLabel(indexSolarMasses, "SOLARMASSES:", new SolarMassesFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
+                scannedBodyInfo.setSolarMasses(new BigDecimal(value));
+            } catch (NumberFormatException e) {
+                logger.warn(screenshotFilename + ": " + e.getMessage());
+            }
+        }
         if (indexEarthMasses < lowercasedScannedWords.size()) {
             try {
                 String value = valueForLabel(indexEarthMasses, "EARTHMASSES:", new EarthMassesFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setEarthMasses(new BigDecimal(value));
+            } catch (NumberFormatException e) {
+                logger.warn(screenshotFilename + ": " + e.getMessage());
+            }
+        }
+        if (indexMoonMasses < lowercasedScannedWords.size()) {
+            try {
+                String value = valueForLabel(indexMoonMasses, "MOONMASSES:", new MoonMassesFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
+                scannedBodyInfo.setMoonMasses(new BigDecimal(value));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
             }
@@ -1100,6 +1150,22 @@ public class ScannedBodyInfo {
         this.bodyName = bodyName;
     }
 
+    public BodyInfo getBodyGroup() {
+        return this.bodyGroup;
+    }
+
+    public void setBodyGroup(BodyInfo bodyGroup) {
+        this.bodyGroup = bodyGroup;
+    }
+
+    public BigDecimal getSolarMasses() {
+        return this.solarMasses;
+    }
+
+    public void setSolarMasses(BigDecimal solarMasses) {
+        this.solarMasses = solarMasses;
+    }
+
     public BodyInfo getBodyType() {
         return this.bodyType;
     }
@@ -1258,6 +1324,14 @@ public class ScannedBodyInfo {
 
     public void setPlanetMaterials(LinkedHashMap<Item, BigDecimal> planetMaterials) {
         this.planetMaterials = planetMaterials;
+    }
+
+    public BigDecimal getMoonMasses() {
+        return this.moonMasses;
+    }
+
+    public void setMoonMasses(BigDecimal moonMasses) {
+        this.moonMasses = moonMasses;
     }
 
 }
