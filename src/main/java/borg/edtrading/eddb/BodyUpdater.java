@@ -76,10 +76,8 @@ public class BodyUpdater implements Closeable {
             this.openOrCreateBodyPage(scannedBodyInfo);
             this.enterBasicBodyInformation(scannedBodyInfo);
             this.updatePlanetMaterials(scannedBodyInfo);
-
-            Thread.sleep(60000L);
+            Thread.sleep(1000L);
             this.submitBodyPage();
-            throw new RuntimeException("testing");
         }
     }
 

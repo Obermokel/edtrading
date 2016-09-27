@@ -52,7 +52,7 @@ public class Mats2 {
         List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
         //File sourceFile = selectRandomScreenshot();
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_4k_\\2016-09-21 07-00-00 Obotrima.png");
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, "_4k_\\2016-09-21 19-29-14 Lalande 39866.png");
         //for (File sourceFile : selectAllScreenshots()) {
         logger.trace("Testing " + sourceFile.getName() + " (Already finished: " + scannedBodyInfos.size() + ")");
         String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
@@ -67,9 +67,9 @@ public class Mats2 {
         //            ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
         BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
         bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
-        //            ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
+        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
         BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
-        //            ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
         //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
         //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
@@ -84,7 +84,7 @@ public class Mats2 {
         //            }
 
         writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
-        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
+        writeDebugImages("Body Info", true, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
 
         //templates = copyLearnedChars();
 
