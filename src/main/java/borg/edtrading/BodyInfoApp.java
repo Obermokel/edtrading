@@ -66,6 +66,11 @@ public class BodyInfoApp {
                 try {
                     //logger.debug(screenshotFile.getName());
 
+                    // Fast skip?
+                    if (bodyUpdater != null && bodyUpdater.isScreenshotFinished(screenshotFile.getName())) {
+                        continue;
+                    }
+
                     // Extract system name from filename
                     String systemName = systemNameFromFilename(screenshotFile);
                     StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);

@@ -93,6 +93,20 @@ public class EddbHistory {
         return count;
     }
 
+    public boolean isScreenshotFinished(String screenshotFilename) throws IOException {
+        final String searchFor = ("|SCREENSHOT|FINISHED|null|null|" + screenshotFilename + "|").toLowerCase();
+        for (String entry : this.history) {
+            if (entry.toLowerCase().contains(searchFor)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void addScreenshotFinished(String systemName, String bodyName, String screenshotFilename) throws IOException {
+        this.log(systemName, bodyName, "SCREENSHOT", "FINISHED", null, null, screenshotFilename);
+    }
+
     public void set(String systemName, String bodyName, String fieldName, String newValue, String screenshotFilename) throws IOException {
         this.log(systemName, bodyName, fieldName, ACTION_SET, null, newValue, screenshotFilename);
     }

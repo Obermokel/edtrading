@@ -87,6 +87,7 @@ public class BodyUpdater implements Closeable {
                 this.updatePlanetMaterials(scannedBodyInfo);
                 Thread.sleep(1000L);
                 this.submitBodyPage();
+                this.history.addScreenshotFinished(scannedBodyInfo.getSystemName(), scannedBodyInfo.getBodyName(), scannedBodyInfo.getScreenshotFilename());
             } catch (NoSuchElementException e) {
                 logger.error("Failed to process " + scannedBodyInfo.getScreenshotFilename(), e);
                 if (this.driver instanceof TakesScreenshot) {
@@ -511,6 +512,10 @@ public class BodyUpdater implements Closeable {
         } else {
             return bodyName;
         }
+    }
+
+    public boolean isScreenshotFinished(String filename) throws IOException {
+        return this.history.isScreenshotFinished(filename);
     }
 
 }

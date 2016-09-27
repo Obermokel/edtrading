@@ -1,4 +1,5 @@
 TODO:
+* Remember successfully processed screenshots
 * System reserve
 * Terraforming
 * Support for other body types like stars, belts etc
@@ -7,11 +8,11 @@ SUSPICIOUS:
 * 2016-09-22 19-51-08 LHS 380.png: '82,' does not look like distance from arrival point
 * 2016-09-22 19-27-56 Wolf 562.png: '135.78l' does not look like distance from arrival point
 * 2016-09-22 19-27-53 Wolf 562.png: '36.50l' does not look like distance from arrival point
-* 2016-09-22 19-19-19 Toolfa.png: Incomplete planet materials screenshot: sulphur(27.5%),carbon(23.1%),phosphorus(14.8%),iron(12.4%),nickel(9.4%),manganese(5.1%),germanium(3.6%),arsenic(1.6%),cadmium(1.0%),
-* 2016-09-22 20-03-41 Wolf 359.png: 358.3o° does not seem plausible for ORBITALINCLINATION
 
 DONE:
 * Human readable logfile
 * Parseable logfile
 * 2016-09-21 07-43-38 Zeta Tucanae.png: Sum of body composition is 99.8: 91.2% ROCK 8.6% METAL
 * 2016-09-21 08-34-23 Ch'i Lingo.png: -1o2.64° does not seem plausible for ORBITALINCLINATION
+* 2016-09-22 20-03-41 Wolf 359.png: 358.3o° does not seem plausible for ORBITALINCLINATION
+* Leider echt incomplete screenshot: 2016-09-22 19-19-19 Toolfa.png: Incomplete planet materials screenshot: sulphur(27.5%),carbon(23.1%),phosphorus(14.8%),iron(12.4%),nickel(9.4%),manganese(5.1%),germanium(3.6%),arsenic(1.6%),cadmium(1.0%),
