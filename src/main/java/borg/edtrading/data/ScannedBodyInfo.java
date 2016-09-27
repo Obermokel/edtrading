@@ -1061,7 +1061,7 @@ public class ScannedBodyInfo {
     private static String valueForLabel(int labelStartIndex, String correctLabel, ValueFixer valueFixer, List<MatchGroup> bodyInfoWords, LinkedList<String> lowercasedScannedWords, List<Integer> sortedIndexes, String screenshotFilename) {
         String value = "";
         int z = sortedIndexes.indexOf(labelStartIndex) + 1;
-        int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : -1;
+        int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : lowercasedScannedWords.size();
         List<Integer> labelIndexes = new ArrayList<>();
         List<Integer> valueIndexes = new ArrayList<>();
         for (int i = labelStartIndex; i < nextIndex; i++) {
