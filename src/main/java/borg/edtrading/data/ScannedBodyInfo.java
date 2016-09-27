@@ -267,82 +267,82 @@ public class ScannedBodyInfo {
         if (indexEarthMasses < lowercasedScannedWords.size()) {
             indexByLabel.put("earth masses:", indexEarthMasses);
         } else {
-            logger.warn("indexEarthMasses not found in " + screenshotFilename);
+            logger.debug("indexEarthMasses not found in " + screenshotFilename);
         }
         if (indexRadius < lowercasedScannedWords.size()) {
             indexByLabel.put("radius:", indexRadius);
         } else {
-            logger.warn("indexRadius not found in " + screenshotFilename);
+            logger.debug("indexRadius not found in " + screenshotFilename);
         }
         if (indexGravity < lowercasedScannedWords.size()) {
             indexByLabel.put("gravity:", indexGravity);
         } else {
-            logger.warn("indexGravity not found in " + screenshotFilename);
+            logger.debug("indexGravity not found in " + screenshotFilename);
         }
         if (indexSurfaceTemp < lowercasedScannedWords.size()) {
             indexByLabel.put("surface temp:", indexSurfaceTemp);
         } else {
-            logger.warn("indexSurfaceTemp not found in " + screenshotFilename);
+            logger.debug("indexSurfaceTemp not found in " + screenshotFilename);
         }
         if (indexVolcanism < lowercasedScannedWords.size()) {
             indexByLabel.put("volcanism:", indexVolcanism);
         } else {
-            logger.warn("indexVolcanism not found in " + screenshotFilename);
+            logger.debug("indexVolcanism not found in " + screenshotFilename);
         }
         if (indexAtmosphereType < lowercasedScannedWords.size()) {
             indexByLabel.put("atmosphere type:", indexAtmosphereType);
         } else {
-            logger.warn("indexAtmosphereType not found in " + screenshotFilename);
+            logger.debug("indexAtmosphereType not found in " + screenshotFilename);
         }
         if (indexComposition < lowercasedScannedWords.size()) {
             indexByLabel.put("composition:", indexComposition);
         } else {
-            logger.warn("indexComposition not found in " + screenshotFilename);
+            logger.debug("indexComposition not found in " + screenshotFilename);
         }
         if (indexOrbitalPeriod < lowercasedScannedWords.size()) {
             indexByLabel.put("orbital period:", indexOrbitalPeriod);
         } else {
-            logger.warn("indexOrbitalPeriod not found in " + screenshotFilename);
+            logger.debug("indexOrbitalPeriod not found in " + screenshotFilename);
         }
         if (indexSemiMajorAxis < lowercasedScannedWords.size()) {
             indexByLabel.put("semi major axis:", indexSemiMajorAxis);
         } else {
-            logger.warn("indexSemiMajorAxis not found in " + screenshotFilename);
+            logger.debug("indexSemiMajorAxis not found in " + screenshotFilename);
         }
         if (indexOrbitalEccentricity < lowercasedScannedWords.size()) {
             indexByLabel.put("orbital eccentricity:", indexOrbitalEccentricity);
         } else {
-            logger.warn("indexOrbitalEccentricity not found in " + screenshotFilename);
+            logger.debug("indexOrbitalEccentricity not found in " + screenshotFilename);
         }
         if (indexOrbitalInclination < lowercasedScannedWords.size()) {
             indexByLabel.put("orbital inclination:", indexOrbitalInclination);
         } else {
-            logger.warn("indexOrbitalInclination not found in " + screenshotFilename);
+            logger.debug("indexOrbitalInclination not found in " + screenshotFilename);
         }
         if (indexArgOfPeriapsis < lowercasedScannedWords.size()) {
             indexByLabel.put("arg of periapsis:", indexArgOfPeriapsis);
         } else {
-            logger.warn("indexArgOfPeriapsis not found in " + screenshotFilename);
+            logger.debug("indexArgOfPeriapsis not found in " + screenshotFilename);
         }
         if (indexRotationalPeriod < lowercasedScannedWords.size()) {
             indexByLabel.put("rotational period:", indexRotationalPeriod);
         } else {
-            logger.warn("indexRotationalPeriod not found in " + screenshotFilename);
+            logger.debug("indexRotationalPeriod not found in " + screenshotFilename);
         }
         if (indexTidallyLocked < lowercasedScannedWords.size()) {
             indexByLabel.put("(tidally locked)", indexTidallyLocked);
         } else {
-            //logger.warn("indexTidallyLocked not found in "+screenshotFilename);
+            //logger.debug("indexTidallyLocked not found in " + screenshotFilename);
         }
         if (indexAxialTilt < lowercasedScannedWords.size()) {
             indexByLabel.put("axial tilt:", indexAxialTilt);
         } else {
-            logger.warn("indexAxialTilt not found in " + screenshotFilename);
+            logger.debug("indexAxialTilt not found in " + screenshotFilename);
         }
         if (indexPlanetMaterials < lowercasedScannedWords.size()) {
             indexByLabel.put("planet materials:", indexPlanetMaterials);
         } else {
-            logger.warn("indexPlanetMaterials not found in " + screenshotFilename);
+            logger.debug("indexPlanetMaterials not found in " + screenshotFilename);
         }
 
         List<Integer> sortedIndexes = new ArrayList<>(indexByLabel.values());
