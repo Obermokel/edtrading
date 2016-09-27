@@ -19,6 +19,7 @@ public class ArgOfPeriapsisFixer implements ValueFixer {
 
     static final Logger logger = LogManager.getLogger(ArgOfPeriapsisFixer.class);
 
+    private static final BigDecimal MIN_VALUE = new BigDecimal("0.0");
     private static final BigDecimal MAX_VALUE = new BigDecimal("360.00");
     private static final NumberFormat NF = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.US));
     private final Body eddbBody;
@@ -44,7 +45,7 @@ public class ArgOfPeriapsisFixer implements ValueFixer {
         } else {
             BigDecimal actualValue = new BigDecimal(fixedValue.replace("°", ""));
 
-            return actualValue.compareTo(MAX_VALUE) < 0;
+            return actualValue.compareTo(MIN_VALUE) >= 0 && actualValue.compareTo(MAX_VALUE) < 0;
         }
     }
 

@@ -3,6 +3,10 @@ TODO:
 * Terraforming
 * Support for other body types like stars, belts etc
 
+SUSPICIOUS:
+
 DONE:
 * Human readable logfile
 * Parseable logfile
+* 2016-09-21 07-43-38 Zeta Tucanae.png: Sum of body composition is 99.8: 91.2% ROCK 8.6% METAL
+* 2016-09-21 08-34-23 Ch'i Lingo.png: -1o2.64° does not seem plausible for ORBITALINCLINATION

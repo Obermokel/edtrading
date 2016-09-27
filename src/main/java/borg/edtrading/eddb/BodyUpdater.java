@@ -20,6 +20,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.io.Closeable;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -422,6 +423,7 @@ public class BodyUpdater implements Closeable {
         try {
             Thread.sleep(1000L);
             List<WebElement> systemLinks = this.driver.findElements(By.cssSelector("div.system-index table.table tbody a"));
+            List<String> foundSystems = new ArrayList<>(systemLinks.size());
             for (WebElement systemLink : systemLinks) {
                 if (systemLink.getText().equalsIgnoreCase(systemName)) {
                     logger.trace("Clicking on link to system '" + systemName + "': " + systemLink.getAttribute("href"));
@@ -429,7 +431,7 @@ public class BodyUpdater implements Closeable {
                     return;
                 }
             }
-            String msg = "System '" + systemName + "' not found on ROSS";
+            String msg = "System '" + systemName + "' not found on ROSS. Found " + foundSystems.size() + " others: " + foundSystems;
             logger.warn(msg);
             throw new SystemNotFoundException(msg);
         } catch (InterruptedException e) {
