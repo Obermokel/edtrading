@@ -94,7 +94,7 @@ public class EddbHistory {
     }
 
     public boolean isScreenshotFinished(String screenshotFilename) throws IOException {
-        final String searchFor = ("|SCREENSHOT|FINISHED|null|null|" + screenshotFilename + "|").toLowerCase();
+        final String searchFor = ("|SCREENSHOT|FINISHED|null|null|" + screenshotFilename).toLowerCase();
         for (String entry : this.history) {
             if (entry.toLowerCase().contains(searchFor)) {
                 return true;
