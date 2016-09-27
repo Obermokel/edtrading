@@ -93,6 +93,7 @@ public class BodyUpdater implements Closeable {
                 if (this.driver instanceof TakesScreenshot) {
                     try {
                         final String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
+                        FileUtils.write(new File(Constants.TEMP_DIR, "ERROR_" + timestamp + "_" + scannedBodyInfo.getScreenshotFilename().replace(".png", ".html")), this.driver.getPageSource(), "UTF-8");
                         File screenshotFile = ((TakesScreenshot) this.driver).getScreenshotAs(OutputType.FILE);
                         FileUtils.copyFileToDirectory(screenshotFile, new File(Constants.TEMP_DIR, "ERROR_" + timestamp + "_" + scannedBodyInfo.getScreenshotFilename()));
                     } catch (Exception se) {
