@@ -40,7 +40,7 @@ public class SemiMajorAxisFixer implements ValueFixer {
 
     @Override
     public boolean seemsPlausible(String fixedValue) {
-        return fixedValue.matches("\\d\\.\\d{2}AU"); // min 0.00AU, max 9.99AU, always two decimal places
+        return fixedValue.matches("\\d{1,2}\\.\\d{2}AU"); // min 0.00AU, max 99.99AU, always two decimal places
     }
 
 }

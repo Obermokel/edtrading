@@ -3,6 +3,7 @@ TODO:
 * Terraforming
 * Support for other body types like stars, belts etc (WIP)
 * Body Image
+* Star catalogue IDs
 
 SUSPICIOUS:
 

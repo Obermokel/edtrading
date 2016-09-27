@@ -189,7 +189,14 @@ public class ScannedBodyInfo {
         }
         int indexArrivalPoint = indexOfWords(lowercasedScannedNameWords, "arrival", "point:");
         if (indexArrivalPoint >= lowercasedScannedNameWords.size()) {
-            logger.warn("indexArrivalPoint not found in " + screenshotFilename);
+            // Arrival star. Everything is planet name.
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < lowercasedScannedNameWords.size(); i++) {
+                lowercasedScannedNameWords.set(i, null);
+                sb.append(bodyNameWords.get(i).getText()).append(" ");
+            }
+            bodyName = removePixelErrorsFromBodyName(sb.toString().trim());
+            bodyName = fixGeneratedBodyName(systemName, bodyName);
         } else {
             // Everything before arrival point is planet name
             StringBuilder sb = new StringBuilder();
@@ -313,6 +320,7 @@ public class ScannedBodyInfo {
         int indexTidallyLocked = indexOfWords(lowercasedScannedWords, "(tidally", "locked)");
         int indexAxialTilt = indexOfWords(lowercasedScannedWords, "axial", "tilt:");
         int indexPlanetMaterials = indexOfWords(lowercasedScannedWords, "planet", "materials:");
+        int indexStarCatalogueId = indexOfWords(lowercasedScannedWords, "star", "catalogue", "id:");
 
         LinkedHashMap<String, Integer> indexByLabel = new LinkedHashMap<>();
         if (indexSolarMasses < lowercasedScannedWords.size()) {
@@ -377,6 +385,9 @@ public class ScannedBodyInfo {
         }
         if (indexPlanetMaterials < lowercasedScannedWords.size()) {
             indexByLabel.put("planet materials:", indexPlanetMaterials);
+        }
+        if (indexStarCatalogueId < lowercasedScannedWords.size()) {
+            indexByLabel.put("star catalogue id:", indexStarCatalogueId);
         }
 
         List<Integer> sortedIndexes = new ArrayList<>(indexByLabel.values());
@@ -1126,10 +1137,12 @@ public class ScannedBodyInfo {
                     learnText(eddbBody.getName().toUpperCase().replaceAll("\\s", ""), bodyNameWords.subList(0, indexArrivalPoint), screenshotFilename);
                 }
             } else if (StringUtils.isNotBlank(scannedBodyName)) {
-                learnText(scannedBodyName.replaceAll("\\s", ""), bodyNameWords.subList(0, indexArrivalPoint), screenshotFilename);
+                learnText(scannedBodyName.replaceAll("\\s", ""), bodyNameWords.subList(0, Math.min(indexArrivalPoint, bodyNameWords.size())), screenshotFilename);
             }
-            learnText("ARRIVAL", Arrays.asList(bodyNameWords.get(indexArrivalPoint)), screenshotFilename);
-            learnText("POINT:", Arrays.asList(bodyNameWords.get(indexArrivalPoint + 1)), screenshotFilename);
+            if (indexArrivalPoint < bodyNameWords.size()) {
+                learnText("ARRIVAL", Arrays.asList(bodyNameWords.get(indexArrivalPoint)), screenshotFilename);
+                learnText("POINT:", Arrays.asList(bodyNameWords.get(indexArrivalPoint + 1)), screenshotFilename);
+            }
             if (ValueFixer.TRUST_EDDB && eddbBody != null && eddbBody.getDistance_to_arrival() != null && eddbBody.getDistance_to_arrival() > 0.0 && scannedDistanceLs != null) {
                 double scannedArrivalFraction = scannedDistanceLs.doubleValue() - scannedDistanceLs.longValue();
                 learnText(new DecimalFormat("#,##0.00LS", new DecimalFormatSymbols(Locale.US)).format(eddbBody.getDistance_to_arrival().doubleValue() + scannedArrivalFraction), Arrays.asList(bodyNameWords.get(indexArrivalPoint + 2)), screenshotFilename);
