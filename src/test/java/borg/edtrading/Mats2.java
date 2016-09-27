@@ -52,7 +52,8 @@ public class Mats2 {
         List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
         //File sourceFile = selectRandomScreenshot();
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-27 08-46-22 Col 132 Sector DB-W d2-38.png"); // Class II gas giant
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-27 08-46-22 Col 132 Sector DB-W d2-38.png"); // Class II gas giant
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-25 08-45-55 HIP 18843.png"); // Star w/o arrival distance
         //for (File sourceFile : selectAllScreenshots()) {
         logger.trace("Testing " + sourceFile.getName() + " (Already finished: " + scannedBodyInfos.size() + ")");
         String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
@@ -84,7 +85,7 @@ public class Mats2 {
         //                logger.warn("!!! " + sourceFile.getName() + " !!! " + msg + " !!!");
         //            }
 
-        writeDebugImages("Body Name", true, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
+        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
         writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
 
         //templates = copyLearnedChars();

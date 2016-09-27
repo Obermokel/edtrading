@@ -240,12 +240,7 @@ public class ScannedBodyInfo {
 
         // See if it is a known body on EDDB, in which case we can greatly improve auto-learning from the correct values (assuming EDDB has correct info^^)
         Body eddbBody = lookupEddbBody(eddbBodies, bodyName, distanceLs, bodyType);
-        if (eddbBody == null) {
-            logger.debug(screenshotFilename + ": Did not find body on EDDB: " + bodyName);
-        } else {
-            logger.debug(screenshotFilename + ": Found body on EDDB: " + eddbBody);
-            autoLearnBody(eddbBody, bodyName, distanceLs, bodyType, bodyNameWords, indexArrivalPoint, screenshotFilename);
-        }
+        autoLearnBody(eddbBody, bodyName, distanceLs, bodyType, bodyNameWords, indexArrivalPoint, screenshotFilename);
 
         ScannedBodyInfo scannedBodyInfo = new ScannedBodyInfo(screenshotFilename, systemName, bodyName, bodyType, distanceLs);
 
@@ -1125,7 +1120,7 @@ public class ScannedBodyInfo {
 
     private static void autoLearnBody(Body eddbBody, String scannedBodyName, BigDecimal scannedDistanceLs, BodyInfo scannedBodyType, List<MatchGroup> bodyNameWords, int indexArrivalPoint, String screenshotFilename) {
         try {
-            if (ValueFixer.TRUST_EDDB && eddbBody.getName() != null && eddbBody.getName().length() > 0) {
+            if (ValueFixer.TRUST_EDDB && eddbBody != null && eddbBody.getName() != null && eddbBody.getName().length() > 0) {
                 // Ignore case and whitespaces for body name
                 if (!scannedBodyName.toLowerCase().replaceAll("\\s", "").equals(eddbBody.getName().toLowerCase().replaceAll("\\s", ""))) {
                     learnText(eddbBody.getName().toUpperCase().replaceAll("\\s", ""), bodyNameWords.subList(0, indexArrivalPoint), screenshotFilename);
@@ -1135,13 +1130,13 @@ public class ScannedBodyInfo {
             }
             learnText("ARRIVAL", Arrays.asList(bodyNameWords.get(indexArrivalPoint)), screenshotFilename);
             learnText("POINT:", Arrays.asList(bodyNameWords.get(indexArrivalPoint + 1)), screenshotFilename);
-            if (ValueFixer.TRUST_EDDB && eddbBody.getDistance_to_arrival() != null && eddbBody.getDistance_to_arrival() > 0.0 && scannedDistanceLs != null) {
+            if (ValueFixer.TRUST_EDDB && eddbBody != null && eddbBody.getDistance_to_arrival() != null && eddbBody.getDistance_to_arrival() > 0.0 && scannedDistanceLs != null) {
                 double scannedArrivalFraction = scannedDistanceLs.doubleValue() - scannedDistanceLs.longValue();
                 learnText(new DecimalFormat("#,##0.00LS", new DecimalFormatSymbols(Locale.US)).format(eddbBody.getDistance_to_arrival().doubleValue() + scannedArrivalFraction), Arrays.asList(bodyNameWords.get(indexArrivalPoint + 2)), screenshotFilename);
             } else if (scannedDistanceLs != null) {
                 learnText(new DecimalFormat("#,##0.00LS", new DecimalFormatSymbols(Locale.US)).format(scannedDistanceLs), Arrays.asList(bodyNameWords.get(indexArrivalPoint + 2)), screenshotFilename);
             }
-            if (ValueFixer.TRUST_EDDB && eddbBody.getTypeName() != null && eddbBody.getTypeName().length() > 0) {
+            if (ValueFixer.TRUST_EDDB && eddbBody != null && eddbBody.getTypeName() != null && eddbBody.getTypeName().length() > 0) {
                 learnText(eddbBody.getTypeName().replaceAll("\\s", ""), bodyNameWords.subList(indexArrivalPoint + 3, bodyNameWords.size()), screenshotFilename);
             } else if (scannedBodyType != null) {
                 learnText(scannedBodyType.getName().replaceAll("\\s", ""), bodyNameWords.subList(indexArrivalPoint + 3, bodyNameWords.size()), screenshotFilename);
