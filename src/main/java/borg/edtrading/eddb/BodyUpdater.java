@@ -264,7 +264,9 @@ public class BodyUpdater implements Closeable {
             WebElement abbrClear = null;
             try {
                 abbrClear = surroundingDiv.findElement(By.cssSelector("abbr.select2-search-choice-close"));
-                oldValue = spanChosen.getText();
+                if (abbrClear.isDisplayed()) {
+                    oldValue = spanChosen.getText();
+                }
             } catch (NoSuchElementException e) {
                 // No value selected yet
             }
