@@ -90,10 +90,15 @@ public class BodyUpdater implements Closeable {
             } catch (NoSuchElementException e) {
                 logger.error("Failed to process " + scannedBodyInfo.getScreenshotFilename(), e);
                 if (this.driver instanceof TakesScreenshot) {
-                    final String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
-                    File screenshotFile = ((TakesScreenshot) this.driver).getScreenshotAs(OutputType.FILE);
-                    FileUtils.copyFileToDirectory(screenshotFile, new File(Constants.TEMP_DIR, "ERROR_" + timestamp + "_" + scannedBodyInfo.getScreenshotFilename()));
+                    try {
+                        final String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
+                        File screenshotFile = ((TakesScreenshot) this.driver).getScreenshotAs(OutputType.FILE);
+                        FileUtils.copyFileToDirectory(screenshotFile, new File(Constants.TEMP_DIR, "ERROR_" + timestamp + "_" + scannedBodyInfo.getScreenshotFilename()));
+                    } catch (Exception se) {
+                        logger.warn("Failed to take screenshot: " + se);
+                    }
                 }
+                this.history.removeAll(scannedBodyInfo.getSystemName(), scannedBodyInfo.getBodyName());
             }
         }
     }

@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * EddbHistory
@@ -72,6 +73,24 @@ public class EddbHistory {
             }
         }
         return null;
+    }
+
+    public int removeAll(String systemName, String bodyName) throws IOException {
+        final String searchFor = ("|" + systemName + "|" + bodyName + "|").toLowerCase();
+        int count = 0;
+        ListIterator<String> it = this.history.listIterator();
+        while (it.hasNext()) {
+            String entry = it.next();
+            if (entry.toLowerCase().contains(searchFor)) {
+                it.remove();
+                count++;
+            }
+        }
+        FileUtils.write(this.logfile, "", "UTF-8", false);
+        for (String remainingEntry : this.history) {
+            FileUtils.write(this.logfile, remainingEntry + "\n", "UTF-8", true);
+        }
+        return count;
     }
 
     public void set(String systemName, String bodyName, String fieldName, String newValue, String screenshotFilename) throws IOException {
