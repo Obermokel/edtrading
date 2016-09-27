@@ -5,9 +5,6 @@ TODO:
 * Support for other body types like stars, belts etc
 
 SUSPICIOUS:
-* 2016-09-22 19-51-08 LHS 380.png: '82,' does not look like distance from arrival point
-* 2016-09-22 19-27-56 Wolf 562.png: '135.78l' does not look like distance from arrival point
-* 2016-09-22 19-27-53 Wolf 562.png: '36.50l' does not look like distance from arrival point
 
 DONE:
 * Human readable logfile
@@ -16,3 +13,6 @@ DONE:
 * 2016-09-21 08-34-23 Ch'i Lingo.png: -1o2.64° does not seem plausible for ORBITALINCLINATION
 * 2016-09-22 20-03-41 Wolf 359.png: 358.3o° does not seem plausible for ORBITALINCLINATION
 * Leider echt incomplete screenshot: 2016-09-22 19-19-19 Toolfa.png: Incomplete planet materials screenshot: sulphur(27.5%),carbon(23.1%),phosphorus(14.8%),iron(12.4%),nickel(9.4%),manganese(5.1%),germanium(3.6%),arsenic(1.6%),cadmium(1.0%),
+* 2016-09-22 19-27-56 Wolf 562.png: '135.78l' does not look like distance from arrival point
+* 2016-09-22 19-27-53 Wolf 562.png: '36.50l' does not look like distance from arrival point
+* 2016-09-22 19-51-08 LHS 380.png: '82,' does not look like distance from arrival point

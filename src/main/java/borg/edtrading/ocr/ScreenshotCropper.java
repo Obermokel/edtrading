@@ -52,7 +52,7 @@ public abstract class ScreenshotCropper {
 
         final float xPercent = 2110f / 3840f; // x=2110 on 4k
         final float yPercent = 635f / 2160f; // y=635 on 4k
-        final float wPercent = 695f / 3840f; // width=695 on 4k
+        final float wPercent = 700f / 3840f; // width=700 on 4k
         final float hPercent = 185f / 2160f; // height=185 on 4k
 
         int x = Math.round(xPercent * defaultAspectRatio.getWidth());

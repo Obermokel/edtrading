@@ -92,6 +92,7 @@ public class BodyInfoApp {
 
                     // Parse!
                     ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(screenshotFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
+                    scannedBodyInfos.add(scannedBodyInfo);
 
                     // sysout
                     System.out.println(scannedBodyInfo);
