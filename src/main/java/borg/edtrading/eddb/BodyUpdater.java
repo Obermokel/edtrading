@@ -1,15 +1,19 @@
 package borg.edtrading.eddb;
 
+import borg.edtrading.Constants;
 import borg.edtrading.data.BodyInfo;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.data.ScannedBodyInfo;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -18,9 +22,12 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -73,12 +80,21 @@ public class BodyUpdater implements Closeable {
         } else if (StringUtils.isEmpty(scannedBodyInfo.getBodyName())) {
             throw new IllegalArgumentException("scannedBodyInfo has no bodyName");
         } else {
-            this.openSystemPage(scannedBodyInfo.getSystemName());
-            this.openOrCreateBodyPage(scannedBodyInfo);
-            this.enterBasicBodyInformation(scannedBodyInfo);
-            this.updatePlanetMaterials(scannedBodyInfo);
-            Thread.sleep(1000L);
-            this.submitBodyPage();
+            try {
+                this.openSystemPage(scannedBodyInfo.getSystemName());
+                this.openOrCreateBodyPage(scannedBodyInfo);
+                this.enterBasicBodyInformation(scannedBodyInfo);
+                this.updatePlanetMaterials(scannedBodyInfo);
+                Thread.sleep(1000L);
+                this.submitBodyPage();
+            } catch (NoSuchElementException e) {
+                logger.error("Failed to process " + scannedBodyInfo.getScreenshotFilename(), e);
+                if (this.driver instanceof TakesScreenshot) {
+                    final String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
+                    File screenshotFile = ((TakesScreenshot) this.driver).getScreenshotAs(OutputType.FILE);
+                    FileUtils.copyFileToDirectory(screenshotFile, new File(Constants.TEMP_DIR, "ERROR_" + timestamp + "_" + scannedBodyInfo.getScreenshotFilename()));
+                }
+            }
         }
     }
 
