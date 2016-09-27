@@ -37,7 +37,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 
@@ -50,20 +49,42 @@ public class ScannedBodyInfo {
 
     static final Logger logger = LogManager.getLogger(ScannedBodyInfo.class);
 
-    private static final Pattern BODY_DESIGNATION_PATTERN = Pattern.compile("^(.+?) ([A-Fa-f]{1,5} [0-9]{1,2} ?[A-Fa-f]?)$");
-
     private String screenshotFilename = null;
     private String systemName = null;
     private String bodyName = null;
+    // bodyGroup (Planet, Star, Belt)
+    // * Star
+    // !no distance if arrival!
+    // Class G stars are...
+    // age (1.656 million years)
+    // solarMasses (0.9258)
+    // solarRadius (1.0162)
+    // surfaceTemp (5,012.00K)
+    // orbitalPeriod (2,711.0D)
+    // semiMajorAxis (1.83AU)
+    // eccentricity
+    // inclination
+    // argOfPeriapsis
+    // * Belt
+    // !no distance if arrival!
+    // ringType (Metallic)
+    // moonMasses (0.4303)
+    // orbitalPeriod
+    // semiMajorAxis
+    // eccentricity
+    // inclination
+    // argOfPeriapsis
     private BodyInfo bodyType = null;
     private BodyInfo terraforming = null;
     private BigDecimal distanceLs = null;
+    // systemReserve
     private BigDecimal earthMasses = null;
     private BigDecimal radiusKm = null;
     private BigDecimal gravityG = null;
     private BigDecimal surfaceTempK = null;
     private BodyInfo volcanism = null;
     private BodyInfo atmosphereType = null;
+    // atmosphere
     private LinkedHashMap<BodyInfo, BigDecimal> composition = null;
     private BigDecimal orbitalPeriodD = null;
     private BigDecimal semiMajorAxisAU = null;
