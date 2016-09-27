@@ -72,7 +72,7 @@ public class ScannedBodyInfo {
     private BigDecimal surfaceTempK = null;
     private BodyInfo volcanism = null;
     private BodyInfo atmosphereType = null;
-    // atmosphere
+    private LinkedHashMap<BodyInfo, BigDecimal> atmosphere = null;
     private LinkedHashMap<BodyInfo, BigDecimal> composition = null;
     private BigDecimal orbitalPeriodD = null;
     private BigDecimal semiMajorAxisAU = null;
@@ -121,6 +121,17 @@ public class ScannedBodyInfo {
         sb.append(String.format(Locale.US, "%-21s\t%.0fK", "SURFACE TEMP:", this.getSurfaceTempK())).append("\n");
         sb.append(String.format(Locale.US, "%-21s\t%s", "VOLCANISM:", this.getVolcanism() == null ? null : this.getVolcanism().getName())).append("\n");
         sb.append(String.format(Locale.US, "%-21s\t%s", "ATMOSPHERE TYPE:", this.getAtmosphereType() == null ? null : this.getAtmosphereType().getName())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t", "ATMOSPHERE:"));
+        if (this.getAtmosphere() == null) {
+            sb.append("null").append("\n");
+        } else {
+            Iterator<BodyInfo> it = this.getAtmosphere().keySet().iterator();
+            while (it.hasNext()) {
+                BodyInfo material = it.next();
+                BigDecimal percent = this.getAtmosphere().get(material);
+                sb.append(String.format(Locale.US, "%.1f%% %s", percent, material.getName())).append(it.hasNext() ? ", " : "\n");
+            }
+        }
         sb.append(String.format(Locale.US, "%-21s\t", "COMPOSITION:"));
         if (this.getComposition() == null) {
             sb.append("null").append("\n");
@@ -247,7 +258,7 @@ public class ScannedBodyInfo {
         // Search the start indexes of labels, also replacing the found words with NULL entries
         int indexSolarMasses = indexOfWords(lowercasedScannedWords, "solar", "masses:");
         if (indexSolarMasses < lowercasedScannedWords.size()) {
-            // The two word before solar masses can be system reserves
+            // The two word before solar masses can be system reserves - otherwise they are at the very end
             if (indexSolarMasses >= 2) {
                 String w1 = lowercasedScannedWords.get(indexSolarMasses - 2);
                 String w2 = lowercasedScannedWords.get(indexSolarMasses - 1);
@@ -262,7 +273,7 @@ public class ScannedBodyInfo {
         }
         int indexEarthMasses = indexOfWords(lowercasedScannedWords, "earth", "masses:");
         if (indexEarthMasses < lowercasedScannedWords.size()) {
-            // The two word before earth masses can be system reserves
+            // The two word before earth masses can be system reserves - otherwise they are at the very end
             if (indexEarthMasses >= 2) {
                 String w1 = lowercasedScannedWords.get(indexEarthMasses - 2);
                 String w2 = lowercasedScannedWords.get(indexEarthMasses - 1);
@@ -277,7 +288,7 @@ public class ScannedBodyInfo {
         }
         int indexMoonMasses = indexOfWords(lowercasedScannedWords, "moon", "masses:");
         if (indexMoonMasses < lowercasedScannedWords.size()) {
-            // The two word before moon masses can be system reserves
+            // The two word before moon masses can be system reserves - otherwise they are at the very end
             if (indexMoonMasses >= 2) {
                 String w1 = lowercasedScannedWords.get(indexMoonMasses - 2);
                 String w2 = lowercasedScannedWords.get(indexMoonMasses - 1);
@@ -296,6 +307,7 @@ public class ScannedBodyInfo {
         int indexSurfaceTemp = indexOfWords(lowercasedScannedWords, "surface", "temp:");
         int indexVolcanism = indexOfWords(lowercasedScannedWords, "volcanism:");
         int indexAtmosphereType = indexOfWords(lowercasedScannedWords, "atmosphere", "type:");
+        int indexAtmosphere = indexOfWords(lowercasedScannedWords, "atmosphere:");
         int indexComposition = indexOfWords(lowercasedScannedWords, "composition:");
         int indexOrbitalPeriod = indexOfWords(lowercasedScannedWords, "orbital", "period:");
         int indexSemiMajorAxis = indexOfWords(lowercasedScannedWords, "semi", "major", "axis:");
@@ -328,73 +340,48 @@ public class ScannedBodyInfo {
         }
         if (indexGravity < lowercasedScannedWords.size()) {
             indexByLabel.put("gravity:", indexGravity);
-        } else {
-            logger.debug("indexGravity not found in " + screenshotFilename);
         }
         if (indexSurfaceTemp < lowercasedScannedWords.size()) {
             indexByLabel.put("surface temp:", indexSurfaceTemp);
-        } else {
-            logger.debug("indexSurfaceTemp not found in " + screenshotFilename);
         }
         if (indexVolcanism < lowercasedScannedWords.size()) {
             indexByLabel.put("volcanism:", indexVolcanism);
-        } else {
-            logger.debug("indexVolcanism not found in " + screenshotFilename);
         }
         if (indexAtmosphereType < lowercasedScannedWords.size()) {
             indexByLabel.put("atmosphere type:", indexAtmosphereType);
-        } else {
-            logger.debug("indexAtmosphereType not found in " + screenshotFilename);
+        }
+        if (indexAtmosphere < lowercasedScannedWords.size()) {
+            indexByLabel.put("atmosphere:", indexAtmosphere);
         }
         if (indexComposition < lowercasedScannedWords.size()) {
             indexByLabel.put("composition:", indexComposition);
-        } else {
-            logger.debug("indexComposition not found in " + screenshotFilename);
         }
         if (indexOrbitalPeriod < lowercasedScannedWords.size()) {
             indexByLabel.put("orbital period:", indexOrbitalPeriod);
-        } else {
-            logger.debug("indexOrbitalPeriod not found in " + screenshotFilename);
         }
         if (indexSemiMajorAxis < lowercasedScannedWords.size()) {
             indexByLabel.put("semi major axis:", indexSemiMajorAxis);
-        } else {
-            logger.debug("indexSemiMajorAxis not found in " + screenshotFilename);
         }
         if (indexOrbitalEccentricity < lowercasedScannedWords.size()) {
             indexByLabel.put("orbital eccentricity:", indexOrbitalEccentricity);
-        } else {
-            logger.debug("indexOrbitalEccentricity not found in " + screenshotFilename);
         }
         if (indexOrbitalInclination < lowercasedScannedWords.size()) {
             indexByLabel.put("orbital inclination:", indexOrbitalInclination);
-        } else {
-            logger.debug("indexOrbitalInclination not found in " + screenshotFilename);
         }
         if (indexArgOfPeriapsis < lowercasedScannedWords.size()) {
             indexByLabel.put("arg of periapsis:", indexArgOfPeriapsis);
-        } else {
-            logger.debug("indexArgOfPeriapsis not found in " + screenshotFilename);
         }
         if (indexRotationalPeriod < lowercasedScannedWords.size()) {
             indexByLabel.put("rotational period:", indexRotationalPeriod);
-        } else {
-            logger.debug("indexRotationalPeriod not found in " + screenshotFilename);
         }
         if (indexTidallyLocked < lowercasedScannedWords.size()) {
             indexByLabel.put("(tidally locked)", indexTidallyLocked);
-        } else {
-            //logger.debug("indexTidallyLocked not found in " + screenshotFilename);
         }
         if (indexAxialTilt < lowercasedScannedWords.size()) {
             indexByLabel.put("axial tilt:", indexAxialTilt);
-        } else {
-            logger.debug("indexAxialTilt not found in " + screenshotFilename);
         }
         if (indexPlanetMaterials < lowercasedScannedWords.size()) {
             indexByLabel.put("planet materials:", indexPlanetMaterials);
-        } else {
-            logger.debug("indexPlanetMaterials not found in " + screenshotFilename);
         }
 
         List<Integer> sortedIndexes = new ArrayList<>(indexByLabel.values());
@@ -470,6 +457,105 @@ public class ScannedBodyInfo {
                 scannedBodyInfo.setAtmosphereType(BodyInfo.findBestMatching(value, "ATMOSPHERE_TYPE_"));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
+            }
+        }
+        if (indexAtmosphere < lowercasedScannedWords.size()) {
+            // Concatenate the whole remaining text
+            // Remember the real start and end index for later auto-learning.
+            String wholeRemainingText = "";
+            int z = sortedIndexes.indexOf(indexAtmosphere) + 1;
+            int nextIndex = z < sortedIndexes.size() ? sortedIndexes.get(z) : lowercasedScannedWords.size();
+            Integer realStartIndexIncl = null;
+            Integer realEndEndexExcl = null;
+            for (int i = indexAtmosphere; i < nextIndex; i++) {
+                if (lowercasedScannedWords.get(i) != null) {
+                    if (wholeRemainingText.length() > 0) {
+                        wholeRemainingText += " ";
+                    }
+                    wholeRemainingText += lowercasedScannedWords.set(i, null);
+                    if (realStartIndexIncl == null) {
+                        realStartIndexIncl = i;
+                    }
+                    realEndEndexExcl = i + 1;
+                }
+            }
+            // Now we should have s.th. like this:
+            // 70.0% ice 20.o% rock 10.0% meta1
+            // Split this at every whitespace
+            String[] percentagesAndNames = wholeRemainingText.split("\\s");
+            // Now we should have a list like this:
+            // [70.0%, ice, ,20.o%, ..., meta1]
+            // What we can do now is to fix wrongly detected chars as in
+            // 20.o%
+            // or
+            // meta1
+            boolean unfixableError = false;
+            List<String> fixedPercentagesAndNames = new ArrayList<>(percentagesAndNames.length);
+            for (int i = 0; i < percentagesAndNames.length; i++) {
+                if (i % 2 == 1) {
+                    // Should be a name
+                    String fixedName = percentagesAndNames[i].replace("0", "o").replace("5", "s").replace("8", "b");
+                    BodyInfo mat = BodyInfo.findBestMatching(fixedName, "ATMOSPHERE_COMPONENT_");
+                    if (mat != null) {
+                        fixedPercentagesAndNames.add(mat.getName());
+                    } else {
+                        logger.warn(screenshotFilename + ": Unfixable atmosphere component: " + percentagesAndNames[i]);
+                        unfixableError = true;
+                    }
+                } else {
+                    // Should be a percentage
+                    String fixedPercentage = percentagesAndNames[i].replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8").replace(",", ".");
+                    if (fixedPercentage.indexOf(".") == fixedPercentage.length() - 3) {
+                        fixedPercentage = fixedPercentage.substring(0, fixedPercentage.length() - 1) + "%";
+                    }
+                    if (fixedPercentage.matches("\\d{1,3}\\.\\d%")) {
+                        fixedPercentagesAndNames.add(fixedPercentage);
+                    } else {
+                        logger.warn(screenshotFilename + ": Unfixable percentage: " + percentagesAndNames[i]);
+                        unfixableError = true;
+                    }
+                }
+            }
+            if (!unfixableError) {
+                // Now we now what the whole text should have been. We can build it together from the fixed parts.
+                String fixedWholeRemainingText = "";
+                for (int i = 0; i < fixedPercentagesAndNames.size(); i++) {
+                    if (fixedWholeRemainingText.length() > 0) {
+                        fixedWholeRemainingText += " ";
+                    }
+                    fixedWholeRemainingText += fixedPercentagesAndNames.get(i);
+                }
+                // The fixed text can later be used for auto-learning.
+                // First though parse all mats and do a plausi check. The sum of percentages should be 100% +/- 0.1%.
+                // If not we might haved missed something completely. This can happen if the text is too close to the border.
+                LinkedHashMap<BodyInfo, BigDecimal> atmosphere = new LinkedHashMap<>();
+                BigDecimal totalPercentage = BigDecimal.ZERO;
+                for (int i = 0; i < fixedPercentagesAndNames.size(); i += 2) {
+                    BigDecimal percentage = new BigDecimal(fixedPercentagesAndNames.get(i).replace("%", ""));
+                    BodyInfo mat = BodyInfo.findBestMatching(fixedPercentagesAndNames.get(i + 1), "ATMOSPHERE_COMPONENT_");
+                    atmosphere.put(mat, percentage);
+                    totalPercentage = totalPercentage.add(percentage);
+                }
+                if (Math.abs(100.0 - totalPercentage.doubleValue()) > 0.1) {
+                    logger.warn(screenshotFilename + ": Sum of atmosphere components is " + totalPercentage + ": " + fixedWholeRemainingText);
+                } else {
+                    scannedBodyInfo.setAtmosphere(atmosphere);
+                    // >>>> BEGIN AUTO LEARNING >>>>
+                    if (fixedWholeRemainingText.length() == wholeRemainingText.length()) {
+                        String autoLearnText = fixedWholeRemainingText.replaceAll("\\s", "");
+                        for (int i = realStartIndexIncl; i < realEndEndexExcl; i++) {
+                            MatchGroup mg = bodyInfoWords.get(i);
+                            for (TemplateMatch m : mg.getGroupMatches()) {
+                                String shouldHaveBeen = autoLearnText.substring(0, m.getTemplate().getText().length());
+                                autoLearnText = autoLearnText.substring(m.getTemplate().getText().length());
+                                if (!m.getTemplate().getText().equals(shouldHaveBeen)) {
+                                    doAutoLearn(m, shouldHaveBeen, screenshotFilename);
+                                }
+                            }
+                        }
+                    }
+                    // <<<< END AUTO LEARNING <<<<
+                }
             }
         }
         if (indexComposition < lowercasedScannedWords.size()) {
@@ -1267,6 +1353,14 @@ public class ScannedBodyInfo {
 
     public void setAtmosphereType(BodyInfo atmosphereType) {
         this.atmosphereType = atmosphereType;
+    }
+
+    public LinkedHashMap<BodyInfo, BigDecimal> getAtmosphere() {
+        return this.atmosphere;
+    }
+
+    public void setAtmosphere(LinkedHashMap<BodyInfo, BigDecimal> atmosphere) {
+        this.atmosphere = atmosphere;
     }
 
     public LinkedHashMap<BodyInfo, BigDecimal> getComposition() {
