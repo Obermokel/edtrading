@@ -398,7 +398,7 @@ public class ScannedBodyInfo {
         if (indexEarthMasses < lowercasedScannedWords.size()) {
             try {
                 String value = valueForLabel(indexEarthMasses, "EARTHMASSES:", new EarthMassesFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
-                scannedBodyInfo.setEarthMasses(new BigDecimal(value));
+                scannedBodyInfo.setEarthMasses(new BigDecimal(value.replace(",", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
             }
@@ -1213,6 +1213,9 @@ public class ScannedBodyInfo {
                 if (lowercasedScannedWords.get(index + i) != null) {
                     combinedScannedWords += lowercasedScannedWords.get(index + i);
                 }
+            }
+            if (combinedWordsToSearch.contains(":") && !combinedScannedWords.contains(":")) {
+                continue; // Do not steal words! For example, searching for the LABEL "atmosphere:" would very likely match the VALUE "no atmosphere".
             }
             String digitsReplaced = combinedScannedWords.replace("0", "o").replace("5", "s").replace("8", "b"); // We do not expect digits, so replace look-alike chars (0 and O, 8 and B)
             if (StringUtils.getLevenshteinDistance(combinedWordsToSearch, digitsReplaced) <= maxLevenshteinDistance) {

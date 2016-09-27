@@ -40,7 +40,7 @@ public class RadiusFixer implements ValueFixer {
 
     @Override
     public boolean seemsPlausible(String fixedValue) {
-        return fixedValue.matches("(\\d,)?\\d{3}KM"); // Three digits followed by 'KM', or 4 digits with thousands separator, min 100KM, max 9,999KM
+        return fixedValue.matches("(\\d{1,3},)?\\d{3}KM"); // min 100KM, max 999,999KM
     }
 
 }
