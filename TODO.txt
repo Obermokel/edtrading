@@ -1,7 +1,7 @@
 TODO:
-* System reserve
+* System reserve (at the end)
 * Terraforming
-* Support for other body types like stars, belts etc
+* Support for other body types like stars, belts etc (WIP)
 * Body Image
 
 SUSPICIOUS:

@@ -21,6 +21,8 @@ public interface Constants {
      */
     File SURFACE_MATS_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Surface Materials");
 
+    String SURFACE_MATS_SUBDIR = "_TEST_";
+
     /**
      * Where this program stores its data
      */

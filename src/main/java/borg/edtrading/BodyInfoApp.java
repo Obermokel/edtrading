@@ -183,7 +183,7 @@ public class BodyInfoApp {
     }
 
     private static List<File> getScreenshotsFromAllDir() {
-        File allDir = new File(Constants.SURFACE_MATS_DIR, "_4k_");
+        File allDir = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR);
         File[] screenshotFiles = allDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {
