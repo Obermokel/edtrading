@@ -77,7 +77,7 @@ public class ScannedBodyInfo {
     private BodyInfo bodyType = null;
     private BodyInfo terraforming = null;
     private BigDecimal distanceLs = null;
-    // systemReserve
+    private BodyInfo systemReserves = null;
     private BigDecimal earthMasses = null;
     private BigDecimal radiusKm = null;
     private BigDecimal gravityG = null;
@@ -110,6 +110,9 @@ public class ScannedBodyInfo {
             sb.append(" // ").append(this.getTerraforming().getName());
         }
         sb.append(" // ").append(String.format(Locale.US, "%.2fLs", this.getDistanceLs())).append("\n");
+        if (this.getSystemReserves() != null) {
+            sb.append(this.getSystemReserves().getName()).append("\n");
+        }
         sb.append(String.format(Locale.US, "%-21s\t%.4f", "EARTH MASSES:", this.getEarthMasses())).append("\n");
         sb.append(String.format(Locale.US, "%-21s\t%.0fKM", "RADIUS:", this.getRadiusKm())).append("\n");
         sb.append(String.format(Locale.US, "%-21s\t%.2fG", "GRAVITY:", this.getGravityG())).append("\n");
@@ -216,7 +219,7 @@ public class ScannedBodyInfo {
             }
             String bodyTypeText = sb.toString().trim();
             bodyTypeText = bodyTypeText.replace("ocly", "ody"); // d broken into c and l
-            bodyType = BodyInfo.findBestMatching(bodyTypeText);
+            bodyType = BodyInfo.findBestMatching(bodyTypeText, "TYPE_");
             if (bodyType == null) {
                 logger.warn(screenshotFilename + ": Cannot parse '" + bodyTypeText + "' to body type");
             }
@@ -242,6 +245,14 @@ public class ScannedBodyInfo {
         // Search the start indexes of labels, also replacing the found words with NULL entries
         int indexEarthMasses = indexOfWords(lowercasedScannedWords, "earth", "masses:");
         if (indexEarthMasses < lowercasedScannedWords.size()) {
+            // The two word before earth masses can be system reserves
+            if (indexEarthMasses >= 2) {
+                String w1 = lowercasedScannedWords.get(indexEarthMasses - 2);
+                String w2 = lowercasedScannedWords.get(indexEarthMasses - 1);
+                if (w1 != null && w2 != null) {
+                    scannedBodyInfo.setSystemReserves(BodyInfo.findBestMatching(w1 + w2, "RESERVES_"));
+                }
+            }
             // Clear everything before earth masses because it is only bla bla about the body
             for (int i = 0; i < indexEarthMasses; i++) {
                 lowercasedScannedWords.set(i, null);
@@ -383,7 +394,7 @@ public class ScannedBodyInfo {
         if (indexVolcanism < lowercasedScannedWords.size()) {
             try {
                 String value = valueForLabel(indexVolcanism, "VOLCANISM:", new VolcanismFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
-                scannedBodyInfo.setVolcanism(BodyInfo.findBestMatching(value));
+                scannedBodyInfo.setVolcanism(BodyInfo.findBestMatching(value, "VOLCANISM_"));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
             }
@@ -391,7 +402,7 @@ public class ScannedBodyInfo {
         if (indexAtmosphereType < lowercasedScannedWords.size()) {
             try {
                 String value = valueForLabel(indexAtmosphereType, "ATMOSPHERETYPE:", new AtmosphereTypeFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
-                scannedBodyInfo.setAtmosphereType(BodyInfo.findBestMatching(value));
+                scannedBodyInfo.setAtmosphereType(BodyInfo.findBestMatching(value, "ATMOSPHERE_TYPE_"));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
             }
@@ -432,7 +443,7 @@ public class ScannedBodyInfo {
                 if (i % 2 == 1) {
                     // Should be a name
                     String fixedName = percentagesAndNames[i].replace("0", "o").replace("5", "s").replace("8", "b");
-                    BodyInfo mat = BodyInfo.findBestMatching(fixedName);
+                    BodyInfo mat = BodyInfo.findBestMatching(fixedName, "COMPOSITION_");
                     if (mat != null) {
                         fixedPercentagesAndNames.add(mat.getName());
                     } else {
@@ -469,7 +480,7 @@ public class ScannedBodyInfo {
                 BigDecimal totalPercentage = BigDecimal.ZERO;
                 for (int i = 0; i < fixedPercentagesAndNames.size(); i += 2) {
                     BigDecimal percentage = new BigDecimal(fixedPercentagesAndNames.get(i).replace("%", ""));
-                    BodyInfo mat = BodyInfo.findBestMatching(fixedPercentagesAndNames.get(i + 1));
+                    BodyInfo mat = BodyInfo.findBestMatching(fixedPercentagesAndNames.get(i + 1), "COMPOSITION_");
                     composition.put(mat, percentage);
                     totalPercentage = totalPercentage.add(percentage);
                 }
@@ -1111,6 +1122,14 @@ public class ScannedBodyInfo {
 
     public void setDistanceLs(BigDecimal distanceLs) {
         this.distanceLs = distanceLs;
+    }
+
+    public BodyInfo getSystemReserves() {
+        return this.systemReserves;
+    }
+
+    public void setSystemReserves(BodyInfo systemReserves) {
+        this.systemReserves = systemReserves;
     }
 
     public BigDecimal getEarthMasses() {

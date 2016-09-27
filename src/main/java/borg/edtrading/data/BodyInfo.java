@@ -32,6 +32,12 @@ public enum BodyInfo {
     COMPOSITION_METAL("METAL"),
     COMPOSITION_ROCK("ROCK"),
 
+    RESERVES_DEPLETED("Depleted Reserves"),
+    RESERVES_LOW("Low Reserves"),
+    RESERVES_COMMON("Common Reserves"),
+    RESERVES_MAJOR("Major Reserves"),
+    RESERVES_PRISTINE("Pristine Reserves"),
+
     VOLCANISM_NO_VOLCANISM("NO VOLCANISM"),
     VOLCANISM_AMMONIA_MAGMA("AMMONIA MAGMA"),
     VOLCANISM_CARBON_DIOXIDE_GEYSERS("CARBON DIOXIDE GEYSERS"),
@@ -52,17 +58,19 @@ public enum BodyInfo {
         this.name = name;
     }
 
-    public static BodyInfo findBestMatching(String name) {
+    public static BodyInfo findBestMatching(String name, String enumPrefix) {
         BodyInfo bestBodyInfo = null;
         float bestBodyInfoError = Float.MAX_VALUE;
         for (BodyInfo bodyInfo : BodyInfo.values()) {
-            float dist = StringUtils.getLevenshteinDistance(name.toLowerCase().replaceAll("\\s", ""), bodyInfo.getName().toLowerCase().replaceAll("\\s", ""));
-            float len = bodyInfo.getName().replaceAll("\\s", "").length();
-            float err = dist / len;
-            if (err <= 0.25f) {
-                if (err < bestBodyInfoError) {
-                    bestBodyInfo = bodyInfo;
-                    bestBodyInfoError = err;
+            if (bodyInfo.name().startsWith(enumPrefix)) {
+                float dist = StringUtils.getLevenshteinDistance(name.toLowerCase().replaceAll("\\s", ""), bodyInfo.getName().toLowerCase().replaceAll("\\s", ""));
+                float len = bodyInfo.getName().replaceAll("\\s", "").length();
+                float err = dist / len;
+                if (err <= 0.25f) {
+                    if (err < bestBodyInfoError) {
+                        bestBodyInfo = bodyInfo;
+                        bestBodyInfoError = err;
+                    }
                 }
             }
         }

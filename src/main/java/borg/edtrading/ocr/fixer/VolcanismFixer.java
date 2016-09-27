@@ -16,8 +16,8 @@ public class VolcanismFixer implements ValueFixer {
     @Override
     public String fixValue(String scannedText) {
         String fixedValue = scannedText.toUpperCase().replace("0", "O").replace("5", "S").replace("8", "B");
-        BodyInfo bodyInfo = BodyInfo.findBestMatching(fixedValue);
-        if (bodyInfo != null && bodyInfo.name().startsWith("VOLCANISM_")) {
+        BodyInfo bodyInfo = BodyInfo.findBestMatching(fixedValue, "VOLCANISM_");
+        if (bodyInfo != null) {
             fixedValue = bodyInfo.getName().toUpperCase();
         }
         return fixedValue.replaceAll("\\s", "");
@@ -25,9 +25,9 @@ public class VolcanismFixer implements ValueFixer {
 
     @Override
     public boolean seemsPlausible(String fixedValue) {
-        BodyInfo bodyInfo = BodyInfo.findBestMatching(fixedValue);
+        BodyInfo bodyInfo = BodyInfo.findBestMatching(fixedValue, "VOLCANISM_");
 
-        return bodyInfo != null && bodyInfo.name().startsWith("VOLCANISM_");
+        return bodyInfo != null;
     }
 
 }
