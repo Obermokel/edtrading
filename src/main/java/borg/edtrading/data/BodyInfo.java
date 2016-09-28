@@ -2,6 +2,9 @@ package borg.edtrading.data;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Body
  *
@@ -100,6 +103,16 @@ public enum BodyInfo {
 
     private BodyInfo(String name) {
         this.name = name;
+    }
+
+    public static List<BodyInfo> byPrefix(String enumPrefix) {
+        List<BodyInfo> result = new ArrayList<>();
+        for (BodyInfo bodyInfo : BodyInfo.values()) {
+            if (bodyInfo.name().startsWith(enumPrefix)) {
+                result.add(bodyInfo);
+            }
+        }
+        return result;
     }
 
     public static BodyInfo findBestMatching(String name, String enumPrefix) {

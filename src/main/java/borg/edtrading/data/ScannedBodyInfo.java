@@ -328,6 +328,19 @@ public class ScannedBodyInfo {
         int indexPlanetMaterials = indexOfWords(lowercasedScannedWords, "planet", "materials:");
         int indexStarCatalogueId = indexOfWords(lowercasedScannedWords, "star", "catalogue", "id:");
 
+        List<Integer> indexesReserves = new ArrayList<>(0);
+        for (BodyInfo reserves : BodyInfo.byPrefix("RESERVES_")) {
+            int indexReserves = lowercasedScannedWords.size();
+            while ((indexReserves = indexOfWords(lowercasedScannedWords, reserves.getName().split("\\s"))) < lowercasedScannedWords.size()) {
+                // These have no value (label only) and can occur multiple times
+                // Remember index
+                indexesReserves.add(indexReserves);
+                // Parse label and set in scannedBodyInfo
+                BodyInfo findBestMatching = BodyInfo.findBestMatching(bodyInfoWords.get(indexReserves).getText() + bodyInfoWords.get(indexReserves + 1).getText(), "RESERVES_");
+                scannedBodyInfo.setSystemReserves(findBestMatching);
+            }
+        }
+
         LinkedHashMap<String, Integer> indexByLabel = new LinkedHashMap<>();
         if (indexSolarMasses < lowercasedScannedWords.size()) {
             indexByLabel.put("solar masses:", indexSolarMasses);
@@ -397,6 +410,9 @@ public class ScannedBodyInfo {
         }
         if (indexStarCatalogueId < lowercasedScannedWords.size()) {
             indexByLabel.put("star catalogue id:", indexStarCatalogueId);
+        }
+        for (Integer index : indexesReserves) {
+            indexByLabel.put("reserves" + index, index);
         }
 
         List<Integer> sortedIndexes = new ArrayList<>(indexByLabel.values());
