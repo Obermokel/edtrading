@@ -102,7 +102,7 @@ public class BodyInfoApp {
                     if (doEddbUpdate) {
                         bodyUpdater.updateBody(scannedBodyInfo);
                     }
-                } catch (SystemNotFoundException e) {
+                } catch (SystemNotFoundException | IllegalArgumentException e) {
                     logger.error("Failed to update body info for " + screenshotFile.getName(), e);
                 }
             }

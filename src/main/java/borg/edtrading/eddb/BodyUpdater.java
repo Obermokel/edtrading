@@ -10,10 +10,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
+import org.openqa.selenium.InvalidElementStateException;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -76,7 +78,7 @@ public class BodyUpdater implements Closeable {
         }
     }
 
-    public void updateBody(ScannedBodyInfo scannedBodyInfo) throws InterruptedException, SystemNotFoundException, IOException {
+    public void updateBody(ScannedBodyInfo scannedBodyInfo) throws SystemNotFoundException, IOException {
         if (StringUtils.isEmpty(scannedBodyInfo.getSystemName())) {
             throw new IllegalArgumentException("scannedBodyInfo has no systemName");
         } else if (StringUtils.isEmpty(scannedBodyInfo.getBodyName())) {
@@ -87,17 +89,16 @@ public class BodyUpdater implements Closeable {
                 this.openOrCreateBodyPage(scannedBodyInfo);
                 this.enterBasicBodyInformation(scannedBodyInfo);
                 this.updatePlanetMaterials(scannedBodyInfo);
-                Thread.sleep(1000L);
                 this.submitBodyPage();
                 this.history.addScreenshotFinished(scannedBodyInfo.getSystemName(), scannedBodyInfo.getBodyName(), scannedBodyInfo.getScreenshotFilename());
-            } catch (NoSuchElementException e) {
+            } catch (TimeoutException | NoSuchElementException | InvalidElementStateException e) {
                 logger.error("Failed to process " + scannedBodyInfo.getScreenshotFilename(), e);
                 if (this.driver instanceof TakesScreenshot) {
                     try {
                         final String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
                         FileUtils.write(new File(Constants.TEMP_DIR, "ERROR_" + timestamp + "_" + scannedBodyInfo.getScreenshotFilename().replace(".png", ".html")), this.driver.getPageSource(), "UTF-8");
                         File screenshotFile = ((TakesScreenshot) this.driver).getScreenshotAs(OutputType.FILE);
-                        FileUtils.copyFileToDirectory(screenshotFile, new File(Constants.TEMP_DIR, "ERROR_" + timestamp + "_" + scannedBodyInfo.getScreenshotFilename()));
+                        FileUtils.copyFile(screenshotFile, new File(Constants.TEMP_DIR, "ERROR_" + timestamp + "_" + scannedBodyInfo.getScreenshotFilename()));
                     } catch (Exception se) {
                         logger.warn("Failed to take screenshot: " + se);
                     }
@@ -107,7 +108,7 @@ public class BodyUpdater implements Closeable {
         }
     }
 
-    private void enterBasicBodyInformation(ScannedBodyInfo scannedBodyInfo) throws InterruptedException, IOException {
+    private void enterBasicBodyInformation(ScannedBodyInfo scannedBodyInfo) throws IOException {
         final String systemName = scannedBodyInfo.getSystemName();
         final String bodyName = fixBodyName(systemName, scannedBodyInfo.getBodyName());
         final String filename = scannedBodyInfo.getScreenshotFilename();
@@ -447,40 +448,48 @@ public class BodyUpdater implements Closeable {
         systemSearchInput.sendKeys(Keys.ENTER);
 
         // Wait for the search result to display the current system and click on it
-        try {
-            Thread.sleep(1000L);
-            List<WebElement> systemLinks = this.driver.findElements(By.cssSelector("div.system-index table.table tbody a"));
-            List<String> foundSystems = new ArrayList<>(systemLinks.size());
-            for (WebElement systemLink : systemLinks) {
-                if (systemLink.getText().equalsIgnoreCase(systemName)) {
-                    logger.trace("Clicking on link to system '" + systemName + "': " + systemLink.getAttribute("href"));
-                    systemLink.click();
-                    return;
-                }
+        new WebDriverWait(this.driver, 30).until(ExpectedConditions.elementToBeClickable(By.cssSelector("div.system-index table.table tbody a")));
+        List<WebElement> allLinks = this.driver.findElements(By.cssSelector("div.system-index table.table tbody a"));
+        List<WebElement> systemLinks = new ArrayList<>(1);
+        for (WebElement link : allLinks) {
+            if (link.getText().equalsIgnoreCase(systemName)) {
+                systemLinks.add(link);
             }
-            String msg = "System '" + systemName + "' not found on ROSS. Found " + foundSystems.size() + " others: " + foundSystems;
+        }
+        if (systemLinks.isEmpty()) {
+            String msg = "System '" + systemName + "' not found on ROSS. Found " + allLinks.size() + " others: " + linksToStrings(allLinks);
             logger.warn(msg);
             throw new SystemNotFoundException(msg);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        } else if (systemLinks.size() > 1) {
+            throw new RuntimeException("Multiple links to system '" + systemName + "' found: " + linksToStrings(systemLinks));
+        } else {
+            String href = systemLinks.get(0).getAttribute("href");
+            String nameOnRoss = systemLinks.get(0).getText();
+            logger.trace("Clicking on link to system '" + systemName + "': " + href + " (" + nameOnRoss + ")");
+            systemLinks.get(0).click();
+            new WebDriverWait(this.driver, 30).until(ExpectedConditions.titleContains("Update System: " + nameOnRoss + " - ROSS"));
         }
     }
 
     private void openOrCreateBodyPage(ScannedBodyInfo scannedBodyInfo) throws IOException {
-        try {
-            String bodyName = fixBodyName(scannedBodyInfo.getSystemName(), scannedBodyInfo.getBodyName());
-            Thread.sleep(1000L);
-            List<WebElement> allLinks = this.driver.findElements(By.tagName("a"));
-            for (WebElement link : allLinks) {
-                if (link.getText().equalsIgnoreCase(bodyName)) {
-                    logger.trace("Clicking on link to body '" + bodyName + "': " + link.getAttribute("href"));
-                    link.click();
-                    return;
-                }
+        String bodyName = fixBodyName(scannedBodyInfo.getSystemName(), scannedBodyInfo.getBodyName());
+        List<WebElement> allLinks = this.driver.findElements(By.tagName("a"));
+        List<WebElement> bodyLinks = new ArrayList<>(1);
+        for (WebElement link : allLinks) {
+            if (link.getText().equalsIgnoreCase(bodyName)) {
+                bodyLinks.add(link);
             }
+        }
+        if (bodyLinks.isEmpty()) {
             this.createBody(scannedBodyInfo);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        } else if (bodyLinks.size() > 1) {
+            throw new RuntimeException("Multiple links to body '" + bodyName + "' found: " + linksToStrings(bodyLinks));
+        } else {
+            String href = bodyLinks.get(0).getAttribute("href");
+            String nameOnRoss = bodyLinks.get(0).getText();
+            logger.trace("Clicking on link to body '" + bodyName + "': " + href + " (" + nameOnRoss + ")");
+            bodyLinks.get(0).click();
+            new WebDriverWait(this.driver, 30).until(ExpectedConditions.titleContains("Update Body: " + nameOnRoss + " - ROSS"));
         }
     }
 
@@ -501,12 +510,16 @@ public class BodyUpdater implements Closeable {
         this.updateNumericField("bodyform-distance_to_spawn", systemName, bodyName, EddbHistory.FIELD_DISTANCE_FROM_ARRIVAL, distanceLsInteger, filename);
 
         logger.trace("Submitting 'Add new body to system " + systemName + "' form");
-        submitBodyPage();
+        this.submitBodyPage();
     }
 
     private void submitBodyPage() {
         logger.trace("Submitting body form");
         this.driver.findElement(By.id("bodyform-name")).submit();
+    }
+
+    public boolean isScreenshotFinished(String filename) throws IOException {
+        return this.history.isScreenshotFinished(filename);
     }
 
     private static String fixBodyName(String systemName, String bodyName) {
@@ -517,8 +530,14 @@ public class BodyUpdater implements Closeable {
         }
     }
 
-    public boolean isScreenshotFinished(String filename) throws IOException {
-        return this.history.isScreenshotFinished(filename);
+    private static List<String> linksToStrings(List<WebElement> links) {
+        List<String> result = new ArrayList<>(links.size());
+        for (WebElement link : links) {
+            String href = link.getAttribute("href");
+            String text = link.getText();
+            result.add("<a href=\"" + href + "\">" + text + "</a>");
+        }
+        return result;
     }
 
 }
