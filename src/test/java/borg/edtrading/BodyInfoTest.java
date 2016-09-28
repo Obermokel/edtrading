@@ -39,9 +39,9 @@ import javax.imageio.ImageIO;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class Mats2 {
+public class BodyInfoTest {
 
-    static final Logger logger = LogManager.getLogger(Mats2.class);
+    static final Logger logger = LogManager.getLogger(BodyInfoTest.class);
 
     public static void main(String[] args) throws IOException {
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
