@@ -35,7 +35,7 @@ import java.util.Random;
 import javax.imageio.ImageIO;
 
 /**
- * Mats2
+ * BodyInfoTest
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
@@ -128,7 +128,7 @@ public class BodyInfoTest {
     }
 
     private static void groupSimilarChars(BufferedImage sharpImage, BufferedImage blurredImage, String screenshotFilename) throws IOException {
-        List<Rectangle> bodyInfoCharacterLocations = CharacterFinder.findCharacterLocations(sharpImage, false);
+        List<Rectangle> bodyInfoCharacterLocations = CharacterFinder.findCharacterLocations(sharpImage, sharpImage, false);
         File templatesDir = new File(Constants.TEMPLATES_DIR, "Similar Unknown");
         templatesDir.mkdirs();
         List<Template> templates = TemplateMatcher.loadTemplates("Similar Unknown");
@@ -157,7 +157,7 @@ public class BodyInfoTest {
     }
 
     private static void writeDebugImages(String debugType, boolean writeCharFinderDebugImages, List<Template> templates, BufferedImage sharpImage, BufferedImage blurredImage, String screenshotFilename) throws IOException {
-        List<Rectangle> bodyInfoCharacterLocations = CharacterFinder.findCharacterLocations(sharpImage, writeCharFinderDebugImages);
+        List<Rectangle> bodyInfoCharacterLocations = CharacterFinder.findCharacterLocations(sharpImage, sharpImage, writeCharFinderDebugImages);
         File unknownDir = new File(Constants.TEMP_DIR, "Unknown " + debugType);
         unknownDir.mkdirs();
         BufferedImage ocrImage = new BufferedImage(blurredImage.getWidth(), blurredImage.getHeight(), BufferedImage.TYPE_INT_RGB);

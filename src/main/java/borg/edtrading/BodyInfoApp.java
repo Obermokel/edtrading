@@ -161,7 +161,7 @@ public class BodyInfoApp {
     }
 
     static List<MatchGroup> scanWords(BufferedImage croppedfourK, List<Template> templates, String screenshotFilename) throws IOException {
-        List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(croppedfourK, false);
+        List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(croppedfourK, croppedfourK, false);
         BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(croppedfourK, 2);
 
         List<TemplateMatch> matches = new ArrayList<>(characterLocations.size());

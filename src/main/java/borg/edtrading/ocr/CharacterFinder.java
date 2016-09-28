@@ -39,7 +39,7 @@ public abstract class CharacterFinder {
 
     static final Logger logger = LogManager.getLogger(CharacterFinder.class);
 
-    public static List<Rectangle> findCharacterLocations(BufferedImage cannySuitableImage, boolean writeDebugImages) throws IOException {
+    public static List<Rectangle> findCharacterLocations(BufferedImage cannySuitableImage, BufferedImage thresholdedWhiteCharsOnBlackBackgroundImage, boolean writeDebugImages) throws IOException {
         GrayF32 grayImage = ConvertBufferedImage.convertFromSingle(cannySuitableImage, null, GrayF32.class);
 
         // Find areas which could be characters (boxes of size 3x4 to 128x128).
@@ -75,7 +75,8 @@ public abstract class CharacterFinder {
         // Finally go back to the candidates and see which ones are inside the text line boxes. Expand those which are
         // inside text line boxes to the full height of the text line.
         //List<Rectangle> characterLocations = createCharacterBoxesWithinTextLines(characterCandidateBoxes, textLineBoxes);
-        List<Rectangle> characterLocations = extractCharBoxesFromTextLines(grayImage, textLineBoxes);
+        GrayF32 thresholdedImage = ConvertBufferedImage.convertFromSingle(thresholdedWhiteCharsOnBlackBackgroundImage, null, GrayF32.class);
+        List<Rectangle> characterLocations = extractCharBoxesFromTextLines(thresholdedImage, textLineBoxes);
         if (writeDebugImages) {
             ImageIO.write(markBoxes(cannySuitableImage, characterLocations, Color.GREEN, 1), "PNG", new File(Constants.TEMP_DIR, "CharacterFinder 03 Chars.png"));
         }
