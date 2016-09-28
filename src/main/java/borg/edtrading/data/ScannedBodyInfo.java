@@ -94,7 +94,7 @@ public class ScannedBodyInfo {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("==== ").append(this.getScreenshotFilename()).append(" ====").append("\n");
-        sb.append(this.getSystemName()).append(" // ").append(this.getBodyName()).append("\n");
+        sb.append(this.getSystemName()).append(" // ").append(this.getBodyName()).append(" (").append(this.getBodyGroup() == null ? null : this.getBodyGroup().getName()).append(")").append("\n");
         if (this.getBodyType() != null) {
             sb.append(this.getBodyType().getName());
         } else {
@@ -477,7 +477,7 @@ public class ScannedBodyInfo {
         if (indexSurfacePressure < lowercasedScannedWords.size()) {
             try {
                 String value = valueForLabel(indexSurfacePressure, "SURFACEPRESSURE:", new SurfacePressureFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
-                scannedBodyInfo.setSurfacePressureAtmospheres(new BigDecimal(value.replace("ATMOSPHERES", "")));
+                scannedBodyInfo.setSurfacePressureAtmospheres(new BigDecimal(value.replace(",", "").replace("ATMOSPHERES", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
             }
@@ -565,7 +565,7 @@ public class ScannedBodyInfo {
                     fixedWholeRemainingText += fixedPercentagesAndNames.get(i);
                 }
                 // The fixed text can later be used for auto-learning.
-                // First though parse all mats and do a plausi check. The sum of percentages should be 100% +/- 0.1%.
+                // First though parse all mats and do a plausi check. The sum of percentages should be 100% +/- 0.4% (ROSS 847 A 5 has 99.6%).
                 // If not we might haved missed something completely. This can happen if the text is too close to the border.
                 LinkedHashMap<BodyInfo, BigDecimal> atmosphere = new LinkedHashMap<>();
                 BigDecimal totalPercentage = BigDecimal.ZERO;
@@ -575,7 +575,7 @@ public class ScannedBodyInfo {
                     atmosphere.put(mat, percentage);
                     totalPercentage = totalPercentage.add(percentage);
                 }
-                if (Math.abs(100.0 - totalPercentage.doubleValue()) > 0.1) {
+                if (Math.abs(100.0 - totalPercentage.doubleValue()) > 0.4001) {
                     logger.warn(screenshotFilename + ": Sum of atmosphere components is " + totalPercentage + ": " + fixedWholeRemainingText);
                 } else {
                     scannedBodyInfo.setAtmosphere(atmosphere);
