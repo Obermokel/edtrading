@@ -6,8 +6,8 @@
         <Console name="STDOUT" target="SYSTEM_OUT">
             <PatternLayout pattern="[%d] %-5p [%F:%L] :: %m%n" />
         </Console>
-        <File name="EDDB_UPDATES" fileName="${sys:user.home}/BodyUpdater.log">
-            <PatternLayout pattern="[%d] %-5p :: %m%n" />
+        <File name="LOGFILE" fileName="${sys:user.home}/edtrading.log">
+            <PatternLayout pattern="[%d] %-5p [%F:%L] :: %m%n" />
         </File>
     </Appenders>
 
@@ -15,13 +15,11 @@
         <logger name="borg" level="TRACE"></logger>
         <logger name="borg.edtrading.boofcv.TemplateMatcher" level="DEBUG"></logger>
         <logger name="borg.edtrading.data.ScannedBodyInfo" level="INFO"></logger>
-        
-        <logger name="borg.edtrading.eddb.BodyUpdater" level="TRACE">
-            <AppenderRef ref="EDDB_UPDATES" />
-        </logger>
+        <logger name="borg.edtrading.eddb.BodyUpdater" level="DEBUG"></logger>
 
         <Root level="ERROR">
             <AppenderRef ref="STDOUT" />
+            <AppenderRef ref="LOGFILE" />
         </Root>
     </Loggers>
 

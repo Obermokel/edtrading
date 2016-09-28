@@ -1155,7 +1155,7 @@ public class ScannedBodyInfo {
                 learnText(scannedBodyType.getName().replaceAll("\\s", ""), bodyNameWords.subList(indexArrivalPoint + 3, bodyNameWords.size()), screenshotFilename);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Auto-learning failed for " + screenshotFilename, e);
         }
     }
 
@@ -1187,7 +1187,7 @@ public class ScannedBodyInfo {
             autoLearnFolder.mkdirs();
             try {
                 ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, autoLearnFolder.getName() + "#" + m.getMatch().x + "#" + m.getMatch().y + "#" + screenshotFilename));
-                logger.info("Learned new '" + shouldHaveBeen + "'");
+                logger.trace("Learned new '" + shouldHaveBeen + "' from " + screenshotFilename);
             } catch (IOException e) {
                 e.printStackTrace();
             }
