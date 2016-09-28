@@ -18,6 +18,7 @@ import borg.edtrading.ocr.fixer.RotationalPeriodFixer;
 import borg.edtrading.ocr.fixer.SemiMajorAxisFixer;
 import borg.edtrading.ocr.fixer.SolarMassesFixer;
 import borg.edtrading.ocr.fixer.SolarRadiusFixer;
+import borg.edtrading.ocr.fixer.SurfacePressureFixer;
 import borg.edtrading.ocr.fixer.SurfaceTempFixer;
 import borg.edtrading.ocr.fixer.TidallyLockedFixer;
 import borg.edtrading.ocr.fixer.ValueFixer;
@@ -70,6 +71,7 @@ public class ScannedBodyInfo {
     private BigDecimal radiusKm = null;
     private BigDecimal gravityG = null;
     private BigDecimal surfaceTempK = null;
+    private BigDecimal surfacePressureAtmospheres = null;
     private BodyInfo volcanism = null;
     private BodyInfo atmosphereType = null;
     private LinkedHashMap<BodyInfo, BigDecimal> atmosphere = null;
@@ -119,17 +121,20 @@ public class ScannedBodyInfo {
         }
         sb.append(String.format(Locale.US, "%-21s\t%.2fG", "GRAVITY:", this.getGravityG())).append("\n");
         sb.append(String.format(Locale.US, "%-21s\t%.0fK", "SURFACE TEMP:", this.getSurfaceTempK())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%.2f", "SURFACE PRESSURE:", this.getSurfacePressureAtmospheres())).append("\n");
         sb.append(String.format(Locale.US, "%-21s\t%s", "VOLCANISM:", this.getVolcanism() == null ? null : this.getVolcanism().getName())).append("\n");
         sb.append(String.format(Locale.US, "%-21s\t%s", "ATMOSPHERE TYPE:", this.getAtmosphereType() == null ? null : this.getAtmosphereType().getName())).append("\n");
-        sb.append(String.format(Locale.US, "%-21s\t", "ATMOSPHERE:"));
-        if (this.getAtmosphere() == null) {
-            sb.append("null").append("\n");
-        } else {
-            Iterator<BodyInfo> it = this.getAtmosphere().keySet().iterator();
-            while (it.hasNext()) {
-                BodyInfo material = it.next();
-                BigDecimal percent = this.getAtmosphere().get(material);
-                sb.append(String.format(Locale.US, "%.1f%% %s", percent, material.getName())).append(it.hasNext() ? ", " : "\n");
+        if (this.getAtmosphere() != null || this.getAtmosphereType() != BodyInfo.ATMOSPHERE_TYPE_NO_ATMOSPHERE) {
+            sb.append(String.format(Locale.US, "%-21s\t", "ATMOSPHERE:"));
+            if (this.getAtmosphere() == null) {
+                sb.append("null").append("\n");
+            } else {
+                Iterator<BodyInfo> it = this.getAtmosphere().keySet().iterator();
+                while (it.hasNext()) {
+                    BodyInfo material = it.next();
+                    BigDecimal percent = this.getAtmosphere().get(material);
+                    sb.append(String.format(Locale.US, "%.1f%% %s", percent, material.getName())).append(it.hasNext() ? ", " : "\n");
+                }
             }
         }
         sb.append(String.format(Locale.US, "%-21s\t", "COMPOSITION:"));
@@ -307,6 +312,7 @@ public class ScannedBodyInfo {
         int indexRadius = indexOfWords(lowercasedScannedWords, "radius:");
         int indexGravity = indexOfWords(lowercasedScannedWords, "gravity:");
         int indexSurfaceTemp = indexOfWords(lowercasedScannedWords, "surface", "temp:");
+        int indexSurfacePressure = indexOfWords(lowercasedScannedWords, "surface", "pressure:");
         int indexVolcanism = indexOfWords(lowercasedScannedWords, "volcanism:");
         int indexAtmosphereType = indexOfWords(lowercasedScannedWords, "atmosphere", "type:");
         int indexAtmosphere = indexOfWords(lowercasedScannedWords, "atmosphere:");
@@ -346,6 +352,9 @@ public class ScannedBodyInfo {
         }
         if (indexSurfaceTemp < lowercasedScannedWords.size()) {
             indexByLabel.put("surface temp:", indexSurfaceTemp);
+        }
+        if (indexSurfacePressure < lowercasedScannedWords.size()) {
+            indexByLabel.put("surface pressure:", indexSurfacePressure);
         }
         if (indexVolcanism < lowercasedScannedWords.size()) {
             indexByLabel.put("volcanism:", indexVolcanism);
@@ -445,6 +454,14 @@ public class ScannedBodyInfo {
             try {
                 String value = valueForLabel(indexSurfaceTemp, "SURFACETEMP:", new SurfaceTempFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
                 scannedBodyInfo.setSurfaceTempK(new BigDecimal(value.replace(",", "").replace("K", "")));
+            } catch (NumberFormatException e) {
+                logger.warn(screenshotFilename + ": " + e.getMessage());
+            }
+        }
+        if (indexSurfacePressure < lowercasedScannedWords.size()) {
+            try {
+                String value = valueForLabel(indexSurfacePressure, "SURFACEPRESSURE:", new SurfacePressureFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
+                scannedBodyInfo.setSurfacePressureAtmospheres(new BigDecimal(value.replace("ATMOSPHERES", "")));
             } catch (NumberFormatException e) {
                 logger.warn(screenshotFilename + ": " + e.getMessage());
             }
@@ -1348,6 +1365,14 @@ public class ScannedBodyInfo {
 
     public void setSurfaceTempK(BigDecimal surfaceTempK) {
         this.surfaceTempK = surfaceTempK;
+    }
+
+    public BigDecimal getSurfacePressureAtmospheres() {
+        return this.surfacePressureAtmospheres;
+    }
+
+    public void setSurfacePressureAtmospheres(BigDecimal surfacePressureAtmospheres) {
+        this.surfacePressureAtmospheres = surfacePressureAtmospheres;
     }
 
     public BodyInfo getVolcanism() {

@@ -39,6 +39,7 @@ public class Body {
     private Double radius = null; // KM
     private Double gravity = null; // G
     private Long surface_temperature = null; // K
+    private Double surface_pressure = null; // Atmospheres
     private List<SolidComposition> solid_composition = null;
     private Double orbital_period = null; // D
     private Double semi_major_axis = null; // AU
@@ -193,6 +194,14 @@ public class Body {
 
     public void setSurface_temperature(Long surface_temperature) {
         this.surface_temperature = surface_temperature;
+    }
+
+    public Double getSurface_pressure() {
+        return this.surface_pressure;
+    }
+
+    public void setSurface_pressure(Double surface_pressure) {
+        this.surface_pressure = surface_pressure;
     }
 
     public List<SolidComposition> getSolid_composition() {

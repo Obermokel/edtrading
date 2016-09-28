@@ -124,10 +124,38 @@ public class TemplateMatcher {
                 }
             }
             if (bestMatch == null) {
-                Constants.UNKNOWN_DIR.mkdirs();
-                ImageIO.write(image, "PNG", new File(Constants.UNKNOWN_DIR, "UNKNOWN#" + xWithinImage + "#" + yWithinImage + "#" + screenshotFilename));
+                final double maxErrorPerPixelGuess = 1.25 * maxErrorPerPixel;
+                double bestErrorPerPixelGuess = maxErrorPerPixelGuess;
+                TemplateMatch bestGuess = null;
+                for (Template template : templates) {
+                    float templateAR = (float) template.getCroppedImage().width / (float) template.getCroppedImage().height;
+                    if (templateAR <= 1.5 * imageAR && templateAR >= imageAR / 1.5) {
+                        GrayF32 scaledTemplate = new GrayF32(croppedGrayImage.width, croppedGrayImage.height);
+                        new FDistort().input(template.getCroppedImage()).output(scaledTemplate).interp(TypeInterpolate.BICUBIC).scale().apply();
+                        double error = 0.0;
+                        for (int y = 0; y < croppedGrayImage.height; y++) {
+                            for (int x = 0; x < croppedGrayImage.width; x++) {
+                                float diff = croppedGrayImage.unsafe_get(x, y) - scaledTemplate.unsafe_get(x, y);
+                                error += (diff * diff);
+                            }
+                        }
+                        double errorPerPixel = error / pixels;
+                        if (errorPerPixel < bestErrorPerPixelGuess) {
+                            bestErrorPerPixelGuess = errorPerPixel;
+                            bestGuess = new TemplateMatch(template, new Match(xWithinImage, yWithinImage, -1 * errorPerPixel), image);
+                        }
+                    }
+                }
+                if (bestGuess == null) {
+                    Constants.UNKNOWN_DIR.mkdirs();
+                    ImageIO.write(image, "PNG", new File(Constants.UNKNOWN_DIR, "UNKNOWN#" + xWithinImage + "#" + yWithinImage + "#" + screenshotFilename));
+                } else {
+                    File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(bestGuess.getTemplate().getText()));
+                    autoLearnFolder.mkdirs();
+                    ImageIO.write(image, "PNG", new File(autoLearnFolder, "GUESSED#" + xWithinImage + "#" + yWithinImage + "#" + screenshotFilename));
+                    logger.trace("Guessed new '" + bestGuess.getTemplate().getText() + "' from " + screenshotFilename);
+                }
             }
-            //logger.debug(bestErrorPerPixel);
             return bestMatch;
         } catch (Exception e) {
             logger.error("Failed to find best match in BufferedImage", e);
