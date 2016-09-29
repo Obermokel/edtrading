@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.math.BigDecimal;
+import java.util.Locale;
 
 /**
  * ScannedRingInfo
@@ -20,6 +21,16 @@ public class ScannedRingInfo {
     private BigDecimal semiMajorAxisAU = null;
     private BigDecimal innerRadiusKm = null;
     private BigDecimal outerRadiusKm = null;
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.getRingName()).append(" // ");
+        sb.append(this.getRingType() == null ? null : this.getRingType().getName()).append(" // ");
+        sb.append(String.format(Locale.US, "%.1fMT", this.getMassMt())).append(" // ");
+        sb.append(String.format(Locale.US, "%.0fKM to %.0fKM", this.getInnerRadiusKm(), this.getOuterRadiusKm()));
+        return sb.toString();
+    }
 
     public String getRingName() {
         return this.ringName;

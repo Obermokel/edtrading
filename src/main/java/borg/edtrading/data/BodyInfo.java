@@ -44,6 +44,11 @@ public enum BodyInfo {
     COMPOSITION_METAL("METAL"),
     COMPOSITION_ROCK("ROCK"),
 
+    RING_TYPE_METALLIC("METALLIC"),
+    RING_TYPE_METAL_RICH("METAL RICH"),
+    RING_TYPE_ROCKY("ROCKY"),
+    RING_TYPE_ICY("ICY"),
+
     RESERVES_DEPLETED("Depleted reserves"),
     RESERVES_LOW("Low reserves"),
     RESERVES_COMMON("Common reserves"),

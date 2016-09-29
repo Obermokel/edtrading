@@ -14,6 +14,9 @@ import borg.edtrading.ocr.fixer.OrbitalEccentricityFixer;
 import borg.edtrading.ocr.fixer.OrbitalInclinationFixer;
 import borg.edtrading.ocr.fixer.OrbitalPeriodFixer;
 import borg.edtrading.ocr.fixer.RadiusFixer;
+import borg.edtrading.ocr.fixer.RingMassFixer;
+import borg.edtrading.ocr.fixer.RingRadiusFixer;
+import borg.edtrading.ocr.fixer.RingTypeFixer;
 import borg.edtrading.ocr.fixer.RotationalPeriodFixer;
 import borg.edtrading.ocr.fixer.SemiMajorAxisFixer;
 import borg.edtrading.ocr.fixer.SolarMassesFixer;
@@ -920,6 +923,73 @@ public class ScannedBodyInfo {
                         // <<<< END AUTO LEARNING <<<<
                     }
                 }
+            }
+        }
+
+        for (String indexLabel : indexByLabel.keySet()) {
+            if (indexLabel.startsWith("ring type ")) {
+                ScannedRingInfo scannedRingInfo = new ScannedRingInfo();
+
+                indexRingType = indexByLabel.get(indexLabel);
+                if (indexRingType < lowercasedScannedWords.size()) {
+                    try {
+                        String value = valueForLabel(indexRingType, "RINGTYPE:", new RingTypeFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
+                        scannedRingInfo.setRingType(BodyInfo.findBestMatching(value, "RING_TYPE_"));
+                    } catch (NumberFormatException e) {
+                        logger.warn(screenshotFilename + ": " + e.getMessage());
+                    }
+
+                    Integer indexRingName = indexByLabel.get(indexLabel.replace("ring type ", "ring name "));
+                    if (indexRingName != null && indexRingName < lowercasedScannedWords.size()) {
+                        StringBuilder name = new StringBuilder();
+                        for (int i = indexRingName; i < indexRingType; i++) {
+                            name.append(bodyInfoWords.get(i).getText()).append(" ");
+                        }
+                        scannedRingInfo.setRingName(name.toString().trim());
+                    }
+                }
+
+                Integer indexRingMass = indexByLabel.get(indexLabel.replace("ring type ", "ring mass "));
+                if (indexRingMass != null && indexRingMass < lowercasedScannedWords.size()) {
+                    try {
+                        String value = valueForLabel(indexRingMass, "MASS:", new RingMassFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
+                        scannedRingInfo.setMassMt(new BigDecimal(value.replace(",", "").replace("MT", "")));
+                    } catch (NumberFormatException e) {
+                        logger.warn(screenshotFilename + ": " + e.getMessage());
+                    }
+                }
+
+                Integer indexRingSemiMajorAxis = indexByLabel.get(indexLabel.replace("ring type ", "ring semi major axis "));
+                if (indexRingSemiMajorAxis != null && indexRingSemiMajorAxis < lowercasedScannedWords.size()) {
+                    try {
+                        String value = valueForLabel(indexRingSemiMajorAxis, "SEMIMAJORAXIS:", new SemiMajorAxisFixer(eddbBody), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
+                        scannedRingInfo.setSemiMajorAxisAU(new BigDecimal(value.replace(",", "").replace("AU", "")));
+                    } catch (NumberFormatException e) {
+                        logger.warn(screenshotFilename + ": " + e.getMessage());
+                    }
+                }
+
+                Integer indexRingInnerRadius = indexByLabel.get(indexLabel.replace("ring type ", "ring inner radius "));
+                if (indexRingInnerRadius != null && indexRingInnerRadius < lowercasedScannedWords.size()) {
+                    try {
+                        String value = valueForLabel(indexRingInnerRadius, "INNERRADIUS:", new RingRadiusFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
+                        scannedRingInfo.setInnerRadiusKm(new BigDecimal(value.replace(",", "").replace("KM", "")));
+                    } catch (NumberFormatException e) {
+                        logger.warn(screenshotFilename + ": " + e.getMessage());
+                    }
+                }
+
+                Integer indexRingOuterRadius = indexByLabel.get(indexLabel.replace("ring type ", "ring outer radius "));
+                if (indexRingOuterRadius != null && indexRingOuterRadius < lowercasedScannedWords.size()) {
+                    try {
+                        String value = valueForLabel(indexRingOuterRadius, "OUTERRADIUS:", new RingRadiusFixer(), bodyInfoWords, lowercasedScannedWords, sortedIndexes, screenshotFilename);
+                        scannedRingInfo.setOuterRadiusKm(new BigDecimal(value.replace(",", "").replace("KM", "")));
+                    } catch (NumberFormatException e) {
+                        logger.warn(screenshotFilename + ": " + e.getMessage());
+                    }
+                }
+
+                System.out.println(scannedRingInfo);
             }
         }
 
