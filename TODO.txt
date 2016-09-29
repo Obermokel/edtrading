@@ -1,10 +1,9 @@
 TODO:
+* Remove auto-learning from expected text. Learn only from similar chars.
 * Terraforming
 * Support for other body types like stars, belts etc (WIP)
 * Body Image
 * Star catalogue IDs
-* Designation muss nicht immer alternierend sein. Siehe Khun Mond vom Mond.
-* Camel Case names
 * Atmosphere component with more than one word
 
 SUSPICIOUS:
@@ -22,3 +21,5 @@ DONE:
 * Remember successfully processed screenshots
 * Selenium Timeout
 * System reserve (at the end)
+* Designation muss nicht immer alternierend sein. Siehe Khun Mond vom Mond.
+* Camel Case names

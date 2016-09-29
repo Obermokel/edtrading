@@ -27,8 +27,10 @@ import borg.edtrading.ocr.fixer.TidallyLockedFixer;
 import borg.edtrading.ocr.fixer.ValueFixer;
 import borg.edtrading.ocr.fixer.VolcanismFixer;
 import borg.edtrading.util.MatchSorter.MatchGroup;
+import borg.edtrading.util.MiscUtil;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,6 +47,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 
@@ -951,7 +955,9 @@ public class ScannedBodyInfo {
                         for (int i = indexRingName; i < indexRingType; i++) {
                             name.append(bodyInfoWords.get(i).getText()).append(" ");
                         }
-                        scannedRingInfo.setRingName(name.toString().trim()); // TODO Fix ring name
+                        String scannedRingName = name.toString().trim();
+                        String fixedRingName = fixGeneratedBodyName(systemName, scannedRingName);
+                        scannedRingInfo.setRingName(fixedRingName);
                     }
                 }
 
@@ -1020,129 +1026,71 @@ public class ScannedBodyInfo {
     }
 
     private static String fixGeneratedBodyName(final String systemName, final String scannedBodyName) {
-        if (StringUtils.isNotBlank(systemName) && StringUtils.isNotBlank(scannedBodyName)) {
-            String bodyNameWithoutDesignation = scannedBodyName.trim();
-            while (bodyNameWithoutDesignation.matches("^.+ [0-9OS]{1,2}$") || bodyNameWithoutDesignation.matches("^.+ [A-J]{1,4}$")) {
-                bodyNameWithoutDesignation = bodyNameWithoutDesignation.substring(0, bodyNameWithoutDesignation.lastIndexOf(" ")).trim();
-            }
-            float dist = StringUtils.getLevenshteinDistance(systemName.toLowerCase(), bodyNameWithoutDesignation.replace("l", "I").toLowerCase());
-            float err = dist / systemName.length();
-            if (err > 0.25f) {
-                // Try replacing 0 with O
-                dist = StringUtils.getLevenshteinDistance(systemName.toLowerCase(), bodyNameWithoutDesignation.replace("l", "I").replace("0", "O").toLowerCase());
-                err = dist / systemName.length();
-            }
-            if (err <= 0.25f) {
-                String designationWithoutBodyName = scannedBodyName.replace(bodyNameWithoutDesignation, "").trim();
-                String fixedDesignation = fixDesignation(designationWithoutBodyName);
-                String fixedName = (systemName + " " + fixedDesignation).trim().toUpperCase();
-                if (!fixedName.equals(scannedBodyName)) {
-                    logger.info("Fixed '" + scannedBodyName + "' to '" + fixedName + "'");
-                }
-                return fixedName;
-            }
-        }
-        return scannedBodyName;
-    }
+        if (StringUtils.isBlank(systemName) || StringUtils.isBlank(scannedBodyName)) {
+            return scannedBodyName;
+        } else {
+            String fixedBodyName = scannedBodyName;
 
-    private static String fixDesignation(String scannedDesignation) {
-        if (StringUtils.isNotBlank(scannedDesignation)) {
-            String[] parts = scannedDesignation.split("\\s");
-            int votesForEvenIndexMustBeDigits = 0;
-            int votesForEvenIndexMustBeLetters = 0;
-            for (int i = 0; i < parts.length; i++) {
-                if (parts[i].replace("O", "0").replace("S", "5").matches("\\d+")) {
-                    // Digits only (assuming O and S cannot occur)
-                    if (i % 2 == 0) {
-                        votesForEvenIndexMustBeDigits++;
-                    } else {
-                        votesForEvenIndexMustBeLetters++;
-                    }
-                } else if (parts[i].matches("[A-J]+")) {
-                    // Letters only
-                    if (i % 2 == 0) {
-                        votesForEvenIndexMustBeLetters++;
-                    } else {
-                        votesForEvenIndexMustBeDigits++;
-                    }
+            // Try to fix the first part which often is the system name
+            // Example: ETA COR0NAE BOREALIS A 1 -> Eta Coronae Borealis A 1
+            String partOfScannedBodyNameToReplaceWithSystemName = null;
+            float bestMatchSoFar = 1.0f;
+            int index = 0;
+            while (scannedBodyName.indexOf(" ", index + 1) >= 0) {
+                index = scannedBodyName.indexOf(" ", index + 1);
+                String partOfScannedBodyName = scannedBodyName.substring(0, index);
+                float err = MiscUtil.levenshteinError(systemName, partOfScannedBodyName);
+                if (err <= 0.25f && err < bestMatchSoFar) {
+                    partOfScannedBodyNameToReplaceWithSystemName = partOfScannedBodyName;
+                    bestMatchSoFar = err;
                 }
             }
-            boolean evenIndexMustBeDigits = votesForEvenIndexMustBeDigits > votesForEvenIndexMustBeLetters;
-            String fixedDesignation = "";
-            for (int i = 0; i < parts.length; i++) {
-                if (evenIndexMustBeDigits) {
-                    if (i % 2 == 0) {
-                        // Even indexes must be digits, and we have an even index => convert to digits
-                        // O,D,C to 0, S to 5, B to 8
-                        fixedDesignation += (" " + parts[i].replace("O", "0").replace("D", "0").replace("C", "0").replace("S", "5").replace("B", "8"));
-                    } else {
-                        // Even indexes must be digits, but we have an odd index => convert to letters
-                        // 0 to D because it is likelier than C and O is too far in the alphabet. 8 to B obviously.
-                        fixedDesignation += (" " + parts[i].replace("0", "D").replace("8", "B"));
-                    }
-                } else {
-                    if (i % 2 == 0) {
-                        // Even indexes must not be digits, but we have an even index => convert to letters
-                        // 0 to D because it is likelier than C and O is too far in the alphabet. 8 to B obviously.
-                        fixedDesignation += (" " + parts[i].replace("0", "D").replace("8", "B"));
-                    } else {
-                        // Even indexes must not be digits, but we have an odd index => convert to digits
-                        // O,D,C to 0, S to 5, B to 8
-                        fixedDesignation += (" " + parts[i].replace("O", "0").replace("D", "0").replace("C", "0").replace("S", "5").replace("B", "8"));
-                    }
-                }
+            if (partOfScannedBodyNameToReplaceWithSystemName != null) {
+                fixedBodyName = scannedBodyName.replace(partOfScannedBodyNameToReplaceWithSystemName, systemName);
+                logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName + "'");
             }
-            fixedDesignation = fixedDesignation.trim();
-            // Now we should have blocks of plain digits and plain letters, no mixed ones
-            boolean hasMixed = false;
-            for (String s : fixedDesignation.split("\\s")) {
-                if (!s.matches("[0-9]+") && !s.matches("[A-J]+")) {
-                    logger.warn("Failed to fix '" + scannedDesignation + "' to '" + fixedDesignation + "' - trying the other way round");
-                    evenIndexMustBeDigits = !evenIndexMustBeDigits; // Try the other way round
-                    hasMixed = true;
-                    break;
-                }
-            }
-            if (hasMixed) {
-                fixedDesignation = "";
-                for (int i = 0; i < parts.length; i++) {
-                    if (evenIndexMustBeDigits) {
-                        if (i % 2 == 0) {
-                            // Even indexes must be digits, and we have an even index => convert to digits
-                            // O,D,C to 0, S to 5, B to 8
-                            fixedDesignation += (" " + parts[i].replace("O", "0").replace("D", "0").replace("C", "0").replace("S", "5").replace("B", "8"));
+
+            // If the name does not start with the system convert to camel case, replacing 0 with O
+            // Example: L0WING'S ROCK -> Lowing's Rock
+            if (partOfScannedBodyNameToReplaceWithSystemName == null) {
+                fixedBodyName = WordUtils.capitalizeFully(scannedBodyName.replace("0", "O"));
+                logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName + "'");
+            } else {
+                // Because the body name is generated we might have a designation. Try to improve it.
+                // Example: Eta Coronae Borealis A1 A Rlng -> Eta Coronae Borealis A 1 A Ring
+                String scannedDesignation = scannedBodyName.replace(partOfScannedBodyNameToReplaceWithSystemName, "").trim();
+                if (StringUtils.isNotEmpty(scannedDesignation)) {
+                    String fixedDesignation = "";
+                    for (String part : scannedDesignation.toUpperCase().split("\\s")) {
+                        String fixedPart = " ";
+                        Matcher mA1A = Pattern.compile("([A-Z]+)([0-9]+)([A-Z]+)").matcher(part);
+                        Matcher m1A1 = Pattern.compile("([0-9]+)([A-Z]+)([0-9]+)").matcher(part);
+                        Matcher mA1 = Pattern.compile("([A-Z]+)([0-9]+)").matcher(part);
+                        Matcher m1A = Pattern.compile("([0-9]+)([A-Z]+)").matcher(part);
+                        if (MiscUtil.levenshteinError("RING", part) <= 0.25f) {
+                            fixedPart += "Ring";
+                        } else if (MiscUtil.levenshteinError("BELT", part) <= 0.25f) {
+                            fixedPart += "Belt";
+                        } else if (mA1A.matches()) {
+                            fixedPart += (mA1A.group(1) + " " + mA1A.group(2) + " " + mA1A.group(3));
+                        } else if (m1A1.matches()) {
+                            fixedPart += (m1A1.group(1) + " " + m1A1.group(2) + " " + m1A1.group(3));
+                        } else if (mA1.matches()) {
+                            fixedPart += (mA1.group(1) + " " + mA1.group(2));
+                        } else if (m1A.matches()) {
+                            fixedPart += (m1A.group(1) + " " + m1A.group(2));
                         } else {
-                            // Even indexes must be digits, but we have an odd index => convert to letters
-                            // 0 to D because it is likelier than C and O is too far in the alphabet. 8 to B obviously.
-                            fixedDesignation += (" " + parts[i].replace("0", "D").replace("8", "B"));
+                            fixedPart += part;
                         }
-                    } else {
-                        if (i % 2 == 0) {
-                            // Even indexes must not be digits, but we have an even index => convert to letters
-                            // 0 to D because it is likelier than C and O is too far in the alphabet. 8 to B obviously.
-                            fixedDesignation += (" " + parts[i].replace("0", "D").replace("8", "B"));
-                        } else {
-                            // Even indexes must not be digits, but we have an odd index => convert to digits
-                            // O,D,C to 0, S to 5, B to 8
-                            fixedDesignation += (" " + parts[i].replace("O", "0").replace("D", "0").replace("C", "0").replace("S", "5").replace("B", "8"));
-                        }
+                        fixedDesignation += fixedPart;
                     }
-                }
-                fixedDesignation = fixedDesignation.trim();
-                // Now we REALLY should have blocks of plain digits and plain letters, no mixed ones
-                for (String s : fixedDesignation.split("\\s")) {
-                    if (!s.matches("[0-9]+") && !s.matches("[A-J]+")) {
-                        logger.warn("Failed to fix '" + scannedDesignation + "' to '" + fixedDesignation + "' - using the scanned one");
-                        return scannedDesignation; // Use the scanned one instead of messing it up even more
-                    }
+                    fixedBodyName = systemName + fixedDesignation;
+                    logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName + "'");
                 }
             }
-            if (!fixedDesignation.equals(scannedDesignation)) {
-                logger.info("Fixed '" + scannedDesignation + "' to '" + fixedDesignation + "' (" + votesForEvenIndexMustBeDigits + ":" + votesForEvenIndexMustBeLetters + " votes for start with digits)");
-            }
-            return fixedDesignation;
+
+            return fixedBodyName;
         }
-        return scannedDesignation;
     }
 
     private static Body lookupEddbBody(List<Body> eddbBodies, String bodyName, BigDecimal distanceLs, BodyInfo bodyType) {
