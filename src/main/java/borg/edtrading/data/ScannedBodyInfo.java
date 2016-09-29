@@ -89,6 +89,7 @@ public class ScannedBodyInfo {
     private Boolean tidallyLocked = null;
     private BigDecimal axialTiltDeg = null;
     private LinkedHashMap<Item, BigDecimal> planetMaterials = null;
+    private List<ScannedRingInfo> rings = null;
     // * Belt
     // !no distance if arrival!
     // ringType (Metallic)
@@ -175,6 +176,11 @@ public class ScannedBodyInfo {
                 Item material = it.next();
                 BigDecimal percent = this.getPlanetMaterials().get(material);
                 sb.append(String.format(Locale.US, "%s(%.1f%%)", material.getName(), percent)).append(it.hasNext() ? ", " : "\n");
+            }
+        }
+        if (this.getRings() != null) {
+            for (ScannedRingInfo sri : this.getRings()) {
+                sb.append(sri.toString()).append("\n");
             }
         }
         return sb.toString().trim();
@@ -945,7 +951,7 @@ public class ScannedBodyInfo {
                         for (int i = indexRingName; i < indexRingType; i++) {
                             name.append(bodyInfoWords.get(i).getText()).append(" ");
                         }
-                        scannedRingInfo.setRingName(name.toString().trim());
+                        scannedRingInfo.setRingName(name.toString().trim()); // TODO Fix ring name
                     }
                 }
 
@@ -989,7 +995,10 @@ public class ScannedBodyInfo {
                     }
                 }
 
-                System.out.println(scannedRingInfo);
+                if (scannedBodyInfo.getRings() == null) {
+                    scannedBodyInfo.setRings(new ArrayList<>());
+                }
+                scannedBodyInfo.getRings().add(scannedRingInfo);
             }
         }
 
@@ -1593,6 +1602,14 @@ public class ScannedBodyInfo {
 
     public void setPlanetMaterials(LinkedHashMap<Item, BigDecimal> planetMaterials) {
         this.planetMaterials = planetMaterials;
+    }
+
+    public List<ScannedRingInfo> getRings() {
+        return this.rings;
+    }
+
+    public void setRings(List<ScannedRingInfo> rings) {
+        this.rings = rings;
     }
 
     public BigDecimal getMoonMasses() {
