@@ -24,6 +24,7 @@ import borg.edtrading.ocr.fixer.TidallyLockedFixer;
 import borg.edtrading.ocr.fixer.ValueFixer;
 import borg.edtrading.ocr.fixer.VolcanismFixer;
 import borg.edtrading.util.MatchSorter.MatchGroup;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -262,6 +263,36 @@ public class ScannedBodyInfo {
             lowercasedScannedWords.add(w.getText().toLowerCase());
         }
 
+        LinkedHashMap<String, Integer> indexByLabel = new LinkedHashMap<>();
+
+        // Parse rings at first
+        int indexRingType = indexOfWords(lowercasedScannedWords, "ring", "type:");
+        while (indexRingType < lowercasedScannedWords.size()) {
+            indexByLabel.put("ring type " + indexRingType + ":", indexRingType);
+            int indexName = indexOfWords(lowercasedScannedWords, ArrayUtils.add(bodyName.split("\\s"), "ring"));
+            if (indexName < lowercasedScannedWords.size()) {
+                indexByLabel.put("ring name " + indexRingType + ":", indexName);
+            }
+            int indexMass = indexOfWords(lowercasedScannedWords, "mass:");
+            if (indexMass < lowercasedScannedWords.size()) {
+                indexByLabel.put("ring mass " + indexRingType + ":", indexMass);
+            }
+            int indexSemiMajorAxis = indexOfWords(lowercasedScannedWords, "semi", "major", "axis:");
+            if (indexSemiMajorAxis < lowercasedScannedWords.size()) {
+                indexByLabel.put("ring semi major axis " + indexRingType + ":", indexSemiMajorAxis);
+            }
+            int indexInnerRadius = indexOfWords(lowercasedScannedWords, "inner", "radius:");
+            if (indexInnerRadius < lowercasedScannedWords.size()) {
+                indexByLabel.put("ring inner radius " + indexRingType + ":", indexInnerRadius);
+            }
+            int indexOuterRadius = indexOfWords(lowercasedScannedWords, "outer", "radius:");
+            if (indexOuterRadius < lowercasedScannedWords.size()) {
+                indexByLabel.put("ring outer radius " + indexRingType + ":", indexOuterRadius);
+            }
+
+            indexRingType = indexOfWords(lowercasedScannedWords, "ring", "type:"); // More rings?
+        }
+
         // Search the start indexes of labels, also replacing the found words with NULL entries
         int indexSolarMasses = indexOfWords(lowercasedScannedWords, "solar", "masses:");
         if (indexSolarMasses < lowercasedScannedWords.size()) {
@@ -341,7 +372,6 @@ public class ScannedBodyInfo {
             }
         }
 
-        LinkedHashMap<String, Integer> indexByLabel = new LinkedHashMap<>();
         if (indexSolarMasses < lowercasedScannedWords.size()) {
             indexByLabel.put("solar masses:", indexSolarMasses);
             scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_STAR);

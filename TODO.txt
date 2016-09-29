@@ -5,6 +5,7 @@ TODO:
 * Star catalogue IDs
 * Designation muss nicht immer alternierend sein. Siehe Khun Mond vom Mond.
 * Camel Case names
+* Atmosphere component with more than one word
 
 SUSPICIOUS:
 
