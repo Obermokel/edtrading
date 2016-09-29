@@ -101,7 +101,7 @@ public class TemplateMatcher {
             float imageAR = (float) croppedGrayImage.width / (float) croppedGrayImage.height;
 
             final double pixels = croppedGrayImage.width * croppedGrayImage.height;
-            final double maxErrorPerPixel = 1250.0;
+            final double maxErrorPerPixel = 1000.0;
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {

@@ -77,6 +77,13 @@ public abstract class ScreenshotPreprocessor {
         return VisualizeImageData.grayMagnitude(edge, null, -1);
     }
 
+    public static GrayU8 cannyEdge(GrayU8 gray, int blurRadius, float threshLow, float threshHigh) {
+        GrayU8 edge = gray.createSameShape();
+        CannyEdge<GrayU8, GrayS16> canny = FactoryEdgeDetectors.canny(blurRadius, true, true, GrayU8.class, GrayS16.class);
+        canny.process(gray, threshLow, threshHigh, edge);
+        return edge;
+    }
+
     /**
      * Tuned for the white text on mostly black background of system map screenshots.
      */
@@ -171,7 +178,20 @@ public abstract class ScreenshotPreprocessor {
 
     public static BufferedImage keepInventoryTextOnly(BufferedImage croppedAndUndistortedImage) {
         //return fillCharacters(ScreenshotPreprocessor.cannyEdge(croppedAndUndistortedImage, 3, 0.1f, 0.3f));
-        return fillCharacters(ScreenshotPreprocessor.cannyEdge(croppedAndUndistortedImage, 2, 0.01f, 0.1f));
+        //return fillCharacters(ScreenshotPreprocessor.cannyEdge(croppedAndUndistortedImage, 2, 0.01f, 0.1f));
+        GrayU8 grayU8 = ConvertBufferedImage.convertFromSingle(croppedAndUndistortedImage, null, GrayU8.class);
+        GrayU8 cannyU8 = cannyEdge(grayU8, 2, 0.1f, 0.3f);
+        BufferedImage cannyImage = VisualizeBinaryData.renderBinary(cannyU8, false, null);
+        cannyU8 = ConvertBufferedImage.convertFromSingle(cannyImage, null, GrayU8.class);
+        //GrayU8 gaussianU8 = BlurImageOps.gaussian(cannyU8, null, /* sigma = */ -1, /* radius = */ 1, null);
+        //GrayU8 gaussianU8 = BlurImageOps.mean(cannyU8, null, 1, null);
+        // median is really bad GrayU8 gaussianU8 = BlurImageOps.median(cannyU8, null, 2);
+        //BufferedImage resultImage = VisualizeBinaryData.renderBinary(gaussianU8, false, null);
+        //        BufferedImage resultImage = ConvertBufferedImage.convertTo(gaussianU8, null);
+        //        return resultImage;
+
+        GrayU8 thresholdU8 = GThresholdImageOps.localGaussian(cannyU8, null, 1, 0.5, false, null, null);
+        return VisualizeBinaryData.renderBinary(thresholdU8, false, null);
     }
 
     private static BufferedImage fillCharacters(BufferedImage cannyImage) {
@@ -210,17 +230,9 @@ public abstract class ScreenshotPreprocessor {
                     almostBlackPoints.add(blackPoint);
                 } else if (filledPixels <= 2) { // 1x2
                     // Very small areas are holes in the border.
-                    // Fill with pure white, making it part of the char.
-                    fillArea(filledImage, blackPoint, 0xffff0000);
+                    // Do not count them as inner points.
                 } else {
                     innerPoints.add(blackPoint); // Now filled white
-                    //                    // Small areas could also be inside closed chars like D or O.
-                    //                    // Simple test: A "large" 7x7 square should only fit inside chars, but not inside thin outlines.
-                    //                    if (areaContainsSquare(filledImage, blackPoint, 7)) {
-                    //                        fillArea(filledImage, blackPoint, 0xff00ff00); // green color for testing purposes
-                    //                        //                        fillArea(filledImage, blackPoint, 0xff010101);
-                    //                        //                        almostBlackPoints.add(blackPoint);
-                    //                    }
                 }
             }
         }
@@ -233,8 +245,20 @@ public abstract class ScreenshotPreprocessor {
                 fillArea(filledImage, innerPoint, 0xff00ff00);
             }
         }
-        for (Point grayOutlinePoint : grayOutlinePoints) {
-            filledImage.setRGB(grayOutlinePoint.x, grayOutlinePoint.y, 0xff000000);
+
+        // At this point we have a very colorful image for debugging purpuses.
+        // Now make it pure black and white.
+        // red -> white
+        // everything else -> black
+        for (int y = 0; y < filledImage.getHeight(); y++) {
+            for (int x = 0; x < filledImage.getWidth(); x++) {
+                int rgb = filledImage.getRGB(x, y);
+                if (rgb == 0xffff0000) {
+                    filledImage.setRGB(x, y, 0xffffffff);
+                } else {
+                    filledImage.setRGB(x, y, 0xff000000);
+                }
+            }
         }
 
         return filledImage;

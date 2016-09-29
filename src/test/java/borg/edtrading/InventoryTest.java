@@ -209,7 +209,7 @@ public class InventoryTest {
             BufferedImage originalImage = ImageIO.read(file);
             BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
             BufferedImage inventoryImage = ScreenshotCropper.cropToInventory(fourKImage);
-            ImageIO.write(inventoryImage, "PNG", new File(Constants.TEMP_DIR, file.getName().replace(".png", "_inventoryImage.png")));
+            //            ImageIO.write(inventoryImage, "PNG", new File(Constants.TEMP_DIR, file.getName().replace(".png", "_inventoryImage.png")));
             //            BufferedImage cannyImage = ScreenshotPreprocessor.cannyEdge(inventoryImage);
             //            ImageIO.write(cannyImage, "PNG", new File(Constants.TEMP_DIR, file.getName().replace(".png", "_cannyImage.png")));
             //            BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(cannyImage, 2);

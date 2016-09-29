@@ -50,8 +50,6 @@ public class BodyInfoApp {
     public static void main(String[] args) throws IOException, InterruptedException {
         final boolean doEddbUpdate = true;
 
-        // TODO Permanently remember successfully created/updated bodies and do not update them again! Otherwise we might end in a battle with other OCR users...
-
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
         Galaxy galaxy = Galaxy.readDataFromFiles();
         BodyUpdater bodyUpdater = doEddbUpdate ? new BodyUpdater(args[0], args[1]) : null;
