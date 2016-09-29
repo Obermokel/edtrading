@@ -465,9 +465,18 @@ public class BodyUpdater implements Closeable {
         } else {
             String href = systemLinks.get(0).getAttribute("href");
             String nameOnRoss = systemLinks.get(0).getText();
-            logger.trace("Clicking on link to system '" + systemName + "': " + href + " (" + nameOnRoss + ")");
+            logger.debug("Clicking on link to system '" + systemName + "': " + href + " (" + nameOnRoss + ")");
             systemLinks.get(0).click();
             new WebDriverWait(this.driver, 30).until(ExpectedConditions.titleContains("Update System: " + nameOnRoss + " - ROSS"));
+
+            // Scroll to bodies section
+            for (WebElement panelHeading : this.driver.findElements(By.cssSelector("div.panel-heading"))) {
+                if (panelHeading.getText().equalsIgnoreCase("Bodies in system " + systemName)) {
+                    new Actions(driver).moveToElement(driver.findElement(By.cssSelector("footer.footer")), 0, 0).build().perform();
+                    new Actions(driver).moveToElement(panelHeading, 0, 0).build().perform();
+                    break;
+                }
+            }
         }
     }
 
@@ -487,9 +496,9 @@ public class BodyUpdater implements Closeable {
         } else {
             String href = bodyLinks.get(0).getAttribute("href");
             String nameOnRoss = bodyLinks.get(0).getText();
-            logger.trace("Clicking on link to body '" + bodyName + "': " + href + " (" + nameOnRoss + ")");
+            logger.debug("Clicking on link to body '" + bodyName + "': " + href + " (" + nameOnRoss + ")");
             bodyLinks.get(0).click();
-            new WebDriverWait(this.driver, 30).until(ExpectedConditions.titleContains("Update Body: " + nameOnRoss + " - ROSS"));
+            new WebDriverWait(this.driver, 60).until(ExpectedConditions.titleContains("Update Body: " + nameOnRoss + " - ROSS"));
         }
     }
 
