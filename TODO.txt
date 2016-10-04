@@ -1,4 +1,5 @@
 TODO:
+* Beim Lernen von vorgegebenen Texten case prüfen. Insbesondere bei bodyName welcher lowercased wird, aber uppercase ist.
 * Remove auto-learning from expected text. Learn only from similar chars.
 * Terraforming
 * Support for other body types like stars, belts etc (WIP)

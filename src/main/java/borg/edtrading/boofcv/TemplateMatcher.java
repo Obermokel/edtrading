@@ -101,7 +101,7 @@ public class TemplateMatcher {
             float imageAR = (float) croppedGrayImage.width / (float) croppedGrayImage.height;
 
             final double pixels = croppedGrayImage.width * croppedGrayImage.height;
-            final double maxErrorPerPixel = 1000.0;
+            final double maxErrorPerPixel = 750.0;
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {
@@ -124,12 +124,12 @@ public class TemplateMatcher {
                 }
             }
             if (bestMatch == null) {
-                final double maxErrorPerPixelGuess = 1.25 * maxErrorPerPixel;
+                final double maxErrorPerPixelGuess = 2.0 * maxErrorPerPixel;
                 double bestErrorPerPixelGuess = maxErrorPerPixelGuess;
                 TemplateMatch bestGuess = null;
                 for (Template template : templates) {
                     float templateAR = (float) template.getCroppedImage().width / (float) template.getCroppedImage().height;
-                    if (templateAR <= 1.5 * imageAR && templateAR >= imageAR / 1.5) {
+                    if (pixels <= 100 || (templateAR <= 1.5 * imageAR && templateAR >= imageAR / 1.5)) {
                         GrayF32 scaledTemplate = new GrayF32(croppedGrayImage.width, croppedGrayImage.height);
                         new FDistort().input(template.getCroppedImage()).output(scaledTemplate).interp(TypeInterpolate.BICUBIC).scale().apply();
                         double error = 0.0;
@@ -150,10 +150,12 @@ public class TemplateMatcher {
                     Constants.UNKNOWN_DIR.mkdirs();
                     ImageIO.write(image, "PNG", new File(Constants.UNKNOWN_DIR, "UNKNOWN#" + xWithinImage + "#" + yWithinImage + "#" + screenshotFilename));
                 } else {
-                    File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(bestGuess.getTemplate().getText()));
+                    String folderName = TemplateMatcher.textToFolder(bestGuess.getTemplate().getText());
+                    File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, folderName);
                     autoLearnFolder.mkdirs();
-                    ImageIO.write(image, "PNG", new File(autoLearnFolder, "GUESSED#" + xWithinImage + "#" + yWithinImage + "#" + screenshotFilename));
+                    ImageIO.write(image, "PNG", new File(autoLearnFolder, "GUESSED#" + folderName + "#" + xWithinImage + "#" + yWithinImage + "#" + screenshotFilename));
                     logger.trace("Guessed new '" + bestGuess.getTemplate().getText() + "' from " + screenshotFilename);
+                    bestMatch = bestGuess;
                 }
             }
             return bestMatch;

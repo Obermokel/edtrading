@@ -1272,11 +1272,15 @@ public class ScannedBodyInfo {
     }
 
     private static void doAutoLearn(TemplateMatch m, String shouldHaveBeen, String screenshotFilename) {
+        if (shouldHaveBeen.equalsIgnoreCase(m.getTemplate().getText())) {
+            return; // Just wrong case, probably shouldHaveBeen has been lowercased to look nicer
+        }
         if (Constants.LEARN_0_VS_O || !is0vsO(shouldHaveBeen, m.getTemplate().getText())) {
-            File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, TemplateMatcher.textToFolder(shouldHaveBeen));
+            String folderName = TemplateMatcher.textToFolder(shouldHaveBeen);
+            File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, folderName);
             autoLearnFolder.mkdirs();
             try {
-                ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, autoLearnFolder.getName() + "#" + m.getMatch().x + "#" + m.getMatch().y + "#" + screenshotFilename));
+                ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "LEARNED#" + folderName + "#" + m.getMatch().x + "#" + m.getMatch().y + "#" + screenshotFilename));
                 logger.trace("Learned new '" + shouldHaveBeen + "' from " + screenshotFilename);
             } catch (IOException e) {
                 e.printStackTrace();
