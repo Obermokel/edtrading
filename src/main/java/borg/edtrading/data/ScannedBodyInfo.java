@@ -1216,7 +1216,10 @@ public class ScannedBodyInfo {
     }
 
     private static boolean is0vsO(String shouldHaveBeen, String actuallyIs) {
-        return ("0".equals(shouldHaveBeen) || "O".equals(shouldHaveBeen)) && ("0".equals(actuallyIs) || "O".equals(actuallyIs));
+        boolean is0vsO = ("0".equals(shouldHaveBeen) && "O".equals(actuallyIs)) || ("O".equals(shouldHaveBeen) && "0".equals(actuallyIs));
+        boolean isIvsl = ("I".equals(shouldHaveBeen) && "l".equals(actuallyIs)) || ("l".equals(shouldHaveBeen) && "I".equals(actuallyIs));
+
+        return is0vsO || isIvsl;
     }
 
     private static void autoLearnBody(Body eddbBody, String scannedBodyName, BigDecimal scannedDistanceLs, BodyInfo scannedBodyType, List<MatchGroup> bodyNameWords, int indexArrivalPoint, String screenshotFilename) {
