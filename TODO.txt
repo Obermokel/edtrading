@@ -1,4 +1,6 @@
 TODO:
+* Crap chars
+* Bei wenig weißen Pixeln (<100 pixel, punkt, komme, apostroph etc) Komplettvergleich
 * Remove auto-learning from expected text. Learn only from similar chars.
 * Terraforming
 * Support for other body types like stars, belts etc (WIP)

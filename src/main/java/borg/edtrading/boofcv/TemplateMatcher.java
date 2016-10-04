@@ -221,6 +221,8 @@ public class TemplateMatcher {
             text = ")";
         } else if ("_grad".equals(folder)) {
             text = "°";
+        } else if ("_crap".equals(folder)) {
+            text = "";
         }
         return text;
     }
@@ -251,6 +253,8 @@ public class TemplateMatcher {
             folder = "_klammer_zu";
         } else if ("°".equals(text)) {
             folder = "_grad";
+        } else if ("".equals(text)) {
+            folder = "_crap";
         }
         return folder;
     }

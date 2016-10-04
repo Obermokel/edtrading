@@ -110,7 +110,7 @@ public class BodyInfoTest {
                 // Learn max 1 per type
                 String text = TemplateMatcher.folderToText(subdir.getName());
                 String learnFrom = "GUESSED#"; // By default learn from guessed
-                if ("0".equals(text) || "O".equals(text) || "I".equals(text) || "l".equals(text) || "'".equals(text)) {
+                if ("0".equals(text) || "O".equals(text) || "I".equals(text) || "l".equals(text)) {
                     learnFrom = "LEARNED#"; // Learn difficult chars from fixed names/values
                     //learnFrom = "DONOTLEARN#";
                 }
