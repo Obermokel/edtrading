@@ -96,7 +96,7 @@ public class ScannedBodyInfo {
     private List<ScannedRingInfo> rings = null;
     // * Belt
     // !no distance if arrival!
-    // ringType (Metallic)
+    private BodyInfo ringType = null;
     private BigDecimal moonMasses = null;
 
     @Override
@@ -118,6 +118,7 @@ public class ScannedBodyInfo {
         if (this.getSystemReserves() != null) {
             sb.append(this.getSystemReserves().getName()).append("\n");
         }
+        sb.append(String.format(Locale.US, "%-21s\t%s", "RING TYPE:", this.getRingType() == null ? null : this.getRingType().getName())).append("\n");
         sb.append(String.format(Locale.US, "%-21s\t%.3fM YEARS", "AGE:", this.getAgeMillionYears())).append("\n");
         if (this.getSolarMasses() != null) {
             sb.append(String.format(Locale.US, "%-21s\t%.4f", "SOLAR MASSES:", this.getSolarMasses())).append("\n");
@@ -1581,6 +1582,14 @@ public class ScannedBodyInfo {
 
     public void setRings(List<ScannedRingInfo> rings) {
         this.rings = rings;
+    }
+
+    public BodyInfo getRingType() {
+        return this.ringType;
+    }
+
+    public void setRingType(BodyInfo ringType) {
+        this.ringType = ringType;
     }
 
     public BigDecimal getMoonMasses() {
