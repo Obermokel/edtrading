@@ -94,7 +94,7 @@ public class BodyInfoTest {
 
             templates = copyLearnedChars();
 
-            System.out.println(scannedBodyInfo);
+            //            System.out.println(scannedBodyInfo);
             //            BodyInfoApp.printStats(scannedBodyInfos);
         }
     }

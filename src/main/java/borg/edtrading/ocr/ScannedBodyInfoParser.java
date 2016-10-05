@@ -81,13 +81,16 @@ public class ScannedBodyInfoParser {
             for (BodyInfo bi : BodyInfo.byPrefix("RESERVES_")) {
                 String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
                 if (findAndRemove(nameWithoutSpaces, bodyInfoMatches, 0, indexOf("EARTHMASSES:", sortedLabelIndexes), "RESERVES_", sortedLabelIndexes) != null) { // Reserves unfortunately is before earth masses, so explicitly search from index 0...
+                    scannedBodyInfo.setSystemReserves(bi);
                     break; // Expect only one hit
                 }
             }
             findAndRemove("RADIUS:", bodyInfoMatches, sortedLabelIndexes);
             findAndRemove("GRAVITY:", bodyInfoMatches, sortedLabelIndexes);
             findAndRemove("SURFACETEMP:", bodyInfoMatches, sortedLabelIndexes);
-            findAndRemove("SURFACEPRESSURE:", bodyInfoMatches, sortedLabelIndexes);
+            if (findAndRemove("SURFACEPRESSURE:", bodyInfoMatches, sortedLabelIndexes) != null) {
+                findAndRemove("ATMOSPHERES", bodyInfoMatches, sortedLabelIndexes); // Remove the unit of surface pressure because it is long and may collide with later labels
+            }
             if (findAndRemove("VOLCANISM:", bodyInfoMatches, sortedLabelIndexes) != null) {
                 for (BodyInfo bi : BodyInfo.byPrefix("VOLCANISM_")) {
                     String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
@@ -175,7 +178,7 @@ public class ScannedBodyInfoParser {
             scannedBodyInfo.setRadiusKm(fixAndRemoveRadius("RADIUS:", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setGravityG(fixAndRemoveGravity("GRAVITY:", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setSurfaceTempK(fixAndRemoveSurfaceTemp("SURFACETEMP:", bodyInfoMatches, sortedLabelIndexes));
-            //            BigDecimal surfacePressure = fixAndRemoveEarthMasses("SURFACEPRESSURE:", bodyInfoMatches, sortedLabelIndexes);
+            scannedBodyInfo.setSurfacePressureAtmospheres(fixAndRemoveSurfacePressure("SURFACEPRESSURE:", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setVolcanism(lookupFixedAndRemovedEnum("VOLCANISM_", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setAtmosphereType(lookupFixedAndRemovedEnum("ATMOSPHERE_TYPE_", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setAtmosphere(fixAndRemoveComposition("ATMOSPHERE:", "ATMOSPHERE_COMPONENT_", bodyInfoMatches, sortedLabelIndexes));
@@ -196,16 +199,16 @@ public class ScannedBodyInfoParser {
         }
 
         // TODO Remove this debug output
-        System.out.print("Scanned: ");
-        for (TemplateMatch m : bodyInfoMatches) {
-            System.out.print("<" + m.getTemplate().getText() + ">");
-        }
-        System.out.println();
-        System.out.print("Parsed:  ");
-        for (TemplateMatch m : bodyInfoMatches) {
-            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
-        }
-        System.out.println();
+        //        System.out.print("Scanned: ");
+        //        for (TemplateMatch m : bodyInfoMatches) {
+        //            System.out.print("<" + m.getTemplate().getText() + ">");
+        //        }
+        //        System.out.println();
+        //        System.out.print("Parsed:  ");
+        //        for (TemplateMatch m : bodyInfoMatches) {
+        //            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
+        //        }
+        //        System.out.println();
 
         learnWronglyDetectedChars(bodyInfoMatches);
 
@@ -469,7 +472,7 @@ public class ScannedBodyInfoParser {
         if (fixedText.length() > 1) {
             // Only fix if the first scanned char is not a digit
             String scannedSign = fixedText.substring(0, 1);
-            if (scannedSign.matches("[^\\d\\.,]+")) {
+            if (scannedSign.matches("[^\\d]")) {
                 fixedText = "-" + fixedText.substring(1);
             }
         }
@@ -647,6 +650,48 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
+    private static BigDecimal fixAndRemoveSurfacePressure(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+        Integer labelIndex = indexOf(label, sortedLabelIndexes);
+        if (labelIndex != null) {
+            int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
+            int startIndex = labelIndex + label.length();
+            StringBuilder scannedText = new StringBuilder();
+            for (int i = startIndex; i < endIndex; i++) {
+                scannedText.append(matches.get(i).getTemplate().getText());
+            }
+            try {
+                // Pattern: #,##0.00
+                BigDecimal min = new BigDecimal("0.50"); // Screenshot: ?
+                BigDecimal max = new BigDecimal("1000.00"); // Screenshot: ?
+                String fixedText = scannedText.toString();
+                fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
+                fixedText = allSeparatorsToThousandsExceptLast(fixedText);
+                if (!fixedText.matches("(\\d{1,3})(,\\d{3})*\\.\\d{2}")) {
+                    throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
+                } else {
+                    String parseableText = fixedText.replace(",", ""); // Remove all thousands separators and units
+                    BigDecimal value = new BigDecimal(parseableText);
+                    if (value.compareTo(min) < 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
+                    } else if (value.compareTo(max) > 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is above the allowed maximum " + label.toLowerCase().replace(":", "") + " of " + max);
+                    } else {
+                        // Set shouldHaveBeen, effectively removing the matches
+                        for (int i = startIndex; i < endIndex; i++) {
+                            char shouldHaveBeen = fixedText.charAt(i - startIndex);
+                            matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+                        }
+                        // Return the result
+                        return value;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
+            }
+        }
+        return null;
+    }
+
     private static BigDecimal fixAndRemoveOrbitalPeriod(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
@@ -658,7 +703,7 @@ public class ScannedBodyInfoParser {
             }
             try {
                 // Pattern: #,##0.0D
-                BigDecimal min = new BigDecimal("1.0"); // Screenshot: 2016-10-01 22-17-32 Laksak.png
+                BigDecimal min = new BigDecimal("0.7"); // Screenshot: 2016-09-28 08-12-04 Ross 847.png
                 BigDecimal max = new BigDecimal("9416.9"); // Screenshot: 2016-09-30 17-22-30 Deciat.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
