@@ -1263,6 +1263,53 @@ public class ScannedBodyInfoParser {
         MiscUtil.sortMapByValueReverse(result);
         if (totalSumPercent.doubleValue() == 0.0) {
             return null;
+        } else if (Math.abs(100.0 - totalSumPercent.doubleValue()) >= 1.0) {
+            logger.debug(currentScreenshotFilename + ": Trying to fix sum of " + label.toLowerCase().replace(":", "") + ". Currently is " + totalSumPercent + ": " + result);
+            LinkedHashMap<String, BigDecimal> wrongPercentages = new LinkedHashMap<>();
+            for (BodyInfo bi : result.keySet()) {
+                wrongPercentages.put(bi.getName(), result.get(bi));
+            }
+            LinkedHashMap<String, BigDecimal> fixedPercentages = fixPercentagesTo100(wrongPercentages);
+            if (fixedPercentages == null) {
+                return null;
+            } else {
+                logger.info(
+                        currentScreenshotFilename + ": Fixed sum of " + label.toLowerCase().replace(":", "") + " from " + sumOfPercentages(wrongPercentages) + "% " + wrongPercentages + " to " + sumOfPercentages(fixedPercentages) + "% " + fixedPercentages);
+                // Find the fixed one
+                String fixedOne = null;
+                for (String name : fixedPercentages.keySet()) {
+                    if (!fixedPercentages.get(name).equals(wrongPercentages.get(name))) {
+                        fixedOne = name;
+                        break;
+                    }
+                }
+                // Get the wrong and the fixed value
+                String wrongValue = wrongPercentages.get(fixedOne).toString() + "%";
+                String fixedValue = fixedPercentages.get(fixedOne).toString() + "%";
+                // Fix it in the scan
+                for (int i = indexOf(label, sortedLabelIndexes); i < matches.size() - wrongValue.length(); i++) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int j = 0; j < wrongValue.length(); j++) {
+                        sb.append(matches.get(i + j).getShouldHaveBeen());
+                    }
+                    if (sb.toString().equals(wrongValue)) {
+                        for (int j = 0; j < wrongValue.length(); j++) {
+                            matches.get(i + j).setShouldHaveBeen(Character.toString(fixedValue.charAt(j)));
+                        }
+                        break;
+                    }
+                }
+                // Fix it in the result
+                result = new LinkedHashMap<>();
+                for (String name : fixedPercentages.keySet()) {
+                    BodyInfo bi = BodyInfo.findBestMatching(name, prefix);
+                    BigDecimal v = fixedPercentages.get(name);
+                    result.put(bi, v);
+                }
+                MiscUtil.sortMapByValueReverse(result);
+                // Return the fixed result
+                return result;
+            }
         } else if (Math.abs(100.0 - totalSumPercent.doubleValue()) > 0.5) {
             logger.warn(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
             return null;
@@ -1326,6 +1373,53 @@ public class ScannedBodyInfoParser {
         MiscUtil.sortMapByValueReverse(result);
         if (totalSumPercent.doubleValue() == 0.0) {
             return null;
+        } else if (Math.abs(100.0 - totalSumPercent.doubleValue()) >= 1.0) {
+            logger.debug(currentScreenshotFilename + ": Trying to fix sum of " + label.toLowerCase().replace(":", "") + ". Currently is " + totalSumPercent + ": " + result);
+            LinkedHashMap<String, BigDecimal> wrongPercentages = new LinkedHashMap<>();
+            for (Item el : result.keySet()) {
+                wrongPercentages.put(el.getName(), result.get(el));
+            }
+            LinkedHashMap<String, BigDecimal> fixedPercentages = fixPercentagesTo100(wrongPercentages);
+            if (fixedPercentages == null) {
+                return null;
+            } else {
+                logger.info(
+                        currentScreenshotFilename + ": Fixed sum of " + label.toLowerCase().replace(":", "") + " from " + sumOfPercentages(wrongPercentages) + "% " + wrongPercentages + " to " + sumOfPercentages(fixedPercentages) + "% " + fixedPercentages);
+                // Find the fixed one
+                String fixedOne = null;
+                for (String name : fixedPercentages.keySet()) {
+                    if (!fixedPercentages.get(name).equals(wrongPercentages.get(name))) {
+                        fixedOne = name;
+                        break;
+                    }
+                }
+                // Get the wrong and the fixed value
+                String wrongValue = wrongPercentages.get(fixedOne).toString() + "%";
+                String fixedValue = fixedPercentages.get(fixedOne).toString() + "%";
+                // Fix it in the scan
+                for (int i = indexOf(label, sortedLabelIndexes); i < matches.size() - wrongValue.length(); i++) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int j = 0; j < wrongValue.length(); j++) {
+                        sb.append(matches.get(i + j).getShouldHaveBeen());
+                    }
+                    if (sb.toString().equals(wrongValue)) {
+                        for (int j = 0; j < wrongValue.length(); j++) {
+                            matches.get(i + j).setShouldHaveBeen(Character.toString(fixedValue.charAt(j)));
+                        }
+                        break;
+                    }
+                }
+                // Fix it in the result
+                result = new LinkedHashMap<>();
+                for (String name : fixedPercentages.keySet()) {
+                    Item el = Item.findBestMatching(name, ItemType.ELEMENT);
+                    BigDecimal v = fixedPercentages.get(name);
+                    result.put(el, v);
+                }
+                MiscUtil.sortMapByValueReverse(result);
+                // Return the fixed result
+                return result;
+            }
         } else if (Math.abs(100.0 - totalSumPercent.doubleValue()) > 0.5) {
             logger.warn(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
             return null;
@@ -1352,6 +1446,59 @@ public class ScannedBodyInfoParser {
             fixedText = fixedText + ",";
         }
         return fixedText;
+    }
+
+    private static LinkedHashMap<String, BigDecimal> fixPercentagesTo100(LinkedHashMap<String, BigDecimal> wrongPercentages) {
+        LinkedHashMap<String, BigDecimal> fixedPercentages = new LinkedHashMap<>(wrongPercentages);
+
+        // 6, 8 and 9 can be messed up.
+        // Try to fix the sum by changing ONE (only ONE!) of them.
+        for (String name : wrongPercentages.keySet()) {
+            BigDecimal scannedPercentage = wrongPercentages.get(name);
+
+            if (scannedPercentage.toString().contains("6")) {
+                fixedPercentages.put(name, new BigDecimal(scannedPercentage.toString().replaceFirst("6", "8")));
+                if (sumOfPercentages(fixedPercentages).doubleValue() == 100.0) {
+                    return fixedPercentages; // I fixed it!
+                }
+                fixedPercentages.put(name, new BigDecimal(scannedPercentage.toString().replaceFirst("6", "9")));
+                if (sumOfPercentages(fixedPercentages).doubleValue() == 100.0) {
+                    return fixedPercentages; // I fixed it!
+                }
+            }
+
+            if (scannedPercentage.toString().contains("8")) {
+                fixedPercentages.put(name, new BigDecimal(scannedPercentage.toString().replaceFirst("8", "6")));
+                if (sumOfPercentages(fixedPercentages).doubleValue() == 100.0) {
+                    return fixedPercentages; // I fixed it!
+                }
+                fixedPercentages.put(name, new BigDecimal(scannedPercentage.toString().replaceFirst("8", "9")));
+                if (sumOfPercentages(fixedPercentages).doubleValue() == 100.0) {
+                    return fixedPercentages; // I fixed it!
+                }
+            }
+
+            if (scannedPercentage.toString().contains("9")) {
+                fixedPercentages.put(name, new BigDecimal(scannedPercentage.toString().replaceFirst("9", "6")));
+                if (sumOfPercentages(fixedPercentages).doubleValue() == 100.0) {
+                    return fixedPercentages; // I fixed it!
+                }
+                fixedPercentages.put(name, new BigDecimal(scannedPercentage.toString().replaceFirst("9", "9")));
+                if (sumOfPercentages(fixedPercentages).doubleValue() == 100.0) {
+                    return fixedPercentages; // I fixed it!
+                }
+            }
+        }
+
+        return null; // Cannot fix :-(
+    }
+
+    private static BigDecimal sumOfPercentages(LinkedHashMap<String, BigDecimal> percentages) {
+        BigDecimal sum = BigDecimal.ZERO;
+        for (BigDecimal percentage : percentages.values()) {
+            sum = sum.add(percentage);
+        }
+        return sum;
     }
 
 }
