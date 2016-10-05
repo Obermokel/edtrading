@@ -1130,7 +1130,7 @@ public class ScannedBodyInfoParser {
             try {
                 // Pattern: 0.0D
                 BigDecimal min = new BigDecimal("0.2"); // Screenshot: 2016-09-28 07-58-40 Har Itari.png
-                BigDecimal max = new BigDecimal("274.1"); // Screenshot: 2016-10-02 06-48-25 LP 838-16.png
+                BigDecimal max = new BigDecimal("307.0"); // Screenshot: 2016-10-02 20-10-19 Ross 720.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
