@@ -64,7 +64,7 @@ public class TemplateMatcher {
             }
         }
 
-        logger.info("Loaded " + result.size() + " template(s) from " + type);
+        logger.debug("Loaded " + result.size() + " template(s) from " + type);
 
         return result;
     }
