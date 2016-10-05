@@ -158,6 +158,8 @@ public class ScannedBodyInfoParser {
             // TODO Scan rings
         }
 
+        findAndRemove("BACK", bodyInfoMatches, sortedLabelIndexes); // Back button...
+
         // Now that we have all labels we can start to parse the values
         if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_STAR) {
             scannedBodyInfo.setAgeMillionYears(fixAndRemoveAge("AGE:", bodyInfoMatches, sortedLabelIndexes));
@@ -542,7 +544,7 @@ public class ScannedBodyInfoParser {
             }
             try {
                 // Pattern: #,##0.0000
-                BigDecimal min = new BigDecimal("0.0273"); // Screenshot: 2016-10-01 20-50-34 HIP 30953.png
+                BigDecimal min = new BigDecimal("0.0117"); // Screenshot: 2016-10-02 07-08-51 Xi Ursae Majoris.png
                 BigDecimal max = new BigDecimal("1.7891"); // Screenshot: 2016-10-03 13-26-06 76 Sigma Ceti.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
@@ -584,7 +586,7 @@ public class ScannedBodyInfoParser {
             }
             try {
                 // Pattern: #,##0.0000
-                BigDecimal min = new BigDecimal("0.1148"); // Screenshot: 2016-10-01 20-50-34 HIP 30953.png
+                BigDecimal min = new BigDecimal("0.0111"); // Screenshot: 2016-10-02 06-57-48 Sirius.png
                 BigDecimal max = new BigDecimal("1.4673"); // Screenshot: 2016-10-03 13-26-06 76 Sigma Ceti.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
@@ -711,7 +713,7 @@ public class ScannedBodyInfoParser {
             }
             try {
                 // Pattern: 0.00G
-                BigDecimal min = new BigDecimal("0.02"); // Screenshot: 2016-09-28 07-43-24 Sol.png
+                BigDecimal min = new BigDecimal("0.01"); // Screenshot: 2016-09-28 07-43-22 Sol.png
                 BigDecimal max = new BigDecimal("20.61"); // Screenshot: 2016-10-03 22-58-36 FT Ceti.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
@@ -1014,7 +1016,7 @@ public class ScannedBodyInfoParser {
             try {
                 // Pattern: 0.0000
                 BigDecimal min = new BigDecimal("0.0000"); // Screenshot: 2016-10-03 08-40-26 V2689 Orionis.png
-                BigDecimal max = new BigDecimal("0.3995"); // Screenshot: 2016-09-28 07-47-11 LHS 380.png
+                BigDecimal max = new BigDecimal("0.5923"); // Screenshot: 2016-10-02 06-57-48 Sirius.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
@@ -1551,20 +1553,10 @@ public class ScannedBodyInfoParser {
         LinkedHashMap<String, BigDecimal> fixedPercentages = new LinkedHashMap<>(wrongPercentages);
 
         // 6, 8 and 9 can be messed up.
+        // TODO 5 and 9 also?
         // Try to fix the sum by changing ONE (only ONE!) of them.
         for (String name : wrongPercentages.keySet()) {
             BigDecimal scannedPercentage = wrongPercentages.get(name);
-
-            if (scannedPercentage.toString().contains("6")) {
-                fixedPercentages.put(name, new BigDecimal(scannedPercentage.toString().replaceFirst("6", "8")));
-                if (sumOfPercentages(fixedPercentages).doubleValue() == 100.0) {
-                    return fixedPercentages; // I fixed it!
-                }
-                fixedPercentages.put(name, new BigDecimal(scannedPercentage.toString().replaceFirst("6", "9")));
-                if (sumOfPercentages(fixedPercentages).doubleValue() == 100.0) {
-                    return fixedPercentages; // I fixed it!
-                }
-            }
 
             if (scannedPercentage.toString().contains("8")) {
                 fixedPercentages.put(name, new BigDecimal(scannedPercentage.toString().replaceFirst("8", "6")));
@@ -1572,6 +1564,17 @@ public class ScannedBodyInfoParser {
                     return fixedPercentages; // I fixed it!
                 }
                 fixedPercentages.put(name, new BigDecimal(scannedPercentage.toString().replaceFirst("8", "9")));
+                if (sumOfPercentages(fixedPercentages).doubleValue() == 100.0) {
+                    return fixedPercentages; // I fixed it!
+                }
+            }
+
+            if (scannedPercentage.toString().contains("6")) {
+                fixedPercentages.put(name, new BigDecimal(scannedPercentage.toString().replaceFirst("6", "8")));
+                if (sumOfPercentages(fixedPercentages).doubleValue() == 100.0) {
+                    return fixedPercentages; // I fixed it!
+                }
+                fixedPercentages.put(name, new BigDecimal(scannedPercentage.toString().replaceFirst("6", "9")));
                 if (sumOfPercentages(fixedPercentages).doubleValue() == 100.0) {
                     return fixedPercentages; // I fixed it!
                 }

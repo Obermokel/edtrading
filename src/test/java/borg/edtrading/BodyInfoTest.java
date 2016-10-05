@@ -53,7 +53,7 @@ public class BodyInfoTest {
         List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
         //File sourceFile = selectRandomScreenshot();
-        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-30 16-56-39 HIP 2453.png");
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-28 07-43-05 Sol.png");
         for (File sourceFile : selectAllScreenshots()) {
             String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
             StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
@@ -63,14 +63,8 @@ public class BodyInfoTest {
             BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
             BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
             bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
-            //            ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
-            //        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
-            //            ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
             BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
             bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
-            //            ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
-            //        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
-            //            ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
             //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
             //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
@@ -85,18 +79,26 @@ public class BodyInfoTest {
             //                logger.warn("!!! " + sourceFile.getName() + " !!! " + msg + " !!!");
             //            }
 
+            //        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
             //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
+            //        ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
+            //        ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
+
+            //        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
             //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
+            //        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
+            //        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
             templates = copyLearnedChars();
 
-            //System.out.println(scannedBodyInfo);
+            //        System.out.println(scannedBodyInfo);
             //            BodyInfoApp.printStats(scannedBodyInfos);
         }
     }
 
     private static List<Template> copyLearnedChars() throws IOException {
         final Random random = new Random(System.currentTimeMillis());
+        List<String> learned = new ArrayList<>();
         File[] subdirs = Constants.AUTO_LEARNED_DIR.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {
@@ -124,10 +126,15 @@ public class BodyInfoTest {
                     File randomPngFile = pngFiles[random.nextInt(pngFiles.length)];
                     File targetDir = new File(Constants.TEMPLATES_DIR, "Body Info\\" + subdir.getName());
                     FileUtils.copyFileToDirectory(randomPngFile, targetDir);
+                    learned.add(text);
                 }
             }
             // Clean auto-learned
             FileUtils.cleanDirectory(Constants.AUTO_LEARNED_DIR);
+        }
+
+        if (learned.size() > 0) {
+            logger.debug("Learned " + learned.size() + " new char(s): " + learned);
         }
 
         return TemplateMatcher.loadTemplates("Body Info");
