@@ -1,6 +1,8 @@
 package borg.edtrading.ocr;
 
+import borg.edtrading.Constants;
 import borg.edtrading.boofcv.TemplateMatch;
+import borg.edtrading.boofcv.TemplateMatcher;
 import borg.edtrading.data.Body;
 import borg.edtrading.data.BodyInfo;
 import borg.edtrading.data.Item;
@@ -11,12 +13,16 @@ import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import javax.imageio.ImageIO;
 
 /**
  * ScannedBodyInfoParser
@@ -32,32 +38,32 @@ public class ScannedBodyInfoParser {
     public static ScannedBodyInfo fromScannedAndSortedWords(String screenshotFilename, String systemName, List<MatchGroup> bodyNameWords, List<MatchGroup> bodyInfoWords, List<Body> eddbBodies) {
         currentScreenshotFilename = screenshotFilename;
 
+        ScannedBodyInfo scannedBodyInfo = new ScannedBodyInfo(screenshotFilename, systemName);
+
         List<TemplateMatch> bodyInfoMatches = new ArrayList<>();
         for (MatchGroup mg : bodyInfoWords) {
             bodyInfoMatches.addAll(mg.getGroupMatches());
         }
 
-        // The body group (star/planet/belt/rings) determines which labels/values can occur.
-        BodyInfo bodyGroup = null;
-
         // Store the indexes of all labels. This allows us to later extract the values. In most cases we have label, value, label, value, ...
         SortedMap<Integer, String> sortedLabelIndexes = new TreeMap<>();
 
         // The first expected label is the body mass. This also allows us to decide which group the body belongs to.
+        // The body group (star/planet/belt/rings) then determines which labels/values can occur.
         if (findAndRemove("SOLARMASSES:", bodyInfoMatches, sortedLabelIndexes) != null) {
-            bodyGroup = BodyInfo.GROUP_STAR;
+            scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_STAR);
         } else if (findAndRemove("EARTHMASSES:", bodyInfoMatches, sortedLabelIndexes) != null) {
-            bodyGroup = BodyInfo.GROUP_PLANET;
+            scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_PLANET);
         } else if (findAndRemove("MOONMASSES:", bodyInfoMatches, sortedLabelIndexes) != null) {
-            bodyGroup = BodyInfo.GROUP_BELT;
+            scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_BELT);
         } else {
             // None of the three above most likely means a scrolled-down screenshot of the rings of a body.
             // Could be a planet, but could also be a dwarf star...
-            bodyGroup = BodyInfo.GROUP_RINGS;
+            scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_RINGS);
         }
 
         // The other labels depend on the body group.
-        if (bodyGroup == BodyInfo.GROUP_STAR) {
+        if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_STAR) {
             // TODO Parse star class from description text
             findAndRemove("AGE:", bodyInfoMatches, 0, indexOf("SOLARMASSES:", sortedLabelIndexes), "", sortedLabelIndexes); // Age unfortunately is before solar masses, so explicitly search from index 0...
             findAndRemove("SOLARRADIUS:", bodyInfoMatches, sortedLabelIndexes);
@@ -70,7 +76,7 @@ public class ScannedBodyInfoParser {
             findAndRemove("STARCATALOGUEID:", bodyInfoMatches, sortedLabelIndexes);
             findAndRemove("GLIESE:", bodyInfoMatches, sortedLabelIndexes);
             findAndRemove("HIPP:", bodyInfoMatches, sortedLabelIndexes);
-        } else if (bodyGroup == BodyInfo.GROUP_PLANET) {
+        } else if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_PLANET) {
             for (BodyInfo bi : BodyInfo.byPrefix("RESERVES_")) {
                 String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
                 if (findAndRemove(nameWithoutSpaces, bodyInfoMatches, 0, indexOf("EARTHMASSES:", sortedLabelIndexes), "RESERVES_", sortedLabelIndexes) != null) { // Reserves unfortunately is before earth masses, so explicitly search from index 0...
@@ -132,7 +138,7 @@ public class ScannedBodyInfoParser {
                     findAndRemove(nameWithoutSpaces, bodyInfoMatches, idxPlanetMaterials, idxAfter, "PLANET_MATERIAL_", sortedLabelIndexes);
                 }
             }
-        } else if (bodyGroup == BodyInfo.GROUP_BELT) {
+        } else if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_BELT) {
             for (BodyInfo bi : BodyInfo.byPrefix("RESERVES_")) {
                 String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
                 if (findAndRemove(nameWithoutSpaces, bodyInfoMatches, 0, indexOf("MOONMASSES:", sortedLabelIndexes), "RESERVES_", sortedLabelIndexes) != null) { // Reserves unfortunately is before moon masses, so explicitly search from index 0...
@@ -155,36 +161,36 @@ public class ScannedBodyInfoParser {
             findAndRemove("ARGOFPERIAPSIS:", bodyInfoMatches, sortedLabelIndexes);
         }
 
-        if (bodyGroup == BodyInfo.GROUP_RINGS || bodyGroup == BodyInfo.GROUP_PLANET || bodyGroup == BodyInfo.GROUP_STAR) {
+        if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_RINGS || scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_PLANET || scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_STAR) {
             // Either a rings-only screenshot, or a body which can have rings
             // TODO Scan rings
         }
 
         // Now that we have all labels we can start to parse the values
-        if (bodyGroup == BodyInfo.GROUP_STAR) {
+        if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_STAR) {
             // TODO ...
-        } else if (bodyGroup == BodyInfo.GROUP_PLANET) {
-            BigDecimal earthMasses = fixAndRemoveEarthMasses("EARTHMASSES:", bodyInfoMatches, sortedLabelIndexes);
-            BigDecimal radius = fixAndRemoveRadius("RADIUS:", bodyInfoMatches, sortedLabelIndexes);
-            BigDecimal gravity = fixAndRemoveGravity("GRAVITY:", bodyInfoMatches, sortedLabelIndexes);
-            BigDecimal surfaceTemp = fixAndRemoveSurfaceTemp("SURFACETEMP:", bodyInfoMatches, sortedLabelIndexes);
+        } else if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_PLANET) {
+            scannedBodyInfo.setEarthMasses(fixAndRemoveEarthMasses("EARTHMASSES:", bodyInfoMatches, sortedLabelIndexes));
+            scannedBodyInfo.setRadiusKm(fixAndRemoveRadius("RADIUS:", bodyInfoMatches, sortedLabelIndexes));
+            scannedBodyInfo.setGravityG(fixAndRemoveGravity("GRAVITY:", bodyInfoMatches, sortedLabelIndexes));
+            scannedBodyInfo.setSurfaceTempK(fixAndRemoveSurfaceTemp("SURFACETEMP:", bodyInfoMatches, sortedLabelIndexes));
             //            BigDecimal surfacePressure = fixAndRemoveEarthMasses("SURFACEPRESSURE:", bodyInfoMatches, sortedLabelIndexes);
-            //            BodyInfo volcanism = fixAndRemoveEarthMasses("VOLCANISM:", bodyInfoMatches, sortedLabelIndexes);
-            //            BodyInfo atmosphereType = fixAndRemoveEarthMasses("ATMOSPHERETYPE:", bodyInfoMatches, sortedLabelIndexes);
+            scannedBodyInfo.setVolcanism(lookupFixedAndRemovedEnum("VOLCANISM_", bodyInfoMatches, sortedLabelIndexes));
+            scannedBodyInfo.setAtmosphereType(lookupFixedAndRemovedEnum("ATMOSPHERE_TYPE_", bodyInfoMatches, sortedLabelIndexes));
             //            Object atmosphere = fixAndRemoveEarthMasses("ATMOSPHERE:", bodyInfoMatches, sortedLabelIndexes); // TODO ...
             //            Object composition = fixAndRemoveEarthMasses("COMPOSITION:", bodyInfoMatches, sortedLabelIndexes); // TODO ...
-            //            BigDecimal orbitalPeriod = fixAndRemoveEarthMasses("ORBITALPERIOD:", bodyInfoMatches, sortedLabelIndexes);
-            //            BigDecimal semiMajorAxis = fixAndRemoveEarthMasses("SEMIMAJORAXIS:", bodyInfoMatches, sortedLabelIndexes);
-            //            BigDecimal orbitalEccentricity = fixAndRemoveEarthMasses("ORBITALECCENTRICITY:", bodyInfoMatches, sortedLabelIndexes);
-            //            BigDecimal orbitalInclination = fixAndRemoveEarthMasses("ORBITALINCLINATION:", bodyInfoMatches, sortedLabelIndexes);
-            //            BigDecimal argOfPeriapsis = fixAndRemoveEarthMasses("ARGOFPERIAPSIS:", bodyInfoMatches, sortedLabelIndexes);
-            //            BigDecimal rotationalPeriod = fixAndRemoveEarthMasses("ROTATIONALPERIOD:", bodyInfoMatches, sortedLabelIndexes);
+            scannedBodyInfo.setOrbitalPeriodD(fixAndRemoveOrbitalPeriod("ORBITALPERIOD:", bodyInfoMatches, sortedLabelIndexes));
+            scannedBodyInfo.setSemiMajorAxisAU(fixAndRemoveSemiMajorAxis("SEMIMAJORAXIS:", bodyInfoMatches, sortedLabelIndexes));
+            scannedBodyInfo.setOrbitalEccentricity(fixAndRemoveOrbitalEccentricity("ORBITALECCENTRICITY:", bodyInfoMatches, sortedLabelIndexes));
+            scannedBodyInfo.setOrbitalInclinationDeg(fixAndRemoveOrbitalInclination("ORBITALINCLINATION:", bodyInfoMatches, sortedLabelIndexes));
+            scannedBodyInfo.setArgOfPeriapsisDeg(fixAndRemoveArgOfPeriapsis("ARGOFPERIAPSIS:", bodyInfoMatches, sortedLabelIndexes));
+            scannedBodyInfo.setRotationalPeriodD(fixAndRemoveRotationalPeriod("ROTATIONALPERIOD:", bodyInfoMatches, sortedLabelIndexes));
             //            Boolean tidallyLocked = fixAndRemoveEarthMasses("(TIDALLYLOCKED)", bodyInfoMatches, sortedLabelIndexes); // TODO ...
-            BigDecimal axialTilt = fixAndRemoveAxialTilt("AXIALTILT:", bodyInfoMatches, sortedLabelIndexes);
+            scannedBodyInfo.setAxialTiltDeg(fixAndRemoveAxialTilt("AXIALTILT:", bodyInfoMatches, sortedLabelIndexes));
             //            Object planetMaterials = fixAndRemoveEarthMasses("PLANETMATERIALS:", bodyInfoMatches, sortedLabelIndexes); // TODO ...
-        } else if (bodyGroup == BodyInfo.GROUP_BELT) {
+        } else if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_BELT) {
             // TODO ...
-        } else if (bodyGroup == BodyInfo.GROUP_RINGS) {
+        } else if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_RINGS) {
             // TODO ...
         }
 
@@ -200,7 +206,39 @@ public class ScannedBodyInfoParser {
         }
         System.out.println();
 
-        return null; // TODO
+        learnWronglyDetectedChars(bodyInfoMatches);
+
+        return scannedBodyInfo;
+    }
+
+    private static void learnWronglyDetectedChars(List<TemplateMatch> fixedMatches) {
+        for (TemplateMatch m : fixedMatches) {
+            if (m != null && m.getShouldHaveBeen() != null) {
+                // We know what it should have been
+                if (!m.getShouldHaveBeen().equals(m.getTemplate().getText())) {
+                    // It is NOT what it should have been
+                    if (!is0vsO(m.getShouldHaveBeen(), m.getTemplate().getText()) || Constants.LEARN_0_VS_O) {
+                        // It is totally wrong, or we are allowed to learn difficult chars like 0<->O
+                        String folderName = TemplateMatcher.textToFolder(m.getShouldHaveBeen());
+                        File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, folderName);
+                        autoLearnFolder.mkdirs();
+                        try {
+                            ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "LEARNED#" + folderName + "#" + m.getMatch().x + "#" + m.getMatch().y + "#" + currentScreenshotFilename));
+                            logger.trace("Learned new '" + m.getShouldHaveBeen() + "' from " + currentScreenshotFilename);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean is0vsO(String shouldHaveBeen, String actuallyIs) {
+        boolean is0vsO = ("0".equals(shouldHaveBeen) && "O".equals(actuallyIs)) || ("O".equals(shouldHaveBeen) && "0".equals(actuallyIs));
+        boolean isIvsl = ("I".equals(shouldHaveBeen) && "l".equals(actuallyIs)) || ("l".equals(shouldHaveBeen) && "I".equals(actuallyIs));
+
+        return is0vsO || isIvsl;
     }
 
     private static Integer indexOf(String label, SortedMap<Integer, String> sortedLabelIndexes) {
@@ -394,8 +432,24 @@ public class ScannedBodyInfoParser {
 
     private static String lastCharsToUnit(String text, String unit) {
         String fixedText = text;
-        if (fixedText.length() >= unit.length()) {
-            fixedText = fixedText.substring(0, fixedText.length() - unit.length()) + unit;
+        if (fixedText.length() > unit.length()) {
+            // Only fix if the last scanned chars are not digits
+            String scannedUnit = fixedText.substring(fixedText.length() - unit.length());
+            if (!scannedUnit.matches("\\d+")) {
+                fixedText = fixedText.substring(0, fixedText.length() - unit.length()) + unit;
+            }
+        }
+        return fixedText;
+    }
+
+    private static String maybeFirstCharToSign(String text) {
+        String fixedText = text;
+        if (fixedText.length() > 1) {
+            // Only fix if the first scanned char is not a digit
+            String scannedSign = fixedText.substring(0, 1);
+            if (!scannedSign.matches("\\d+")) {
+                fixedText = "-" + fixedText.substring(1);
+            }
         }
         return fixedText;
     }
@@ -454,7 +508,7 @@ public class ScannedBodyInfoParser {
             try {
                 // Pattern: #,##0KM
                 BigDecimal min = new BigDecimal("282"); // Screenshot: 2016-10-02 07-29-22 Dahan.png
-                BigDecimal max = new BigDecimal("77543"); // Screenshot: 2016-10-02 11-24-03 LHS 3505.png
+                BigDecimal max = new BigDecimal("78930"); // Screenshot: 2016-09-30 17-22-30 Deciat.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousands(fixedText);
@@ -539,7 +593,7 @@ public class ScannedBodyInfoParser {
             }
             try {
                 // Pattern: #,##0K
-                BigDecimal min = new BigDecimal("29"); // Screenshot: 2016-10-01 22-08-03 Devataru.png
+                BigDecimal min = new BigDecimal("20"); // Screenshot: 2016-10-01 22-22-54 Damocan.png
                 BigDecimal max = new BigDecimal("3286"); // Screenshot: 2016-10-02 07-15-50 Aulis.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
@@ -549,6 +603,264 @@ public class ScannedBodyInfoParser {
                     throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
                 } else {
                     String parseableText = fixedText.replace(",", "").replace("K", ""); // Remove all thousands separators and units
+                    BigDecimal value = new BigDecimal(parseableText);
+                    if (value.compareTo(min) < 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
+                    } else if (value.compareTo(max) > 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is above the allowed maximum " + label.toLowerCase().replace(":", "") + " of " + max);
+                    } else {
+                        // Set shouldHaveBeen, effectively removing the matches
+                        for (int i = startIndex; i < endIndex; i++) {
+                            char shouldHaveBeen = fixedText.charAt(i - startIndex);
+                            matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+                        }
+                        // Return the result
+                        return value;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+            }
+        }
+        return null;
+    }
+
+    private static BigDecimal fixAndRemoveOrbitalPeriod(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+        Integer labelIndex = indexOf(label, sortedLabelIndexes);
+        if (labelIndex != null) {
+            int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
+            int startIndex = labelIndex + label.length();
+            StringBuilder scannedText = new StringBuilder();
+            for (int i = startIndex; i < endIndex; i++) {
+                scannedText.append(matches.get(i).getTemplate().getText());
+            }
+            try {
+                // Pattern: #,##0.0D
+                BigDecimal min = new BigDecimal("1.1"); // Screenshot: 2016-09-28 07-48-06 LHS 380.png
+                BigDecimal max = new BigDecimal("9416.9"); // Screenshot: 2016-09-30 17-22-30 Deciat.png
+                String fixedText = scannedText.toString();
+                fixedText = fixedText.replace("O", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
+                fixedText = allSeparatorsToThousandsExceptLast(fixedText);
+                fixedText = lastCharsToUnit(fixedText, "D");
+                if (!fixedText.matches("(\\d{1,3})(,\\d{3})*\\.\\d{1}D")) {
+                    throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
+                } else {
+                    String parseableText = fixedText.replace(",", "").replace("D", ""); // Remove all thousands separators and units
+                    BigDecimal value = new BigDecimal(parseableText);
+                    if (value.compareTo(min) < 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
+                    } else if (value.compareTo(max) > 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is above the allowed maximum " + label.toLowerCase().replace(":", "") + " of " + max);
+                    } else {
+                        // Set shouldHaveBeen, effectively removing the matches
+                        for (int i = startIndex; i < endIndex; i++) {
+                            char shouldHaveBeen = fixedText.charAt(i - startIndex);
+                            matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+                        }
+                        // Return the result
+                        return value;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+            }
+        }
+        return null;
+    }
+
+    private static BigDecimal fixAndRemoveSemiMajorAxis(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+        Integer labelIndex = indexOf(label, sortedLabelIndexes);
+        if (labelIndex != null) {
+            int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
+            int startIndex = labelIndex + label.length();
+            StringBuilder scannedText = new StringBuilder();
+            for (int i = startIndex; i < endIndex; i++) {
+                scannedText.append(matches.get(i).getTemplate().getText());
+            }
+            try {
+                // Pattern: 0.00AU
+                BigDecimal min = new BigDecimal("0.00"); // Screenshot: 2016-10-02 07-32-11 Wyrd.png
+                BigDecimal max = new BigDecimal("8.03"); // Screenshot: 2016-09-30 17-22-30 Deciat.png
+                String fixedText = scannedText.toString();
+                fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
+                fixedText = allSeparatorsToThousandsExceptLast(fixedText);
+                fixedText = lastCharsToUnit(fixedText, "AU");
+                if (!fixedText.matches("\\d{1,3}\\.\\d{2}AU")) {
+                    throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
+                } else {
+                    String parseableText = fixedText.replace(",", "").replace("AU", ""); // Remove all thousands separators and units
+                    BigDecimal value = new BigDecimal(parseableText);
+                    if (value.compareTo(min) < 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
+                    } else if (value.compareTo(max) > 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is above the allowed maximum " + label.toLowerCase().replace(":", "") + " of " + max);
+                    } else {
+                        // Set shouldHaveBeen, effectively removing the matches
+                        for (int i = startIndex; i < endIndex; i++) {
+                            char shouldHaveBeen = fixedText.charAt(i - startIndex);
+                            matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+                        }
+                        // Return the result
+                        return value;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+            }
+        }
+        return null;
+    }
+
+    private static BigDecimal fixAndRemoveOrbitalEccentricity(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+        Integer labelIndex = indexOf(label, sortedLabelIndexes);
+        if (labelIndex != null) {
+            int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
+            int startIndex = labelIndex + label.length();
+            StringBuilder scannedText = new StringBuilder();
+            for (int i = startIndex; i < endIndex; i++) {
+                scannedText.append(matches.get(i).getTemplate().getText());
+            }
+            try {
+                // Pattern: 0.0000
+                BigDecimal min = new BigDecimal("0.0000"); // Screenshot: 2016-10-03 08-40-26 V2689 Orionis.png
+                BigDecimal max = new BigDecimal("0.1927"); // Screenshot: 2016-09-28 08-07-09 CD-35 9019.png
+                String fixedText = scannedText.toString();
+                fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
+                fixedText = allSeparatorsToThousandsExceptLast(fixedText);
+                if (!fixedText.matches("\\d{1,3}\\.\\d{4}")) {
+                    throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
+                } else {
+                    String parseableText = fixedText.replace(",", ""); // Remove all thousands separators and units
+                    BigDecimal value = new BigDecimal(parseableText);
+                    if (value.compareTo(min) < 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
+                    } else if (value.compareTo(max) > 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is above the allowed maximum " + label.toLowerCase().replace(":", "") + " of " + max);
+                    } else {
+                        // Set shouldHaveBeen, effectively removing the matches
+                        for (int i = startIndex; i < endIndex; i++) {
+                            char shouldHaveBeen = fixedText.charAt(i - startIndex);
+                            matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+                        }
+                        // Return the result
+                        return value;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+            }
+        }
+        return null;
+    }
+
+    private static BigDecimal fixAndRemoveOrbitalInclination(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+        Integer labelIndex = indexOf(label, sortedLabelIndexes);
+        if (labelIndex != null) {
+            int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
+            int startIndex = labelIndex + label.length();
+            StringBuilder scannedText = new StringBuilder();
+            for (int i = startIndex; i < endIndex; i++) {
+                scannedText.append(matches.get(i).getTemplate().getText());
+            }
+            try {
+                // Pattern: 0.00° (-180°..+180°)
+                BigDecimal min = new BigDecimal("-180.00"); // Screenshot: ?
+                BigDecimal max = new BigDecimal("180.00"); // Screenshot: ?
+                String fixedText = scannedText.toString();
+                fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
+                fixedText = allSeparatorsToThousandsExceptLast(fixedText);
+                fixedText = lastCharsToUnit(fixedText, "°");
+                fixedText = maybeFirstCharToSign(fixedText);
+                if (!fixedText.matches("\\-?\\d{1,3}\\.\\d{2}°?")) {
+                    throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
+                } else {
+                    String parseableText = fixedText.replace(",", "").replace("°", ""); // Remove all thousands separators and units
+                    BigDecimal value = new BigDecimal(parseableText);
+                    if (value.compareTo(min) < 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
+                    } else if (value.compareTo(max) > 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is above the allowed maximum " + label.toLowerCase().replace(":", "") + " of " + max);
+                    } else {
+                        // Set shouldHaveBeen, effectively removing the matches
+                        for (int i = startIndex; i < endIndex; i++) {
+                            char shouldHaveBeen = fixedText.charAt(i - startIndex);
+                            matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+                        }
+                        // Return the result
+                        return value;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+            }
+        }
+        return null;
+    }
+
+    private static BigDecimal fixAndRemoveArgOfPeriapsis(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+        Integer labelIndex = indexOf(label, sortedLabelIndexes);
+        if (labelIndex != null) {
+            int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
+            int startIndex = labelIndex + label.length();
+            StringBuilder scannedText = new StringBuilder();
+            for (int i = startIndex; i < endIndex; i++) {
+                scannedText.append(matches.get(i).getTemplate().getText());
+            }
+            try {
+                // Pattern: 0.00° (0°..360°)
+                BigDecimal min = new BigDecimal("0.00"); // Screenshot: ?
+                BigDecimal max = new BigDecimal("360.00"); // Screenshot: ?
+                String fixedText = scannedText.toString();
+                fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
+                fixedText = allSeparatorsToThousandsExceptLast(fixedText);
+                fixedText = lastCharsToUnit(fixedText, "°");
+                if (!fixedText.matches("\\d{1,3}\\.\\d{2}°?")) {
+                    throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
+                } else {
+                    String parseableText = fixedText.replace(",", "").replace("°", ""); // Remove all thousands separators and units
+                    BigDecimal value = new BigDecimal(parseableText);
+                    if (value.compareTo(min) < 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
+                    } else if (value.compareTo(max) > 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is above the allowed maximum " + label.toLowerCase().replace(":", "") + " of " + max);
+                    } else {
+                        // Set shouldHaveBeen, effectively removing the matches
+                        for (int i = startIndex; i < endIndex; i++) {
+                            char shouldHaveBeen = fixedText.charAt(i - startIndex);
+                            matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+                        }
+                        // Return the result
+                        return value;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+            }
+        }
+        return null;
+    }
+
+    private static BigDecimal fixAndRemoveRotationalPeriod(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+        Integer labelIndex = indexOf(label, sortedLabelIndexes);
+        if (labelIndex != null) {
+            int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
+            int startIndex = labelIndex + label.length();
+            StringBuilder scannedText = new StringBuilder();
+            for (int i = startIndex; i < endIndex; i++) {
+                scannedText.append(matches.get(i).getTemplate().getText());
+            }
+            try {
+                // Pattern: 0.0D
+                BigDecimal min = new BigDecimal("0.4"); // Screenshot: 2016-10-01 22-11-30 Giryak.png
+                BigDecimal max = new BigDecimal("213.4"); // Screenshot: 2016-10-02 11-24-29 LHS 3505.png
+                String fixedText = scannedText.toString();
+                fixedText = fixedText.replace("O", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
+                fixedText = allSeparatorsToThousandsExceptLast(fixedText);
+                fixedText = lastCharsToUnit(fixedText, "D");
+                if (!fixedText.matches("\\d{1,3}\\.\\d{1}D")) {
+                    throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
+                } else {
+                    String parseableText = fixedText.replace(",", "").replace("D", ""); // Remove all thousands separators and units
                     BigDecimal value = new BigDecimal(parseableText);
                     if (value.compareTo(min) < 0) {
                         throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
@@ -581,14 +893,15 @@ public class ScannedBodyInfoParser {
                 scannedText.append(matches.get(i).getTemplate().getText());
             }
             try {
-                // Pattern: 0.00°
-                BigDecimal min = new BigDecimal("-100"); // Screenshot: TODO
-                BigDecimal max = new BigDecimal("171.06"); // Screenshot: 2016-10-01 22-08-03 Devataru.png
+                // Pattern: 0.00° (-180°..+180°)
+                BigDecimal min = new BigDecimal("-180.00"); // Screenshot: ?
+                BigDecimal max = new BigDecimal("180.00"); // Screenshot: ?
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
                 fixedText = lastCharsToUnit(fixedText, "°");
-                if (!fixedText.matches("\\-?\\d{1,3}\\.\\d{2}°")) {
+                fixedText = maybeFirstCharToSign(fixedText);
+                if (!fixedText.matches("\\-?\\d{1,3}\\.\\d{2}°?")) {
                     throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
                 } else {
                     String parseableText = fixedText.replace(",", "").replace("°", ""); // Remove all thousands separators and units
@@ -609,6 +922,19 @@ public class ScannedBodyInfoParser {
                 }
             } catch (Exception e) {
                 logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+            }
+        }
+        return null;
+    }
+
+    private static BodyInfo lookupFixedAndRemovedEnum(String prefix, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+        // This is an enum and has either already been fixed and removed, or was not fixable
+        // Just look it up
+        for (BodyInfo bi : BodyInfo.byPrefix(prefix)) {
+            String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
+            Integer enumIndex = indexOf(prefix + nameWithoutSpaces, sortedLabelIndexes);
+            if (enumIndex != null) {
+                return bi;
             }
         }
         return null;

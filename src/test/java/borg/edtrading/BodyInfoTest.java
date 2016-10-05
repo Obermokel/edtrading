@@ -82,8 +82,8 @@ public class BodyInfoTest {
             List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates, sourceFile.getName());
             List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates, sourceFile.getName());
             //        ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
-            //        scannedBodyInfos.add(scannedBodyInfo);
-            ScannedBodyInfoParser.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
+            ScannedBodyInfo scannedBodyInfo = ScannedBodyInfoParser.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
+            scannedBodyInfos.add(scannedBodyInfo);
             //            List<String> plausiMessages = BodyPlausiChecker.checkPlanet(scannedBodyInfo.getRadiusKm(), scannedBodyInfo.getEarthMasses(), scannedBodyInfo.getGravityG());
             //            for (String msg : plausiMessages) {
             //                logger.warn("!!! " + sourceFile.getName() + " !!! " + msg + " !!!");
@@ -92,7 +92,7 @@ public class BodyInfoTest {
             //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
             //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
 
-            //templates = copyLearnedChars();
+            templates = copyLearnedChars();
 
             //            System.out.println(scannedBodyInfo);
             //            BodyInfoApp.printStats(scannedBodyInfos);
@@ -111,11 +111,12 @@ public class BodyInfoTest {
             for (File subdir : subdirs) {
                 // Learn max 1 per type
                 String text = TemplateMatcher.folderToText(subdir.getName());
-                String learnFrom = "GUESSED#"; // By default learn from guessed
-                if ("0".equals(text) || "O".equals(text) || "I".equals(text) || "l".equals(text)) {
-                    learnFrom = "LEARNED#"; // Learn difficult chars from fixed names/values
-                    //learnFrom = "DONOTLEARN#";
-                }
+                String learnFrom = "LEARNED#";
+                //                String learnFrom = "GUESSED#"; // By default learn from guessed
+                //                if ("0".equals(text) || "O".equals(text) || "I".equals(text) || "l".equals(text)) {
+                //                    learnFrom = "LEARNED#"; // Learn difficult chars from fixed names/values
+                //                    //learnFrom = "DONOTLEARN#";
+                //                }
                 final String filePrefix = learnFrom;
                 File[] pngFiles = subdir.listFiles(new FileFilter() {
                     @Override

@@ -190,6 +190,11 @@ public class ScannedBodyInfo {
         return sb.toString().trim();
     }
 
+    public ScannedBodyInfo(String screenshotFilename, String systemName) {
+        this.setScreenshotFilename(screenshotFilename);
+        this.setSystemName(systemName);
+    }
+
     private ScannedBodyInfo(String screenshotFilename, String systemName, String bodyName, BodyInfo bodyType, BigDecimal distanceLs) {
         this.setScreenshotFilename(screenshotFilename);
         this.setSystemName(systemName);

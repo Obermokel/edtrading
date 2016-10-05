@@ -12,10 +12,11 @@
     </Appenders>
 
     <Loggers>
-        <logger name="borg" level="TRACE"></logger>
-        <logger name="borg.edtrading.boofcv.TemplateMatcher" level="DEBUG"></logger>
-        <logger name="borg.edtrading.data.ScannedBodyInfo" level="INFO"></logger>
-        <logger name="borg.edtrading.eddb.BodyUpdater" level="DEBUG"></logger>
+        <logger name="borg" level="DEBUG"></logger>
+        <!-- logger name="borg.edtrading.boofcv.TemplateMatcher" level="TRACE"></logger -->
+        <!-- logger name="borg.edtrading.data.ScannedBodyInfo" level="TRACE"></logger -->
+        <!-- logger name="borg.edtrading.eddb.BodyUpdater" level="TRACE"></logger -->
+        <!-- logger name="borg.edtrading.ocr.ScannedBodyInfoParser" level="TRACE"></logger -->
 
         <Root level="ERROR">
             <AppenderRef ref="STDOUT" />
