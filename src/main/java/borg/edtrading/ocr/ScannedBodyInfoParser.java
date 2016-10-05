@@ -77,10 +77,8 @@ public class ScannedBodyInfoParser {
                     break; // Expect only one hit
                 }
             }
-            Integer idxRadius = findAndRemove("RADIUS:", bodyInfoMatches, sortedLabelIndexes);
-            logger.debug("idxRadius=" + idxRadius);
-            Integer idxGravity = findAndRemove("GRAVITY:", bodyInfoMatches, sortedLabelIndexes);
-            logger.debug("idxGravity=" + idxGravity);
+            findAndRemove("RADIUS:", bodyInfoMatches, sortedLabelIndexes);
+            findAndRemove("GRAVITY:", bodyInfoMatches, sortedLabelIndexes);
             findAndRemove("SURFACETEMP:", bodyInfoMatches, sortedLabelIndexes);
             findAndRemove("SURFACEPRESSURE:", bodyInfoMatches, sortedLabelIndexes);
             if (findAndRemove("VOLCANISM:", bodyInfoMatches, sortedLabelIndexes) != null) {
@@ -447,11 +445,8 @@ public class ScannedBodyInfoParser {
     private static BigDecimal fixAndRemoveRadius(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
-            logger.debug("labelIndex=" + labelIndex);
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
-            logger.debug("endIndex=" + endIndex);
             int startIndex = labelIndex + label.length();
-            logger.debug("startIndex=" + startIndex);
             StringBuilder scannedText = new StringBuilder();
             for (int i = startIndex; i < endIndex; i++) {
                 scannedText.append(matches.get(i).getTemplate().getText());
@@ -502,7 +497,7 @@ public class ScannedBodyInfoParser {
             try {
                 // Pattern: 0.00G
                 BigDecimal min = new BigDecimal("0.02"); // Screenshot: 2016-09-28 07-43-24 Sol.png
-                BigDecimal max = new BigDecimal("5.58"); // Screenshot: 2016-10-02 11-24-03 LHS 3505.png
+                BigDecimal max = new BigDecimal("17.64"); // Screenshot: 2016-10-01 20-51-15 HIP 30953.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);

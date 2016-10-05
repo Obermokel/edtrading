@@ -147,6 +147,8 @@ public abstract class CharacterFinder {
     }
 
     private static List<Rectangle> extractCharBoxesFromTextLines(GrayF32 grayImage, List<Rectangle> textLineBoxes) {
+        final int maxNonBlack = 1;
+
         List<Rectangle> charBoxes = new ArrayList<>();
 
         for (Rectangle textLineBox : textLineBoxes) {
@@ -154,13 +156,13 @@ public abstract class CharacterFinder {
 
             while (x < Math.min(grayImage.width, textLineBox.x + textLineBox.width)) {
                 // Search for char start, which is the first vertical line which is not all black
-                boolean isAllBlack = true;
+                int nNonBlack = 0;
                 for (int y = Math.max(0, textLineBox.y); y < Math.min(grayImage.height, textLineBox.y + textLineBox.height); y++) {
                     if (grayImage.unsafe_get(x, y) != 0f) {
-                        isAllBlack = false;
-                        break;
+                        nNonBlack++;
                     }
                 }
+                boolean isAllBlack = nNonBlack <= maxNonBlack;
 
                 if (isAllBlack) {
                     x++; // Char not yet started
@@ -169,13 +171,13 @@ public abstract class CharacterFinder {
 
                     while (x < Math.min(grayImage.width, textLineBox.x + textLineBox.width)) {
                         // Search for char end, which is the first vertical line which again is all black
-                        isAllBlack = true;
+                        nNonBlack = 0;
                         for (int y = Math.max(0, textLineBox.y); y < Math.min(grayImage.height, textLineBox.y + textLineBox.height); y++) {
                             if (grayImage.unsafe_get(x, y) != 0f) {
-                                isAllBlack = false;
-                                break;
+                                nNonBlack++;
                             }
                         }
+                        isAllBlack = nNonBlack <= maxNonBlack;
 
                         if (!isAllBlack) {
                             x++; // Char not yet ended
