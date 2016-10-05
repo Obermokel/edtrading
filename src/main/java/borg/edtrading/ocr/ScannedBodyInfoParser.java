@@ -167,7 +167,7 @@ public class ScannedBodyInfoParser {
 
         // Now that we have all labels we can start to parse the values
         if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_STAR) {
-            scannedBodyInfo.setAge(fixAndRemoveAge("AGE:", bodyInfoMatches, sortedLabelIndexes));
+            scannedBodyInfo.setAgeMillionYears(fixAndRemoveAge("AGE:", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setSolarMasses(fixAndRemoveSolarMasses("SOLARMASSES:", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setSolarRadius(fixAndRemoveSolarRadius("SOLARRADIUS:", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setSurfaceTempK(fixAndRemoveSurfaceTemp("SURFACETEMP:", bodyInfoMatches, sortedLabelIndexes));
@@ -500,13 +500,13 @@ public class ScannedBodyInfoParser {
                 scannedText.append(matches.get(i).getTemplate().getText());
             }
             try {
-                // Pattern: #,##0.000
-                BigDecimal min = new BigDecimal("1.720"); // Screenshot: 2016-10-01 20-50-34 HIP 30953.png
-                BigDecimal max = new BigDecimal("500.000"); // Screenshot: ?
+                // Pattern: #,##0
+                BigDecimal min = new BigDecimal("42"); // Screenshot: 2016-10-03 11-50-29 Arare.png
+                BigDecimal max = new BigDecimal("10000"); // Screenshot: ?
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
-                fixedText = allSeparatorsToThousandsExceptLast(fixedText);
-                if (!fixedText.matches("(\\d{1,3})(,\\d{3})*\\.\\d{3}")) {
+                fixedText = allSeparatorsToThousands(fixedText);
+                if (!fixedText.matches("(\\d{1,3})(,\\d{3})*")) {
                     throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
                 } else {
                     String parseableText = fixedText.replace(",", ""); // Remove all thousands separators and units
@@ -756,7 +756,7 @@ public class ScannedBodyInfoParser {
             try {
                 // Pattern: #,##0K (planets) or #,##0.00K (stars)
                 BigDecimal min = new BigDecimal("20"); // Screenshot: 2016-10-01 22-22-54 Damocan.png
-                BigDecimal max = new BigDecimal("4314"); // Screenshot: 2016-10-03 12-03-41 Zeaex.png
+                BigDecimal max = new BigDecimal("5492"); // Screenshot: 2016-10-02 10-13-16 Pongo.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 // Cannot do this because stars have decimal places... fixedText = allSeparatorsToThousands(fixedText);

@@ -68,7 +68,7 @@ public class ScannedBodyInfo {
     // * Star
     // !no distance if arrival!
     // Class G stars are...
-    private BigDecimal age = null;
+    private BigDecimal ageMillionYears = null;
     private BigDecimal solarMasses = null;
     private BigDecimal solarRadius = null;
     private BodyInfo bodyType = null; // Rocky, Icy, HMC, ...
@@ -118,7 +118,7 @@ public class ScannedBodyInfo {
         if (this.getSystemReserves() != null) {
             sb.append(this.getSystemReserves().getName()).append("\n");
         }
-        sb.append(String.format(Locale.US, "%-21s\t%.3fM YEARS", "AGE:", this.getAge())).append("\n");
+        sb.append(String.format(Locale.US, "%-21s\t%.3fM YEARS", "AGE:", this.getAgeMillionYears())).append("\n");
         if (this.getSolarMasses() != null) {
             sb.append(String.format(Locale.US, "%-21s\t%.4f", "SOLAR MASSES:", this.getSolarMasses())).append("\n");
         } else if (this.getMoonMasses() != null) {
@@ -1375,12 +1375,12 @@ public class ScannedBodyInfo {
         this.bodyGroup = bodyGroup;
     }
 
-    public BigDecimal getAge() {
-        return this.age;
+    public BigDecimal getAgeMillionYears() {
+        return this.ageMillionYears;
     }
 
-    public void setAge(BigDecimal age) {
-        this.age = age;
+    public void setAgeMillionYears(BigDecimal ageMillionYears) {
+        this.ageMillionYears = ageMillionYears;
     }
 
     public BigDecimal getSolarMasses() {
