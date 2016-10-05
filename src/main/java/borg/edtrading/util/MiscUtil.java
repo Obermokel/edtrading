@@ -357,6 +357,18 @@ public abstract class MiscUtil {
         return defaultValue;
     }
 
+    public static void sortMapByValueReverse(LinkedHashMap map) {
+        MiscUtil.sortMapByValue(map, null, true);
+    }
+
+    public static void sortMapByValue(LinkedHashMap map) {
+        MiscUtil.sortMapByValue(map, null, false);
+    }
+
+    public static void sortMapByValue(LinkedHashMap map, Comparator comparator) {
+        MiscUtil.sortMapByValue(map, null, false);
+    }
+
     /**
      * Sorts a map by its values. The map must be a <code>LinkedHashMap</code>, because only this type of map has a predictable iteration order.
      *
@@ -367,7 +379,7 @@ public abstract class MiscUtil {
      * @since 3.5
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static void sortMapByValue(LinkedHashMap map, Comparator comparator) {
+    private static void sortMapByValue(LinkedHashMap map, Comparator comparator, boolean reverse) {
         // Make two copies of the original map: A list of all keys and one of all values
         List mapKeys = new ArrayList(map.keySet());
         List mapValues = new ArrayList(map.values());
@@ -376,6 +388,9 @@ public abstract class MiscUtil {
         List sortedValues = new ArrayList();
         sortedValues.addAll(mapValues);
         Collections.sort(sortedValues, comparator);
+        if (reverse) {
+            Collections.reverse(sortedValues);
+        }
 
         // Clear the original map
         map.clear();

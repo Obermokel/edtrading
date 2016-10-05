@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -177,17 +178,17 @@ public class ScannedBodyInfoParser {
             //            BigDecimal surfacePressure = fixAndRemoveEarthMasses("SURFACEPRESSURE:", bodyInfoMatches, sortedLabelIndexes);
             scannedBodyInfo.setVolcanism(lookupFixedAndRemovedEnum("VOLCANISM_", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setAtmosphereType(lookupFixedAndRemovedEnum("ATMOSPHERE_TYPE_", bodyInfoMatches, sortedLabelIndexes));
-            //            Object atmosphere = fixAndRemoveEarthMasses("ATMOSPHERE:", bodyInfoMatches, sortedLabelIndexes); // TODO ...
-            //            Object composition = fixAndRemoveEarthMasses("COMPOSITION:", bodyInfoMatches, sortedLabelIndexes); // TODO ...
+            scannedBodyInfo.setAtmosphere(fixAndRemoveComposition("ATMOSPHERE:", "ATMOSPHERE_COMPONENT_", bodyInfoMatches, sortedLabelIndexes));
+            scannedBodyInfo.setComposition(fixAndRemoveComposition("COMPOSITION:", "COMPOSITION_", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setOrbitalPeriodD(fixAndRemoveOrbitalPeriod("ORBITALPERIOD:", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setSemiMajorAxisAU(fixAndRemoveSemiMajorAxis("SEMIMAJORAXIS:", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setOrbitalEccentricity(fixAndRemoveOrbitalEccentricity("ORBITALECCENTRICITY:", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setOrbitalInclinationDeg(fixAndRemoveOrbitalInclination("ORBITALINCLINATION:", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setArgOfPeriapsisDeg(fixAndRemoveArgOfPeriapsis("ARGOFPERIAPSIS:", bodyInfoMatches, sortedLabelIndexes));
             scannedBodyInfo.setRotationalPeriodD(fixAndRemoveRotationalPeriod("ROTATIONALPERIOD:", bodyInfoMatches, sortedLabelIndexes));
-            //            Boolean tidallyLocked = fixAndRemoveEarthMasses("(TIDALLYLOCKED)", bodyInfoMatches, sortedLabelIndexes); // TODO ...
+            scannedBodyInfo.setTidallyLocked(scannedBodyInfo.getRotationalPeriodD() == null ? null : (indexOf("(TIDALLYLOCKED)", sortedLabelIndexes) != null));
             scannedBodyInfo.setAxialTiltDeg(fixAndRemoveAxialTilt("AXIALTILT:", bodyInfoMatches, sortedLabelIndexes));
-            //            Object planetMaterials = fixAndRemoveEarthMasses("PLANETMATERIALS:", bodyInfoMatches, sortedLabelIndexes); // TODO ...
+            scannedBodyInfo.setPlanetMaterials(fixAndRemovePlanetMaterials("PLANETMATERIALS:", "PLANET_MATERIAL_", bodyInfoMatches, sortedLabelIndexes));
         } else if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_BELT) {
             // TODO ...
         } else if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_RINGS) {
@@ -249,6 +250,27 @@ public class ScannedBodyInfoParser {
         }
 
         return null;
+    }
+
+    private static int indexBefore(Integer idx, SortedMap<Integer, String> sortedLabelIndexes, int defaultValue) {
+        if (idx == null || sortedLabelIndexes.isEmpty()) {
+            return defaultValue;
+        } else {
+            List<Integer> indexes = new ArrayList<>(sortedLabelIndexes.keySet());
+            int idxOfIdx = indexes.indexOf(idx);
+
+            if (idxOfIdx < 0) {
+                return defaultValue;
+            } else {
+                int idxOfIdxBefore = idxOfIdx - 1;
+
+                if (idxOfIdxBefore < 0) {
+                    return defaultValue;
+                } else {
+                    return indexes.get(idxOfIdxBefore);
+                }
+            }
+        }
     }
 
     private static int indexAfter(Integer idx, SortedMap<Integer, String> sortedLabelIndexes, int defaultValue) {
@@ -435,7 +457,7 @@ public class ScannedBodyInfoParser {
         if (fixedText.length() > unit.length()) {
             // Only fix if the last scanned chars are not digits
             String scannedUnit = fixedText.substring(fixedText.length() - unit.length());
-            if (!scannedUnit.matches("\\d+")) {
+            if (scannedUnit.matches("[^\\d\\.,]+")) {
                 fixedText = fixedText.substring(0, fixedText.length() - unit.length()) + unit;
             }
         }
@@ -447,7 +469,7 @@ public class ScannedBodyInfoParser {
         if (fixedText.length() > 1) {
             // Only fix if the first scanned char is not a digit
             String scannedSign = fixedText.substring(0, 1);
-            if (!scannedSign.matches("\\d+")) {
+            if (scannedSign.matches("[^\\d\\.,]+")) {
                 fixedText = "-" + fixedText.substring(1);
             }
         }
@@ -490,7 +512,7 @@ public class ScannedBodyInfoParser {
                     }
                 }
             } catch (Exception e) {
-                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
             }
         }
         return null;
@@ -533,7 +555,7 @@ public class ScannedBodyInfoParser {
                     }
                 }
             } catch (Exception e) {
-                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
             }
         }
         return null;
@@ -576,7 +598,7 @@ public class ScannedBodyInfoParser {
                     }
                 }
             } catch (Exception e) {
-                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
             }
         }
         return null;
@@ -619,7 +641,7 @@ public class ScannedBodyInfoParser {
                     }
                 }
             } catch (Exception e) {
-                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
             }
         }
         return null;
@@ -636,7 +658,7 @@ public class ScannedBodyInfoParser {
             }
             try {
                 // Pattern: #,##0.0D
-                BigDecimal min = new BigDecimal("1.1"); // Screenshot: 2016-09-28 07-48-06 LHS 380.png
+                BigDecimal min = new BigDecimal("1.0"); // Screenshot: 2016-10-01 22-17-32 Laksak.png
                 BigDecimal max = new BigDecimal("9416.9"); // Screenshot: 2016-09-30 17-22-30 Deciat.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
@@ -662,7 +684,7 @@ public class ScannedBodyInfoParser {
                     }
                 }
             } catch (Exception e) {
-                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
             }
         }
         return null;
@@ -705,7 +727,7 @@ public class ScannedBodyInfoParser {
                     }
                 }
             } catch (Exception e) {
-                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
             }
         }
         return null;
@@ -747,7 +769,7 @@ public class ScannedBodyInfoParser {
                     }
                 }
             } catch (Exception e) {
-                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
             }
         }
         return null;
@@ -791,7 +813,7 @@ public class ScannedBodyInfoParser {
                     }
                 }
             } catch (Exception e) {
-                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
             }
         }
         return null;
@@ -834,7 +856,7 @@ public class ScannedBodyInfoParser {
                     }
                 }
             } catch (Exception e) {
-                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
             }
         }
         return null;
@@ -852,7 +874,7 @@ public class ScannedBodyInfoParser {
             try {
                 // Pattern: 0.0D
                 BigDecimal min = new BigDecimal("0.4"); // Screenshot: 2016-10-01 22-11-30 Giryak.png
-                BigDecimal max = new BigDecimal("213.4"); // Screenshot: 2016-10-02 11-24-29 LHS 3505.png
+                BigDecimal max = new BigDecimal("274.1"); // Screenshot: 2016-10-02 06-48-25 LP 838-16.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
@@ -877,7 +899,7 @@ public class ScannedBodyInfoParser {
                     }
                 }
             } catch (Exception e) {
-                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
             }
         }
         return null;
@@ -921,10 +943,159 @@ public class ScannedBodyInfoParser {
                     }
                 }
             } catch (Exception e) {
-                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label + " -- " + e);
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
             }
         }
         return null;
+    }
+
+    private static LinkedHashMap<BodyInfo, BigDecimal> fixAndRemoveComposition(String label, String prefix, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+        LinkedHashMap<BodyInfo, BigDecimal> result = new LinkedHashMap<>();
+        BigDecimal totalSumPercent = BigDecimal.ZERO;
+        if (indexOf(label, sortedLabelIndexes) != null) {
+            for (BodyInfo bi : BodyInfo.byPrefix(prefix)) {
+                String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
+                Integer enumIndex = indexOf(prefix + nameWithoutSpaces, sortedLabelIndexes);
+                if (enumIndex != null) {
+                    Integer startIndex = null;
+                    Integer endIndex = null;
+                    StringBuilder scannedText = new StringBuilder();
+                    for (int i = indexBefore(enumIndex, sortedLabelIndexes, 0); i < enumIndex; i++) {
+                        if (matches.get(i).getShouldHaveBeen() == null) {
+                            scannedText.append(matches.get(i).getTemplate().getText());
+                            if (startIndex == null) {
+                                startIndex = i;
+                            }
+                            endIndex = i + 1;
+                        }
+                    }
+                    try {
+                        // Pattern: 0.0%
+                        BigDecimal min = new BigDecimal("0.0");
+                        BigDecimal max = new BigDecimal("100.0");
+                        String fixedText = scannedText.toString();
+                        fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
+                        fixedText = allSeparatorsToThousandsExceptLast(fixedText);
+                        fixedText = lastCharsToUnit(fixedText, "%");
+                        if (!fixedText.matches("\\d{1,3}\\.\\d{1}%")) {
+                            throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
+                        } else {
+                            String parseableText = fixedText.replace(",", "").replace("%", ""); // Remove all thousands separators and units
+                            BigDecimal value = new BigDecimal(parseableText);
+                            if (value.compareTo(min) < 0) {
+                                throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
+                            } else if (value.compareTo(max) > 0) {
+                                throw new NumberFormatException("Parsed value " + value + " is above the allowed maximum " + label.toLowerCase().replace(":", "") + " of " + max);
+                            } else {
+                                // Set shouldHaveBeen, effectively removing the matches
+                                for (int i = startIndex; i < endIndex; i++) {
+                                    char shouldHaveBeen = fixedText.charAt(i - startIndex);
+                                    matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+                                }
+                                // Add to result
+                                result.put(bi, value);
+                                // Sum up
+                                totalSumPercent = totalSumPercent.add(value);
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
+                    }
+                }
+            }
+        }
+        MiscUtil.sortMapByValueReverse(result);
+        if (totalSumPercent.doubleValue() == 0.0) {
+            return null;
+        } else if (Math.abs(100.0 - totalSumPercent.doubleValue()) > 0.5) {
+            logger.warn(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
+            return null;
+        } else {
+            return result;
+        }
+    }
+
+    private static LinkedHashMap<Item, BigDecimal> fixAndRemovePlanetMaterials(String label, String prefix, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+        LinkedHashMap<Item, BigDecimal> result = new LinkedHashMap<>();
+        BigDecimal totalSumPercent = BigDecimal.ZERO;
+        if (indexOf(label, sortedLabelIndexes) != null) {
+            for (Item el : Item.byType(ItemType.ELEMENT)) {
+                String nameWithoutSpaces = el.getName().replaceAll("\\s", "");
+                Integer enumIndex = indexOf(prefix + nameWithoutSpaces, sortedLabelIndexes);
+                if (enumIndex != null) {
+                    Integer startIndex = null;
+                    Integer endIndex = null;
+                    StringBuilder scannedText = new StringBuilder();
+                    for (int i = enumIndex; i < indexAfter(enumIndex, sortedLabelIndexes, matches.size()); i++) {
+                        if (matches.get(i).getShouldHaveBeen() == null) {
+                            scannedText.append(matches.get(i).getTemplate().getText());
+                            if (startIndex == null) {
+                                startIndex = i;
+                            }
+                            endIndex = i + 1;
+                        }
+                    }
+                    try {
+                        // Pattern: (0.0%),
+                        BigDecimal min = new BigDecimal("0.0");
+                        BigDecimal max = new BigDecimal("100.0");
+                        String fixedText = fixPlanetMaterialPercentage(scannedText.toString());
+                        if (!fixedText.matches("\\(\\d{1,3}\\.\\d{1}%\\),?")) {
+                            throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
+                        } else {
+                            String parseableText = fixedText.replace(",", "").replace("%", "").replace("(", "").replace(")", ""); // Remove all thousands separators and units
+                            BigDecimal value = new BigDecimal(parseableText);
+                            if (value.compareTo(min) < 0) {
+                                throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
+                            } else if (value.compareTo(max) > 0) {
+                                throw new NumberFormatException("Parsed value " + value + " is above the allowed maximum " + label.toLowerCase().replace(":", "") + " of " + max);
+                            } else {
+                                // Set shouldHaveBeen, effectively removing the matches
+                                for (int i = startIndex; i < endIndex; i++) {
+                                    char shouldHaveBeen = fixedText.charAt(i - startIndex);
+                                    matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+                                }
+                                // Add to result
+                                result.put(el, value);
+                                // Sum up
+                                totalSumPercent = totalSumPercent.add(value);
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
+                    }
+                }
+            }
+        }
+        MiscUtil.sortMapByValueReverse(result);
+        if (totalSumPercent.doubleValue() == 0.0) {
+            return null;
+        } else if (Math.abs(100.0 - totalSumPercent.doubleValue()) > 0.5) {
+            logger.warn(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
+            return null;
+        } else {
+            return result;
+        }
+    }
+
+    private static String fixPlanetMaterialPercentage(String scannedText) {
+        String fixedText = scannedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
+        fixedText = fixedText.replace(",", "."); // All to thousands
+        boolean removedTrailingComma = false;
+        if (fixedText.substring(fixedText.length() - 1, fixedText.length()).equals(".")) {
+            fixedText = fixedText.substring(0, fixedText.length() - 1);
+            removedTrailingComma = true;
+        }
+        if (fixedText.substring(0, 1).matches("[^\\d\\.,]+")) {
+            fixedText = "(" + fixedText.substring(1, fixedText.length()); // Expect first char to be opening bracket
+        }
+        if (fixedText.substring(fixedText.length() - 2, fixedText.length()).matches("[^\\d\\.,]+")) {
+            fixedText = fixedText.substring(0, fixedText.length() - 2) + "%)"; // Expect last two chars to be percent sign and closing bracket
+        }
+        if (removedTrailingComma) {
+            fixedText = fixedText + ",";
+        }
+        return fixedText;
     }
 
     private static BodyInfo lookupFixedAndRemovedEnum(String prefix, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
