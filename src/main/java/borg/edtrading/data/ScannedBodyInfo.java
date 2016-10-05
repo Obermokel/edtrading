@@ -68,7 +68,7 @@ public class ScannedBodyInfo {
     // * Star
     // !no distance if arrival!
     // Class G stars are...
-    // age (1.656 million years)
+    private BigDecimal age = null;
     private BigDecimal solarMasses = null;
     private BigDecimal solarRadius = null;
     private BodyInfo bodyType = null; // Rocky, Icy, HMC, ...
@@ -102,7 +102,9 @@ public class ScannedBodyInfo {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        // screenshotFilename
         sb.append("==== ").append(this.getScreenshotFilename()).append(" ====").append("\n");
+        // systemName // bodyName (bodyGroup)
         sb.append(this.getSystemName()).append(" // ").append(this.getBodyName()).append(" (").append(this.getBodyGroup() == null ? null : this.getBodyGroup().getName()).append(")").append("\n");
         if (this.getBodyType() != null) {
             sb.append(this.getBodyType().getName());
@@ -116,6 +118,7 @@ public class ScannedBodyInfo {
         if (this.getSystemReserves() != null) {
             sb.append(this.getSystemReserves().getName()).append("\n");
         }
+        sb.append(String.format(Locale.US, "%-21s\t%.3fM YEARS", "AGE:", this.getAge())).append("\n");
         if (this.getSolarMasses() != null) {
             sb.append(String.format(Locale.US, "%-21s\t%.4f", "SOLAR MASSES:", this.getSolarMasses())).append("\n");
         } else if (this.getMoonMasses() != null) {
@@ -1370,6 +1373,14 @@ public class ScannedBodyInfo {
 
     public void setBodyGroup(BodyInfo bodyGroup) {
         this.bodyGroup = bodyGroup;
+    }
+
+    public BigDecimal getAge() {
+        return this.age;
+    }
+
+    public void setAge(BigDecimal age) {
+        this.age = age;
     }
 
     public BigDecimal getSolarMasses() {
