@@ -343,10 +343,11 @@ public class ScannedBodyInfoParser {
 
             // Remove and learn chars belonging to the searched text.
             // Try to match as large regions of text as possible. Everything that remains must be learned.
+            // Lengths < 3 chars do not make sense.
             StringBuilder remainingReferenceText = new StringBuilder(chars);
-            for (int matchLength = chars.length(); matchLength >= 1; matchLength--) {
+            for (int matchLength = chars.length(); matchLength >= 3; matchLength--) {
                 int possibleShifts = chars.length() - matchLength;
-                for (int offsetInReferenceText = 0; offsetInReferenceText < possibleShifts; offsetInReferenceText++) {
+                for (int offsetInReferenceText = 0; offsetInReferenceText <= possibleShifts; offsetInReferenceText++) {
                     CharSequence referenceText = getReferenceText(remainingReferenceText, offsetInReferenceText, matchLength);
                     if (referenceText != null) {
                         for (int offsetInTemplateMatches = bestStartIndex - 1; offsetInTemplateMatches < bestStartIndex + possibleShifts + 2; offsetInTemplateMatches++) { // -1/+2 to allow jitter

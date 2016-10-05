@@ -53,7 +53,7 @@ public class BodyInfoTest {
         List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
         //File sourceFile = selectRandomScreenshot();
-        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-02 07-08-56 Xi Ursae Majoris.png");
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-01 22-18-38 Laksak.png");
         //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-28 08-20-53 Eta Coronae Borealis.png"); // Gas giant with rings - ring info follows axial tilt...
         //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-28 08-14-01 Ross 847.png"); // Has surface pressure
         //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-27 08-46-22 Col 132 Sector DB-W d2-38.png"); // Class II gas giant
