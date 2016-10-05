@@ -25,8 +25,8 @@ public abstract class MiscUtil {
 
     static final Logger logger = LogManager.getLogger(MiscUtil.class);
 
-    public static float levenshteinError(String mostLikelyCorrectReferenceString, String someOtherString) {
-        float dist = StringUtils.getLevenshteinDistance(mostLikelyCorrectReferenceString.toLowerCase(), someOtherString.toLowerCase());
+    public static float levenshteinError(CharSequence mostLikelyCorrectReferenceString, CharSequence someOtherString) {
+        float dist = StringUtils.getLevenshteinDistance(mostLikelyCorrectReferenceString.toString().toLowerCase(), someOtherString.toString().toLowerCase());
         float err = dist / mostLikelyCorrectReferenceString.length();
 
         return err;

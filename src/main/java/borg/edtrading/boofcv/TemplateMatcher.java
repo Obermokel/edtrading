@@ -124,7 +124,7 @@ public class TemplateMatcher {
                 }
             }
             if (bestMatch == null) {
-                final double maxErrorPerPixelGuess = 2.0 * maxErrorPerPixel;
+                final double maxErrorPerPixelGuess = 999.9 * maxErrorPerPixel; // We need a match for learning, regardless how bad it is, so multiply with 999.9
                 double bestErrorPerPixelGuess = maxErrorPerPixelGuess;
                 TemplateMatch bestGuess = null;
                 for (Template template : templates) {

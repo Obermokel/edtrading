@@ -3,6 +3,8 @@ package borg.edtrading.data;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -13,6 +15,11 @@ import java.util.List;
 public enum BodyInfo {
 
     //@formatter:off
+    GROUP_STAR("Star"),
+    GROUP_PLANET("Planet"),
+    GROUP_BELT("Belt"),
+    GROUP_RINGS("Rings"), // Not a real body type. Just an indicator for a scrolled-down screenshot of rings.
+
     TYPE_AMMONIA_WORLD("Ammonia world"),
     TYPE_CLASS_I_GAS_GIANT("Class I gas giant"),
     TYPE_CLASS_II_GAS_GIANT("Class II gas giant"),
@@ -31,29 +38,10 @@ public enum BodyInfo {
     TYPE_WATER_GIANT("Water giant"),
     TYPE_WATER_WORLD("Water world"),
 
-    GROUP_STAR("Star"),
-    GROUP_PLANET("Planet"),
-    GROUP_BELT("Belt"),
-
     TERRAFORMING_NOT_TERRAFORMABLE("Not terraformable"),
     TERRAFORMING_CANDIDATE_FOR_TERRAFORMING("Candidate for terraforming"),
     TERRAFORMING_BEING_TERRAFORMED("Being terraformed"),
     TERRAFORMING_TERRAFORMING_COMPLETED("Terraforming completed"),
-
-    COMPOSITION_ICE("ICE"),
-    COMPOSITION_METAL("METAL"),
-    COMPOSITION_ROCK("ROCK"),
-
-    RING_TYPE_METALLIC("METALLIC"),
-    RING_TYPE_METAL_RICH("METAL RICH"),
-    RING_TYPE_ROCKY("ROCKY"),
-    RING_TYPE_ICY("ICY"),
-
-    RESERVES_DEPLETED("Depleted reserves"),
-    RESERVES_LOW("Low reserves"),
-    RESERVES_COMMON("Common reserves"),
-    RESERVES_MAJOR("Major reserves"),
-    RESERVES_PRISTINE("Pristine reserves"),
 
     VOLCANISM_NO_VOLCANISM("NO VOLCANISM"),
     VOLCANISM_AMMONIA_MAGMA("AMMONIA MAGMA"),
@@ -101,7 +89,22 @@ public enum BodyInfo {
     ATMOSPHERE_COMPONENT_OXYGEN("OXYGEN"),
     ATMOSPHERE_COMPONENT_SILICATES("SILICATES"),
     ATMOSPHERE_COMPONENT_SULPHUR_DIOXIDE("SULPHUR DIOXIDE"),
-    ATMOSPHERE_COMPONENT_WATER("WATER");
+    ATMOSPHERE_COMPONENT_WATER("WATER"),
+
+    COMPOSITION_ICE("ICE"),
+    COMPOSITION_METAL("METAL"),
+    COMPOSITION_ROCK("ROCK"),
+
+    RING_TYPE_METALLIC("METALLIC"),
+    RING_TYPE_METAL_RICH("METAL RICH"),
+    RING_TYPE_ROCKY("ROCKY"),
+    RING_TYPE_ICY("ICY"),
+
+    RESERVES_DEPLETED("Depleted reserves"),
+    RESERVES_LOW("Low reserves"),
+    RESERVES_COMMON("Common reserves"),
+    RESERVES_MAJOR("Major reserves"),
+    RESERVES_PRISTINE("Pristine reserves");
     //@formatter:on
 
     private final String name;
@@ -117,6 +120,12 @@ public enum BodyInfo {
                 result.add(bodyInfo);
             }
         }
+        Collections.sort(result, new Comparator<BodyInfo>() {
+            @Override
+            public int compare(BodyInfo bi1, BodyInfo bi2) {
+                return -1 * new Integer(bi1.getName().length()).compareTo(new Integer(bi2.getName().length()));
+            }
+        });
         return result;
     }
 

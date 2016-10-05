@@ -21,6 +21,7 @@ public class TemplateMatch {
     private Template template = null;
     private Match match = null;
     private BufferedImage subimage = null;
+    private String shouldHaveBeen = null;
 
     public TemplateMatch(Template template, Match match, BufferedImage subimage) {
         this.setTemplate(template);
@@ -113,6 +114,14 @@ public class TemplateMatch {
 
     public void setSubimage(BufferedImage subimage) {
         this.subimage = subimage;
+    }
+
+    public String getShouldHaveBeen() {
+        return this.shouldHaveBeen;
+    }
+
+    public void setShouldHaveBeen(String shouldHaveBeen) {
+        this.shouldHaveBeen = shouldHaveBeen;
     }
 
 }

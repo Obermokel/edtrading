@@ -2,6 +2,11 @@ package borg.edtrading.data;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 /**
  * Item
  *
@@ -113,6 +118,22 @@ public enum Item {
         this.name = name;
         this.type = type;
         this.grade = grade;
+    }
+
+    public static List<Item> byType(ItemType type) {
+        List<Item> result = new ArrayList<>();
+        for (Item item : Item.values()) {
+            if (item.getType() == type) {
+                result.add(item);
+            }
+        }
+        Collections.sort(result, new Comparator<Item>() {
+            @Override
+            public int compare(Item i1, Item i2) {
+                return -1 * new Integer(i1.getName().length()).compareTo(new Integer(i2.getName().length()));
+            }
+        });
+        return result;
     }
 
     public static Item findBestMatching(String name, ItemType type) {
