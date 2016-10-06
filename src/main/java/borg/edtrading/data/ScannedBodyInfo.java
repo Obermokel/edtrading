@@ -67,7 +67,7 @@ public class ScannedBodyInfo {
     private BodyInfo bodyGroup = null; // Star, Planet, Belt
     // * Star
     // !no distance if arrival!
-    // Class G stars are...
+    private BodyInfo starType = null;
     private BigDecimal ageMillionYears = null;
     private BigDecimal solarMasses = null;
     private BigDecimal solarRadius = null;
@@ -104,40 +104,65 @@ public class ScannedBodyInfo {
         StringBuilder sb = new StringBuilder();
         // screenshotFilename
         sb.append("==== ").append(this.getScreenshotFilename()).append(" ====").append("\n");
-        // systemName // bodyName (bodyGroup)
-        sb.append(this.getSystemName()).append(" // ").append(this.getBodyName()).append(" (").append(this.getBodyGroup() == null ? null : this.getBodyGroup().getName()).append(")").append("\n");
-        if (this.getBodyType() != null) {
-            sb.append(this.getBodyType().getName());
+        // systemName // bodyName // distanceLs
+        sb.append(this.getSystemName()).append(" // ").append(this.getBodyName());
+        if (this.getDistanceLs() != null) {
+            sb.append(" // ").append(String.format(Locale.US, "%.2fLS", this.getDistanceLs())).append("\n");
         } else {
-            sb.append("null");
+            sb.append(" // ").append("ARRIVAL STAR").append("\n");
         }
+        // bodyGroup|bodyType
+        if (this.getBodyType() != null) {
+            sb.append(this.getBodyType().getName()).append("\n");
+        } else if (this.getStarType() != null) {
+            sb.append(this.getStarType().getName()).append("\n");
+        } else if (this.getBodyGroup() != null) {
+            sb.append(this.getBodyGroup().getName()).append("\n");
+        } else {
+            sb.append("UNKNOWN BODY GROUP/TYPE").append("\n");
+        }
+        // terraforming
         if (this.getTerraforming() != null) {
-            sb.append(" // ").append(this.getTerraforming().getName());
+            sb.append(this.getTerraforming().getName()).append("\n");
         }
-        sb.append(" // ").append(String.format(Locale.US, "%.2fLs", this.getDistanceLs())).append("\n");
+        // systemReserves
         if (this.getSystemReserves() != null) {
             sb.append(this.getSystemReserves().getName()).append("\n");
         }
-        sb.append(String.format(Locale.US, "%-21s\t%s", "RING TYPE:", this.getRingType() == null ? null : this.getRingType().getName())).append("\n");
-        sb.append(String.format(Locale.US, "%-21s\t%.3fM YEARS", "AGE:", this.getAgeMillionYears())).append("\n");
-        if (this.getSolarMasses() != null) {
+
+        // ---- STARS ----
+        if (this.getBodyGroup() == BodyInfo.GROUP_STAR) {
+            sb.append(String.format(Locale.US, "%-21s\t%.0f MILLION YEARS", "AGE:", this.getAgeMillionYears())).append("\n");
             sb.append(String.format(Locale.US, "%-21s\t%.4f", "SOLAR MASSES:", this.getSolarMasses())).append("\n");
-        } else if (this.getMoonMasses() != null) {
-            sb.append(String.format(Locale.US, "%-21s\t%.4f", "MOON MASSES:", this.getMoonMasses())).append("\n");
-        } else {
-            sb.append(String.format(Locale.US, "%-21s\t%.4f", "EARTH MASSES:", this.getEarthMasses())).append("\n");
-        }
-        if (this.getSolarRadius() != null) {
             sb.append(String.format(Locale.US, "%-21s\t%.4f", "SOLAR RADIUS:", this.getSolarRadius())).append("\n");
-        } else {
-            sb.append(String.format(Locale.US, "%-21s\t%.0fKM", "RADIUS:", this.getRadiusKm())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.0fK", "SURFACE TEMP:", this.getSurfaceTempK())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.1fD", "ORBITAL PERIOD:", this.getOrbitalPeriodD())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.2fAU", "SEMI MAJOR AXIS:", this.getSemiMajorAxisAU())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.4f", "ORBITAL ECCENTRICITY:", this.getOrbitalEccentricity())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.2f°", "ORBITAL INCLINATION:", this.getOrbitalInclinationDeg())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.2f°", "ARG OF PERIAPSIS:", this.getArgOfPeriapsisDeg())).append("\n");
         }
-        sb.append(String.format(Locale.US, "%-21s\t%.2fG", "GRAVITY:", this.getGravityG())).append("\n");
-        sb.append(String.format(Locale.US, "%-21s\t%.0fK", "SURFACE TEMP:", this.getSurfaceTempK())).append("\n");
-        sb.append(String.format(Locale.US, "%-21s\t%.2f", "SURFACE PRESSURE:", this.getSurfacePressureAtmospheres())).append("\n");
-        sb.append(String.format(Locale.US, "%-21s\t%s", "VOLCANISM:", this.getVolcanism() == null ? null : this.getVolcanism().getName())).append("\n");
-        sb.append(String.format(Locale.US, "%-21s\t%s", "ATMOSPHERE TYPE:", this.getAtmosphereType() == null ? null : this.getAtmosphereType().getName())).append("\n");
-        if (this.getAtmosphere() != null || this.getAtmosphereType() != BodyInfo.ATMOSPHERE_TYPE_NO_ATMOSPHERE) {
+
+        // ---- BELTS ----
+        if (this.getBodyGroup() == BodyInfo.GROUP_BELT) {
+            sb.append(String.format(Locale.US, "%-21s\t%s", "RING TYPE:", this.getRingType() == null ? null : this.getRingType().getName())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.4f", "MOON MASSES:", this.getMoonMasses())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.1fD", "ORBITAL PERIOD:", this.getOrbitalPeriodD())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.2fAU", "SEMI MAJOR AXIS:", this.getSemiMajorAxisAU())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.4f", "ORBITAL ECCENTRICITY:", this.getOrbitalEccentricity())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.2f°", "ORBITAL INCLINATION:", this.getOrbitalInclinationDeg())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.2f°", "ARG OF PERIAPSIS:", this.getArgOfPeriapsisDeg())).append("\n");
+        }
+
+        // ---- PLANETS ----
+        if (this.getBodyGroup() == BodyInfo.GROUP_PLANET) {
+            sb.append(String.format(Locale.US, "%-21s\t%.4f", "EARTH MASSES:", this.getEarthMasses())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.0fKM", "RADIUS:", this.getRadiusKm())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.2fG", "GRAVITY:", this.getGravityG())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.0fK", "SURFACE TEMP:", this.getSurfaceTempK())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.2f", "SURFACE PRESSURE:", this.getSurfacePressureAtmospheres())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%s", "VOLCANISM:", this.getVolcanism() == null ? null : this.getVolcanism().getName())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%s", "ATMOSPHERE TYPE:", this.getAtmosphereType() == null ? null : this.getAtmosphereType().getName())).append("\n");
             sb.append(String.format(Locale.US, "%-21s\t", "ATMOSPHERE:"));
             if (this.getAtmosphere() == null) {
                 sb.append("null").append("\n");
@@ -149,48 +174,51 @@ public class ScannedBodyInfo {
                     sb.append(String.format(Locale.US, "%.1f%% %s", percent, material.getName())).append(it.hasNext() ? ", " : "\n");
                 }
             }
-        }
-        sb.append(String.format(Locale.US, "%-21s\t", "COMPOSITION:"));
-        if (this.getComposition() == null) {
-            sb.append("null").append("\n");
-        } else {
-            Iterator<BodyInfo> it = this.getComposition().keySet().iterator();
-            while (it.hasNext()) {
-                BodyInfo material = it.next();
-                BigDecimal percent = this.getComposition().get(material);
-                sb.append(String.format(Locale.US, "%.1f%% %s", percent, material.getName())).append(it.hasNext() ? ", " : "\n");
+            sb.append(String.format(Locale.US, "%-21s\t", "COMPOSITION:"));
+            if (this.getComposition() == null) {
+                sb.append("null").append("\n");
+            } else {
+                Iterator<BodyInfo> it = this.getComposition().keySet().iterator();
+                while (it.hasNext()) {
+                    BodyInfo material = it.next();
+                    BigDecimal percent = this.getComposition().get(material);
+                    sb.append(String.format(Locale.US, "%.1f%% %s", percent, material.getName())).append(it.hasNext() ? ", " : "\n");
+                }
+            }
+            sb.append(String.format(Locale.US, "%-21s\t%.1fD", "ORBITAL PERIOD:", this.getOrbitalPeriodD())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.2fAU", "SEMI MAJOR AXIS:", this.getSemiMajorAxisAU())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.4f", "ORBITAL ECCENTRICITY:", this.getOrbitalEccentricity())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.2f°", "ORBITAL INCLINATION:", this.getOrbitalInclinationDeg())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.2f°", "ARG OF PERIAPSIS:", this.getArgOfPeriapsisDeg())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t%.1fD", "ROTATIONAL PERIOD:", this.getRotationalPeriodD()));
+            if (Boolean.TRUE.equals(this.getTidallyLocked())) {
+                sb.append(" (TIDALLY LOCKED)").append("\n");
+            } else if (Boolean.FALSE.equals(this.getTidallyLocked())) {
+                sb.append("\n");
+            } else {
+                sb.append(" (null)").append("\n");
+            }
+            sb.append(String.format(Locale.US, "%-21s\t%.2f°", "AXIAL TILT:", this.getAxialTiltDeg() == null ? null : this.getAxialTiltDeg().doubleValue())).append("\n");
+            sb.append(String.format(Locale.US, "%-21s\t", "PLANET MATERIALS:"));
+            if (this.getPlanetMaterials() == null) {
+                sb.append("null").append("\n");
+            } else {
+                Iterator<Item> it = this.getPlanetMaterials().keySet().iterator();
+                while (it.hasNext()) {
+                    Item material = it.next();
+                    BigDecimal percent = this.getPlanetMaterials().get(material);
+                    sb.append(String.format(Locale.US, "%s(%.1f%%)", material.getName(), percent)).append(it.hasNext() ? ", " : "\n");
+                }
             }
         }
-        sb.append(String.format(Locale.US, "%-21s\t%.1fD", "ORBITAL PERIOD:", this.getOrbitalPeriodD())).append("\n");
-        sb.append(String.format(Locale.US, "%-21s\t%.2fAU", "SEMI MAJOR AXIS:", this.getSemiMajorAxisAU())).append("\n");
-        sb.append(String.format(Locale.US, "%-21s\t%.4f", "ORBITAL ECCENTRICITY:", this.getOrbitalEccentricity())).append("\n");
-        sb.append(String.format(Locale.US, "%-21s\t%.2f°", "ORBITAL INCLINATION:", this.getOrbitalInclinationDeg())).append("\n");
-        sb.append(String.format(Locale.US, "%-21s\t%.2f°", "ARG OF PERIAPSIS:", this.getArgOfPeriapsisDeg())).append("\n");
-        sb.append(String.format(Locale.US, "%-21s\t%.1fD", "ROTATIONAL PERIOD:", this.getRotationalPeriodD()));
-        if (Boolean.TRUE.equals(this.getTidallyLocked())) {
-            sb.append(" (TIDALLY LOCKED)").append("\n");
-        } else if (Boolean.FALSE.equals(this.getTidallyLocked())) {
-            sb.append("\n");
-        } else {
-            sb.append(" (null)").append("\n");
-        }
-        sb.append(String.format(Locale.US, "%-21s\t%.2f°", "AXIAL TILT:", this.getAxialTiltDeg() == null ? null : this.getAxialTiltDeg().doubleValue())).append("\n");
-        sb.append(String.format(Locale.US, "%-21s\t", "PLANET MATERIALS:"));
-        if (this.getPlanetMaterials() == null) {
-            sb.append("null").append("\n");
-        } else {
-            Iterator<Item> it = this.getPlanetMaterials().keySet().iterator();
-            while (it.hasNext()) {
-                Item material = it.next();
-                BigDecimal percent = this.getPlanetMaterials().get(material);
-                sb.append(String.format(Locale.US, "%s(%.1f%%)", material.getName(), percent)).append(it.hasNext() ? ", " : "\n");
-            }
-        }
+
+        // ---- RINGS ----
         if (this.getRings() != null) {
             for (ScannedRingInfo sri : this.getRings()) {
                 sb.append(sri.toString()).append("\n");
             }
         }
+
         return sb.toString().trim();
     }
 
@@ -1374,6 +1402,14 @@ public class ScannedBodyInfo {
 
     public void setBodyGroup(BodyInfo bodyGroup) {
         this.bodyGroup = bodyGroup;
+    }
+
+    public BodyInfo getStarType() {
+        return this.starType;
+    }
+
+    public void setStarType(BodyInfo starType) {
+        this.starType = starType;
     }
 
     public BigDecimal getAgeMillionYears() {

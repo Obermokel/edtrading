@@ -38,6 +38,8 @@ public enum BodyInfo {
     TYPE_WATER_GIANT("Water giant"),
     TYPE_WATER_WORLD("Water world"),
 
+    STAR_TYPE_T_TAURI("T Tauri type stars are very young stars"),
+
     TERRAFORMING_NOT_TERRAFORMABLE("Not terraformable"),
     TERRAFORMING_CANDIDATE_FOR_TERRAFORMING("Candidate for terraforming"),
     TERRAFORMING_BEING_TERRAFORMED("Being terraformed"),

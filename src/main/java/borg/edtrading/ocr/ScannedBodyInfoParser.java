@@ -70,6 +70,8 @@ public class ScannedBodyInfoParser {
         for (int i = 0; i < bodyNameMatches.size(); i++) {
             if (bodyNameMatches.get(i).getShouldHaveBeen() != null) {
                 break;
+            } else if ("▪".equals(bodyNameMatches.get(i).getTemplate().getText())) {
+                // Skip
             } else {
                 remainingNameMatches.add(bodyNameMatches.get(i));
             }
@@ -118,6 +120,13 @@ public class ScannedBodyInfoParser {
         // The other labels depend on the body group.
         if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_STAR) {
             // TODO Parse star class from description text
+            for (BodyInfo bi : BodyInfo.byPrefix("STAR_TYPE_")) {
+                String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
+                if (findAndRemove(nameWithoutSpaces, bodyInfoMatches, 0, indexOf("SOLARMASSES:", sortedLabelIndexes), "STAR_TYPE_", sortedLabelIndexes) != null) { // Star type unfortunately is before solar masses, so explicitly search from index 0...
+                    scannedBodyInfo.setStarType(bi);
+                    break; // Expect only one hit
+                }
+            }
             for (BodyInfo bi : BodyInfo.byPrefix("RESERVES_")) {
                 String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
                 if (findAndRemove(nameWithoutSpaces, bodyInfoMatches, 0, indexOf("SOLARMASSES:", sortedLabelIndexes), "RESERVES_", sortedLabelIndexes) != null) { // Reserves unfortunately is before solar masses, so explicitly search from index 0...
@@ -287,26 +296,26 @@ public class ScannedBodyInfoParser {
         }
 
         // TODO Remove this debug output
-        //        System.out.print("Scanned: ");
-        //        for (TemplateMatch m : bodyNameMatches) {
-        //            System.out.print("<" + m.getTemplate().getText() + ">");
-        //        }
-        //        System.out.println();
-        //        System.out.print("Parsed:  ");
-        //        for (TemplateMatch m : bodyNameMatches) {
-        //            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
-        //        }
-        //        System.out.println();
-        //        System.out.print("Scanned: ");
-        //        for (TemplateMatch m : bodyInfoMatches) {
-        //            System.out.print("<" + m.getTemplate().getText() + ">");
-        //        }
-        //        System.out.println();
-        //        System.out.print("Parsed:  ");
-        //        for (TemplateMatch m : bodyInfoMatches) {
-        //            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
-        //        }
-        //        System.out.println();
+        System.out.print("Scanned: ");
+        for (TemplateMatch m : bodyNameMatches) {
+            System.out.print("<" + m.getTemplate().getText() + ">");
+        }
+        System.out.println();
+        System.out.print("Parsed:  ");
+        for (TemplateMatch m : bodyNameMatches) {
+            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
+        }
+        System.out.println();
+        System.out.print("Scanned: ");
+        for (TemplateMatch m : bodyInfoMatches) {
+            System.out.print("<" + m.getTemplate().getText() + ">");
+        }
+        System.out.println();
+        System.out.print("Parsed:  ");
+        for (TemplateMatch m : bodyInfoMatches) {
+            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
+        }
+        System.out.println();
 
         learnWronglyDetectedChars(bodyNameMatches);
         learnWronglyDetectedChars(bodyInfoMatches);
@@ -323,6 +332,8 @@ public class ScannedBodyInfoParser {
             for (int i = labelIndex - 1; i >= 0; i--) {
                 if (matches.get(i).getShouldHaveBeen() != null) {
                     break;
+                } else if ("▪".equals(matches.get(i).getTemplate().getText())) {
+                    // Skip
                 } else {
                     remainingMatches.add(0, matches.get(i));
                     startIndex = i;
@@ -337,9 +348,11 @@ public class ScannedBodyInfoParser {
             ringName = fixGeneratedBodyName(systemName, ringName);
             String fixedText = ringName.replace(bodyName, "").replaceAll("\\s", "");
             // Set shouldHaveBeen, effectively removing the matches
-            for (int i = startIndex; i < endIndex; i++) {
-                char shouldHaveBeen = fixedText.charAt(i - startIndex);
-                matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+            if (remainingMatches.size() == fixedText.length()) {
+                for (int i = 0; i < remainingMatches.size(); i++) {
+                    char shouldHaveBeen = fixedText.charAt(i);
+                    remainingMatches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+                }
             }
             // Return the result
             return ringName;
@@ -398,7 +411,7 @@ public class ScannedBodyInfoParser {
             while (scannedBodyName.indexOf(" ", index + 1) >= 0) {
                 index = scannedBodyName.indexOf(" ", index + 1);
                 String partOfScannedBodyName = scannedBodyName.substring(0, index);
-                float err = MiscUtil.levenshteinError(systemName, partOfScannedBodyName);
+                float err = MiscUtil.levenshteinError(systemName.replace("0", "O").replace("l", "I"), partOfScannedBodyName.replace("0", "O").replace("l", "I"));
                 if (err <= 0.25f && err < bestMatchSoFar) {
                     partOfScannedBodyNameToReplaceWithSystemName = partOfScannedBodyName;
                     bestMatchSoFar = err;
@@ -1018,8 +1031,11 @@ public class ScannedBodyInfoParser {
                 BigDecimal max = new BigDecimal("10373"); // Screenshot: 2016-10-02 06-57-39 Sirius.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
-                // Cannot do this because stars have decimal places... fixedText = allSeparatorsToThousands(fixedText);
+                fixedText = allSeparatorsToThousands(fixedText);
                 fixedText = lastCharsToUnit(fixedText, "K");
+                if (fixedText.matches(".+,\\d{2}K")) {
+                    fixedText = allSeparatorsToThousandsExceptLast(fixedText);
+                }
                 if (!fixedText.matches("(\\d{1,3})(,\\d{3})*K") && !fixedText.matches("(\\d{1,3})(,\\d{3})*\\.\\d{2}K")) {
                     throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
                 } else {

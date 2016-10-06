@@ -97,23 +97,26 @@ public class TemplateMatcher {
 
     public static TemplateMatch findBestTemplateMatch(BufferedImage unknownImage, List<Template> templates, int xWithinImage, int yWithinImage, String screenshotFilename) {
         try {
-            GrayF32 grayUnknownImage = ConvertBufferedImage.convertFrom(unknownImage, (GrayF32) null);
-            GrayF32 croppedUnknownImage = cropCharToHeight(grayUnknownImage);
-            float croppedUnknownAR = (float) croppedUnknownImage.width / (float) croppedUnknownImage.height;
+            GrayF32 originalUnknownImage = ConvertBufferedImage.convertFrom(unknownImage, (GrayF32) null);
+            GrayF32 croppedUnknownImage = cropCharToHeight(originalUnknownImage);
+            final boolean doNotUseCropped = (croppedUnknownImage.width * croppedUnknownImage.height) <= 100;
+            GrayF32 unknownF32 = doNotUseCropped ? originalUnknownImage : croppedUnknownImage;
+            final float unknownAR = (float) unknownF32.width / (float) unknownF32.height;
+            final double pixels = unknownF32.width * unknownF32.height;
 
-            final double pixels = croppedUnknownImage.width * croppedUnknownImage.height;
             final double maxErrorPerPixel = 750.0;
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {
-                float croppedTemplateAR = (float) template.getCroppedImage().width / (float) template.getCroppedImage().height;
-                if (croppedTemplateAR <= 1.25 * croppedUnknownAR && croppedTemplateAR >= croppedUnknownAR / 1.25) {
-                    GrayF32 scaledCroppedTemplateImage = new GrayF32(croppedUnknownImage.width, croppedUnknownImage.height);
-                    new FDistort().input(template.getCroppedImage()).output(scaledCroppedTemplateImage).interp(TypeInterpolate.BICUBIC).scale().apply();
+                GrayF32 templateF32 = doNotUseCropped ? template.getImage() : template.getCroppedImage();
+                float templateAR = (float) templateF32.width / (float) templateF32.height;
+                if (templateAR <= 1.25 * unknownAR && templateAR >= unknownAR / 1.25) {
+                    GrayF32 templateF32Scaled = new GrayF32(unknownF32.width, unknownF32.height);
+                    new FDistort().input(templateF32).output(templateF32Scaled).interp(TypeInterpolate.BICUBIC).scale().apply();
                     double error = 0.0;
-                    for (int y = 0; y < croppedUnknownImage.height; y++) {
-                        for (int x = 0; x < croppedUnknownImage.width; x++) {
-                            float diff = croppedUnknownImage.unsafe_get(x, y) - scaledCroppedTemplateImage.unsafe_get(x, y);
+                    for (int y = 0; y < unknownF32.height; y++) {
+                        for (int x = 0; x < unknownF32.width; x++) {
+                            float diff = unknownF32.unsafe_get(x, y) - templateF32Scaled.unsafe_get(x, y);
                             error += (diff * diff);
                         }
                     }
@@ -129,14 +132,15 @@ public class TemplateMatcher {
                 double bestErrorPerPixelGuess = maxErrorPerPixelGuess;
                 TemplateMatch bestGuess = null;
                 for (Template template : templates) {
-                    float croppedTemplateAR = (float) template.getCroppedImage().width / (float) template.getCroppedImage().height;
-                    if (croppedTemplateAR <= 1.5 * croppedUnknownAR && croppedTemplateAR >= croppedUnknownAR / 1.5) {
-                        GrayF32 scaledCroppedTemplateImage = new GrayF32(croppedUnknownImage.width, croppedUnknownImage.height);
-                        new FDistort().input(template.getCroppedImage()).output(scaledCroppedTemplateImage).interp(TypeInterpolate.BICUBIC).scale().apply();
+                    GrayF32 templateF32 = doNotUseCropped ? template.getImage() : template.getCroppedImage();
+                    float templateAR = (float) templateF32.width / (float) templateF32.height;
+                    if (templateAR <= 1.5 * unknownAR && templateAR >= unknownAR / 1.5) {
+                        GrayF32 templateF32Scaled = new GrayF32(unknownF32.width, unknownF32.height);
+                        new FDistort().input(templateF32).output(templateF32Scaled).interp(TypeInterpolate.BICUBIC).scale().apply();
                         double error = 0.0;
-                        for (int y = 0; y < croppedUnknownImage.height; y++) {
-                            for (int x = 0; x < croppedUnknownImage.width; x++) {
-                                float diff = croppedUnknownImage.unsafe_get(x, y) - scaledCroppedTemplateImage.unsafe_get(x, y);
+                        for (int y = 0; y < unknownF32.height; y++) {
+                            for (int x = 0; x < unknownF32.width; x++) {
+                                float diff = unknownF32.unsafe_get(x, y) - templateF32Scaled.unsafe_get(x, y);
                                 error += (diff * diff);
                             }
                         }
@@ -220,7 +224,7 @@ public class TemplateMatcher {
         } else if ("_grad".equals(folder)) {
             text = "°";
         } else if ("_crap".equals(folder)) {
-            text = "";
+            text = "▪";
         }
         return text;
     }
@@ -251,7 +255,7 @@ public class TemplateMatcher {
             folder = "_klammer_zu";
         } else if ("°".equals(text)) {
             folder = "_grad";
-        } else if ("".equals(text)) {
+        } else if ("▪".equals(text)) {
             folder = "_crap";
         }
         return folder;
