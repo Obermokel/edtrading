@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.imageio.ImageIO;
 
@@ -94,69 +95,66 @@ public class TemplateMatcher {
         }
     }
 
-    public static TemplateMatch findBestTemplateMatch(BufferedImage image, List<Template> templates, int xWithinImage, int yWithinImage, String screenshotFilename) {
+    public static TemplateMatch findBestTemplateMatch(BufferedImage unknownImage, List<Template> templates, int xWithinImage, int yWithinImage, String screenshotFilename) {
         try {
-            GrayF32 originalGrayImage = ConvertBufferedImage.convertFrom(image, (GrayF32) null);
-            GrayF32 croppedGrayImage = cropCharToHeight(originalGrayImage);
-            float imageAR = (float) croppedGrayImage.width / (float) croppedGrayImage.height;
+            GrayF32 grayUnknownImage = ConvertBufferedImage.convertFrom(unknownImage, (GrayF32) null);
+            GrayF32 croppedUnknownImage = cropCharToHeight(grayUnknownImage);
+            float croppedUnknownAR = (float) croppedUnknownImage.width / (float) croppedUnknownImage.height;
 
-            final double pixels = croppedGrayImage.width * croppedGrayImage.height;
+            final double pixels = croppedUnknownImage.width * croppedUnknownImage.height;
             final double maxErrorPerPixel = 750.0;
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {
-                float templateAR = (float) template.getCroppedImage().width / (float) template.getCroppedImage().height;
-                if (templateAR <= 1.5 * imageAR && templateAR >= imageAR / 1.5) {
-                    GrayF32 scaledTemplate = new GrayF32(croppedGrayImage.width, croppedGrayImage.height);
-                    new FDistort().input(template.getCroppedImage()).output(scaledTemplate).interp(TypeInterpolate.BICUBIC).scale().apply();
+                float croppedTemplateAR = (float) template.getCroppedImage().width / (float) template.getCroppedImage().height;
+                if (croppedTemplateAR <= 1.5 * croppedUnknownAR && croppedTemplateAR >= croppedUnknownAR / 1.5) {
+                    GrayF32 scaledCroppedTemplateImage = new GrayF32(croppedUnknownImage.width, croppedUnknownImage.height);
+                    new FDistort().input(template.getCroppedImage()).output(scaledCroppedTemplateImage).interp(TypeInterpolate.BICUBIC).scale().apply();
                     double error = 0.0;
-                    for (int y = 0; y < croppedGrayImage.height; y++) {
-                        for (int x = 0; x < croppedGrayImage.width; x++) {
-                            float diff = croppedGrayImage.unsafe_get(x, y) - scaledTemplate.unsafe_get(x, y);
+                    for (int y = 0; y < croppedUnknownImage.height; y++) {
+                        for (int x = 0; x < croppedUnknownImage.width; x++) {
+                            float diff = croppedUnknownImage.unsafe_get(x, y) - scaledCroppedTemplateImage.unsafe_get(x, y);
                             error += (diff * diff);
                         }
                     }
                     double errorPerPixel = error / pixels;
                     if (errorPerPixel < bestErrorPerPixel) {
                         bestErrorPerPixel = errorPerPixel;
-                        bestMatch = new TemplateMatch(template, new Match(xWithinImage, yWithinImage, -1 * errorPerPixel), image);
+                        bestMatch = new TemplateMatch(template, new Match(xWithinImage, yWithinImage, -1 * error), unknownImage);
                     }
                 }
             }
             if (bestMatch == null) {
-                final double maxErrorPerPixelGuess = 999.9 * maxErrorPerPixel; // We need a match for learning, regardless how bad it is, so multiply with 999.9
+                final double maxErrorPerPixelGuess = 9999.9; // We need a match for learning, regardless how bad it is
                 double bestErrorPerPixelGuess = maxErrorPerPixelGuess;
                 TemplateMatch bestGuess = null;
                 for (Template template : templates) {
-                    float templateAR = (float) template.getCroppedImage().width / (float) template.getCroppedImage().height;
-                    if (pixels <= 100 || (templateAR <= 1.5 * imageAR && templateAR >= imageAR / 1.5)) {
-                        GrayF32 scaledTemplate = new GrayF32(croppedGrayImage.width, croppedGrayImage.height);
-                        new FDistort().input(template.getCroppedImage()).output(scaledTemplate).interp(TypeInterpolate.BICUBIC).scale().apply();
+                    float croppedTemplateAR = (float) template.getCroppedImage().width / (float) template.getCroppedImage().height;
+                    if (pixels <= 100 || (croppedTemplateAR <= 1.5 * croppedUnknownAR && croppedTemplateAR >= croppedUnknownAR / 1.5)) {
+                        GrayF32 scaledCroppedTemplateImage = new GrayF32(croppedUnknownImage.width, croppedUnknownImage.height);
+                        new FDistort().input(template.getCroppedImage()).output(scaledCroppedTemplateImage).interp(TypeInterpolate.BICUBIC).scale().apply();
                         double error = 0.0;
-                        for (int y = 0; y < croppedGrayImage.height; y++) {
-                            for (int x = 0; x < croppedGrayImage.width; x++) {
-                                float diff = croppedGrayImage.unsafe_get(x, y) - scaledTemplate.unsafe_get(x, y);
+                        for (int y = 0; y < croppedUnknownImage.height; y++) {
+                            for (int x = 0; x < croppedUnknownImage.width; x++) {
+                                float diff = croppedUnknownImage.unsafe_get(x, y) - scaledCroppedTemplateImage.unsafe_get(x, y);
                                 error += (diff * diff);
                             }
                         }
                         double errorPerPixel = error / pixels;
                         if (errorPerPixel < bestErrorPerPixelGuess) {
                             bestErrorPerPixelGuess = errorPerPixel;
-                            bestGuess = new TemplateMatch(template, new Match(xWithinImage, yWithinImage, -1 * errorPerPixel), image);
+                            bestGuess = new TemplateMatch(template, new Match(xWithinImage, yWithinImage, -1 * error), unknownImage);
                         }
                     }
                 }
-                if (bestGuess == null) {
+                if (!"verify.png".equals(screenshotFilename)) {
+                    String folderName = bestGuess == null ? "UNKNOWN" : TemplateMatcher.textToFolder(bestGuess.getTemplate().getText());
+                    String filenamePrefix = String.format(Locale.US, "%06.1f#%s", bestErrorPerPixelGuess, folderName);
+                    String filenameSuffix = xWithinImage + "#" + yWithinImage + "#" + screenshotFilename;
                     Constants.UNKNOWN_DIR.mkdirs();
-                    ImageIO.write(image, "PNG", new File(Constants.UNKNOWN_DIR, "UNKNOWN#" + xWithinImage + "#" + yWithinImage + "#" + screenshotFilename));
-                } else {
-                    String folderName = TemplateMatcher.textToFolder(bestGuess.getTemplate().getText());
-                    File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, folderName);
-                    autoLearnFolder.mkdirs();
-                    ImageIO.write(image, "PNG", new File(autoLearnFolder, "GUESSED#" + folderName + "#" + xWithinImage + "#" + yWithinImage + "#" + screenshotFilename));
-                    logger.trace("Guessed new '" + bestGuess.getTemplate().getText() + "' from " + screenshotFilename);
-                    bestMatch = bestGuess;
+                    ImageIO.write(unknownImage, "PNG", new File(Constants.UNKNOWN_DIR, filenamePrefix + "#" + filenameSuffix));
                 }
+                bestMatch = bestGuess;
             }
             return bestMatch;
         } catch (Exception e) {

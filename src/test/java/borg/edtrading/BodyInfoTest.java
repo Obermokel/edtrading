@@ -129,15 +129,17 @@ public class BodyInfoTest {
                     List<Template> verifyTemplates = currentTemplates.stream().filter(t -> t.getText().equals(text)).collect(Collectors.toList());
                     TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(ImageIO.read(randomPngFile), verifyTemplates, 0, 0, "verify.png");
 
-                    if (bestMatch != null && bestMatch.getErrorPerPixel() >= 1.0) {
-                        BigDecimal errpp = BigDecimal.valueOf(bestMatch.getErrorPerPixel()).setScale(1, BigDecimal.ROUND_HALF_UP);
-                        logger.warn(randomPngFile.getName() + " is too different from " + text + " with " + errpp + " err/pixel - putting it aside");
-                        File targetDir = new File(Constants.TEMPLATES_DIR, "Suspicious\\" + subdir.getName());
-                        FileUtils.copyFileToDirectory(randomPngFile, targetDir);
-                    } else {
-                        File targetDir = new File(Constants.TEMPLATES_DIR, "Body Info\\" + subdir.getName());
-                        FileUtils.copyFileToDirectory(randomPngFile, targetDir);
-                        learned.add(text);
+                    if (bestMatch != null) {
+                        if (bestMatch.getErrorPerPixel() < 750.0) {
+                            File targetDir = new File(Constants.TEMPLATES_DIR, "Body Info\\" + subdir.getName());
+                            FileUtils.copyFileToDirectory(randomPngFile, targetDir);
+                            learned.add(text);
+                        } else {
+                            BigDecimal errpp = BigDecimal.valueOf(bestMatch.getErrorPerPixel()).setScale(1, BigDecimal.ROUND_HALF_UP);
+                            logger.warn(randomPngFile.getName() + " is too different from " + text + " with " + errpp + " err/pixel - putting it aside");
+                            File targetDir = new File(Constants.TEMPLATES_DIR, "Suspicious\\" + subdir.getName());
+                            FileUtils.copyFileToDirectory(randomPngFile, targetDir);
+                        }
                     }
                 }
             }

@@ -20,13 +20,13 @@ public class TemplateMatch {
 
     private Template template = null;
     private Match match = null;
-    private BufferedImage subimage = null;
+    private BufferedImage matchedImage = null;
     private String shouldHaveBeen = null;
 
     public TemplateMatch(Template template, Match match, BufferedImage subimage) {
         this.setTemplate(template);
         this.setMatch(match);
-        this.setSubimage(subimage);
+        this.setMatchedImage(subimage);
     }
 
     @Override
@@ -39,8 +39,8 @@ public class TemplateMatch {
      */
     public double getErrorPerPixel() {
         int pixels = this.getTemplate().getImage().getWidth() * this.getTemplate().getImage().getHeight();
-        if (this.getSubimage() != null) {
-            pixels = this.getSubimage().getWidth() * this.getSubimage().getHeight();
+        if (this.getMatchedImage() != null) {
+            pixels = this.getMatchedImage().getWidth() * this.getMatchedImage().getHeight();
         }
         double error = -1 * this.getMatch().score;
 
@@ -52,8 +52,8 @@ public class TemplateMatch {
      */
     public double getErrorPerWidth() {
         int width = this.getTemplate().getImage().getWidth();
-        if (this.getSubimage() != null) {
-            width = this.getSubimage().getWidth();
+        if (this.getMatchedImage() != null) {
+            width = this.getMatchedImage().getWidth();
         }
         double error = -1 * this.getMatch().score;
 
@@ -114,12 +114,15 @@ public class TemplateMatch {
         this.match = match;
     }
 
-    public BufferedImage getSubimage() {
-        return this.subimage;
+    /**
+     * The image that has been matched against the templates
+     */
+    public BufferedImage getMatchedImage() {
+        return this.matchedImage;
     }
 
-    public void setSubimage(BufferedImage subimage) {
-        this.subimage = subimage;
+    public void setMatchedImage(BufferedImage matchedImage) {
+        this.matchedImage = matchedImage;
     }
 
     public String getShouldHaveBeen() {

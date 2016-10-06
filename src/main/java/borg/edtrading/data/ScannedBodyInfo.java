@@ -1292,7 +1292,7 @@ public class ScannedBodyInfo {
             File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, folderName);
             autoLearnFolder.mkdirs();
             try {
-                ImageIO.write(m.getSubimage(), "PNG", new File(autoLearnFolder, "LEARNED#" + folderName + "#" + m.getMatch().x + "#" + m.getMatch().y + "#" + screenshotFilename));
+                ImageIO.write(m.getMatchedImage(), "PNG", new File(autoLearnFolder, "LEARNED#" + folderName + "#" + m.getMatch().x + "#" + m.getMatch().y + "#" + screenshotFilename));
                 logger.trace("Learned new '" + shouldHaveBeen + "' from " + screenshotFilename);
             } catch (IOException e) {
                 e.printStackTrace();
