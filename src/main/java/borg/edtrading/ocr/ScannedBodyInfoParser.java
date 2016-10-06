@@ -205,8 +205,6 @@ public class ScannedBodyInfoParser {
             findAndRemove("ARGOFPERIAPSIS:", bodyInfoMatches, sortedLabelIndexes);
         }
 
-        // TODO Reserves again (before rings)
-
         // Search for rings
         int nRings = 0;
         String expectedRingNamePrefix = bodyName.replaceAll("\\s", "");
@@ -217,6 +215,17 @@ public class ScannedBodyInfoParser {
             findAndRemove("SEMIMAJORAXIS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
             findAndRemove("INNERRADIUS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
             findAndRemove("OUTERRADIUS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
+        }
+
+        if (nRings > 0) {
+            // Reserves again (the one before rings)
+            for (BodyInfo bi : BodyInfo.byPrefix("RESERVES_")) {
+                String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
+                if (findAndRemove(nameWithoutSpaces, bodyInfoMatches, 0, indexOf("RING1_RINGTYPE:", sortedLabelIndexes), "RING_RESERVES_", sortedLabelIndexes) != null) { // Reserves unfortunately is before moon masses, so explicitly search from index 0...
+                    scannedBodyInfo.setSystemReserves(bi);
+                    break; // Expect only one hit
+                }
+            }
         }
 
         findAndRemove("BACK", bodyInfoMatches, sortedLabelIndexes); // Back button...
@@ -1566,7 +1575,7 @@ public class ScannedBodyInfoParser {
             }
             try {
                 // Pattern: #,##0.0MT
-                BigDecimal min = new BigDecimal("41430573056.0"); // Screenshot: 2016-09-28 07-56-53 Har Itari.png
+                BigDecimal min = new BigDecimal("501.8"); // Screenshot: 2016-10-01 22-39-34 Moirai.png
                 BigDecimal max = new BigDecimal("908107579392.0"); // Screenshot: 2016-09-28 07-56-53 Har Itari.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
@@ -1609,7 +1618,7 @@ public class ScannedBodyInfoParser {
             }
             try {
                 // Pattern: #,##0KM
-                BigDecimal min = new BigDecimal("112751"); // Screenshot: 2016-09-28 07-56-53 Har Itari.png
+                BigDecimal min = new BigDecimal("7549"); // Screenshot: 2016-10-01 22-39-34 Moirai.png
                 BigDecimal max = new BigDecimal("221662"); // Screenshot: 2016-09-28 07-56-53 Har Itari.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur

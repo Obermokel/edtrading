@@ -46,6 +46,7 @@ public class BodyInfoTest {
     static final Logger logger = LogManager.getLogger(BodyInfoTest.class);
 
     public static void main(String[] args) throws IOException {
+        logger.trace("Cleaning temp dir...");
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
         Galaxy galaxy = Galaxy.readDataFromFiles();
         //testAllImages();

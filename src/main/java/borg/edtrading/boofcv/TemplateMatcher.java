@@ -107,7 +107,7 @@ public class TemplateMatcher {
             TemplateMatch bestMatch = null;
             for (Template template : templates) {
                 float croppedTemplateAR = (float) template.getCroppedImage().width / (float) template.getCroppedImage().height;
-                if (croppedTemplateAR <= 1.5 * croppedUnknownAR && croppedTemplateAR >= croppedUnknownAR / 1.5) {
+                if (croppedTemplateAR <= 1.25 * croppedUnknownAR && croppedTemplateAR >= croppedUnknownAR / 1.25) {
                     GrayF32 scaledCroppedTemplateImage = new GrayF32(croppedUnknownImage.width, croppedUnknownImage.height);
                     new FDistort().input(template.getCroppedImage()).output(scaledCroppedTemplateImage).interp(TypeInterpolate.BICUBIC).scale().apply();
                     double error = 0.0;
@@ -130,7 +130,7 @@ public class TemplateMatcher {
                 TemplateMatch bestGuess = null;
                 for (Template template : templates) {
                     float croppedTemplateAR = (float) template.getCroppedImage().width / (float) template.getCroppedImage().height;
-                    if (pixels <= 100 || (croppedTemplateAR <= 1.5 * croppedUnknownAR && croppedTemplateAR >= croppedUnknownAR / 1.5)) {
+                    if (croppedTemplateAR <= 1.5 * croppedUnknownAR && croppedTemplateAR >= croppedUnknownAR / 1.5) {
                         GrayF32 scaledCroppedTemplateImage = new GrayF32(croppedUnknownImage.width, croppedUnknownImage.height);
                         new FDistort().input(template.getCroppedImage()).output(scaledCroppedTemplateImage).interp(TypeInterpolate.BICUBIC).scale().apply();
                         double error = 0.0;
