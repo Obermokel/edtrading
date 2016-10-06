@@ -9,8 +9,11 @@ import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.data.ScannedRingInfo;
+import borg.edtrading.util.MatchSorter;
 import borg.edtrading.util.MatchSorter.MatchGroup;
 import borg.edtrading.util.MiscUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -23,6 +26,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 
@@ -41,6 +46,43 @@ public class ScannedBodyInfoParser {
         currentScreenshotFilename = screenshotFilename;
 
         ScannedBodyInfo scannedBodyInfo = new ScannedBodyInfo(screenshotFilename, systemName);
+
+        // >>>> START BODY NAME >>>>
+        List<TemplateMatch> bodyNameMatches = new ArrayList<>();
+        for (MatchGroup mg : bodyNameWords) {
+            bodyNameMatches.addAll(mg.getGroupMatches());
+        }
+        SortedMap<Integer, String> sortedNameIndexes = new TreeMap<>();
+        if (findAndRemove("ARRIVALPOINT:", bodyNameMatches, sortedNameIndexes) == null) {
+            // Name only
+        } else {
+            // Name, then distance, then type
+            for (BodyInfo bi : BodyInfo.byPrefix("TYPE_")) {
+                String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
+                if (findAndRemove(nameWithoutSpaces, bodyNameMatches, "TYPE_", sortedNameIndexes) != null) {
+                    scannedBodyInfo.setBodyType(bi);
+                    break; // Expect only one hit
+                }
+            }
+            scannedBodyInfo.setDistanceLs(fixAndRemoveDistance("ARRIVALPOINT:", bodyNameMatches, sortedNameIndexes));
+        }
+        List<TemplateMatch> remainingNameMatches = new ArrayList<>();
+        for (int i = 0; i < bodyNameMatches.size(); i++) {
+            if (bodyNameMatches.get(i).getShouldHaveBeen() != null) {
+                break;
+            } else {
+                remainingNameMatches.add(bodyNameMatches.get(i));
+            }
+        }
+        List<MatchGroup> remainingNameWords = MatchSorter.sortMatches(remainingNameMatches);
+        String bodyName = "";
+        for (MatchGroup mg : remainingNameWords) {
+            bodyName = (bodyName + " " + mg.getText()).trim();
+        }
+        bodyName = removePixelErrorsFromBodyName(bodyName);
+        bodyName = fixGeneratedBodyName(systemName, bodyName);
+        scannedBodyInfo.setBodyName(bodyName);
+        // <<<< END BODY NAME <<<<
 
         List<TemplateMatch> bodyInfoMatches = new ArrayList<>();
         for (MatchGroup mg : bodyInfoWords) {
@@ -172,7 +214,6 @@ public class ScannedBodyInfoParser {
             while (searchForMoreRings) {
                 // We have found a new ring
                 nRings++;
-                // TODO Name
                 findAndRemove("MASS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
                 findAndRemove("SEMIMAJORAXIS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
                 findAndRemove("INNERRADIUS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
@@ -230,7 +271,7 @@ public class ScannedBodyInfoParser {
             List<ScannedRingInfo> rings = new ArrayList<>(nRings);
             for (int n = 1; n <= nRings; n++) {
                 ScannedRingInfo ring = new ScannedRingInfo();
-                // TODO Name
+                ring.setRingName(fixAndRemoveRingName("RING" + n + "_RINGTYPE:", bodyInfoMatches, sortedLabelIndexes, systemName));
                 ring.setRingType(fixAndRemoveRingType("RING" + n + "_RINGTYPE:", bodyInfoMatches, sortedLabelIndexes));
                 ring.setMassMt(fixAndRemoveRingMass("RING" + n + "_MASS:", bodyInfoMatches, sortedLabelIndexes));
                 ring.setSemiMajorAxisAU(fixAndRemoveSemiMajorAxis("RING" + n + "_SEMIMAJORAXIS:", bodyInfoMatches, sortedLabelIndexes));
@@ -260,6 +301,29 @@ public class ScannedBodyInfoParser {
         return scannedBodyInfo;
     }
 
+    private static String fixAndRemoveRingName(String beforeLabel, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes, String systemName) {
+        Integer labelIndex = indexOf(beforeLabel, sortedLabelIndexes);
+        if (labelIndex != null) {
+            List<TemplateMatch> remainingMatches = new ArrayList<>();
+            for (int i = labelIndex - 1; i >= 0; i--) {
+                if (matches.get(i).getShouldHaveBeen() != null) {
+                    break;
+                } else {
+                    remainingMatches.add(0, matches.get(i));
+                }
+            }
+            List<MatchGroup> remainingNameWords = MatchSorter.sortMatches(remainingMatches);
+            String ringName = "";
+            for (MatchGroup mg : remainingNameWords) {
+                ringName = (ringName + " " + mg.getText()).trim();
+            }
+            ringName = removePixelErrorsFromBodyName(ringName);
+            ringName = fixGeneratedBodyName(systemName, ringName);
+            return ringName;
+        }
+        return null;
+    }
+
     private static void learnWronglyDetectedChars(List<TemplateMatch> fixedMatches) {
         for (TemplateMatch m : fixedMatches) {
             if (m != null && m.getShouldHaveBeen() != null) {
@@ -280,6 +344,88 @@ public class ScannedBodyInfoParser {
                     }
                 }
             }
+        }
+    }
+
+    private static String removePixelErrorsFromBodyName(final String scannedBodyName) {
+        if (StringUtils.isNotBlank(scannedBodyName)) {
+            String fixedName = scannedBodyName;
+            while (fixedName.startsWith(".") || fixedName.startsWith(",") || fixedName.startsWith(":") || fixedName.startsWith("-") || fixedName.startsWith("'") || fixedName.startsWith("°")) {
+                fixedName = fixedName.substring(1, fixedName.length()).trim();
+            }
+            while (fixedName.endsWith(".") || fixedName.endsWith(",") || fixedName.endsWith(":") || fixedName.endsWith("-") || fixedName.endsWith("'") || fixedName.endsWith("°")) {
+                fixedName = fixedName.substring(0, fixedName.length() - 1).trim();
+            }
+            return fixedName;
+        }
+        return scannedBodyName;
+    }
+
+    private static String fixGeneratedBodyName(final String systemName, final String scannedBodyName) {
+        if (StringUtils.isBlank(systemName) || StringUtils.isBlank(scannedBodyName)) {
+            return scannedBodyName;
+        } else {
+            String fixedBodyName = scannedBodyName;
+
+            // Try to fix the first part which often is the system name
+            // Example: ETA COR0NAE BOREALIS A 1 -> Eta Coronae Borealis A 1
+            String partOfScannedBodyNameToReplaceWithSystemName = null;
+            float bestMatchSoFar = 1.0f;
+            int index = 0;
+            while (scannedBodyName.indexOf(" ", index + 1) >= 0) {
+                index = scannedBodyName.indexOf(" ", index + 1);
+                String partOfScannedBodyName = scannedBodyName.substring(0, index);
+                float err = MiscUtil.levenshteinError(systemName, partOfScannedBodyName);
+                if (err <= 0.25f && err < bestMatchSoFar) {
+                    partOfScannedBodyNameToReplaceWithSystemName = partOfScannedBodyName;
+                    bestMatchSoFar = err;
+                }
+            }
+            if (partOfScannedBodyNameToReplaceWithSystemName != null) {
+                fixedBodyName = scannedBodyName.replace(partOfScannedBodyNameToReplaceWithSystemName, systemName);
+                logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName + "'");
+            }
+
+            // If the name does not start with the system convert to camel case, replacing 0 with O
+            // Example: L0WING'S ROCK -> Lowing's Rock
+            if (partOfScannedBodyNameToReplaceWithSystemName == null) {
+                fixedBodyName = WordUtils.capitalizeFully(scannedBodyName.replace("0", "O"));
+                logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName + "'");
+            } else {
+                // Because the body name is generated we might have a designation. Try to improve it.
+                // Example: Eta Coronae Borealis A1 A Rlng -> Eta Coronae Borealis A 1 A Ring
+                String scannedDesignation = scannedBodyName.replace(partOfScannedBodyNameToReplaceWithSystemName, "").trim();
+                if (StringUtils.isNotEmpty(scannedDesignation)) {
+                    String fixedDesignation = "";
+                    for (String part : scannedDesignation.toUpperCase().split("\\s")) {
+                        String fixedPart = " ";
+                        Matcher mA1A = Pattern.compile("([A-Z]+)([0-9]+)([A-Z]+)").matcher(part);
+                        Matcher m1A1 = Pattern.compile("([0-9]+)([A-Z]+)([0-9]+)").matcher(part);
+                        Matcher mA1 = Pattern.compile("([A-Z]+)([0-9]+)").matcher(part);
+                        Matcher m1A = Pattern.compile("([0-9]+)([A-Z]+)").matcher(part);
+                        if (MiscUtil.levenshteinError("RING", part) <= 0.25f) {
+                            fixedPart += "Ring";
+                        } else if (MiscUtil.levenshteinError("BELT", part) <= 0.25f) {
+                            fixedPart += "Belt";
+                        } else if (mA1A.matches()) {
+                            fixedPart += (mA1A.group(1) + " " + mA1A.group(2) + " " + mA1A.group(3));
+                        } else if (m1A1.matches()) {
+                            fixedPart += (m1A1.group(1) + " " + m1A1.group(2) + " " + m1A1.group(3));
+                        } else if (mA1.matches()) {
+                            fixedPart += (mA1.group(1) + " " + mA1.group(2));
+                        } else if (m1A.matches()) {
+                            fixedPart += (m1A.group(1) + " " + m1A.group(2));
+                        } else {
+                            fixedPart += part;
+                        }
+                        fixedDesignation += fixedPart;
+                    }
+                    fixedBodyName = systemName + fixedDesignation;
+                    logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName + "'");
+                }
+            }
+
+            return fixedBodyName;
         }
     }
 
@@ -529,6 +675,49 @@ public class ScannedBodyInfoParser {
             }
         }
         return fixedText;
+    }
+
+    private static BigDecimal fixAndRemoveDistance(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+        Integer labelIndex = indexOf(label, sortedLabelIndexes);
+        if (labelIndex != null) {
+            int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
+            int startIndex = labelIndex + label.length();
+            StringBuilder scannedText = new StringBuilder();
+            for (int i = startIndex; i < endIndex; i++) {
+                scannedText.append(matches.get(i).getTemplate().getText());
+            }
+            try {
+                // Pattern: #,##0.00LS
+                BigDecimal min = new BigDecimal("50.00"); // Screenshot: ?
+                BigDecimal max = new BigDecimal("500000.00"); // Screenshot: ?
+                String fixedText = scannedText.toString();
+                fixedText = fixedText.replace("O", "0").replace("D", "0").replace("B", "8"); // Replace all chars which cannot occur
+                fixedText = allSeparatorsToThousandsExceptLast(fixedText);
+                fixedText = lastCharsToUnit(fixedText, "LS");
+                if (!fixedText.matches("(\\d{1,3})(,\\d{3})*\\.\\d{2}LS")) {
+                    throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
+                } else {
+                    String parseableText = fixedText.replace(",", "").replace("LS", ""); // Remove all thousands separators and units
+                    BigDecimal value = new BigDecimal(parseableText);
+                    if (value.compareTo(min) < 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
+                    } else if (value.compareTo(max) > 0) {
+                        throw new NumberFormatException("Parsed value " + value + " is above the allowed maximum " + label.toLowerCase().replace(":", "") + " of " + max);
+                    } else {
+                        // Set shouldHaveBeen, effectively removing the matches
+                        for (int i = startIndex; i < endIndex; i++) {
+                            char shouldHaveBeen = fixedText.charAt(i - startIndex);
+                            matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+                        }
+                        // Return the result
+                        return value;
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn(currentScreenshotFilename + ": Scanned text '" + scannedText + "' does not look like a valid value for " + label.toLowerCase().replace(":", "") + " -- " + e);
+            }
+        }
+        return null;
     }
 
     private static BigDecimal fixAndRemoveAge(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {

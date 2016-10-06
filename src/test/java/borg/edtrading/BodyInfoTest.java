@@ -86,10 +86,10 @@ public class BodyInfoTest {
         //        ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
         //        ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
 
-        //        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
-        //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
-        //        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
-        //        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
+        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
+        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
+        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
         templates = copyLearnedChars(templates);
 
