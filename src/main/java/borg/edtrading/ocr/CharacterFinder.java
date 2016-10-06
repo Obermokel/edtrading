@@ -147,7 +147,7 @@ public abstract class CharacterFinder {
     }
 
     private static List<Rectangle> extractCharBoxesFromTextLines(GrayF32 grayImage, List<Rectangle> textLineBoxes) {
-        final int maxNonBlack = 1;
+        final int maxNonBlack = 0;
 
         List<Rectangle> charBoxes = new ArrayList<>();
 
