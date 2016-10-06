@@ -26,12 +26,14 @@ import java.awt.image.RasterFormatException;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -53,7 +55,7 @@ public class BodyInfoTest {
         List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
         //File sourceFile = selectRandomScreenshot();
-        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-28 07-43-05 Sol.png");
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-02 10-29-45 Latugara.png");
         for (File sourceFile : selectAllScreenshots()) {
             String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
             StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
@@ -89,14 +91,14 @@ public class BodyInfoTest {
             //        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
             //        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
-            templates = copyLearnedChars();
+            templates = copyLearnedChars(templates);
 
             //        System.out.println(scannedBodyInfo);
             //            BodyInfoApp.printStats(scannedBodyInfos);
         }
     }
 
-    private static List<Template> copyLearnedChars() throws IOException {
+    private static List<Template> copyLearnedChars(List<Template> currentTemplates) throws IOException {
         final Random random = new Random(System.currentTimeMillis());
         List<String> learned = new ArrayList<>();
         File[] subdirs = Constants.AUTO_LEARNED_DIR.listFiles(new FileFilter() {
@@ -124,9 +126,19 @@ public class BodyInfoTest {
                 });
                 if (pngFiles != null && pngFiles.length >= 1) {
                     File randomPngFile = pngFiles[random.nextInt(pngFiles.length)];
-                    File targetDir = new File(Constants.TEMPLATES_DIR, "Body Info\\" + subdir.getName());
-                    FileUtils.copyFileToDirectory(randomPngFile, targetDir);
-                    learned.add(text);
+                    List<Template> verifyTemplates = currentTemplates.stream().filter(t -> t.getText().equals(text)).collect(Collectors.toList());
+                    TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(ImageIO.read(randomPngFile), verifyTemplates, 0, 0, "verify.png");
+
+                    if (bestMatch != null && bestMatch.getErrorPerPixel() >= 1.0) {
+                        BigDecimal errpp = BigDecimal.valueOf(bestMatch.getErrorPerPixel()).setScale(1, BigDecimal.ROUND_HALF_UP);
+                        logger.warn(randomPngFile.getName() + " is too different from " + text + " with " + errpp + " err/pixel - putting it aside");
+                        File targetDir = new File(Constants.TEMPLATES_DIR, "Suspicious\\" + subdir.getName());
+                        FileUtils.copyFileToDirectory(randomPngFile, targetDir);
+                    } else {
+                        File targetDir = new File(Constants.TEMPLATES_DIR, "Body Info\\" + subdir.getName());
+                        FileUtils.copyFileToDirectory(randomPngFile, targetDir);
+                        learned.add(text);
+                    }
                 }
             }
             // Clean auto-learned
