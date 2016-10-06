@@ -28,10 +28,9 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -136,9 +135,11 @@ public class BodyInfoTest {
                             learned.add(text);
                         } else {
                             BigDecimal errpp = BigDecimal.valueOf(bestMatch.getErrorPerPixel()).setScale(1, BigDecimal.ROUND_HALF_UP);
-                            logger.warn(randomPngFile.getName() + " is too different from " + text + " with " + errpp + " err/pixel - putting it aside");
-                            File targetDir = new File(Constants.TEMPLATES_DIR, "Suspicious\\" + subdir.getName());
-                            FileUtils.copyFileToDirectory(randomPngFile, targetDir);
+                            logger.debug(randomPngFile.getName() + " is too different from " + text + " with " + errpp + " err/pixel - putting it aside");
+                            String filenamePrefix = String.format(Locale.US, "%07.1f#%s", bestMatch.getErrorPerPixel(), subdir.getName());
+                            String filename = randomPngFile.getName().replace("LEARNED#" + subdir.getName(), filenamePrefix);
+                            File targetFile = new File(Constants.TEMPLATES_DIR, "Suspicious\\" + filename);
+                            FileUtils.copyFile(randomPngFile, targetFile);
                         }
                     }
                 }
@@ -224,22 +225,20 @@ public class BodyInfoTest {
         return files[rand.nextInt(files.length)];
     }
 
-    private static File[] selectAllScreenshots() {
+    private static List<File> selectAllScreenshots() {
         File dir = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR);
-        File[] files = dir.listFiles(new FileFilter() {
+        File[] fileArray = dir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File f) {
                 return f.getName().endsWith(".png");
             }
         });
-        final Random random = new Random(System.currentTimeMillis());
-        Arrays.sort(files, new Comparator<File>() {
-            @Override
-            public int compare(File f1, File f2) {
-                return random.nextDouble() < 0.5 ? -1 : 1;
-            }
-        });
-        return files;
+        List<File> fileList = new ArrayList<>(fileArray.length);
+        for (File f : fileArray) {
+            fileList.add(f);
+        }
+        Collections.shuffle(fileList);
+        return fileList;
     }
 
     private static void testAllImages() throws IOException {

@@ -39,8 +39,8 @@ public class TemplateMatch {
      */
     public double getErrorPerPixel() {
         int pixels = this.getTemplate().getImage().getWidth() * this.getTemplate().getImage().getHeight();
-        if (this.getMatchedImage() != null) {
-            pixels = this.getMatchedImage().getWidth() * this.getMatchedImage().getHeight();
+        if (this.getTemplate().getCroppedImage() != null) {
+            pixels = this.getTemplate().getCroppedImage().getWidth() * this.getTemplate().getCroppedImage().getHeight();
         }
         double error = -1 * this.getMatch().score;
 
@@ -52,8 +52,8 @@ public class TemplateMatch {
      */
     public double getErrorPerWidth() {
         int width = this.getTemplate().getImage().getWidth();
-        if (this.getMatchedImage() != null) {
-            width = this.getMatchedImage().getWidth();
+        if (this.getTemplate().getCroppedImage() != null) {
+            width = this.getTemplate().getCroppedImage().getWidth();
         }
         double error = -1 * this.getMatch().score;
 

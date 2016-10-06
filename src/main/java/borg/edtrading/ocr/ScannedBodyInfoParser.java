@@ -398,7 +398,7 @@ public class ScannedBodyInfoParser {
             if (partOfScannedBodyNameToReplaceWithSystemName != null) {
                 fixedBodyName = scannedBodyName.replace(partOfScannedBodyNameToReplaceWithSystemName, systemName);
                 if (!fixedBodyName.equalsIgnoreCase(scannedBodyName)) {
-                    logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName.toUpperCase() + "'");
+                    logger.trace("Fixed '" + scannedBodyName + "' to '" + fixedBodyName.toUpperCase() + "'");
                 }
             }
 
@@ -407,7 +407,7 @@ public class ScannedBodyInfoParser {
             if (partOfScannedBodyNameToReplaceWithSystemName == null) {
                 fixedBodyName = WordUtils.capitalizeFully(scannedBodyName.replace("0", "O"));
                 if (!fixedBodyName.equalsIgnoreCase(scannedBodyName)) {
-                    logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName.toUpperCase() + "'");
+                    logger.trace("Fixed '" + scannedBodyName + "' to '" + fixedBodyName.toUpperCase() + "'");
                 }
             } else {
                 // Because the body name is generated we might have a designation. Try to improve it.
@@ -440,7 +440,7 @@ public class ScannedBodyInfoParser {
                     }
                     fixedBodyName = systemName + fixedDesignation;
                     if (!fixedBodyName.equalsIgnoreCase(scannedBodyName)) {
-                        logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName.toUpperCase() + "'");
+                        logger.trace("Fixed '" + scannedBodyName + "' to '" + fixedBodyName.toUpperCase() + "'");
                     }
                 }
             }

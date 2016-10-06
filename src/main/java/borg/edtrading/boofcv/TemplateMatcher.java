@@ -125,7 +125,7 @@ public class TemplateMatcher {
                 }
             }
             if (bestMatch == null) {
-                final double maxErrorPerPixelGuess = 9999.9; // We need a match for learning, regardless how bad it is
+                final double maxErrorPerPixelGuess = 99999.9; // We need a match for learning, regardless how bad it is
                 double bestErrorPerPixelGuess = maxErrorPerPixelGuess;
                 TemplateMatch bestGuess = null;
                 for (Template template : templates) {
@@ -149,7 +149,7 @@ public class TemplateMatcher {
                 }
                 if (!"verify.png".equals(screenshotFilename)) {
                     String folderName = bestGuess == null ? "UNKNOWN" : TemplateMatcher.textToFolder(bestGuess.getTemplate().getText());
-                    String filenamePrefix = String.format(Locale.US, "%06.1f#%s", bestErrorPerPixelGuess, folderName);
+                    String filenamePrefix = String.format(Locale.US, "%07.1f#%s", bestErrorPerPixelGuess, folderName);
                     String filenameSuffix = xWithinImage + "#" + yWithinImage + "#" + screenshotFilename;
                     Constants.UNKNOWN_DIR.mkdirs();
                     ImageIO.write(unknownImage, "PNG", new File(Constants.UNKNOWN_DIR, filenamePrefix + "#" + filenameSuffix));
