@@ -1365,13 +1365,13 @@ public class ScannedBodyInfoParser {
         if (totalSumPercent.doubleValue() == 0.0) {
             return null;
         } else if (Math.abs(100.0 - totalSumPercent.doubleValue()) >= 1.0) {
-            logger.debug(currentScreenshotFilename + ": Trying to fix sum of " + label.toLowerCase().replace(":", "") + ". Currently is " + totalSumPercent + ": " + result);
             LinkedHashMap<String, BigDecimal> wrongPercentages = new LinkedHashMap<>();
             for (BodyInfo bi : result.keySet()) {
                 wrongPercentages.put(bi.getName(), result.get(bi));
             }
             LinkedHashMap<String, BigDecimal> fixedPercentages = fixPercentagesTo100(wrongPercentages);
             if (fixedPercentages == null) {
+                logger.warn(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
                 return null;
             } else {
                 logger.info(
@@ -1412,7 +1412,7 @@ public class ScannedBodyInfoParser {
                 return result;
             }
         } else if (Math.abs(100.0 - totalSumPercent.doubleValue()) > 0.5) {
-            logger.warn(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
+            logger.debug(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
             return null;
         } else {
             return result;
@@ -1475,13 +1475,13 @@ public class ScannedBodyInfoParser {
         if (totalSumPercent.doubleValue() == 0.0) {
             return null;
         } else if (Math.abs(100.0 - totalSumPercent.doubleValue()) >= 1.0) {
-            logger.debug(currentScreenshotFilename + ": Trying to fix sum of " + label.toLowerCase().replace(":", "") + ". Currently is " + totalSumPercent + ": " + result);
             LinkedHashMap<String, BigDecimal> wrongPercentages = new LinkedHashMap<>();
             for (Item el : result.keySet()) {
                 wrongPercentages.put(el.getName(), result.get(el));
             }
             LinkedHashMap<String, BigDecimal> fixedPercentages = fixPercentagesTo100(wrongPercentages);
             if (fixedPercentages == null) {
+                logger.warn(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
                 return null;
             } else {
                 logger.info(
@@ -1522,7 +1522,7 @@ public class ScannedBodyInfoParser {
                 return result;
             }
         } else if (Math.abs(100.0 - totalSumPercent.doubleValue()) > 0.5) {
-            logger.warn(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
+            logger.debug(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
             return null;
         } else {
             return result;
