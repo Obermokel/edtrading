@@ -81,6 +81,15 @@ public class ScannedBodyInfoParser {
         }
         bodyName = removePixelErrorsFromBodyName(bodyName);
         bodyName = fixGeneratedBodyName(systemName, bodyName);
+        String fixedText = bodyName.toUpperCase().replaceAll("\\s", "");
+        // Set shouldHaveBeen, effectively removing the matches
+        if (remainingNameMatches.size() == fixedText.length()) {
+            for (int i = 0; i < remainingNameMatches.size(); i++) {
+                char shouldHaveBeen = fixedText.charAt(i);
+                remainingNameMatches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+            }
+        }
+        // Set the name
         scannedBodyInfo.setBodyName(bodyName);
         // <<<< END BODY NAME <<<<
 
@@ -196,32 +205,18 @@ public class ScannedBodyInfoParser {
             findAndRemove("ARGOFPERIAPSIS:", bodyInfoMatches, sortedLabelIndexes);
         }
 
+        // TODO Reserves again (before rings)
+
+        // Search for rings
         int nRings = 0;
-        if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_RINGS || scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_PLANET || scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_STAR) {
-            // Either a rings-only screenshot, or a body which can have rings.
-            // The first ring starts with system reserves.
-            boolean searchForMoreRings = false;
-            for (BodyInfo bi : BodyInfo.byPrefix("RESERVES_")) {
-                String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
-                if (findAndRemove(nameWithoutSpaces, bodyInfoMatches, "RING" + nRings + "_RESERVES_", sortedLabelIndexes) != null) {
-                    scannedBodyInfo.setSystemReserves(bi);
-                    searchForMoreRings = true;
-                    findAndRemove("RINGTYPE:", bodyInfoMatches, "RING" + (nRings + 1) + "_", sortedLabelIndexes);
-                    break; // Find and remove only one at once
-                }
-            }
-
-            while (searchForMoreRings) {
-                // We have found a new ring
-                nRings++;
-                findAndRemove("MASS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
-                findAndRemove("SEMIMAJORAXIS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
-                findAndRemove("INNERRADIUS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
-                findAndRemove("OUTERRADIUS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
-
-                // More rings?
-                searchForMoreRings = findAndRemove("RINGTYPE:", bodyInfoMatches, "RING" + (nRings + 1) + "_", sortedLabelIndexes) != null;
-            }
+        String expectedRingNamePrefix = bodyName.replaceAll("\\s", "");
+        while (findAndRemove(expectedRingNamePrefix, bodyInfoMatches, "RING" + (nRings + 1) + "_NAME_", sortedLabelIndexes) != null) {
+            nRings++;
+            findAndRemove("RINGTYPE:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
+            findAndRemove("MASS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
+            findAndRemove("SEMIMAJORAXIS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
+            findAndRemove("INNERRADIUS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
+            findAndRemove("OUTERRADIUS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
         }
 
         findAndRemove("BACK", bodyInfoMatches, sortedLabelIndexes); // Back button...
@@ -271,7 +266,7 @@ public class ScannedBodyInfoParser {
             List<ScannedRingInfo> rings = new ArrayList<>(nRings);
             for (int n = 1; n <= nRings; n++) {
                 ScannedRingInfo ring = new ScannedRingInfo();
-                ring.setRingName(fixAndRemoveRingName("RING" + n + "_RINGTYPE:", bodyInfoMatches, sortedLabelIndexes, systemName));
+                ring.setRingName(fixAndRemoveRingName("RING" + n + "_RINGTYPE:", bodyInfoMatches, sortedLabelIndexes, systemName, bodyName));
                 ring.setRingType(fixAndRemoveRingType("RING" + n + "_RINGTYPE:", bodyInfoMatches, sortedLabelIndexes));
                 ring.setMassMt(fixAndRemoveRingMass("RING" + n + "_MASS:", bodyInfoMatches, sortedLabelIndexes));
                 ring.setSemiMajorAxisAU(fixAndRemoveSemiMajorAxis("RING" + n + "_SEMIMAJORAXIS:", bodyInfoMatches, sortedLabelIndexes));
@@ -283,42 +278,61 @@ public class ScannedBodyInfoParser {
         }
 
         // TODO Remove this debug output
-        if (nRings > 0) {
-            System.out.print("Scanned: ");
-            for (TemplateMatch m : bodyInfoMatches) {
-                System.out.print("<" + m.getTemplate().getText() + ">");
-            }
-            System.out.println();
-            System.out.print("Parsed:  ");
-            for (TemplateMatch m : bodyInfoMatches) {
-                System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
-            }
-            System.out.println();
-        }
+        //        System.out.print("Scanned: ");
+        //        for (TemplateMatch m : bodyNameMatches) {
+        //            System.out.print("<" + m.getTemplate().getText() + ">");
+        //        }
+        //        System.out.println();
+        //        System.out.print("Parsed:  ");
+        //        for (TemplateMatch m : bodyNameMatches) {
+        //            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
+        //        }
+        //        System.out.println();
+        //        System.out.print("Scanned: ");
+        //        for (TemplateMatch m : bodyInfoMatches) {
+        //            System.out.print("<" + m.getTemplate().getText() + ">");
+        //        }
+        //        System.out.println();
+        //        System.out.print("Parsed:  ");
+        //        for (TemplateMatch m : bodyInfoMatches) {
+        //            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
+        //        }
+        //        System.out.println();
 
+        learnWronglyDetectedChars(bodyNameMatches);
         learnWronglyDetectedChars(bodyInfoMatches);
 
         return scannedBodyInfo;
     }
 
-    private static String fixAndRemoveRingName(String beforeLabel, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes, String systemName) {
+    private static String fixAndRemoveRingName(String beforeLabel, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes, String systemName, String bodyName) {
         Integer labelIndex = indexOf(beforeLabel, sortedLabelIndexes);
         if (labelIndex != null) {
+            int endIndex = labelIndex;
+            int startIndex = labelIndex;
             List<TemplateMatch> remainingMatches = new ArrayList<>();
             for (int i = labelIndex - 1; i >= 0; i--) {
                 if (matches.get(i).getShouldHaveBeen() != null) {
                     break;
                 } else {
                     remainingMatches.add(0, matches.get(i));
+                    startIndex = i;
                 }
             }
             List<MatchGroup> remainingNameWords = MatchSorter.sortMatches(remainingMatches);
-            String ringName = "";
+            String ringName = bodyName;
             for (MatchGroup mg : remainingNameWords) {
                 ringName = (ringName + " " + mg.getText()).trim();
             }
             ringName = removePixelErrorsFromBodyName(ringName);
             ringName = fixGeneratedBodyName(systemName, ringName);
+            String fixedText = ringName.replace(bodyName, "").replaceAll("\\s", "");
+            // Set shouldHaveBeen, effectively removing the matches
+            for (int i = startIndex; i < endIndex; i++) {
+                char shouldHaveBeen = fixedText.charAt(i - startIndex);
+                matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+            }
+            // Return the result
             return ringName;
         }
         return null;
@@ -383,14 +397,18 @@ public class ScannedBodyInfoParser {
             }
             if (partOfScannedBodyNameToReplaceWithSystemName != null) {
                 fixedBodyName = scannedBodyName.replace(partOfScannedBodyNameToReplaceWithSystemName, systemName);
-                logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName + "'");
+                if (!fixedBodyName.equalsIgnoreCase(scannedBodyName)) {
+                    logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName.toUpperCase() + "'");
+                }
             }
 
             // If the name does not start with the system convert to camel case, replacing 0 with O
             // Example: L0WING'S ROCK -> Lowing's Rock
             if (partOfScannedBodyNameToReplaceWithSystemName == null) {
                 fixedBodyName = WordUtils.capitalizeFully(scannedBodyName.replace("0", "O"));
-                logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName + "'");
+                if (!fixedBodyName.equalsIgnoreCase(scannedBodyName)) {
+                    logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName.toUpperCase() + "'");
+                }
             } else {
                 // Because the body name is generated we might have a designation. Try to improve it.
                 // Example: Eta Coronae Borealis A1 A Rlng -> Eta Coronae Borealis A 1 A Ring
@@ -421,7 +439,9 @@ public class ScannedBodyInfoParser {
                         fixedDesignation += fixedPart;
                     }
                     fixedBodyName = systemName + fixedDesignation;
-                    logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName + "'");
+                    if (!fixedBodyName.equalsIgnoreCase(scannedBodyName)) {
+                        logger.debug("Fixed '" + scannedBodyName + "' to '" + fixedBodyName.toUpperCase() + "'");
+                    }
                 }
             }
 
