@@ -55,47 +55,47 @@ public class BodyInfoTest {
         List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
         //File sourceFile = selectRandomScreenshot();
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-02 10-13-37 Pongo.png");
-        //for (File sourceFile : selectAllScreenshots()) {
-        String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
-        StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
-        List<Body> eddbBodies = eddbStarSystem == null ? Collections.emptyList() : galaxy.searchBodiesOfStarSystem(eddbStarSystem.getId());
-        BufferedImage originalImage = ImageIO.read(sourceFile);
-        logger.trace("Testing " + sourceFile.getName() + " (" + originalImage.getWidth() + "x" + originalImage.getHeight() + ", already finished: " + scannedBodyInfos.size() + ")");
-        BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
-        BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
-        bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
-        BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
-        bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-02 10-13-37 Pongo.png");
+        for (File sourceFile : selectAllScreenshots()) {
+            String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
+            StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
+            List<Body> eddbBodies = eddbStarSystem == null ? Collections.emptyList() : galaxy.searchBodiesOfStarSystem(eddbStarSystem.getId());
+            BufferedImage originalImage = ImageIO.read(sourceFile);
+            logger.trace("Testing " + sourceFile.getName() + " (" + originalImage.getWidth() + "x" + originalImage.getHeight() + ", already finished: " + scannedBodyInfos.size() + ")");
+            BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
+            BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
+            bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
+            BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
+            bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
 
-        //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
-        //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
+            //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
+            //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
 
-        List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates, sourceFile.getName());
-        List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates, sourceFile.getName());
-        //        ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
-        ScannedBodyInfo scannedBodyInfo = ScannedBodyInfoParser.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
-        scannedBodyInfos.add(scannedBodyInfo);
-        //            List<String> plausiMessages = BodyPlausiChecker.checkPlanet(scannedBodyInfo.getRadiusKm(), scannedBodyInfo.getEarthMasses(), scannedBodyInfo.getGravityG());
-        //            for (String msg : plausiMessages) {
-        //                logger.warn("!!! " + sourceFile.getName() + " !!! " + msg + " !!!");
-        //            }
+            List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates, sourceFile.getName());
+            List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates, sourceFile.getName());
+            //        ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
+            ScannedBodyInfo scannedBodyInfo = ScannedBodyInfoParser.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
+            scannedBodyInfos.add(scannedBodyInfo);
+            //            List<String> plausiMessages = BodyPlausiChecker.checkPlanet(scannedBodyInfo.getRadiusKm(), scannedBodyInfo.getEarthMasses(), scannedBodyInfo.getGravityG());
+            //            for (String msg : plausiMessages) {
+            //                logger.warn("!!! " + sourceFile.getName() + " !!! " + msg + " !!!");
+            //            }
 
-        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
-        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
-        ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
-        ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
+            //        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
+            //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
+            //        ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
+            //        ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
+            //
+            //        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
+            //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
+            //        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
+            //        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
-        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
-        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
-        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
-        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+            templates = copyLearnedChars(templates);
 
-        templates = copyLearnedChars(templates);
-
-        System.out.println(scannedBodyInfo);
-        //            BodyInfoApp.printStats(scannedBodyInfos);
-        //}
+            //System.out.println(scannedBodyInfo);
+            //            BodyInfoApp.printStats(scannedBodyInfos);
+        }
     }
 
     private static List<Template> copyLearnedChars(List<Template> currentTemplates) throws IOException {
