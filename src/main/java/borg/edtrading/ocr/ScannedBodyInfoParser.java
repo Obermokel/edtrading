@@ -749,7 +749,7 @@ public class ScannedBodyInfoParser {
                 BigDecimal min = new BigDecimal("5.76"); // Screenshot: 2016-10-03 22-44-20 Sakarabru.png
                 BigDecimal max = new BigDecimal("526274.25"); // Screenshot: 2016-10-02 20-02-39 Jaradharre.png
                 String fixedText = scannedText.toString();
-                fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("B", "8"); // Replace all chars which cannot occur
+                fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("B", "8").replace("▪", ""); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
                 fixedText = lastCharsToUnit(fixedText, "LS");
                 if (!fixedText.matches("(\\d{1,3})(,\\d{3})*\\.\\d{2}LS")) {
@@ -1653,7 +1653,7 @@ public class ScannedBodyInfoParser {
                 BigDecimal min = new BigDecimal("7549"); // Screenshot: 2016-10-01 22-39-34 Moirai.png
                 BigDecimal max = new BigDecimal("488687"); // Screenshot: 2016-10-03 22-58-36 FT Ceti.png
                 String fixedText = scannedText.toString();
-                fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
+                fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace("▪", ""); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousands(fixedText);
                 fixedText = lastCharsToUnit(fixedText, "KM");
                 if (!fixedText.matches("(\\d{1,3})(,\\d{3})*KM")) {

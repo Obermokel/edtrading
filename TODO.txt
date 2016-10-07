@@ -1,4 +1,5 @@
 TODO:
+* Learn unknown if guess was correct
 * TemplateMatcher soll Kombinationen direkt splitten damit die nicht in unknown landen
 * Terraforming
 * Body Image
