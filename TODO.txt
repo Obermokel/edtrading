@@ -1,5 +1,4 @@
 TODO:
-* Do not care about case for Cc, Vv, Zz, Oo, Ww
 * TemplateMatcher soll Kombinationen direkt splitten damit die nicht in unknown landen
 * Terraforming
 * Body Image
@@ -29,3 +28,4 @@ DONE:
 * Atmosphere component with more than one word
 * Crap chars
 * Also o to 0, not only O to 0
+* Do not care about case for Cc, Oo, Vv, Ww, Zz

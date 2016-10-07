@@ -370,16 +370,18 @@ public class ScannedBodyInfoParser {
                 // We know what it should have been
                 if (!m.getShouldHaveBeen().equals(m.getTemplate().getText())) {
                     // It is NOT what it should have been
-                    if (!is0vsO(m.getShouldHaveBeen(), m.getTemplate().getText()) || Constants.LEARN_0_VS_O) {
-                        // It is totally wrong, or we are allowed to learn difficult chars like 0<->O
-                        String folderName = TemplateMatcher.textToFolder(m.getShouldHaveBeen());
-                        File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, folderName);
-                        autoLearnFolder.mkdirs();
-                        try {
-                            ImageIO.write(m.getMatchedImage(), "PNG", new File(autoLearnFolder, "LEARNED#" + folderName + "#" + m.getMatch().x + "#" + m.getMatch().y + "#" + currentScreenshotFilename));
-                            logger.trace("Learned new '" + m.getShouldHaveBeen() + "' from " + currentScreenshotFilename);
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                    if (!isSameUppercaseAndLowercase(m.getShouldHaveBeen(), m.getTemplate().getText())) {
+                        if (!is0vsO(m.getShouldHaveBeen(), m.getTemplate().getText()) || Constants.LEARN_0_VS_O) {
+                            // It is totally wrong, or we are allowed to learn difficult chars like 0<->O
+                            String folderName = TemplateMatcher.textToFolder(m.getShouldHaveBeen());
+                            File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, folderName);
+                            autoLearnFolder.mkdirs();
+                            try {
+                                ImageIO.write(m.getMatchedImage(), "PNG", new File(autoLearnFolder, "LEARNED#" + folderName + "#" + m.getMatch().x + "#" + m.getMatch().y + "#" + currentScreenshotFilename));
+                                logger.trace("Learned new '" + m.getShouldHaveBeen() + "' from " + currentScreenshotFilename);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
@@ -473,6 +475,16 @@ public class ScannedBodyInfoParser {
 
             return fixedBodyName;
         }
+    }
+
+    private static boolean isSameUppercaseAndLowercase(String shouldHaveBeen, String actuallyIs) {
+        boolean isCc = "C".equalsIgnoreCase(shouldHaveBeen) && "c".equalsIgnoreCase(actuallyIs);
+        boolean isOo = "O".equalsIgnoreCase(shouldHaveBeen) && "o".equalsIgnoreCase(actuallyIs);
+        boolean isVv = "V".equalsIgnoreCase(shouldHaveBeen) && "v".equalsIgnoreCase(actuallyIs);
+        boolean isWw = "W".equalsIgnoreCase(shouldHaveBeen) && "w".equalsIgnoreCase(actuallyIs);
+        boolean isZz = "Z".equalsIgnoreCase(shouldHaveBeen) && "z".equalsIgnoreCase(actuallyIs);
+
+        return isCc || isOo || isVv || isWw || isZz;
     }
 
     private static boolean is0vsO(String shouldHaveBeen, String actuallyIs) {
