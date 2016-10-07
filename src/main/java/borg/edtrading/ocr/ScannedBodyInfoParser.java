@@ -227,10 +227,14 @@ public class ScannedBodyInfoParser {
         }
 
         if (nRings > 0) {
+            Integer idxRingtype = indexOf("RING1_RINGTYPE:", sortedLabelIndexes);
+            if (idxRingtype == null) {
+                idxRingtype = bodyInfoMatches.size();
+            }
             // Reserves again (the one before rings)
             for (BodyInfo bi : BodyInfo.byPrefix("RESERVES_")) {
                 String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
-                if (findAndRemove(nameWithoutSpaces, bodyInfoMatches, 0, indexOf("RING1_RINGTYPE:", sortedLabelIndexes), "RING_RESERVES_", sortedLabelIndexes) != null) { // Reserves unfortunately is before moon masses, so explicitly search from index 0...
+                if (findAndRemove(nameWithoutSpaces, bodyInfoMatches, 0, idxRingtype, "RING_RESERVES_", sortedLabelIndexes) != null) { // Reserves unfortunately is before moon masses, so explicitly search from index 0...
                     scannedBodyInfo.setSystemReserves(bi);
                     break; // Expect only one hit
                 }
@@ -296,26 +300,26 @@ public class ScannedBodyInfoParser {
         }
 
         // TODO Remove this debug output
-        System.out.print("Scanned: ");
-        for (TemplateMatch m : bodyNameMatches) {
-            System.out.print("<" + m.getTemplate().getText() + ">");
-        }
-        System.out.println();
-        System.out.print("Parsed:  ");
-        for (TemplateMatch m : bodyNameMatches) {
-            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
-        }
-        System.out.println();
-        System.out.print("Scanned: ");
-        for (TemplateMatch m : bodyInfoMatches) {
-            System.out.print("<" + m.getTemplate().getText() + ">");
-        }
-        System.out.println();
-        System.out.print("Parsed:  ");
-        for (TemplateMatch m : bodyInfoMatches) {
-            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
-        }
-        System.out.println();
+        //        System.out.print("Scanned: ");
+        //        for (TemplateMatch m : bodyNameMatches) {
+        //            System.out.print("<" + m.getTemplate().getText() + ">");
+        //        }
+        //        System.out.println();
+        //        System.out.print("Parsed:  ");
+        //        for (TemplateMatch m : bodyNameMatches) {
+        //            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
+        //        }
+        //        System.out.println();
+        //        System.out.print("Scanned: ");
+        //        for (TemplateMatch m : bodyInfoMatches) {
+        //            System.out.print("<" + m.getTemplate().getText() + ">");
+        //        }
+        //        System.out.println();
+        //        System.out.print("Parsed:  ");
+        //        for (TemplateMatch m : bodyInfoMatches) {
+        //            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
+        //        }
+        //        System.out.println();
 
         learnWronglyDetectedChars(bodyNameMatches);
         learnWronglyDetectedChars(bodyInfoMatches);
@@ -730,8 +734,8 @@ public class ScannedBodyInfoParser {
             }
             try {
                 // Pattern: #,##0.00LS
-                BigDecimal min = new BigDecimal("50.00"); // Screenshot: ?
-                BigDecimal max = new BigDecimal("500000.00"); // Screenshot: ?
+                BigDecimal min = new BigDecimal("5.76"); // Screenshot: 2016-10-03 22-44-20 Sakarabru.png
+                BigDecimal max = new BigDecimal("526274.25"); // Screenshot: 2016-10-02 20-02-39 Jaradharre.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
@@ -1592,7 +1596,7 @@ public class ScannedBodyInfoParser {
             try {
                 // Pattern: #,##0.0MT
                 BigDecimal min = new BigDecimal("501.8"); // Screenshot: 2016-10-01 22-39-34 Moirai.png
-                BigDecimal max = new BigDecimal("908107579392.0"); // Screenshot: 2016-09-28 07-56-53 Har Itari.png
+                BigDecimal max = new BigDecimal("15310708015104.0"); // Screenshot: 2016-10-01 20-50-38 HIP 30953.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
@@ -1635,7 +1639,7 @@ public class ScannedBodyInfoParser {
             try {
                 // Pattern: #,##0KM
                 BigDecimal min = new BigDecimal("7549"); // Screenshot: 2016-10-01 22-39-34 Moirai.png
-                BigDecimal max = new BigDecimal("221662"); // Screenshot: 2016-09-28 07-56-53 Har Itari.png
+                BigDecimal max = new BigDecimal("488687"); // Screenshot: 2016-10-03 22-58-36 FT Ceti.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousands(fixedText);

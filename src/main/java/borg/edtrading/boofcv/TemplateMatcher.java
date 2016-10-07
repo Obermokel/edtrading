@@ -105,7 +105,7 @@ public class TemplateMatcher {
             for (int charIndex = 0; charIndex < combination.length(); charIndex++) {
                 String c = Character.toString(combination.charAt(charIndex));
                 List<Template> templatesForChar = templates.stream().filter(t -> t.getText().equals(c)).collect(Collectors.toList());
-                logger.info("Searching for <" + c + "> in combination <" + combination + "> using " + templatesForChar.size() + " template(s)");
+                //logger.info("Searching for <" + c + "> in combination <" + combination + "> using " + templatesForChar.size() + " template(s)");
                 final double maxErrorPerPixel = 1500.0;
                 double bestErrorPerPixel = maxErrorPerPixel;
                 TemplateMatch bestMatch = null;
@@ -132,16 +132,16 @@ public class TemplateMatcher {
                     }
                 }
                 if (bestMatch == null) {
-                    logger.info("Not found");
+                    //logger.info("Not found");
                     break; // Test the next combination
                 } else {
-                    logger.info("Found with " + bestErrorPerPixel + " errpp");
+                    //logger.info("Found with " + bestErrorPerPixel + " errpp");
                     ImageMiscOps.fillRectangle(unknownF32, 0.0f, bestMatchRect.x, bestMatchRect.y, bestMatchRect.width, bestMatchRect.height); // Overwrite with black to avoid matching again
                     result.add(bestMatch); // Test the next char in the current combination
                 }
             }
             if (result.size() == combination.length()) {
-                logger.info("Found combination: " + combination);
+                //logger.info("Found combination: " + combination);
                 return result; // This is it!
             }
         }
