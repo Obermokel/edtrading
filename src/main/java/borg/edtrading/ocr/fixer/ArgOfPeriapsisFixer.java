@@ -33,7 +33,7 @@ public class ArgOfPeriapsisFixer implements ValueFixer {
         if (TRUST_EDDB && this.eddbBody != null && this.eddbBody.getArg_of_periapsis() != null) {
             return NF.format(this.eddbBody.getArg_of_periapsis()) + (scannedText.contains("°") ? "°" : "");
         } else {
-            return scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".").replaceAll("\\.?°\\.?", "°");
+            return scannedText.toUpperCase().replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".").replaceAll("\\.?°\\.?", "°");
         }
     }
 

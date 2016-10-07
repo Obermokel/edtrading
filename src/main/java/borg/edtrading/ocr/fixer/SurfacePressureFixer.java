@@ -34,7 +34,7 @@ public class SurfacePressureFixer implements ValueFixer {
                 return scannedText;
             } else {
                 String fixedValue = scannedText.substring(0, scannedText.length() - "ATMOSPHERES".length());
-                return fixedValue.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8") + "ATMOSPHERES";
+                return fixedValue.toUpperCase().replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8") + "ATMOSPHERES";
             }
         }
     }

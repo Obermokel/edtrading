@@ -30,7 +30,7 @@ public class RadiusFixer implements ValueFixer {
         if (TRUST_EDDB && this.eddbBody != null && this.eddbBody.getRadius() != null) {
             return NF.format(this.eddbBody.getRadius());
         } else {
-            String fixedValue = scannedText.toUpperCase().replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(".", ",");
+            String fixedValue = scannedText.toUpperCase().replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(".", ",");
             if (fixedValue.contains(",") && fixedValue.indexOf(",") == fixedValue.length() - 6) {
                 fixedValue = fixedValue.substring(0, fixedValue.length() - 2) + "KM";
             }

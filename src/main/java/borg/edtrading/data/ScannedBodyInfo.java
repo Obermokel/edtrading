@@ -269,7 +269,7 @@ public class ScannedBodyInfo {
                     String distanceText = lowercasedScannedNameWords.set(i, null);
                     try {
                         String parseableText = distanceText.replace("l5", "").replace("ls", ""); // remove trailing LS (with S possibly detected as 5)
-                        parseableText = parseableText.replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8"); // fix digits
+                        parseableText = parseableText.replace("o", "0").replace("O", "0").replace("d", "0").replace("s", "5").replace("b", "8"); // fix digits
                         parseableText = parseableText.replace(".", ","); // make all to comma
                         if (parseableText.length() >= 4 && parseableText.lastIndexOf(",") == parseableText.length() - 3) {
                             parseableText = parseableText.substring(0, parseableText.lastIndexOf(",")) + "." + parseableText.substring(parseableText.lastIndexOf(",") + 1); // Replace last comma with dot
@@ -623,7 +623,7 @@ public class ScannedBodyInfo {
                     }
                 } else {
                     // Should be a percentage
-                    String fixedPercentage = percentagesAndNames[i].replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8").replace(",", ".");
+                    String fixedPercentage = percentagesAndNames[i].replace("o", "0").replace("O", "0").replace("d", "0").replace("s", "5").replace("b", "8").replace(",", ".");
                     if (fixedPercentage.indexOf(".") == fixedPercentage.length() - 3) {
                         fixedPercentage = fixedPercentage.substring(0, fixedPercentage.length() - 1) + "%";
                     }
@@ -722,7 +722,7 @@ public class ScannedBodyInfo {
                     }
                 } else {
                     // Should be a percentage
-                    String fixedPercentage = percentagesAndNames[i].replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8").replace(",", ".");
+                    String fixedPercentage = percentagesAndNames[i].replace("o", "0").replace("O", "0").replace("d", "0").replace("s", "5").replace("b", "8").replace(",", ".");
                     if (fixedPercentage.indexOf(".") == fixedPercentage.length() - 3) {
                         fixedPercentage = fixedPercentage.substring(0, fixedPercentage.length() - 1) + "%";
                     }
@@ -915,7 +915,7 @@ public class ScannedBodyInfo {
                         }
                     } else {
                         // Should be a percentage
-                        String fixedPercentage = matsAndPercentagesSeparated.get(i).replace("o", "0").replace("d", "0").replace("s", "5").replace("b", "8").replace(",", ".");
+                        String fixedPercentage = matsAndPercentagesSeparated.get(i).replace("o", "0").replace("O", "0").replace("d", "0").replace("s", "5").replace("b", "8").replace(",", ".");
                         if (fixedPercentage.indexOf(".") == fixedPercentage.length() - 3) {
                             fixedPercentage = fixedPercentage.substring(0, fixedPercentage.length() - 1) + "%";
                         }

@@ -1,12 +1,9 @@
 TODO:
-* Crap chars
-* Bei wenig weißen Pixeln (<100 pixel, punkt, komme, apostroph etc) Komplettvergleich
-* Remove auto-learning from expected text. Learn only from similar chars.
+* Do not care about case for Cc, Vv, Zz, Oo, Ww
+* TemplateMatcher soll Kombinationen direkt splitten damit die nicht in unknown landen
 * Terraforming
-* Support for other body types like stars, belts etc (WIP)
 * Body Image
 * Star catalogue IDs
-* Atmosphere component with more than one word
 
 SUSPICIOUS:
 
@@ -26,3 +23,9 @@ DONE:
 * Designation muss nicht immer alternierend sein. Siehe Khun Mond vom Mond.
 * Camel Case names
 * Beim Lernen von vorgegebenen Texten case prüfen. Insbesondere bei bodyName welcher lowercased wird, aber uppercase ist.
+* Bei wenig weißen Pixeln (<100 pixel, punkt, komme, apostroph etc) Komplettvergleich
+* Remove auto-learning from expected text. Learn only from similar chars.
+* Support for other body types like stars, belts etc (WIP)
+* Atmosphere component with more than one word
+* Crap chars
+* Also o to 0, not only O to 0
