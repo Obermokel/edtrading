@@ -296,26 +296,26 @@ public class ScannedBodyInfoParser {
         }
 
         // TODO Remove this debug output
-        //        System.out.print("Scanned: ");
-        //        for (TemplateMatch m : bodyNameMatches) {
-        //            System.out.print("<" + m.getTemplate().getText() + ">");
-        //        }
-        //        System.out.println();
-        //        System.out.print("Parsed:  ");
-        //        for (TemplateMatch m : bodyNameMatches) {
-        //            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
-        //        }
-        //        System.out.println();
-        //        System.out.print("Scanned: ");
-        //        for (TemplateMatch m : bodyInfoMatches) {
-        //            System.out.print("<" + m.getTemplate().getText() + ">");
-        //        }
-        //        System.out.println();
-        //        System.out.print("Parsed:  ");
-        //        for (TemplateMatch m : bodyInfoMatches) {
-        //            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
-        //        }
-        //        System.out.println();
+        System.out.print("Scanned: ");
+        for (TemplateMatch m : bodyNameMatches) {
+            System.out.print("<" + m.getTemplate().getText() + ">");
+        }
+        System.out.println();
+        System.out.print("Parsed:  ");
+        for (TemplateMatch m : bodyNameMatches) {
+            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
+        }
+        System.out.println();
+        System.out.print("Scanned: ");
+        for (TemplateMatch m : bodyInfoMatches) {
+            System.out.print("<" + m.getTemplate().getText() + ">");
+        }
+        System.out.println();
+        System.out.print("Parsed:  ");
+        for (TemplateMatch m : bodyInfoMatches) {
+            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
+        }
+        System.out.println();
 
         learnWronglyDetectedChars(bodyNameMatches);
         learnWronglyDetectedChars(bodyInfoMatches);

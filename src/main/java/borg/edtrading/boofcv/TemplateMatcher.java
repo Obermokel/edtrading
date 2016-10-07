@@ -3,6 +3,7 @@ package borg.edtrading.boofcv;
 import boofcv.abst.distort.FDistort;
 import boofcv.alg.feature.detect.template.TemplateMatching;
 import boofcv.alg.interpolate.TypeInterpolate;
+import boofcv.alg.misc.ImageMiscOps;
 import boofcv.factory.feature.detect.template.FactoryTemplateMatching;
 import boofcv.factory.feature.detect.template.TemplateScoreType;
 import boofcv.io.image.ConvertBufferedImage;
@@ -13,12 +14,14 @@ import borg.edtrading.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -95,6 +98,57 @@ public class TemplateMatcher {
         }
     }
 
+    public static List<TemplateMatch> findMultiTemplateMatches(BufferedImage unknownImage, List<Template> templates, List<String> combinations, int xWithinImage, int yWithinImage, String screenshotFilename) {
+        for (String combination : combinations) {
+            GrayF32 unknownF32 = ConvertBufferedImage.convertFrom(unknownImage, (GrayF32) null);
+            List<TemplateMatch> result = new ArrayList<>();
+            for (int charIndex = 0; charIndex < combination.length(); charIndex++) {
+                String c = Character.toString(combination.charAt(charIndex));
+                List<Template> templatesForChar = templates.stream().filter(t -> t.getText().equals(c)).collect(Collectors.toList());
+                logger.info("Searching for <" + c + "> in combination <" + combination + "> using " + templatesForChar.size() + " template(s)");
+                final double maxErrorPerPixel = 1500.0;
+                double bestErrorPerPixel = maxErrorPerPixel;
+                TemplateMatch bestMatch = null;
+                Rectangle bestMatchRect = null;
+                for (Template t : templatesForChar) {
+                    int scaleToWidth = Math.round((float) t.getImage().width * ((float) unknownF32.height / (float) t.getImage().height));
+                    GrayF32 templateF32Scaled = new GrayF32(scaleToWidth, unknownF32.height);
+                    new FDistort().input(t.getImage()).output(templateF32Scaled).interp(TypeInterpolate.BICUBIC).scale().apply();
+                    final double pixels = templateF32Scaled.width * templateF32Scaled.height;
+                    for (int xOffset = 0; xOffset < unknownF32.width - templateF32Scaled.width; xOffset++) {
+                        double error = 0.0;
+                        for (int y = 0; y < templateF32Scaled.height; y++) {
+                            for (int x = 0; x < templateF32Scaled.width; x++) {
+                                float diff = unknownF32.unsafe_get(x + xOffset, y) - templateF32Scaled.unsafe_get(x, y);
+                                error += (diff * diff);
+                            }
+                        }
+                        double errorPerPixel = error / pixels;
+                        if (errorPerPixel < bestErrorPerPixel) {
+                            bestErrorPerPixel = errorPerPixel;
+                            bestMatch = new TemplateMatch(t, new Match(xWithinImage + xOffset, yWithinImage, -1 * error), unknownImage);
+                            bestMatchRect = new Rectangle(xOffset, 0, templateF32Scaled.width, templateF32Scaled.height);
+                        }
+                    }
+                }
+                if (bestMatch == null) {
+                    logger.info("Not found");
+                    break; // Test the next combination
+                } else {
+                    logger.info("Found with " + bestErrorPerPixel + " errpp");
+                    ImageMiscOps.fillRectangle(unknownF32, 0.0f, bestMatchRect.x, bestMatchRect.y, bestMatchRect.width, bestMatchRect.height); // Overwrite with black to avoid matching again
+                    result.add(bestMatch); // Test the next char in the current combination
+                }
+            }
+            if (result.size() == combination.length()) {
+                logger.info("Found combination: " + combination);
+                return result; // This is it!
+            }
+        }
+
+        return null; // None matched
+    }
+
     public static TemplateMatch findBestTemplateMatch(BufferedImage unknownImage, List<Template> templates, int xWithinImage, int yWithinImage, String screenshotFilename) {
         try {
             GrayF32 originalUnknownImage = ConvertBufferedImage.convertFrom(unknownImage, (GrayF32) null);
@@ -151,7 +205,7 @@ public class TemplateMatcher {
                         }
                     }
                 }
-                if (!"verify.png".equals(screenshotFilename)) {
+                if (!"verify.png".equals(screenshotFilename) && bestErrorPerPixelGuess >= 2 * maxErrorPerPixel) {
                     String folderName = bestGuess == null ? "UNKNOWN" : TemplateMatcher.textToFolder(bestGuess.getTemplate().getText());
                     String filenamePrefix = String.format(Locale.US, "%07.1f#%s", bestErrorPerPixelGuess, folderName);
                     String filenameSuffix = xWithinImage + "#" + yWithinImage + "#" + screenshotFilename;

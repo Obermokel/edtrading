@@ -168,7 +168,8 @@ public class BodyInfoApp {
                 BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
                 TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, screenshotFilename);
                 if (bestMatch != null) {
-                    matches.add(bestMatch);
+                    List<TemplateMatch> splittedMatches = checkForMultiCharMatch(bestMatch, templates, r.x, r.y, screenshotFilename);
+                    matches.addAll(splittedMatches);
                 }
             } catch (RasterFormatException e) {
                 // Ignore
@@ -178,6 +179,20 @@ public class BodyInfoApp {
         List<MatchGroup> matchGroups = MatchSorter.sortMatches(matches);
         //return matchGroups.stream().map(mg -> mg.getText()).collect(Collectors.toList());
         return matchGroups;
+    }
+
+    private static List<TemplateMatch> checkForMultiCharMatch(TemplateMatch match, List<Template> templates, int xWithinImage, int yWithinImage, String screenshotFilename) {
+        if (match.getErrorPerPixel() <= 1500.0) {
+            return Arrays.asList(match);
+        } else {
+            List<String> combinations = Arrays.asList("AV", "AX", "AT", "LY", "TY", "TA", "TT", "fo", "fe", "fa", "rv", "ky", "oj");
+            List<TemplateMatch> splitted = TemplateMatcher.findMultiTemplateMatches(match.getMatchedImage(), templates, combinations, xWithinImage, yWithinImage, screenshotFilename);
+            if (splitted != null && splitted.size() > 0) {
+                return splitted;
+            } else {
+                return Arrays.asList(match);
+            }
+        }
     }
 
     private static List<File> getScreenshotsFromAllDir() {
