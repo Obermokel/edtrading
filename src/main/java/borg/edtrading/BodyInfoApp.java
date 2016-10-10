@@ -185,7 +185,7 @@ public class BodyInfoApp {
         if (match.getErrorPerPixel() <= 1500.0) {
             return Arrays.asList(match);
         } else {
-            List<String> combinations = Arrays.asList("AV", "AX", "AT", "LY", "TY", "TA", "TT", "fo", "fe", "fa", "rv", "ky", "oj");
+            List<String> combinations = Arrays.asList("WAT", "AV", "AX", "AT", "KY", "LY", "TY", "XY", "TA", "TT", "fo", "fe", "fa", "rv", "ky", "oj");
             List<TemplateMatch> splitted = TemplateMatcher.findMultiTemplateMatches(match.getMatchedImage(), templates, combinations, xWithinImage, yWithinImage, screenshotFilename);
             if (splitted != null && splitted.size() > 0) {
                 return splitted;
