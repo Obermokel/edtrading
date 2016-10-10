@@ -1,5 +1,5 @@
 TODO:
-* 2016-10-02 09-57-16 CF 16001.png uppercase/lowercase beim lernen...
+* XY Kombi von OXYGEN
 * TemplateMatcher soll Kombinationen direkt splitten damit die nicht in unknown landen
 * Nicht so viele Punkte (.) lernen
 * Terraforming
@@ -60,3 +60,4 @@ DONE:
 * Also o to 0, not only O to 0
 * Do not care about case for Cc, Oo, Vv, Ww, Zz
 * Learn unknown if guess was correct
+* 2016-10-02 09-57-16 CF 16001.png uppercase/lowercase beim lernen...

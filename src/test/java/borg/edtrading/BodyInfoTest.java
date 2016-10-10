@@ -63,8 +63,7 @@ public class BodyInfoTest {
             BufferedImage originalImage = ImageIO.read(sourceFile);
             logger.trace("Testing " + sourceFile.getName() + " (" + originalImage.getWidth() + "x" + originalImage.getHeight() + ", already finished: " + scannedBodyInfos.size() + ")");
             BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
-            BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
-            bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
+            BufferedImage bodyNameImage = ScreenshotCropper.cropAndHighlightSystemMapToBodyName(fourKImage);
             BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
             bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
 
@@ -98,6 +97,8 @@ public class BodyInfoTest {
                 BodyInfoApp.printStats(scannedBodyInfos);
             }
         }
+
+        BodyInfoApp.printStats(scannedBodyInfos);
     }
 
     private static List<Template> copyLearnedChars(List<Template> currentTemplates) throws IOException {
