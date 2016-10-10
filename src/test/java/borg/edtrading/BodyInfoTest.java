@@ -55,7 +55,7 @@ public class BodyInfoTest {
         List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
         //File sourceFile = selectRandomScreenshot();
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-02 06-48-29 LP 838-16.png");
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-01 20-50-38 HIP 30953.png");
         //for (File sourceFile : selectAllScreenshots()) {
         String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
         StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
@@ -81,14 +81,14 @@ public class BodyInfoTest {
         //            }
 
         //        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
-        //        writeDebugImages("Body Name", false, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
+        //        writeDebugImages("Body Name", true, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
         //        ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
         //        ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
-        //
-        //        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
-        //        writeDebugImages("Body Info", false, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
-        //        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
-        //        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+
+        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
+        writeDebugImages("Body Info", true, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
+        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
+        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
         templates = copyLearnedChars(templates);
 

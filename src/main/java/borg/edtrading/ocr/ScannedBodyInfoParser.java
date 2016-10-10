@@ -770,10 +770,13 @@ public class ScannedBodyInfoParser {
                 fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
                 fixedText = lastCharsToUnit(fixedText, "LS");
-                if (!fixedText.matches("▪*(\\d{1,3})(,\\d{3})*\\.\\d{2}LS▪*")) {
+                Pattern pDistance = Pattern.compile(".*?((\\d{1,3})(,\\d{3})*\\.\\d{2}LS).*?");
+                Matcher mDistance = pDistance.matcher(fixedText);
+                if (!mDistance.matches()) {
                     throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
                 } else {
-                    String parseableText = fixedText.replace("▪", "").replace(",", "").replace("LS", ""); // Remove all thousands separators and units
+                    String distanceText = mDistance.group(1);
+                    String parseableText = distanceText.replace(",", "").replace("LS", ""); // Remove all thousands separators and units
                     BigDecimal value = new BigDecimal(parseableText);
                     if (value.compareTo(min) < 0) {
                         throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
@@ -781,9 +784,10 @@ public class ScannedBodyInfoParser {
                         throw new NumberFormatException("Parsed value " + value + " is above the allowed maximum " + label.toLowerCase().replace(":", "") + " of " + max);
                     } else {
                         // Set shouldHaveBeen, effectively removing the matches
-                        for (int i = startIndex; i < endIndex; i++) {
-                            char shouldHaveBeen = fixedText.charAt(i - startIndex);
-                            matches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+                        int offset = fixedText.indexOf(distanceText);
+                        for (int i = 0; i < distanceText.length(); i++) {
+                            char shouldHaveBeen = distanceText.charAt(i);
+                            matches.get(i + startIndex + offset).setShouldHaveBeen(Character.toString(shouldHaveBeen));
                         }
                         // Return the result
                         return value;
