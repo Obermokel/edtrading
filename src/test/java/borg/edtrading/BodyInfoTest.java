@@ -132,7 +132,7 @@ public class BodyInfoTest {
                     TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(ImageIO.read(randomPngFile), verifyTemplates, 0, 0, "verify.png");
 
                     if (bestMatch != null) {
-                        if (bestMatch.getErrorPerPixel() < 750.0) {
+                        if (bestMatch.getErrorPerPixel() <= 1500.0) {
                             File targetDir = new File(Constants.TEMPLATES_DIR, "Body Info\\" + subdir.getName());
                             FileUtils.copyFileToDirectory(randomPngFile, targetDir);
                             learned.add(text);

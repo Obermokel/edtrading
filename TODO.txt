@@ -1,11 +1,40 @@
 TODO:
-* Learn unknown if guess was correct
+* 2016-10-02 09-57-16 CF 16001.png uppercase/lowercase beim lernen...
 * TemplateMatcher soll Kombinationen direkt splitten damit die nicht in unknown landen
+* Nicht so viele Punkte (.) lernen
 * Terraforming
 * Body Image
 * Star catalogue IDs
 
 SUSPICIOUS:
+* 2016-09-28 08-11-03 Ross 847.png: Viele Störungen...
+
+* 2016-09-28 08-01-53 Arque.png: Sum of atmosphere is 99.4: {ATMOSPHERE_COMPONENT_WATER=98.4, ATMOSPHERE_COMPONENT_AMMONIA=0.5, ATMOSPHERE_COMPONENT_METHANE=0.5}
+* 2016-10-03 13-08-43 Dafnharian.png: Sum of atmosphere is 97.9: {ATMOSPHERE_COMPONENT_HELIUM=85.9, ATMOSPHERE_COMPONENT_HYDROGEN=8.1, ATMOSPHERE_COMPONENT_NITROGEN=3.9}
+* 2016-10-07 21-25-14 HIP 11131.png: Sum of atmosphere is 99.3: {ATMOSPHERE_COMPONENT_NITROGEN=33.1, ATMOSPHERE_COMPONENT_AMMONIA=33.1, ATMOSPHERE_COMPONENT_METHANE=33.1}
+* 2016-10-02 07-51-11 LHS 2471.png: Sum of atmosphere is 97.3: {ATMOSPHERE_COMPONENT_NITROGEN=92.8, ATMOSPHERE_COMPONENT_WATER=4.5}
+* 2016-10-02 08-43-36 Novas.png: Sum of atmosphere is 83.7: {ATMOSPHERE_COMPONENT_NITROGEN=83.7}
+* 2016-10-01 21-51-44 Egovae.png: Sum of atmosphere is 83.1: {ATMOSPHERE_COMPONENT_NITROGEN=83.1}
+
+* 2016-10-01 22-39-57 Moirai.png: Scanned text '1,37e.94LS.' does not look like a valid value for arrivalpoint -- java.lang.NumberFormatException: Fixed text '1,37e,94LS.' does not match the expected pattern
+* 2016-10-02 07-32-43 Wyrd.png: Scanned text '13,48e.09LS' does not look like a valid value for arrivalpoint -- java.lang.NumberFormatException: Fixed text '13,48e.09LS' does not match the expected pattern
+* 2016-10-02 06-48-29 LP 838-16.png: Scanned text '2,76O.56LS.::' does not look like a valid value for arrivalpoint -- java.lang.NumberFormatException: Fixed text '2,760,56LS.::' does not match the expected pattern
+* 2016-10-03 11-29-51 Yoru.png: Scanned text '1.307.44LS-▪' does not look like a valid value for arrivalpoint -- java.lang.NumberFormatException: Fixed text '1,307.44LS-▪' does not match the expected pattern
+* 2016-10-03 12-05-58 Berzitibi.png: Scanned text '16,O75.71LS.' does not look like a valid value for arrivalpoint -- java.lang.NumberFormatException: Fixed text '16,075,71LS.' does not match the expected pattern
+* 2016-10-03 12-06-12 Berzitibi.png: Scanned text '16,O7O.9OLS-' does not look like a valid value for arrivalpoint -- java.lang.NumberFormatException: Fixed text '16,070.90LS-' does not match the expected pattern
+* 2016-09-29 08-31-00 Khun.png: Scanned text '1,826.9OLS---...' does not look like a valid value for arrivalpoint -- java.lang.NumberFormatException: Fixed text '1,826,90LS---,,.' does not match the expected pattern
+* 2016-09-30 17-21-44 Deciat.png: Scanned text '...::2,040.62LS' does not look like a valid value for arrivalpoint -- java.lang.NumberFormatException: Fixed text ',,,::2,040.62LS' does not match the expected pattern
+
+* 2016-09-28 08-03-49 Leesti.png: Scanned text '21,151KM.' does not look like a valid value for ring1_outerradius -- java.lang.NumberFormatException: Fixed text '21,151KM,' does not match the expected pattern
+* 2016-10-02 11-24-54 LHS 3505.png: Scanned text '108,714KM.' does not look like a valid value for ring1_outerradius -- java.lang.NumberFormatException: Fixed text '108,714KM,' does not match the expected pattern
+* 2016-10-06 22-58-43 LHS 3593.png: Scanned text '54,767KM.' does not look like a valid value for ring1_outerradius -- java.lang.NumberFormatException: Fixed text '54,767KM,' does not match the expected pattern
+
+* 2016-10-01 20-50-38 HIP 30953.png: Scanned text '793,564KMSTARCATALOGUEID:HIPP:30,953HD:46,273' does not look like a valid value for ring2_outerradius -- java.lang.NumberFormatException: Fixed text '793,564KM5TARCATAL0GUEI0:HIPP:30,953H0:46,273' does not match the expected pattern
+
+* 2016-10-01 22-18-19 Laksak.png: Scanned text 'ROC▪' does not look like a valid value for ring1_ringtype -- java.lang.NumberFormatException: Did not find any matching enum
+* 2016-10-02 08-43-36 Novas.png: Scanned text '15.9%O-GENO.2%' does not look like a valid value for atmosphere -- java.lang.NumberFormatException: Fixed text '15,9%0-GEN0.2%' does not match the expected pattern
+* 2016-10-03 12-03-55 Zeaex.png: Scanned text '28.9%0-GENO.2%' does not look like a valid value for atmosphere -- java.lang.NumberFormatException: Fixed text '28,9%0-GEN0.2%' does not match the expected pattern
+* 2016-10-01 21-51-47 Egovae.png: Scanned text '98.4%VAER0.5%' does not look like a valid value for atmosphere -- java.lang.NumberFormatException: Fixed text '98,4%VAER0.5%' does not match the expected pattern
 
 DONE:
 * Human readable logfile
@@ -30,3 +59,4 @@ DONE:
 * Crap chars
 * Also o to 0, not only O to 0
 * Do not care about case for Cc, Oo, Vv, Ww, Zz
+* Learn unknown if guess was correct

@@ -22,8 +22,10 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -226,18 +228,16 @@ public class ScannedBodyInfoParser {
             findAndRemove("OUTERRADIUS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
         }
 
-        if (nRings > 0) {
-            Integer idxRingtype = indexOf("RING1_RINGTYPE:", sortedLabelIndexes);
-            if (idxRingtype == null) {
-                idxRingtype = bodyInfoMatches.size();
-            }
-            // Reserves again (the one before rings)
-            for (BodyInfo bi : BodyInfo.byPrefix("RESERVES_")) {
-                String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
-                if (findAndRemove(nameWithoutSpaces, bodyInfoMatches, 0, idxRingtype, "RING_RESERVES_", sortedLabelIndexes) != null) { // Reserves unfortunately is before moon masses, so explicitly search from index 0...
-                    scannedBodyInfo.setSystemReserves(bi);
-                    break; // Expect only one hit
-                }
+        // Reserves again (the one before rings)
+        Integer idxRingtype = indexOf("RING1_RINGTYPE:", sortedLabelIndexes);
+        if (idxRingtype == null) {
+            idxRingtype = bodyInfoMatches.size();
+        }
+        for (BodyInfo bi : BodyInfo.byPrefix("RESERVES_")) {
+            String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
+            if (findAndRemove(nameWithoutSpaces, bodyInfoMatches, 0, idxRingtype, "RING_RESERVES_", sortedLabelIndexes) != null) { // Reserves unfortunately is before moon masses, so explicitly search from index 0...
+                scannedBodyInfo.setSystemReserves(bi);
+                break; // Expect only one hit
             }
         }
 
@@ -365,6 +365,7 @@ public class ScannedBodyInfoParser {
     }
 
     private static void learnWronglyDetectedChars(List<TemplateMatch> fixedMatches) {
+        Set<String> learned = new HashSet<>();
         for (TemplateMatch m : fixedMatches) {
             if (m != null && m.getShouldHaveBeen() != null) {
                 // We know what it should have been
@@ -382,6 +383,22 @@ public class ScannedBodyInfoParser {
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
+                        }
+                    }
+                } else if (m.getErrorPerPixel() > 750.0 && m.getErrorPerPixel() <= 1500.0) {
+                    // It has been detected/guessed correctly and is quite, but not totally off.
+                    if (!learned.contains(m.getTemplate().getText())) {
+                        // It has not yet been learned in this session
+                        learned.add(m.getTemplate().getText());
+
+                        String folderName = TemplateMatcher.textToFolder(m.getTemplate().getText());
+                        File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, folderName);
+                        autoLearnFolder.mkdirs();
+                        try {
+                            ImageIO.write(m.getMatchedImage(), "PNG", new File(autoLearnFolder, "LEARNED#" + folderName + "#" + m.getMatch().x + "#" + m.getMatch().y + "#" + currentScreenshotFilename));
+                            logger.trace("Learned new '" + m.getShouldHaveBeen() + "' from " + currentScreenshotFilename);
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     }
                 }
@@ -480,11 +497,12 @@ public class ScannedBodyInfoParser {
     private static boolean isSameUppercaseAndLowercase(String shouldHaveBeen, String actuallyIs) {
         boolean isCc = "C".equalsIgnoreCase(shouldHaveBeen) && "c".equalsIgnoreCase(actuallyIs);
         boolean isOo = "O".equalsIgnoreCase(shouldHaveBeen) && "o".equalsIgnoreCase(actuallyIs);
+        boolean isSs = "S".equalsIgnoreCase(shouldHaveBeen) && "s".equalsIgnoreCase(actuallyIs);
         boolean isVv = "V".equalsIgnoreCase(shouldHaveBeen) && "v".equalsIgnoreCase(actuallyIs);
         boolean isWw = "W".equalsIgnoreCase(shouldHaveBeen) && "w".equalsIgnoreCase(actuallyIs);
         boolean isZz = "Z".equalsIgnoreCase(shouldHaveBeen) && "z".equalsIgnoreCase(actuallyIs);
 
-        return isCc || isOo || isVv || isWw || isZz;
+        return isCc || isOo || isSs || isVv || isWw || isZz;
     }
 
     private static boolean is0vsO(String shouldHaveBeen, String actuallyIs) {
@@ -714,10 +732,10 @@ public class ScannedBodyInfoParser {
     private static String lastCharsToUnit(String text, String unit) {
         String fixedText = text;
         if (fixedText.length() > unit.length()) {
-            // Only fix if the last scanned chars are not digits
-            String scannedUnit = fixedText.substring(fixedText.length() - unit.length());
-            if (scannedUnit.matches("[^\\d\\.,]+")) {
-                fixedText = fixedText.substring(0, fixedText.length() - unit.length()) + unit;
+            Pattern p = Pattern.compile("(▪*[\\d\\.\\-,]+)([^\\d\\.\\-,]{" + unit.length() + "})(▪*)"); // 0-n crap at start, 1-n digits, exact number of unit chars, 0-n crap at end
+            Matcher m = p.matcher(text);
+            if (m.matches()) {
+                fixedText = m.group(1) + unit + m.group(3);
             }
         }
         return fixedText;
@@ -749,13 +767,13 @@ public class ScannedBodyInfoParser {
                 BigDecimal min = new BigDecimal("5.76"); // Screenshot: 2016-10-03 22-44-20 Sakarabru.png
                 BigDecimal max = new BigDecimal("526274.25"); // Screenshot: 2016-10-02 20-02-39 Jaradharre.png
                 String fixedText = scannedText.toString();
-                fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("B", "8").replace("▪", ""); // Replace all chars which cannot occur
+                fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
                 fixedText = lastCharsToUnit(fixedText, "LS");
-                if (!fixedText.matches("(\\d{1,3})(,\\d{3})*\\.\\d{2}LS")) {
+                if (!fixedText.matches("▪*(\\d{1,3})(,\\d{3})*\\.\\d{2}LS▪*")) {
                     throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
                 } else {
-                    String parseableText = fixedText.replace(",", "").replace("LS", ""); // Remove all thousands separators and units
+                    String parseableText = fixedText.replace("▪", "").replace(",", "").replace("LS", ""); // Remove all thousands separators and units
                     BigDecimal value = new BigDecimal(parseableText);
                     if (value.compareTo(min) < 0) {
                         throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
@@ -1566,7 +1584,7 @@ public class ScannedBodyInfoParser {
             try {
                 // Pattern: #,##0.0000
                 BigDecimal min = new BigDecimal("0.0000"); // Screenshot: 2016-09-30 17-07-13 Uchaluroja.png
-                BigDecimal max = new BigDecimal("266.8278"); // Screenshot: 2016-10-02 11-23-34 LHS 3505.png
+                BigDecimal max = new BigDecimal("411.1901"); // Screenshot: 2016-10-06 22-55-55 Delta Equulei.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
@@ -1651,15 +1669,15 @@ public class ScannedBodyInfoParser {
             try {
                 // Pattern: #,##0KM
                 BigDecimal min = new BigDecimal("7549"); // Screenshot: 2016-10-01 22-39-34 Moirai.png
-                BigDecimal max = new BigDecimal("488687"); // Screenshot: 2016-10-03 22-58-36 FT Ceti.png
+                BigDecimal max = new BigDecimal("516969"); // Screenshot: 2016-09-28 08-00-48 Arque.png
                 String fixedText = scannedText.toString();
-                fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace("▪", ""); // Replace all chars which cannot occur
+                fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousands(fixedText);
                 fixedText = lastCharsToUnit(fixedText, "KM");
-                if (!fixedText.matches("(\\d{1,3})(,\\d{3})*KM")) {
+                if (!fixedText.matches("▪*(\\d{1,3})(,\\d{3})*KM▪*")) {
                     throw new NumberFormatException("Fixed text '" + fixedText + "' does not match the expected pattern");
                 } else {
-                    String parseableText = fixedText.replace(",", "").replace("KM", ""); // Remove all thousands separators and units
+                    String parseableText = fixedText.replace("▪", "").replace(",", "").replace("KM", ""); // Remove all thousands separators and units
                     BigDecimal value = new BigDecimal(parseableText);
                     if (value.compareTo(min) < 0) {
                         throw new NumberFormatException("Parsed value " + value + " is below the allowed minimum " + label.toLowerCase().replace(":", "") + " of " + min);
