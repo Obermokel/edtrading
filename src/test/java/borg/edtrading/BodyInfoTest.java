@@ -1,5 +1,7 @@
 package borg.edtrading;
 
+import boofcv.io.image.ConvertBufferedImage;
+import boofcv.struct.image.GrayF32;
 import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
@@ -12,7 +14,6 @@ import borg.edtrading.ocr.ScannedBodyInfoParser;
 import borg.edtrading.ocr.ScreenshotCropper;
 import borg.edtrading.ocr.ScreenshotPreprocessor;
 import borg.edtrading.util.ImageUtil;
-import borg.edtrading.util.MatchSorter.MatchGroup;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,51 +55,53 @@ public class BodyInfoTest {
         List<Template> templates = TemplateMatcher.loadTemplates("Body Info");
         List<ScannedBodyInfo> scannedBodyInfos = new ArrayList<>();
 
-        //File sourceFile = selectRandomScreenshot();
+        File sourceFile = selectRandomScreenshot();
         //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-01 20-50-38 HIP 30953.png");
-        for (File sourceFile : selectAllScreenshots()) {
-            String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
-            StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
-            List<Body> eddbBodies = eddbStarSystem == null ? Collections.emptyList() : galaxy.searchBodiesOfStarSystem(eddbStarSystem.getId());
-            BufferedImage originalImage = ImageIO.read(sourceFile);
-            logger.trace("Testing " + sourceFile.getName() + " (" + originalImage.getWidth() + "x" + originalImage.getHeight() + ", already finished: " + scannedBodyInfos.size() + ")");
-            BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
-            BufferedImage bodyNameImage = ScreenshotCropper.cropAndHighlightSystemMapToBodyName(fourKImage);
-            BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
-            bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
+        //for (File sourceFile : selectAllScreenshots()) {
+        String systemName = BodyInfoApp.systemNameFromFilename(sourceFile);
+        StarSystem eddbStarSystem = galaxy.searchStarSystemByExactName(systemName);
+        List<Body> eddbBodies = eddbStarSystem == null ? Collections.emptyList() : galaxy.searchBodiesOfStarSystem(eddbStarSystem.getId());
+        BufferedImage originalImage = ImageIO.read(sourceFile);
+        logger.trace("Testing " + sourceFile.getName() + " (" + originalImage.getWidth() + "x" + originalImage.getHeight() + ", already finished: " + scannedBodyInfos.size() + ")");
+        BufferedImage fourKImage = ImageUtil.toFourK(originalImage);
+        BufferedImage bodyNameImage = ScreenshotCropper.cropAndHighlightSystemMapToBodyName(fourKImage);
+        BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
+        bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
 
-            //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
-            //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
+        //            groupSimilarChars(bodyNameImage, blurredBodyNameImage);
+        //            groupSimilarChars(bodyInfoImage, blurredBodyInfoImage);
 
-            List<MatchGroup> bodyNameWords = BodyInfoApp.scanWords(bodyNameImage, templates, sourceFile.getName());
-            List<MatchGroup> bodyInfoWords = BodyInfoApp.scanWords(bodyInfoImage, templates, sourceFile.getName());
-            //        ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
-            ScannedBodyInfo scannedBodyInfo = ScannedBodyInfoParser.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
-            scannedBodyInfos.add(scannedBodyInfo);
-            //            List<String> plausiMessages = BodyPlausiChecker.checkPlanet(scannedBodyInfo.getRadiusKm(), scannedBodyInfo.getEarthMasses(), scannedBodyInfo.getGravityG());
-            //            for (String msg : plausiMessages) {
-            //                logger.warn("!!! " + sourceFile.getName() + " !!! " + msg + " !!!");
-            //            }
+        List<TemplateMatch> bodyNameMatches = BodyInfoApp.scanScreenshot(bodyNameImage, templates, sourceFile.getName());
+        List<TemplateMatch> bodyInfoMatches = BodyInfoApp.scanScreenshot(bodyInfoImage, templates, sourceFile.getName());
+        //        ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(sourceFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
+        ScannedBodyInfo scannedBodyInfo = ScannedBodyInfoParser.fromScannedAndSortedMatches(sourceFile.getName(), systemName, bodyNameMatches, bodyInfoMatches, eddbBodies);
+        scannedBodyInfos.add(scannedBodyInfo);
+        //            List<String> plausiMessages = BodyPlausiChecker.checkPlanet(scannedBodyInfo.getRadiusKm(), scannedBodyInfo.getEarthMasses(), scannedBodyInfo.getGravityG());
+        //            for (String msg : plausiMessages) {
+        //                logger.warn("!!! " + sourceFile.getName() + " !!! " + msg + " !!!");
+        //            }
 
-            //        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
-            //        writeDebugImages("Body Name", true, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
-            //        ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
-            //        ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
+        //        BufferedImage blurredBodyNameImage = ScreenshotPreprocessor.gaussian(bodyNameImage, 2);
+        //        writeDebugImages("Body Name", true, templates, bodyNameImage, blurredBodyNameImage, sourceFile.getName());
+        //        ImageIO.write(bodyNameImage, "PNG", new File(Constants.TEMP_DIR, "bodyNameImage.png"));
+        //        ImageIO.write(blurredBodyNameImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyNameImage.png"));
 
-            //        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
-            //        writeDebugImages("Body Info", true, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
-            //        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
-            //        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
+        //        BufferedImage blurredBodyInfoImage = ScreenshotPreprocessor.gaussian(bodyInfoImage, 2);
+        //        writeDebugImages("Body Info", true, templates, bodyInfoImage, blurredBodyInfoImage, sourceFile.getName());
+        //        ImageIO.write(bodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "bodyInfoImage.png"));
+        //        ImageIO.write(blurredBodyInfoImage, "PNG", new File(Constants.TEMP_DIR, "blurredBodyInfoImage.png"));
 
-            templates = copyLearnedChars(templates);
+        //templates = copyLearnedChars(templates);
 
-            //        System.out.println(scannedBodyInfo);
-            if (scannedBodyInfos.size() % 100 == 0) {
-                BodyInfoApp.printStats(scannedBodyInfos);
-            }
+        System.out.println(scannedBodyInfo);
+        if (scannedBodyInfos.size() % 100 == 0) {
+            BodyInfoApp.printStats(scannedBodyInfos);
         }
+        //}
 
         BodyInfoApp.printStats(scannedBodyInfos);
+
+        bruteForceFind(ScreenshotPreprocessor.gaussian(bodyNameImage, 2), templates, sourceFile.getName());
     }
 
     private static List<Template> copyLearnedChars(List<Template> currentTemplates) throws IOException {
@@ -186,6 +189,30 @@ public class BodyInfoTest {
             }
         }
         logger.info("Grouped " + bodyInfoCharacterLocations.size() + " chars into " + templatesDir.list().length + " folders");
+    }
+
+    private static void bruteForceFind(BufferedImage blurredImage, List<Template> templates, String screenshotFilename) throws IOException {
+        GrayF32 imageF32 = ConvertBufferedImage.convertFrom(blurredImage, (GrayF32) null);
+        List<TemplateMatch> matches = TemplateMatcher.findAllNonOverlappingMatches(blurredImage, imageF32, templates);
+        writeOcrImage(blurredImage, matches, screenshotFilename);
+    }
+
+    private static void writeOcrImage(BufferedImage sharpImage, List<TemplateMatch> matches, String screenshotFilename) throws IOException {
+        BufferedImage ocrImage = new BufferedImage(sharpImage.getWidth(), sharpImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = ocrImage.createGraphics();
+        g.drawImage(sharpImage, 0, 0, null);
+        g.setColor(new Color(180, 0, 0));
+        g.setFont(new Font("Consolas", Font.PLAIN, 22));
+        //g.setFont(new Font("Arial", Font.PLAIN, 22));
+        for (TemplateMatch m : matches) {
+            try {
+                g.drawString(m.getTemplate().getText(), m.getMatch().x, m.getMatch().y + 18);
+            } catch (RasterFormatException e) {
+                // Too close to border
+            }
+        }
+        System.out.println();
+        ImageIO.write(ocrImage, "PNG", new File(Constants.TEMP_DIR, screenshotFilename.replace(".png", "_OCR.png")));
     }
 
     private static void writeDebugImages(String debugType, boolean writeCharFinderDebugImages, List<Template> templates, BufferedImage sharpImage, BufferedImage blurredImage, String screenshotFilename) throws IOException {

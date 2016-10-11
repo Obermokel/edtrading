@@ -11,14 +11,22 @@ import boofcv.io.image.UtilImageIO;
 import boofcv.struct.feature.Match;
 import boofcv.struct.image.GrayF32;
 import borg.edtrading.Constants;
+import borg.edtrading.ocr.CharacterFinder;
+import borg.edtrading.ocr.ScreenshotPreprocessor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.awt.image.RasterFormatException;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -62,7 +70,7 @@ public class TemplateMatcher {
                         mask = UtilImageIO.loadImage(maskFile.getAbsolutePath(), GrayF32.class);
                     }
                     Template t = new Template(text, image, mask);
-                    t.setCroppedImage(cropCharToHeight(image));
+                    t.setCroppedImage(cropImage(image));
                     result.add(t);
                 }
             }
@@ -73,6 +81,10 @@ public class TemplateMatcher {
         return result;
     }
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
     public static List<TemplateMatch> findTemplateMatches(BufferedImage image, Template template, int maxMatches) {
         try {
             logger.trace("Searching max " + maxMatches + " match(es) of <" + template.getText() + ">");
@@ -96,6 +108,177 @@ public class TemplateMatcher {
             logger.error("Failed to find max " + maxMatches + " matches for " + template + " in BufferedImage", e);
             return new ArrayList<>(0);
         }
+    }
+
+    public static TemplateMatch findBestMatch(BufferedImage image, GrayF32 imageF32, List<Template> templates) {
+        return findBestMatch(image, imageF32, templates, Constants.MAX_ERROR_PER_PIXEL, null);
+    }
+
+    /**
+     * @param image Original image
+     * @param imageF32 Original image already converted to GrayF32 (for performance reasons). If <code>null</code> it will be converted by this method.
+     * @param templates The templates to search in the image
+     * @param maxErrorPerPixel Regarding the pixels in the template, not the image
+     * @param maxCroppedSizeDifference If not <code>null</code> the image will also be cropped, and if its cropped size is too different from the template, the template will be skipped immediately
+     * @return The best match, or <code>null</code> if none was good enough
+     */
+    public static TemplateMatch findBestMatch(BufferedImage image, GrayF32 imageF32, List<Template> templates, double maxErrorPerPixel, Float maxCroppedSizeDifference) {
+        if (imageF32 == null) {
+            imageF32 = ConvertBufferedImage.convertFrom(image, (GrayF32) null);
+        }
+        Integer minCroppedTemplateWidth = null;
+        Integer maxCroppedTemplateWidth = null;
+        Integer minCroppedTemplateHeight = null;
+        Integer maxCroppedTemplateHeight = null;
+        if (maxCroppedSizeDifference != null) {
+            GrayF32 croppedImageF32 = cropImage(imageF32).getGrayF32();
+            minCroppedTemplateWidth = Math.round(croppedImageF32.width / maxCroppedSizeDifference);
+            maxCroppedTemplateWidth = Math.round(croppedImageF32.width * maxCroppedSizeDifference);
+            minCroppedTemplateHeight = Math.round(croppedImageF32.height / maxCroppedSizeDifference);
+            maxCroppedTemplateHeight = Math.round(croppedImageF32.height * maxCroppedSizeDifference);
+        }
+        double bestErrorPerPixel = maxErrorPerPixel;
+        TemplateMatch bestMatch = null;
+        for (Template t : templates) {
+            // Always use the cropped template. If not already available crop it now.
+            CroppedImage croppedTemplate = t.getCroppedImage() != null ? t.getCroppedImage() : cropImage(t.getImage());
+            GrayF32 templateF32 = croppedTemplate.getGrayF32();
+            // Fast skip: Cropped sizes too different?
+            if (maxCroppedSizeDifference != null) {
+                if (templateF32.width < minCroppedTemplateWidth || templateF32.width > maxCroppedTemplateWidth || templateF32.height < minCroppedTemplateHeight || templateF32.height > maxCroppedTemplateHeight) {
+                    continue; // Fast skip to next template
+                }
+            }
+            final double pixels = templateF32.width * templateF32.height;
+            for (int yInImage = 0; yInImage < imageF32.height - templateF32.height; yInImage++) {
+                for (int xInImage = 0; xInImage < imageF32.width - templateF32.width; xInImage++) {
+                    double error = 0.0;
+                    for (int yInTemplate = 0; yInTemplate < templateF32.height; yInTemplate++) {
+                        for (int xInTemplate = 0; xInTemplate < templateF32.width; xInTemplate++) {
+                            float diff = imageF32.unsafe_get(xInImage + xInTemplate, yInImage + yInTemplate) - templateF32.unsafe_get(xInTemplate, yInTemplate);
+                            error += (diff * diff);
+                        }
+                    }
+                    double errorPerPixel = error / pixels;
+                    if (errorPerPixel < bestErrorPerPixel) {
+                        bestErrorPerPixel = errorPerPixel;
+                        bestMatch = new TemplateMatch(t, new Match(xInImage - croppedTemplate.getxInOriginal(), yInImage - croppedTemplate.getyInOriginal(), -1 * error), image);
+                    }
+                }
+            }
+        }
+        return bestMatch;
+    }
+
+    public static List<TemplateMatch> findAllNonOverlappingMatches(BufferedImage image, GrayF32 imageF32, List<Template> templates) {
+        // Find all
+        List<TemplateMatch> allMatches = new ArrayList<>();
+        for (Template t : templates) {
+            TemplateMatch bestMatch = findBestMatch(image, imageF32, Arrays.asList(t));
+            if (bestMatch != null) {
+                allMatches.add(bestMatch);
+            }
+        }
+        if (allMatches.isEmpty()) {
+            return allMatches;
+        } else {
+            // Sort by error/pixel
+            Collections.sort(allMatches, new Comparator<TemplateMatch>() {
+                @Override
+                public int compare(TemplateMatch m1, TemplateMatch m2) {
+                    return new Double(m1.getErrorPerPixel()).compareTo(new Double(m2.getErrorPerPixel()));
+                }
+            });
+            // Select all non-overlapping
+            List<TemplateMatch> nonOverlappingMatches = new ArrayList<>();
+            nonOverlappingMatches.add(allMatches.remove(0)); // Add the best one
+            for (TemplateMatch m : allMatches) {
+                if (!m.overlapsWithAny(nonOverlappingMatches)) {
+                    nonOverlappingMatches.add(m);
+                }
+            }
+            // Finished
+            return nonOverlappingMatches;
+        }
+    }
+
+    /**
+     * Sorted by x-position in the image
+     */
+    public static List<TemplateMatch> findSortedMatches(BufferedImage image, GrayF32 imageF32, List<Template> templates, List<String> combinations) {
+        // Find the best single match, assuming the image already almost represents exactly one of the templates.
+        // That is, the image does not contain multiple templates, and also has a quite correct size/aspect ratio.
+        TemplateMatch bestSingleMatch = findBestMatch(image, imageF32, templates, Constants.MAX_ERROR_PER_PIXEL, 1.25f);
+        if (bestSingleMatch != null) {
+            return Arrays.asList(bestSingleMatch);
+        } else {
+            // Test all allowed combinations
+            String concat = StringUtils.join(combinations);
+            List<Template> templatesForCombinations = templates.stream().filter(t -> concat.contains(t.getText())).collect(Collectors.toList());
+            List<TemplateMatch> combinationMatches = findAllNonOverlappingMatches(image, imageF32, templatesForCombinations);
+            Collections.sort(combinationMatches, new Comparator<TemplateMatch>() {
+                @Override
+                public int compare(TemplateMatch m1, TemplateMatch m2) {
+                    return new Integer(m1.getMatch().x).compareTo(new Integer(m2.getMatch().x));
+                }
+            });
+            String joinedText = StringUtils.join(combinationMatches.stream().map(m -> m.getTemplate().getText()).collect(Collectors.toList()));
+            if (combinations.contains(joinedText)) {
+                return combinationMatches;
+            } else {
+                // Guess using a higher allowed error/pixel and size difference
+                TemplateMatch bestGuess = findBestMatch(image, imageF32, templates, 999 * Constants.MAX_ERROR_PER_PIXEL, 1.5f);
+                if (bestGuess != null) {
+                    return Arrays.asList(bestGuess);
+                } else {
+                    return Collections.emptyList();
+                }
+            }
+        }
+    }
+
+    public static List<TemplateMatch> findSortedMatchesInScreenshot(BufferedImage screenshotImage, List<Template> templates, List<String> combinations, String screenshotFilename) throws IOException {
+        Constants.UNKNOWN_DIR.mkdirs();
+
+        List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(screenshotImage, screenshotImage, false);
+        BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(screenshotImage, 2);
+
+        List<TemplateMatch> sortedScreenshotMatches = new ArrayList<>(characterLocations.size());
+        for (Rectangle r : characterLocations) {
+            try {
+                BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
+                GrayF32 imageF32 = ConvertBufferedImage.convertFrom(charImage, (GrayF32) null);
+                List<TemplateMatch> sortedCharMatches = findSortedMatches(charImage, imageF32, templates, combinations);
+                if (sortedCharMatches.isEmpty()) {
+                    // Write to unknown dir
+                    ImageIO.write(charImage, "PNG", new File(Constants.UNKNOWN_DIR, "UNKNOWN#" + r.x + "#" + r.y + "#" + screenshotFilename));
+                } else {
+                    // Adjust x and y, then add to result
+                    List<TemplateMatch> adjustedMatches = new ArrayList<>(sortedCharMatches.size());
+                    for (TemplateMatch m : sortedCharMatches) {
+                        adjustedMatches.add(new TemplateMatch(m.getTemplate(), new Match(m.getMatch().x + r.x, m.getMatch().y + r.y, m.getMatch().score), m.getMatchedImage()));
+                    }
+                    sortedScreenshotMatches.addAll(adjustedMatches);
+                }
+            } catch (RasterFormatException e) {
+                logger.warn("Character location outside of raster: " + r + " in " + screenshotFilename);
+            }
+        }
+
+        // Sort by x, then by y
+        Collections.sort(sortedScreenshotMatches, new Comparator<TemplateMatch>() {
+            @Override
+            public int compare(TemplateMatch m1, TemplateMatch m2) {
+                return new Integer(m1.getMatch().x).compareTo(new Integer(m2.getMatch().x));
+            }
+        });
+        Collections.sort(sortedScreenshotMatches, new Comparator<TemplateMatch>() {
+            @Override
+            public int compare(TemplateMatch m1, TemplateMatch m2) {
+                return new Integer(m1.getMatch().y).compareTo(new Integer(m2.getMatch().y));
+            }
+        });
+        return sortedScreenshotMatches;
     }
 
     public static List<TemplateMatch> findMultiTemplateMatches(BufferedImage unknownImage, List<Template> templates, List<String> combinations, int xWithinImage, int yWithinImage, String screenshotFilename) {
@@ -162,7 +345,7 @@ public class TemplateMatcher {
             double bestErrorPerPixel = maxErrorPerPixel;
             TemplateMatch bestMatch = null;
             for (Template template : templates) {
-                GrayF32 templateF32 = doNotUseCropped ? template.getImage() : template.getCroppedImage();
+                GrayF32 templateF32 = doNotUseCropped ? template.getImage() : template.getCroppedImage().getGrayF32();
                 float templateAR = (float) templateF32.width / (float) templateF32.height;
                 if (templateAR <= 1.25 * unknownAR && templateAR >= unknownAR / 1.25) {
                     GrayF32 templateF32Scaled = new GrayF32(unknownF32.width, unknownF32.height);
@@ -186,7 +369,7 @@ public class TemplateMatcher {
                 double bestErrorPerPixelGuess = maxErrorPerPixelGuess;
                 TemplateMatch bestGuess = null;
                 for (Template template : templates) {
-                    GrayF32 templateF32 = doNotUseCropped ? template.getImage() : template.getCroppedImage();
+                    GrayF32 templateF32 = doNotUseCropped ? template.getImage() : template.getCroppedImage().getGrayF32();
                     float templateAR = (float) templateF32.width / (float) templateF32.height;
                     if (templateAR <= 1.5 * unknownAR && templateAR >= unknownAR / 1.5) {
                         GrayF32 templateF32Scaled = new GrayF32(unknownF32.width, unknownF32.height);
@@ -248,6 +431,65 @@ public class TemplateMatcher {
             return originalCharImage.subimage(0, lastBlackLineFromTop, originalCharImage.width, lastBlackLineFromBottom + 1);
         } else {
             return originalCharImage;
+        }
+    }
+
+    private static CroppedImage cropImage(GrayF32 originalImage) {
+        int firstNonBlackLineFromTop = 0;
+        boolean foundTopBoundary = false;
+        for (int y = 0; y < originalImage.height && !foundTopBoundary; y++) {
+            for (int x = 0; x < originalImage.width && !foundTopBoundary; x++) {
+                if (originalImage.unsafe_get(x, y) != 0f) {
+                    foundTopBoundary = true;
+                }
+            }
+            firstNonBlackLineFromTop = y;
+        }
+
+        int firstNonBlackLineFromBottom = originalImage.height - 1;
+        boolean foundBottomBoundary = false;
+        for (int y = originalImage.height - 1; y >= 0 && !foundBottomBoundary; y--) {
+            for (int x = 0; x < originalImage.width && !foundBottomBoundary; x++) {
+                if (originalImage.unsafe_get(x, y) != 0f) {
+                    foundBottomBoundary = true;
+                }
+            }
+            firstNonBlackLineFromBottom = y;
+        }
+
+        int firstNonBlackLineFromLeft = 0;
+        boolean foundLeftBoundary = false;
+        for (int x = 0; x < originalImage.width && !foundLeftBoundary; x++) {
+            for (int y = 0; y < originalImage.height && !foundLeftBoundary; y++) {
+                if (originalImage.unsafe_get(x, y) != 0f) {
+                    foundLeftBoundary = true;
+                }
+            }
+            firstNonBlackLineFromLeft = x;
+        }
+
+        int firstNonBlackLineFromRight = originalImage.width - 1;
+        boolean foundRightBoundary = false;
+        for (int x = originalImage.width - 1; x >= 0 && !foundRightBoundary; x--) {
+            for (int y = 0; y < originalImage.height && !foundRightBoundary; y++) {
+                if (originalImage.unsafe_get(x, y) != 0f) {
+                    foundRightBoundary = true;
+                }
+            }
+            firstNonBlackLineFromRight = x;
+        }
+
+        boolean foundAllBoundaries = foundTopBoundary && foundBottomBoundary && foundLeftBoundary && foundRightBoundary;
+
+        if (foundAllBoundaries && firstNonBlackLineFromTop < firstNonBlackLineFromBottom && firstNonBlackLineFromLeft < firstNonBlackLineFromRight) {
+            int x0Incl = firstNonBlackLineFromLeft;
+            int y0Incl = firstNonBlackLineFromTop;
+            int x1Excl = firstNonBlackLineFromRight + 1;
+            int y1Excl = firstNonBlackLineFromBottom + 1;
+
+            return new CroppedImage(originalImage.subimage(x0Incl, y0Incl, x1Excl, y1Excl), firstNonBlackLineFromLeft, firstNonBlackLineFromTop);
+        } else {
+            return new CroppedImage(originalImage, 0, 0);
         }
     }
 
@@ -313,6 +555,32 @@ public class TemplateMatcher {
             folder = "_crap";
         }
         return folder;
+    }
+
+    public static class CroppedImage {
+
+        private final GrayF32 grayF32;
+        private final int xInOriginal;
+        private final int yInOriginal;
+
+        public CroppedImage(GrayF32 grayF32, int xInOriginal, int yInOriginal) {
+            this.grayF32 = grayF32;
+            this.xInOriginal = xInOriginal;
+            this.yInOriginal = yInOriginal;
+        }
+
+        public GrayF32 getGrayF32() {
+            return this.grayF32;
+        }
+
+        public int getxInOriginal() {
+            return this.xInOriginal;
+        }
+
+        public int getyInOriginal() {
+            return this.yInOriginal;
+        }
+
     }
 
 }

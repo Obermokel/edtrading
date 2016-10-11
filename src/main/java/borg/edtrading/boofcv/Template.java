@@ -1,6 +1,7 @@
 package borg.edtrading.boofcv;
 
 import boofcv.struct.image.GrayF32;
+import borg.edtrading.boofcv.TemplateMatcher.CroppedImage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,7 +16,7 @@ public class Template {
 
     private String text = null;
     private GrayF32 image = null;
-    private GrayF32 croppedImage = null;
+    private CroppedImage croppedImage = null;
     private GrayF32 mask = null;
 
     public Template(String text, GrayF32 image, GrayF32 mask) {
@@ -45,11 +46,11 @@ public class Template {
         this.image = image;
     }
 
-    public GrayF32 getCroppedImage() {
+    public CroppedImage getCroppedImage() {
         return this.croppedImage;
     }
 
-    public void setCroppedImage(GrayF32 croppedImage) {
+    public void setCroppedImage(CroppedImage croppedImage) {
         this.croppedImage = croppedImage;
     }
 

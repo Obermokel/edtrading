@@ -23,10 +23,10 @@ public class TemplateMatch {
     private BufferedImage matchedImage = null;
     private String shouldHaveBeen = null;
 
-    public TemplateMatch(Template template, Match match, BufferedImage subimage) {
+    public TemplateMatch(Template template, Match match, BufferedImage matchedImage) {
         this.setTemplate(template);
         this.setMatch(match);
-        this.setMatchedImage(subimage);
+        this.setMatchedImage(matchedImage);
     }
 
     @Override
@@ -40,7 +40,7 @@ public class TemplateMatch {
     public double getErrorPerPixel() {
         int pixels = this.getTemplate().getImage().getWidth() * this.getTemplate().getImage().getHeight();
         if (this.getTemplate().getCroppedImage() != null) {
-            pixels = this.getTemplate().getCroppedImage().getWidth() * this.getTemplate().getCroppedImage().getHeight();
+            pixels = this.getTemplate().getCroppedImage().getGrayF32().getWidth() * this.getTemplate().getCroppedImage().getGrayF32().getHeight();
         }
         double error = -1 * this.getMatch().score;
 
@@ -53,7 +53,7 @@ public class TemplateMatch {
     public double getErrorPerWidth() {
         int width = this.getTemplate().getImage().getWidth();
         if (this.getTemplate().getCroppedImage() != null) {
-            width = this.getTemplate().getCroppedImage().getWidth();
+            width = this.getTemplate().getCroppedImage().getGrayF32().getWidth();
         }
         double error = -1 * this.getMatch().score;
 

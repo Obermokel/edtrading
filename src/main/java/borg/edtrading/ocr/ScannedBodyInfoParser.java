@@ -44,16 +44,12 @@ public class ScannedBodyInfoParser {
 
     private static String currentScreenshotFilename = "";
 
-    public static ScannedBodyInfo fromScannedAndSortedWords(String screenshotFilename, String systemName, List<MatchGroup> bodyNameWords, List<MatchGroup> bodyInfoWords, List<Body> eddbBodies) {
+    public static ScannedBodyInfo fromScannedAndSortedMatches(String screenshotFilename, String systemName, List<TemplateMatch> bodyNameMatches, List<TemplateMatch> bodyInfoMatches, List<Body> eddbBodies) {
         currentScreenshotFilename = screenshotFilename;
 
         ScannedBodyInfo scannedBodyInfo = new ScannedBodyInfo(screenshotFilename, systemName);
 
         // >>>> START BODY NAME >>>>
-        List<TemplateMatch> bodyNameMatches = new ArrayList<>();
-        for (MatchGroup mg : bodyNameWords) {
-            bodyNameMatches.addAll(mg.getGroupMatches());
-        }
         SortedMap<Integer, String> sortedNameIndexes = new TreeMap<>();
         if (findAndRemove("ARRIVALPOINT:", bodyNameMatches, sortedNameIndexes) == null) {
             // Name only
@@ -96,11 +92,6 @@ public class ScannedBodyInfoParser {
         // Set the name
         scannedBodyInfo.setBodyName(bodyName);
         // <<<< END BODY NAME <<<<
-
-        List<TemplateMatch> bodyInfoMatches = new ArrayList<>();
-        for (MatchGroup mg : bodyInfoWords) {
-            bodyInfoMatches.addAll(mg.getGroupMatches());
-        }
 
         // Store the indexes of all labels. This allows us to later extract the values. In most cases we have label, value, label, value, ...
         SortedMap<Integer, String> sortedLabelIndexes = new TreeMap<>();
@@ -303,26 +294,26 @@ public class ScannedBodyInfoParser {
         }
 
         // TODO Remove this debug output
-        //        System.out.print("Scanned: ");
-        //        for (TemplateMatch m : bodyNameMatches) {
-        //            System.out.print("<" + m.getTemplate().getText() + ">");
-        //        }
-        //        System.out.println();
-        //        System.out.print("Parsed:  ");
-        //        for (TemplateMatch m : bodyNameMatches) {
-        //            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
-        //        }
-        //        System.out.println();
-        //        System.out.print("Scanned: ");
-        //        for (TemplateMatch m : bodyInfoMatches) {
-        //            System.out.print("<" + m.getTemplate().getText() + ">");
-        //        }
-        //        System.out.println();
-        //        System.out.print("Parsed:  ");
-        //        for (TemplateMatch m : bodyInfoMatches) {
-        //            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
-        //        }
-        //        System.out.println();
+        System.out.print("Scanned: ");
+        for (TemplateMatch m : bodyNameMatches) {
+            System.out.print("<" + m.getTemplate().getText() + ">");
+        }
+        System.out.println();
+        System.out.print("Parsed:  ");
+        for (TemplateMatch m : bodyNameMatches) {
+            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
+        }
+        System.out.println();
+        System.out.print("Scanned: ");
+        for (TemplateMatch m : bodyInfoMatches) {
+            System.out.print("<" + m.getTemplate().getText() + ">");
+        }
+        System.out.println();
+        System.out.print("Parsed:  ");
+        for (TemplateMatch m : bodyInfoMatches) {
+            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
+        }
+        System.out.println();
 
         learnWronglyDetectedChars(bodyNameMatches);
         learnWronglyDetectedChars(bodyInfoMatches);

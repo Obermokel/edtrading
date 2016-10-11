@@ -10,19 +10,15 @@ import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.data.StarSystem;
 import borg.edtrading.eddb.BodyUpdater;
 import borg.edtrading.eddb.SystemNotFoundException;
-import borg.edtrading.ocr.CharacterFinder;
+import borg.edtrading.ocr.ScannedBodyInfoParser;
 import borg.edtrading.ocr.ScreenshotCropper;
 import borg.edtrading.ocr.ScreenshotPreprocessor;
 import borg.edtrading.util.ImageUtil;
-import borg.edtrading.util.MatchSorter;
-import borg.edtrading.util.MatchSorter.MatchGroup;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import java.awt.image.RasterFormatException;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -81,15 +77,15 @@ public class BodyInfoApp {
                     // Extract planet name, type and distance from arrival
                     BufferedImage bodyNameImage = ScreenshotCropper.cropSystemMapToBodyName(fourKImage);
                     bodyNameImage = ScreenshotPreprocessor.highlightWhiteText(bodyNameImage);
-                    List<MatchGroup> bodyNameWords = scanWords(bodyNameImage, templates, screenshotFile.getName());
+                    List<TemplateMatch> bodyNameMatches = scanScreenshot(bodyNameImage, templates, screenshotFile.getName());
 
                     // Extract body info
                     BufferedImage bodyInfoImage = ScreenshotCropper.cropSystemMapToBodyInfo(fourKImage);
                     bodyInfoImage = ScreenshotPreprocessor.highlightWhiteText(bodyInfoImage);
-                    List<MatchGroup> bodyInfoWords = scanWords(bodyInfoImage, templates, screenshotFile.getName());
+                    List<TemplateMatch> bodyInfoMatches = scanScreenshot(bodyInfoImage, templates, screenshotFile.getName());
 
                     // Parse!
-                    ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(screenshotFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
+                    ScannedBodyInfo scannedBodyInfo = ScannedBodyInfoParser.fromScannedAndSortedMatches(screenshotFile.getName(), systemName, bodyNameMatches, bodyInfoMatches, eddbBodies);
                     scannedBodyInfos.add(scannedBodyInfo);
 
                     // sysout
@@ -158,42 +154,47 @@ public class BodyInfoApp {
         return systemName;
     }
 
-    static List<MatchGroup> scanWords(BufferedImage croppedfourK, List<Template> templates, String screenshotFilename) throws IOException {
-        List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(croppedfourK, croppedfourK, false);
-        BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(croppedfourK, 2);
-
-        List<TemplateMatch> matches = new ArrayList<>(characterLocations.size());
-        for (Rectangle r : characterLocations) {
-            try {
-                BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
-                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, screenshotFilename);
-                if (bestMatch != null) {
-                    List<TemplateMatch> splittedMatches = checkForMultiCharMatch(bestMatch, templates, r.x, r.y, screenshotFilename);
-                    matches.addAll(splittedMatches);
-                }
-            } catch (RasterFormatException e) {
-                // Ignore
-            }
-        }
-
-        List<MatchGroup> matchGroups = MatchSorter.sortMatches(matches);
-        //return matchGroups.stream().map(mg -> mg.getText()).collect(Collectors.toList());
-        return matchGroups;
+    static List<TemplateMatch> scanScreenshot(BufferedImage croppedfourK, List<Template> templates, String screenshotFilename) throws IOException {
+        List<String> combinations = Arrays.asList("WAT", "AV", "AX", "AT", "KY", "LY", "TY", "XY", "TA", "TT", "fo", "fe", "fa", "rv", "ky", "oj");
+        return TemplateMatcher.findSortedMatchesInScreenshot(croppedfourK, templates, combinations, screenshotFilename);
     }
 
-    private static List<TemplateMatch> checkForMultiCharMatch(TemplateMatch match, List<Template> templates, int xWithinImage, int yWithinImage, String screenshotFilename) {
-        if (match.getErrorPerPixel() <= 1500.0) {
-            return Arrays.asList(match);
-        } else {
-            List<String> combinations = Arrays.asList("WAT", "AV", "AX", "AT", "KY", "LY", "TY", "XY", "TA", "TT", "fo", "fe", "fa", "rv", "ky", "oj");
-            List<TemplateMatch> splitted = TemplateMatcher.findMultiTemplateMatches(match.getMatchedImage(), templates, combinations, xWithinImage, yWithinImage, screenshotFilename);
-            if (splitted != null && splitted.size() > 0) {
-                return splitted;
-            } else {
-                return Arrays.asList(match);
-            }
-        }
-    }
+    //    static List<MatchGroup> scanWords(BufferedImage croppedfourK, List<Template> templates, String screenshotFilename) throws IOException {
+    //        List<Rectangle> characterLocations = CharacterFinder.findCharacterLocations(croppedfourK, croppedfourK, false);
+    //        BufferedImage blurredImage = ScreenshotPreprocessor.gaussian(croppedfourK, 2);
+    //
+    //        List<TemplateMatch> matches = new ArrayList<>(characterLocations.size());
+    //        for (Rectangle r : characterLocations) {
+    //            try {
+    //                BufferedImage charImage = blurredImage.getSubimage(r.x, r.y, r.width, r.height);
+    //                TemplateMatch bestMatch = TemplateMatcher.findBestTemplateMatch(charImage, templates, r.x, r.y, screenshotFilename);
+    //                if (bestMatch != null) {
+    //                    List<TemplateMatch> splittedMatches = checkForMultiCharMatch(bestMatch, templates, r.x, r.y, screenshotFilename);
+    //                    matches.addAll(splittedMatches);
+    //                }
+    //            } catch (RasterFormatException e) {
+    //                // Ignore
+    //            }
+    //        }
+    //
+    //        List<MatchGroup> matchGroups = MatchSorter.sortMatches(matches);
+    //        //return matchGroups.stream().map(mg -> mg.getText()).collect(Collectors.toList());
+    //        return matchGroups;
+    //    }
+    //
+    //    private static List<TemplateMatch> checkForMultiCharMatch(TemplateMatch match, List<Template> templates, int xWithinImage, int yWithinImage, String screenshotFilename) {
+    //        if (match.getErrorPerPixel() <= 1500.0) {
+    //            return Arrays.asList(match);
+    //        } else {
+    //            List<String> combinations = Arrays.asList("WAT", "AV", "AX", "AT", "KY", "LY", "TY", "XY", "TA", "TT", "fo", "fe", "fa", "rv", "ky", "oj");
+    //            List<TemplateMatch> splitted = TemplateMatcher.findMultiTemplateMatches(match.getMatchedImage(), templates, combinations, xWithinImage, yWithinImage, screenshotFilename);
+    //            if (splitted != null && splitted.size() > 0) {
+    //                return splitted;
+    //            } else {
+    //                return Arrays.asList(match);
+    //            }
+    //        }
+    //    }
 
     private static List<File> getScreenshotsFromAllDir() {
         File allDir = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR);
