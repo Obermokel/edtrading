@@ -1,5 +1,4 @@
 TODO:
-* XY Kombi von OXYGEN
 * TemplateMatcher soll Kombinationen direkt splitten damit die nicht in unknown landen
 * Nicht so viele Punkte (.) lernen
 * Terraforming
@@ -10,7 +9,7 @@ SUSPICIOUS:
 * 2016-09-28 08-11-03 Ross 847.png: Viele Störungen...
 * 2016-09-30 17-21-44 Deciat.png: Scanned text '...::2,040.62LS' does not look like a valid value for arrivalpoint -- java.lang.NumberFormatException: Fixed text ',,,::2,040.62LS' does not match the expected pattern
 
-* 2016-10-01 20-50-38 HIP 30953.png: Scanned text '793,564KMSTARCATALOGUEID:HIPP:30,953HD:46,273' does not look like a valid value for ring2_outerradius -- java.lang.NumberFormatException: Fixed text '793,564KM5TARCATAL0GUEI0:HIPP:30,953H0:46,273' does not match the expected pattern
+* 2016-10-03 11-30-38 Yoru.png: Scanned text '2.583.97L' does not look like a valid value for arrivalpoint -- java.lang.NumberFormatException: Fixed text '2,583.97L' does not match the expected pattern
 
 DONE:
 * Human readable logfile
@@ -36,6 +35,7 @@ DONE:
 * Also o to 0, not only O to 0
 * Do not care about case for Cc, Oo, Vv, Ww, Zz
 * Learn unknown if guess was correct
+* XY Kombi von OXYGEN
 * 2016-10-02 09-57-16 CF 16001.png uppercase/lowercase beim lernen...
 * 2016-09-28 08-01-53 Arque.png: Sum of atmosphere is 99.4: ist tatsächlich so: {ATMOSPHERE_COMPONENT_WATER=98.4, ATMOSPHERE_COMPONENT_AMMONIA=0.5, ATMOSPHERE_COMPONENT_METHANE=0.5}
 * 2016-10-03 13-08-43 Dafnharian.png: Sum of atmosphere is 97.9: ist tatsächlich so: {ATMOSPHERE_COMPONENT_HELIUM=85.9, ATMOSPHERE_COMPONENT_HYDROGEN=8.1, ATMOSPHERE_COMPONENT_NITROGEN=3.9}

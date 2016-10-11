@@ -146,9 +146,6 @@ public class ScannedBodyInfoParser {
             findAndRemove("ORBITALECCENTRICITY:", bodyInfoMatches, sortedLabelIndexes);
             findAndRemove("ORBITALINCLINATION:", bodyInfoMatches, sortedLabelIndexes);
             findAndRemove("ARGOFPERIAPSIS:", bodyInfoMatches, sortedLabelIndexes);
-            findAndRemove("STARCATALOGUEID:", bodyInfoMatches, sortedLabelIndexes);
-            findAndRemove("GLIESE:", bodyInfoMatches, sortedLabelIndexes);
-            findAndRemove("HIPP:", bodyInfoMatches, sortedLabelIndexes);
         } else if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_PLANET) {
             for (BodyInfo bi : BodyInfo.byPrefix("RESERVES_")) {
                 String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
@@ -215,6 +212,12 @@ public class ScannedBodyInfoParser {
             findAndRemove("ORBITALINCLINATION:", bodyInfoMatches, sortedLabelIndexes);
             findAndRemove("ARGOFPERIAPSIS:", bodyInfoMatches, sortedLabelIndexes);
         }
+
+        // Always search for star catalogue IDs
+        findAndRemove("STARCATALOGUEID:", bodyInfoMatches, sortedLabelIndexes);
+        findAndRemove("GLIESE:", bodyInfoMatches, sortedLabelIndexes);
+        findAndRemove("HIPP:", bodyInfoMatches, sortedLabelIndexes);
+        findAndRemove("HD:", bodyInfoMatches, sortedLabelIndexes);
 
         // Search for rings
         int nRings = 0;
