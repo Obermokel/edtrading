@@ -1,6 +1,7 @@
 package borg.edtrading.templatematching;
 
 import boofcv.struct.image.GrayF32;
+import borg.edtrading.ocr.Screenshot;
 
 /**
  * Region (pixel area) of a full screenshot

@@ -1,4 +1,4 @@
-package borg.edtrading.templatematching;
+package borg.edtrading.ocr;
 
 import boofcv.alg.filter.binary.GThresholdImageOps;
 import boofcv.io.image.ConvertBufferedImage;
