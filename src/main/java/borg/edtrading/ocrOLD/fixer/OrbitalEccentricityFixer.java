@@ -1,4 +1,4 @@
-package borg.edtrading.ocr.fixer;
+package borg.edtrading.ocrOLD.fixer;
 
 import borg.edtrading.data.Body;
 import org.apache.logging.log4j.LogManager;
@@ -10,25 +10,25 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 /**
- * MoonMassesFixer
+ * EarthMassesFixer
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class MoonMassesFixer implements ValueFixer {
+public class OrbitalEccentricityFixer implements ValueFixer {
 
-    static final Logger logger = LogManager.getLogger(MoonMassesFixer.class);
+    static final Logger logger = LogManager.getLogger(OrbitalEccentricityFixer.class);
 
     private static final NumberFormat NF = new DecimalFormat("0.0000", new DecimalFormatSymbols(Locale.US));
     private final Body eddbBody;
 
-    public MoonMassesFixer(Body eddbBody) {
+    public OrbitalEccentricityFixer(Body eddbBody) {
         this.eddbBody = eddbBody;
     }
 
     @Override
     public String fixValue(String scannedText) {
-        if (TRUST_EDDB && this.eddbBody != null && this.eddbBody.getMoon_masses() != null) {
-            return NF.format(this.eddbBody.getMoon_masses());
+        if (TRUST_EDDB && this.eddbBody != null && this.eddbBody.getOrbital_eccentricity() != null) {
+            return NF.format(this.eddbBody.getOrbital_eccentricity());
         } else {
             return scannedText.toUpperCase().replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".");
         }

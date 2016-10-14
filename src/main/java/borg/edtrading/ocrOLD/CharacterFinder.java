@@ -1,4 +1,4 @@
-package borg.edtrading.ocr;
+package borg.edtrading.ocrOLD;
 
 import boofcv.alg.feature.detect.edge.CannyEdge;
 import boofcv.alg.filter.binary.BinaryImageOps;

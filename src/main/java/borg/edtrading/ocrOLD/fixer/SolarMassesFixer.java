@@ -1,4 +1,4 @@
-package borg.edtrading.ocr.fixer;
+package borg.edtrading.ocrOLD.fixer;
 
 import borg.edtrading.data.Body;
 import org.apache.logging.log4j.LogManager;
@@ -10,25 +10,25 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 /**
- * SolarRadiusFixer
+ * SolarMassesFixer
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class SolarRadiusFixer implements ValueFixer {
+public class SolarMassesFixer implements ValueFixer {
 
-    static final Logger logger = LogManager.getLogger(SolarRadiusFixer.class);
+    static final Logger logger = LogManager.getLogger(SolarMassesFixer.class);
 
     private static final NumberFormat NF = new DecimalFormat("0.0000", new DecimalFormatSymbols(Locale.US));
     private final Body eddbBody;
 
-    public SolarRadiusFixer(Body eddbBody) {
+    public SolarMassesFixer(Body eddbBody) {
         this.eddbBody = eddbBody;
     }
 
     @Override
     public String fixValue(String scannedText) {
-        if (TRUST_EDDB && this.eddbBody != null && this.eddbBody.getSolar_radius() != null) {
-            return NF.format(this.eddbBody.getSolar_radius());
+        if (TRUST_EDDB && this.eddbBody != null && this.eddbBody.getSolar_masses() != null) {
+            return NF.format(this.eddbBody.getSolar_masses());
         } else {
             return scannedText.toUpperCase().replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".");
         }

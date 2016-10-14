@@ -1,4 +1,4 @@
-package borg.edtrading.ocr;
+package borg.edtrading.ocrOLD;
 
 import borg.edtrading.Constants;
 import borg.edtrading.boofcv.TemplateMatch;

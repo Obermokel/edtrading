@@ -1,4 +1,4 @@
-package borg.edtrading.ocr.fixer;
+package borg.edtrading.ocrOLD.fixer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

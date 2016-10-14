@@ -1,4 +1,4 @@
-package borg.edtrading.ocr.fixer;
+package borg.edtrading.ocrOLD.fixer;
 
 import borg.edtrading.data.Body;
 import org.apache.logging.log4j.LogManager;
@@ -14,23 +14,23 @@ import java.util.Locale;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class RotationalPeriodFixer implements ValueFixer {
+public class OrbitalPeriodFixer implements ValueFixer {
 
-    static final Logger logger = LogManager.getLogger(RotationalPeriodFixer.class);
+    static final Logger logger = LogManager.getLogger(OrbitalPeriodFixer.class);
 
-    private static final NumberFormat NF = new DecimalFormat("0.0D", new DecimalFormatSymbols(Locale.US));
+    private static final NumberFormat NF = new DecimalFormat("#,##0.0D", new DecimalFormatSymbols(Locale.US));
     private final Body eddbBody;
 
-    public RotationalPeriodFixer(Body eddbBody) {
+    public OrbitalPeriodFixer(Body eddbBody) {
         this.eddbBody = eddbBody;
     }
 
     @Override
     public String fixValue(String scannedText) {
-        if (TRUST_EDDB && this.eddbBody != null && this.eddbBody.getRotational_period() != null) {
-            return NF.format(this.eddbBody.getRotational_period());
+        if (TRUST_EDDB && this.eddbBody != null && this.eddbBody.getOrbital_period() != null) {
+            return NF.format(this.eddbBody.getOrbital_period());
         } else {
-            String fixedValue = scannedText.toUpperCase().replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8").replace(",", ".");
+            String fixedValue = scannedText.toUpperCase().replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8");
             if (fixedValue.contains(".") && fixedValue.indexOf(".") == fixedValue.length() - 3) {
                 fixedValue = fixedValue.substring(0, fixedValue.length() - 1) + "D";
             }
@@ -40,7 +40,7 @@ public class RotationalPeriodFixer implements ValueFixer {
 
     @Override
     public boolean seemsPlausible(String fixedValue) {
-        return fixedValue.matches("\\d{1,3}\\.\\dD"); // min 0.0D, max 999.9D, always one decimal place
+        return fixedValue.matches("\\d{1,3}\\.\\dD") || fixedValue.matches("\\d{1,2},\\d{3}\\.\\dD"); // min 0.0D, max 99,999.9D, always one decimal place
     }
 
 }

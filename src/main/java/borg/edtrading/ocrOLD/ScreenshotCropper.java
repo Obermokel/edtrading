@@ -1,4 +1,4 @@
-package borg.edtrading.ocr;
+package borg.edtrading.ocrOLD;
 
 import boofcv.alg.distort.RemovePerspectiveDistortion;
 import boofcv.alg.filter.binary.GThresholdImageOps;
