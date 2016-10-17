@@ -1,5 +1,8 @@
 package borg.edtrading.util;
 
+import boofcv.abst.distort.FDistort;
+import boofcv.alg.interpolate.TypeInterpolate;
+import boofcv.struct.image.GrayU8;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -107,6 +110,50 @@ public abstract class ImageUtil {
         } else {
             return original;
         }
+    }
+
+    public static void cropAndScaleTo(GrayU8 input, GrayU8 output) {
+        // First do the cropping, which is a simple subimage.
+        // The less we have to scale, the faster.
+        // Also allows re-using memory.
+        final float currentAspectRatio = (float) input.width / (float) input.height;
+        final float targetAspectRatio = (float) output.width / (float) output.height;
+
+        GrayU8 cropped = null;
+        if (currentAspectRatio > targetAspectRatio) {
+            cropped = cropTo(input, Math.round(input.height * targetAspectRatio), input.height); // Crop width
+        } else if (currentAspectRatio < targetAspectRatio) {
+            cropped = cropTo(input, input.width, Math.round(input.width / targetAspectRatio)); // Crop height
+        } else {
+            cropped = input;
+        }
+
+        // Then do the scaling
+        scaleTo(cropped, output, output.width, output.height);
+    }
+
+    public static GrayU8 cropTo(GrayU8 original, int targetWidth, int targetHeight) {
+        if (original.getWidth() > targetWidth && original.getHeight() > targetHeight) {
+            int x = (original.getWidth() - targetWidth) / 2;
+            int y = (original.getHeight() - targetHeight) / 2;
+            return original.subimage(x, y, x + targetWidth, y + targetHeight);
+        } else if (original.getWidth() > targetWidth) {
+            int x = (original.getWidth() - targetWidth) / 2;
+            int y = 0;
+            return original.subimage(x, y, x + targetWidth, y + targetHeight);
+        } else if (original.getHeight() > targetHeight) {
+            int x = 0;
+            int y = (original.getHeight() - targetHeight) / 2;
+            return original.subimage(x, y, x + targetWidth, y + targetHeight);
+        } else {
+            return original;
+        }
+    }
+
+    public static GrayU8 scaleTo(GrayU8 original, GrayU8 prevScaled, int targetWidth, int targetHeight) {
+        GrayU8 scaled = prevScaled != null && prevScaled.width == targetWidth && prevScaled.height == targetHeight ? prevScaled : new GrayU8(targetWidth, targetHeight);
+        new FDistort().input(original).output(scaled).interp(TypeInterpolate.BICUBIC).scale().apply();
+        return scaled;
     }
 
 }

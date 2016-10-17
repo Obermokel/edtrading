@@ -1,9 +1,15 @@
 package borg.edtrading.ocr;
 
+import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.Planar;
+import borg.edtrading.util.ImageUtil;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 /**
  * Full screenshot
@@ -16,10 +22,35 @@ public class Screenshot {
     private final Planar<GrayU8> originalImage;
     private final Planar<GrayU8> resizedImage;
 
-    public Screenshot(File file, Planar<GrayU8> originalImage, Planar<GrayU8> resizedImage) {
+    private Screenshot(File file, Planar<GrayU8> originalImage, Planar<GrayU8> resizedImage) {
         this.file = file;
         this.originalImage = originalImage;
         this.resizedImage = resizedImage;
+    }
+
+    public static Screenshot loadFromFile(File file, int targetWidth, int targetHeight, Screenshot previosScreenshot) throws IOException {
+        // Load as BufferedImage
+        BufferedImage bi = ImageIO.read(file);
+
+        // If we have a previous screenshot of the same format we can re-use memory
+        boolean sameFormatAsPrevious = false;
+        if (previosScreenshot != null) {
+            Planar<GrayU8> p = previosScreenshot.getOriginalImage();
+            sameFormatAsPrevious = bi.getWidth() == p.getWidth() && bi.getHeight() == p.getHeight() && bi.getRaster().getNumBands() == p.getNumBands();
+        }
+
+        // Convert into planar (A)RGB
+        Planar<GrayU8> originalImage = sameFormatAsPrevious ? previosScreenshot.getOriginalImage() : new Planar<>(GrayU8.class, bi.getWidth(), bi.getHeight(), bi.getRaster().getNumBands());
+        ConvertBufferedImage.convertFromMulti(bi, originalImage, true, GrayU8.class);
+
+        // Resize to target size and discard alpha channel
+        Planar<GrayU8> rgb = originalImage.getNumBands() == 4 ? originalImage.partialSpectrum(1, 2, 3) : originalImage;
+        Planar<GrayU8> resizedImage = sameFormatAsPrevious ? previosScreenshot.getResizedImage() : new Planar<>(GrayU8.class, targetWidth, targetHeight, 3);
+        for (int band = 0; band < 3; band++) {
+            ImageUtil.cropAndScaleTo(rgb.getBand(band), resizedImage.getBand(band));
+        }
+
+        return new Screenshot(file, originalImage, resizedImage);
     }
 
     @Override
