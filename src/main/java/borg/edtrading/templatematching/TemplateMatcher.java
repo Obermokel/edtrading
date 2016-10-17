@@ -26,7 +26,7 @@ public class TemplateMatcher {
         Match bestMatch = null;
         for (Template t : templates) {
             GrayF32 scaledTemplatePixels = t.scalePixelsToSize(region.getWidth(), region.getHeight());
-            GrayF32 regionPixels = (GrayF32) region.getTransformed(t.getTransformation());
+            GrayF32 regionPixels = (GrayF32) region.getImageData(t.getTransformation());
             float error = 0.0f;
             for (int y = 0; y < region.getHeight() && error < bestError; y++) {
                 for (int x = 0; x < region.getWidth() && error < bestError; x++) {
@@ -54,7 +54,7 @@ public class TemplateMatcher {
         if (template.getWidth() > region.getWidth() || template.getHeight() > region.getHeight()) {
             throw new IllegalArgumentException("Template " + template + " is larger than " + region);
         } else {
-            GrayF32 regionPixels = (GrayF32) region.getTransformed(template.getTransformation());
+            GrayF32 regionPixels = (GrayF32) region.getImageData(template.getTransformation());
             float bestError = 999999999.9f;
             Match bestMatch = null;
             for (int yInRegion = 0; yInRegion < (region.getHeight() - template.getHeight()); yInRegion++) {

@@ -9,8 +9,8 @@ import boofcv.struct.image.ImageBase;
  */
 public interface Transformation {
 
-    String APPLY_ON_ORIGINAL = "%ORIGINAL%";
-    String APPLY_ON_LAST = "%LAST%";
+    String ORIGINAL = "%ORIGINAL%";
+    String LAST = "%LAST%";
 
     String getName();
 

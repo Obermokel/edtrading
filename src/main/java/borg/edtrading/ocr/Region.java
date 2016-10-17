@@ -1,15 +1,22 @@
 package borg.edtrading.ocr;
 
+import boofcv.gui.image.VisualizeImageData;
+import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageBase;
+import boofcv.struct.image.ImageGray;
 import boofcv.struct.image.Planar;
 import borg.edtrading.imagetransformation.NoSuchTransformationException;
 import borg.edtrading.imagetransformation.Transformation;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+
+import javax.imageio.ImageIO;
 
 /**
  * Region (pixel area) of a full screenshot or another region
@@ -43,6 +50,22 @@ public class Region {
         this.transformed = transformed;
     }
 
+    public void saveToFile(File file, String whichTransformation) throws IOException {
+        String formatName = file.getName().substring(file.getName().lastIndexOf(".") + 1);
+        ImageBase<?> ti = this.getImageData(whichTransformation);
+        if (ti instanceof Planar<?>) {
+            if (((Planar<?>) ti).getBandType().isAssignableFrom(GrayU8.class)) {
+                ImageIO.write(ConvertBufferedImage.convertTo_U8((Planar<GrayU8>) ti, null, true), formatName, file);
+            } else {
+                throw new RuntimeException("Cannot write " + whichTransformation + " of " + this + ": Unknown band type " + ((Planar<?>) ti).getBandType().getClass().getName());
+            }
+        } else if (ti instanceof ImageGray) {
+            ImageIO.write(VisualizeImageData.grayMagnitude((ImageGray) ti, null, -1), formatName, file);
+        } else {
+            throw new RuntimeException("Cannot write " + whichTransformation + " of " + this + ": Unknown image type " + ti.getClass().getName());
+        }
+    }
+
     @Override
     public String toString() {
         return this.getWidth() + "x" + this.getHeight() + " region of " + this.getScreenshot();
@@ -69,12 +92,20 @@ public class Region {
     }
 
     /**
-     * Transformed pixel data of this region
+     * Transformed or original pixel data of this region
      *
      * @throws NoSuchTransformationException
      */
-    public ImageBase<?> getTransformed(String transformation) throws NoSuchTransformationException {
-        if (!this.transformed.containsKey(transformation)) {
+    public ImageBase<?> getImageData(String transformation) throws NoSuchTransformationException {
+        if (StringUtils.isEmpty(transformation) || Transformation.ORIGINAL.equals(transformation)) {
+            return this.originalRGB;
+        } else if (Transformation.LAST.equals(transformation)) {
+            if (this.transformed.isEmpty()) {
+                return this.originalRGB;
+            } else {
+                return this.transformed.get(this.getTransformations().get(this.getTransformations().size() - 1));
+            }
+        } else if (!this.transformed.containsKey(transformation)) {
             throw new NoSuchTransformationException(transformation);
         } else {
             return this.transformed.get(transformation);
@@ -94,7 +125,7 @@ public class Region {
      * @throws NoSuchTransformationException
      */
     public Region applyTransformation(Transformation t) throws NoSuchTransformationException {
-        return this.applyTransformation(t, Transformation.APPLY_ON_LAST);
+        return this.applyTransformation(t, Transformation.LAST);
     }
 
     /**
@@ -103,27 +134,15 @@ public class Region {
      * @param t
      *      The transformation to be executed
      * @param applyOn
-     *      On what input data to apply the transformation. If empty or {@link Transformation#APPLY_ON_ORIGINAL} it
-     *      will be applied on the original RGB pixel data of this region, if {@link Transformation#APPLY_ON_LAST} it
+     *      On what input data to apply the transformation. If empty or {@link Transformation#ORIGINAL} it
+     *      will be applied on the original RGB pixel data of this region, if {@link Transformation#LAST} it
      *      will be applied on top of the last transformation (which, in case none exists, is the original RGB data),
      *      or otherwise to the specified transformation.
      *
      * @throws NoSuchTransformationException
      */
     public Region applyTransformation(Transformation t, String applyOn) throws NoSuchTransformationException {
-        ImageBase<?> inputImage = null;
-        if (StringUtils.isEmpty(applyOn) || Transformation.APPLY_ON_ORIGINAL.equals(applyOn)) {
-            inputImage = this.getOriginalRGB();
-        } else if (Transformation.APPLY_ON_LAST.equals(applyOn)) {
-            if (this.getTransformations().isEmpty()) {
-                inputImage = this.getOriginalRGB();
-            } else {
-                inputImage = this.getTransformed(this.getTransformations().get(this.getTransformations().size() - 1));
-            }
-        } else {
-            inputImage = this.getTransformed(applyOn);
-        }
-
+        ImageBase<?> inputImage = this.getImageData(applyOn);
         ImageBase<?> transformedImage = t.transform(inputImage);
         this.transformed.put(t.getName(), transformedImage);
         return this;
