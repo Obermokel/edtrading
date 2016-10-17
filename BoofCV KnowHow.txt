@@ -1,0 +1,23 @@
+==== BufferedImage conversion ====
+
+BufferedImage -> ImageBase
+ImageGray[0..255] = ConvertBufferedImage.convertFrom(BufferedImage src, ImageGray dst)
+Planar<GrayU8>[0..255] = ConvertBufferedImage.convertFromMulti(BufferedImage src, Planar<GrayU8> dst, true, GrayU8.class)
+Planar<GrayF32>[0..255] = ConvertBufferedImage.convertFromMulti(BufferedImage src, Planar<GrayF32> dst, true, GrayF32.class)
+
+ImageBase -> BufferedImage
+BufferedImage = ConvertBufferedImage.convertTo(ImageGray[0..255] src, BufferedImage dst)
+BufferedImage = ConvertBufferedImage.convertTo_F32(Planar<GrayU8>[0..255] src, BufferedImage dst, true)
+BufferedImage = ConvertBufferedImage.convertTo_F32(Planar<GrayF32>[0..255] src, BufferedImage dst, true)
+
+ImageGray -> BufferedImage (normalized to 0..255)
+BufferedImage = VisualizeImageData.grayMagnitude(ImageGray src, BufferedImage dst, -1)
+
+==== RGB to HSV ====
+
+ColorHsv.rgbToHsv_F32(Planar<GrayF32>[0..1] rgb, Planar<GrayF32>[0..1] hsv)
+ColorHsv.hsvToRgb_F32(Planar<GrayF32>[0..1] hsv, Planar<GrayF32>[0..1] rgb)
+
+hue: angle in radians
+sat: 0..1
+val: 0..1

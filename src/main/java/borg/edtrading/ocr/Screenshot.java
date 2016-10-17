@@ -3,6 +3,7 @@ package borg.edtrading.ocr;
 import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.Planar;
+import borg.edtrading.imagetransformation.Transformation;
 import borg.edtrading.util.ImageUtil;
 
 import java.awt.image.BufferedImage;
@@ -53,9 +54,17 @@ public class Screenshot {
         return new Screenshot(file, originalImage, resizedImage);
     }
 
+    public void saveToFile(File file) throws IOException {
+        this.getAsRegion().saveToFile(file, Transformation.ORIGINAL);
+    }
+
     @Override
     public String toString() {
         return this.getFile().getName() + " (" + this.getOriginalWidth() + "x" + this.getOriginalHeight() + " -> " + this.getResizedWidth() + "x" + this.getResizedHeight() + ")";
+    }
+
+    private Region getAsRegion() {
+        return this.getRegion(0, 0, this.getResizedWidth(), this.getResizedHeight());
     }
 
     public Region getRegion(int x, int y, int width, int height) {

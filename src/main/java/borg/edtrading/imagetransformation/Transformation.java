@@ -14,6 +14,9 @@ public interface Transformation {
 
     String getName();
 
-    ImageBase<?> transform(ImageBase<?> inputImage);
+    /**
+     * @throws TransformationException
+     */
+    ImageBase<?> transform(ImageBase<?> inputImage) throws TransformationException;
 
 }

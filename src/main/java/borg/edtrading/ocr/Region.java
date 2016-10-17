@@ -2,6 +2,7 @@ package borg.edtrading.ocr;
 
 import boofcv.gui.image.VisualizeImageData;
 import boofcv.io.image.ConvertBufferedImage;
+import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageBase;
 import boofcv.struct.image.ImageGray;
@@ -56,6 +57,8 @@ public class Region {
         if (ti instanceof Planar<?>) {
             if (((Planar<?>) ti).getBandType().isAssignableFrom(GrayU8.class)) {
                 ImageIO.write(ConvertBufferedImage.convertTo_U8((Planar<GrayU8>) ti, null, true), formatName, file);
+            } else if (((Planar<?>) ti).getBandType().isAssignableFrom(GrayF32.class)) {
+                ImageIO.write(ConvertBufferedImage.convertTo_F32((Planar<GrayF32>) ti, null, true), formatName, file);
             } else {
                 throw new RuntimeException("Cannot write " + whichTransformation + " of " + this + ": Unknown band type " + ((Planar<?>) ti).getBandType().getClass().getName());
             }
