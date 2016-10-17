@@ -1,6 +1,7 @@
 package borg.edtrading.templatematching;
 
 import boofcv.struct.image.GrayF32;
+import borg.edtrading.ocr.Region;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,15 +21,16 @@ public class TemplateMatcher {
      *
      * @return The best matching template, never <code>null</code>
      */
-    public Match bestMatchingTemplate(ScreenshotRegion region, List<Template> templates) {
+    public Match bestMatchingTemplate(Region region, List<Template> templates) {
         float bestError = 999999999.9f;
         Match bestMatch = null;
         for (Template t : templates) {
             GrayF32 scaledTemplatePixels = t.scalePixelsToSize(region.getWidth(), region.getHeight());
+            GrayF32 regionPixels = (GrayF32) region.getTransformed(t.getTransformation());
             float error = 0.0f;
             for (int y = 0; y < region.getHeight() && error < bestError; y++) {
                 for (int x = 0; x < region.getWidth() && error < bestError; x++) {
-                    float diff = region.getPixels().unsafe_get(x, y) - scaledTemplatePixels.unsafe_get(x, y);
+                    float diff = regionPixels.unsafe_get(x, y) - scaledTemplatePixels.unsafe_get(x, y);
                     error += (diff * diff);
                 }
             }
@@ -48,10 +50,11 @@ public class TemplateMatcher {
      * @return The best matching location, never <code>null</code>
      * @throws IllegalArgumentException If the template is larger than the screenshot region
      */
-    public Match bestMatchingLocation(ScreenshotRegion region, Template template) throws IllegalArgumentException {
+    public Match bestMatchingLocation(Region region, Template template) throws IllegalArgumentException {
         if (template.getWidth() > region.getWidth() || template.getHeight() > region.getHeight()) {
             throw new IllegalArgumentException("Template " + template + " is larger than " + region);
         } else {
+            GrayF32 regionPixels = (GrayF32) region.getTransformed(template.getTransformation());
             float bestError = 999999999.9f;
             Match bestMatch = null;
             for (int yInRegion = 0; yInRegion < (region.getHeight() - template.getHeight()); yInRegion++) {
@@ -59,7 +62,7 @@ public class TemplateMatcher {
                     float error = 0.0f;
                     for (int yInTemplate = 0; yInTemplate < template.getHeight() && error < bestError; yInTemplate++) {
                         for (int xInTemplate = 0; xInTemplate < template.getWidth() && error < bestError; xInTemplate++) {
-                            float diff = region.getPixels().unsafe_get(xInRegion + xInTemplate, yInRegion + yInTemplate) - template.getPixels().unsafe_get(xInTemplate, yInTemplate);
+                            float diff = regionPixels.unsafe_get(xInRegion + xInTemplate, yInRegion + yInTemplate) - template.getPixels().unsafe_get(xInTemplate, yInTemplate);
                             error += (diff * diff);
                         }
                     }

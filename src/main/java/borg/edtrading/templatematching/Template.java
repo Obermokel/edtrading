@@ -14,11 +14,13 @@ import java.io.File;
 public class Template {
 
     private final File file;
+    private final String transformation;
     private final GrayF32 pixels;
     private final String text;
 
-    public Template(File file, GrayF32 pixels, String text) {
+    public Template(File file, String transformation, GrayF32 pixels, String text) {
         this.file = file;
+        this.transformation = transformation;
         this.pixels = pixels;
         this.text = text;
     }
@@ -39,6 +41,13 @@ public class Template {
      */
     public File getFile() {
         return this.file;
+    }
+
+    /**
+     * Name of the transformation that has been used to create the pixel data of this template
+     */
+    public String getTransformation() {
+        return this.transformation;
     }
 
     /**

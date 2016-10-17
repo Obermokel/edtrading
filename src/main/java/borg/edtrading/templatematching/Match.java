@@ -1,5 +1,7 @@
 package borg.edtrading.templatematching;
 
+import borg.edtrading.ocr.Region;
+
 /**
  * Successful match of a template against a screenshot region
  *
@@ -7,14 +9,14 @@ package borg.edtrading.templatematching;
  */
 public class Match {
 
-    private final ScreenshotRegion region;
+    private final Region region;
     private final Template template;
     private final int x;
     private final int y;
     private final float error;
     private final float errorPerPixel;
 
-    public Match(ScreenshotRegion region, Template template, int x, int y, float error, float errorPerPixel) {
+    public Match(Region region, Template template, int x, int y, float error, float errorPerPixel) {
         this.region = region;
         this.template = template;
         this.x = x;
@@ -26,7 +28,7 @@ public class Match {
     /**
      * Screenshot region that has successfully been matched against
      */
-    public ScreenshotRegion getRegion() {
+    public Region getRegion() {
         return this.region;
     }
 
