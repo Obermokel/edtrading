@@ -1,4 +1,4 @@
-package borg.edtrading.ocr;
+package borg.edtrading.imagetransformation;
 
 import boofcv.struct.image.ImageBase;
 

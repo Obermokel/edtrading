@@ -3,6 +3,8 @@ package borg.edtrading.ocr;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageBase;
 import boofcv.struct.image.Planar;
+import borg.edtrading.imagetransformation.NoSuchTransformationException;
+import borg.edtrading.imagetransformation.Transformation;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
