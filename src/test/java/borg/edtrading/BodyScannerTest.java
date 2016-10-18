@@ -1,6 +1,6 @@
 package borg.edtrading;
 
-import borg.edtrading.imagetransformation.KeepBodyScannerTextOnlyTransformation;
+import borg.edtrading.imagetransformation.BodyScannerFeatureLocatorTransformation;
 import borg.edtrading.imagetransformation.Transformation;
 import borg.edtrading.ocr.Region;
 import borg.edtrading.ocr.Screenshot;
@@ -29,19 +29,38 @@ public class BodyScannerTest {
         logger.trace("Cleaning temp dir...");
         FileUtils.cleanDirectory(Constants.TEMP_DIR);
 
-        Screenshot screenshot = null;
-        File sourceFile = selectRandomScreenshot();
-        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-01 20-50-38 HIP 30953.png");
-        //for (File sourceFile : selectAllScreenshots()) {
-        logger.trace("Loading " + sourceFile);
-        screenshot = Screenshot.loadFromFile(sourceFile, 3840, 2160, screenshot);
-        logger.trace("Testing " + screenshot);
-        screenshot.saveToFile(new File(Constants.TEMP_DIR, sourceFile.getName().replace(".png", ".00-Screenshot.png")));
-        Region bodyDataRegion = screenshot.getRegion(20, 340, 820, 1690);
-        bodyDataRegion.saveToFile(new File(Constants.TEMP_DIR, sourceFile.getName().replace(".png", ".10-BodyDataRegion.png")), Transformation.ORIGINAL);
-        bodyDataRegion.applyTransformation(new KeepBodyScannerTextOnlyTransformation());
-        bodyDataRegion.saveToFile(new File(Constants.TEMP_DIR, sourceFile.getName().replace(".png", ".20-" + KeepBodyScannerTextOnlyTransformation.class.getSimpleName() + ".png")), KeepBodyScannerTextOnlyTransformation.class.getSimpleName());
-        //}
+        Screenshot screenshot1080 = null;
+        Screenshot screenshot2160 = null;
+
+        //File sourceFile = selectRandomScreenshot();
+        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-28 07-47-30 LHS 380.png");
+        for (File sourceFile : selectAllScreenshots()) {
+
+            // Load the screenshot in FullHD resolution for fast location of the relevant areas
+            screenshot1080 = Screenshot.loadFromFile(sourceFile, 1920, 1080, screenshot1080);
+            logger.trace("Testing " + screenshot1080);
+            //screenshot.saveToFile(new File(Constants.TEMP_DIR, sourceFile.getName().replace(".png", ".00-Screenshot.png")));
+
+            // Convert to gray image and apply a simple threshold
+            Region region1080 = screenshot1080.getAsRegion();
+            //region720.applyTransformation(new RgbToGrayTransformation()).applyTransformation(new ThresholdingTransformation(64));
+            //region1080.applyTransformation(new RgbToGrayTransformation()).applyTransformation(new CannyEdgeTransformation(2, 0.033f, 0.1f));
+            //@formatter:off
+            region1080.applyTransformation(new BodyScannerFeatureLocatorTransformation())
+                    .saveToFile(new File(Constants.TEMP_DIR, sourceFile.getName().replace(".png", ".BSFL.png")), Transformation.LAST);
+            //@formatter:on
+            //region1080.saveToFile(new File(Constants.TEMP_DIR, sourceFile.getName().replace(".png", ".canny.png")), Transformation.LAST);
+            //region720.saveToFile(new File(Constants.TEMP_DIR, sourceFile.getName().replace(".png", ".original.png")), Transformation.ORIGINAL);
+
+            //            // Get the body data region
+            //            Region bodyDataRegion = screenshot720.getRegion(20, 340, 820, 1690);
+            //            //bodyDataRegion.saveToFile(new File(Constants.TEMP_DIR, sourceFile.getName().replace(".png", ".10-BodyDataRegion.png")), Transformation.ORIGINAL);
+            //
+            //            // Keep only white text
+            //            bodyDataRegion.applyTransformation(new KeepBodyScannerTextOnlyTransformation());
+            //            bodyDataRegion.saveToFile(new File(Constants.TEMP_DIR, sourceFile.getName().replace(".png", ".20-" + KeepBodyScannerTextOnlyTransformation.class.getSimpleName() + ".png")), KeepBodyScannerTextOnlyTransformation.class.getSimpleName());
+
+        }
     }
 
     static File selectRandomScreenshot() {

@@ -147,6 +147,7 @@ public class Region {
     public Region applyTransformation(Transformation t, String applyOn) throws NoSuchTransformationException {
         ImageBase<?> inputImage = this.getImageData(applyOn);
         ImageBase<?> transformedImage = t.transform(inputImage);
+        this.transformed.remove(t.getName());
         this.transformed.put(t.getName(), transformedImage);
         return this;
     }

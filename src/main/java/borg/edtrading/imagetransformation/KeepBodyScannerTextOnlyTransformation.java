@@ -9,7 +9,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * KeepBodyScannerTextOnlyTransformation
+ * <p>
+ * Input Image must be a <code>Planar&lt;GrayU8&gt;</code> with values between 0 and 255.
+ * </p>
+ * <p>
+ * Output Image will be <code>Planar&lt;GrayU8&gt;</code> with values between 0 and 255.
+ * </p>
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */

@@ -63,7 +63,7 @@ public class Screenshot {
         return this.getFile().getName() + " (" + this.getOriginalWidth() + "x" + this.getOriginalHeight() + " -> " + this.getResizedWidth() + "x" + this.getResizedHeight() + ")";
     }
 
-    private Region getAsRegion() {
+    public Region getAsRegion() {
         return this.getRegion(0, 0, this.getResizedWidth(), this.getResizedHeight());
     }
 
