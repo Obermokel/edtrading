@@ -4,6 +4,7 @@ import borg.edtrading.boofcv.Template;
 import borg.edtrading.boofcv.TemplateMatch;
 import borg.edtrading.boofcv.TemplateMatcher;
 import borg.edtrading.data.Body;
+import borg.edtrading.data.BodyInfo;
 import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.ScannedBodyInfo;
@@ -11,6 +12,7 @@ import borg.edtrading.data.StarSystem;
 import borg.edtrading.eddb.BodyUpdater;
 import borg.edtrading.eddb.SystemNotFoundException;
 import borg.edtrading.ocr.CharacterFinder;
+import borg.edtrading.ocr.ScannedBodyInfoParser;
 import borg.edtrading.ocr.ScreenshotCropper;
 import borg.edtrading.ocr.ScreenshotPreprocessor;
 import borg.edtrading.util.ImageUtil;
@@ -89,7 +91,7 @@ public class BodyInfoApp {
                     List<MatchGroup> bodyInfoWords = scanWords(bodyInfoImage, templates, screenshotFile.getName());
 
                     // Parse!
-                    ScannedBodyInfo scannedBodyInfo = ScannedBodyInfo.fromScannedAndSortedWords(screenshotFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
+                    ScannedBodyInfo scannedBodyInfo = ScannedBodyInfoParser.fromScannedAndSortedWords(screenshotFile.getName(), systemName, bodyNameWords, bodyInfoWords, eddbBodies);
                     scannedBodyInfos.add(scannedBodyInfo);
 
                     // sysout
@@ -98,7 +100,9 @@ public class BodyInfoApp {
 
                     // Update!
                     if (doEddbUpdate) {
-                        bodyUpdater.updateBody(scannedBodyInfo);
+                        if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_PLANET && !"Sol".equals(systemName)) {
+                            bodyUpdater.updateBody(scannedBodyInfo);
+                        }
                     }
                 } catch (SystemNotFoundException | IllegalArgumentException e) {
                     logger.error("Failed to update body info for " + screenshotFile.getName(), e);
