@@ -1,7 +1,7 @@
 package borg.edtrading.templatematching;
 
 import boofcv.struct.image.GrayF32;
-import borg.edtrading.ocr.Region;
+import borg.edtrading.screenshots.Region;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

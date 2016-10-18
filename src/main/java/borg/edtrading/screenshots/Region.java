@@ -1,4 +1,4 @@
-package borg.edtrading.ocr;
+package borg.edtrading.screenshots;
 
 import boofcv.gui.image.VisualizeImageData;
 import boofcv.io.image.ConvertBufferedImage;

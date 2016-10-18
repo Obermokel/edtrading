@@ -1,6 +1,6 @@
 package borg.edtrading.templatematching;
 
-import borg.edtrading.ocr.Region;
+import borg.edtrading.screenshots.Region;
 
 /**
  * Successful match of a template against a screenshot region

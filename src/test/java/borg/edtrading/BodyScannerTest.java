@@ -2,8 +2,8 @@ package borg.edtrading;
 
 import borg.edtrading.imagetransformation.Transformation;
 import borg.edtrading.imagetransformation.combined.BodyScannerFeatureLocatorTransformation;
-import borg.edtrading.ocr.Region;
-import borg.edtrading.ocr.Screenshot;
+import borg.edtrading.screenshots.Region;
+import borg.edtrading.screenshots.Screenshot;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
