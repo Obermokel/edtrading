@@ -1,8 +1,13 @@
-package borg.edtrading.imagetransformation;
+package borg.edtrading.imagetransformation.combined;
 
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageBase;
+import borg.edtrading.imagetransformation.Transformation;
+import borg.edtrading.imagetransformation.TransformationException;
+import borg.edtrading.imagetransformation.simple.CannyEdgeTransformation;
+import borg.edtrading.imagetransformation.simple.GaussianBlurTransformation;
+import borg.edtrading.imagetransformation.simple.RgbToGrayTransformation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

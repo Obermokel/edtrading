@@ -1,7 +1,7 @@
 package borg.edtrading;
 
-import borg.edtrading.imagetransformation.BodyScannerFeatureLocatorTransformation;
 import borg.edtrading.imagetransformation.Transformation;
+import borg.edtrading.imagetransformation.combined.BodyScannerFeatureLocatorTransformation;
 import borg.edtrading.ocr.Region;
 import borg.edtrading.ocr.Screenshot;
 import org.apache.commons.io.FileUtils;
