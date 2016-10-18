@@ -2,9 +2,16 @@ package borg.edtrading.templatematching;
 
 import boofcv.abst.distort.FDistort;
 import boofcv.alg.interpolate.TypeInterpolate;
+import boofcv.gui.image.VisualizeImageData;
+import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.image.GrayF32;
+import borg.edtrading.Constants;
+import borg.edtrading.screenshots.Region;
 
 import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 /**
  * Template which can be matched against screenshots or regions of screenshots
@@ -16,13 +23,35 @@ public class Template {
     private final File file;
     private final String transformation;
     private final GrayF32 pixels;
+    // TODO mask
     private final String text;
 
-    public Template(File file, String transformation, GrayF32 pixels, String text) {
+    private Template(File file, String transformation, GrayF32 pixels, String text) {
         this.file = file;
         this.transformation = transformation;
         this.pixels = pixels;
         this.text = text;
+    }
+
+    public static Template createNewFromRegion(Region region, String templateSetName, String templateText) throws IOException {
+        String lastTransformation = region.getTransformations().get(region.getTransformations().size() - 1);
+        GrayF32 pixels = normalize((GrayF32) region.getImageData(lastTransformation));
+        File setDir = new File(Constants.TEMPLATES_DIR, templateSetName);
+        File textDir = new File(setDir, textToFolder(templateText));
+        textDir.mkdirs();
+        String fn = region.getScreenshot().getFile().getName().substring(0, region.getScreenshot().getFile().getName().lastIndexOf("."));
+        File file = new File(textDir, String.format("%s#%s#%d.%d#%s.png", textToFolder(templateText), fn, region.getxInScreenshot(), region.getyInScreenshot(), lastTransformation));
+        ImageIO.write(VisualizeImageData.grayMagnitude(pixels, null, -1), "png", file);
+
+        return new Template(file, lastTransformation, pixels, templateText);
+    }
+
+    public static Template fromFile(File file) throws IOException {
+        String transformation = file.getName().substring(file.getName().lastIndexOf("#") + 1, file.getName().lastIndexOf("."));
+        GrayF32 pixels = normalize(ConvertBufferedImage.convertFrom(ImageIO.read(file), (GrayF32) null));
+        String text = folderToText(file.getParentFile().getName());
+
+        return new Template(file, transformation, pixels, text);
     }
 
     @Override
@@ -32,7 +61,7 @@ public class Template {
 
     public GrayF32 scalePixelsToSize(int width, int height) {
         GrayF32 scaled = new GrayF32(width, height);
-        new FDistort().input(this.getPixels()).output(scaled).interp(TypeInterpolate.BICUBIC).scale().apply();
+        new FDistort().input(this.getPixels()).output(scaled).interp(TypeInterpolate.BICUBIC).scaleExt().apply();
         return scaled;
     }
 
@@ -76,6 +105,86 @@ public class Template {
      */
     public int getHeight() {
         return this.pixels.height;
+    }
+
+    private static GrayF32 normalize(GrayF32 original) {
+        float max = 0f;
+        for (int y = 0; y < original.height; y++) {
+            for (int x = 0; x < original.width; x++) {
+                max = Math.max(max, original.unsafe_get(x, y));
+            }
+        }
+        GrayF32 normalized = original.createSameShape();
+        for (int y = 0; y < original.height; y++) {
+            for (int x = 0; x < original.width; x++) {
+                normalized.unsafe_set(x, y, original.unsafe_get(x, y) / max);
+            }
+        }
+        return normalized;
+    }
+
+    private static String folderToText(String folder) {
+        String text = folder;
+        if (folder.endsWith("_")) {
+            text = text.substring(0, text.length() - 1).toLowerCase();
+        } else if ("_punkt".equals(folder)) {
+            text = ".";
+        } else if ("_komma".equals(folder)) {
+            text = ",";
+        } else if ("_apostroph".equals(folder)) {
+            text = "'";
+        } else if ("_mikro".equals(folder)) {
+            text = "µ";
+        } else if ("_prozent".equals(folder)) {
+            text = "%";
+        } else if ("_strich".equals(folder)) {
+            text = "-";
+        } else if ("_plus".equals(folder)) {
+            text = "+";
+        } else if ("_doppelpunkt".equals(folder)) {
+            text = ":";
+        } else if ("_klammer_auf".equals(folder)) {
+            text = "(";
+        } else if ("_klammer_zu".equals(folder)) {
+            text = ")";
+        } else if ("_grad".equals(folder)) {
+            text = "°";
+        } else if ("_crap".equals(folder)) {
+            text = "▪";
+        }
+        return text;
+    }
+
+    private static String textToFolder(String text) {
+        String folder = text;
+        if (text.matches("[a-z]+")) {
+            folder = folder + "_";
+        } else if (".".equals(text)) {
+            folder = "_punkt";
+        } else if (",".equals(text)) {
+            folder = "_komma";
+        } else if ("'".equals(text)) {
+            folder = "_apostroph";
+        } else if ("µ".equals(text)) {
+            folder = "_mikro";
+        } else if ("%".equals(text)) {
+            folder = "_prozent";
+        } else if ("-".equals(text)) {
+            folder = "_strich";
+        } else if ("+".equals(text)) {
+            folder = "_plus";
+        } else if (":".equals(text)) {
+            folder = "_doppelpunkt";
+        } else if ("(".equals(text)) {
+            folder = "_klammer_auf";
+        } else if (")".equals(text)) {
+            folder = "_klammer_zu";
+        } else if ("°".equals(text)) {
+            folder = "_grad";
+        } else if ("▪".equals(text)) {
+            folder = "_crap";
+        }
+        return folder;
     }
 
 }
