@@ -40,17 +40,31 @@ public class Match {
     }
 
     /**
-     * X coord in the screenshot region
+     * X coord in the region
      */
-    public int getX() {
+    public int getxInRegion() {
         return this.x;
     }
 
     /**
-     * Y coord in the screenshot region
+     * Y coord in the region
      */
-    public int getY() {
+    public int getyInRegion() {
         return this.y;
+    }
+
+    /**
+     * X coord in the screenshot
+     */
+    public int getxInScreenshot() {
+        return this.getxInRegion() + this.getRegion().getxInScreenshot();
+    }
+
+    /**
+     * Y coord in the screenshot
+     */
+    public int getyInScreenshot() {
+        return this.getyInRegion() + this.getRegion().getyInScreenshot();
     }
 
     public float getError() {

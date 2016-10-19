@@ -5,6 +5,7 @@ import boofcv.struct.image.GrayU8;
 import borg.edtrading.imagetransformation.Transformation;
 import borg.edtrading.imagetransformation.combined.BodyScannerCharMatchingTransformation;
 import borg.edtrading.ocr.CharacterLocator;
+import borg.edtrading.ocr.TextLine;
 import borg.edtrading.screenshots.Region;
 import borg.edtrading.screenshots.Screenshot;
 import borg.edtrading.templatematching.Match;
@@ -54,7 +55,7 @@ public class BodyScannerTest {
         //for (File sourceFile : selectAllScreenshots()) {
 
         logger.trace("Testing " + sourceFile.getName());
-        writeGuessedOrUnknownTemplates(sourceFile, templates);
+        //writeGuessedOrUnknownTemplates(sourceFile, templates);
 
         //        // Load the screenshot in FullHD resolution for fast location of the relevant areas
         //        screenshot1080 = Screenshot.loadFromFile(sourceFile, 1920, 1080, screenshot1080);
@@ -65,6 +66,21 @@ public class BodyScannerTest {
         // Load the screenshot in 4K resolution for template matching of chars
         screenshot2160 = Screenshot.loadFromFile(sourceFile, 3840, 2160, screenshot2160);
 
+        Region region2160sharp = screenshot2160.getAsRegion();
+        region2160sharp.applyTransformation(new BodyScannerCharMatchingTransformation(false));
+        List<Rectangle> rects = new CharacterLocator(2, 40, 16, 40, 1).locateCharacters((GrayU8) region2160sharp.getImageData(Transformation.LAST));
+
+        List<Match> matches = new ArrayList<>(rects.size());
+        Region region2160blurred = screenshot2160.getAsRegion();
+        region2160blurred.applyTransformation(new BodyScannerCharMatchingTransformation(true));
+        for (Rectangle r : rects) {
+            Region charRegion = region2160blurred.getSubregion(r.x, r.y, r.width, r.height);
+            Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, templates);
+            if (bestMatch.getErrorPerPixel() <= 0.05f) {
+                matches.add(bestMatch);
+            }
+        }
+        TextLine.matchesToTextLines(matches);
         //}
     }
 
