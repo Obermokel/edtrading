@@ -50,8 +50,8 @@ public class BodyScannerTest {
         Screenshot screenshot1080 = null;
         Screenshot screenshot2160 = null;
 
-        File sourceFile = selectRandomScreenshot();
-        //File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-28 07-47-30 LHS 380.png");
+        //File sourceFile = selectRandomScreenshot();
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-10 04-35-07 Wolf 25.png");
         //for (File sourceFile : selectAllScreenshots()) {
 
         logger.trace("Testing " + sourceFile.getName());

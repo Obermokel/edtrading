@@ -128,10 +128,24 @@ public class TextLine {
                         maxY = Math.max(maxY, m.getyInScreenshot() + m.getRegion().getHeight());
                         it.remove();
                     }
-                    TextLine l = new TextLine(screenshot, minX, minY, maxX - minX, maxY - minY, textLineMatches);
-                    logger.debug(screenshot + ": " + l);
-                    result.add(l);
+                    result.add(new TextLine(screenshot, minX, minY, maxX - minX, maxY - minY, textLineMatches));
                 }
+            }
+
+            Collections.sort(result, new Comparator<TextLine>() {
+                @Override
+                public int compare(TextLine tl1, TextLine tl2) {
+                    return new Integer(tl1.getX()).compareTo(new Integer(tl2.getX()));
+                }
+            });
+            Collections.sort(result, new Comparator<TextLine>() {
+                @Override
+                public int compare(TextLine tl1, TextLine tl2) {
+                    return new Integer(tl1.getY()).compareTo(new Integer(tl2.getY()));
+                }
+            });
+            for (TextLine tl : result) {
+                logger.debug(screenshot + ": " + tl);
             }
         }
 
