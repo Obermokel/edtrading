@@ -2,6 +2,7 @@ package borg.edtrading.util;
 
 import boofcv.abst.distort.FDistort;
 import boofcv.alg.interpolate.TypeInterpolate;
+import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU8;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -154,6 +155,26 @@ public abstract class ImageUtil {
         GrayU8 scaled = prevScaled != null && prevScaled.width == targetWidth && prevScaled.height == targetHeight ? prevScaled : new GrayU8(targetWidth, targetHeight);
         new FDistort().input(original).output(scaled).interp(TypeInterpolate.BICUBIC).scale().apply();
         return scaled;
+    }
+
+    public static GrayF32 normalize(GrayF32 original) {
+        float max = 0f;
+        for (int y = 0; y < original.height; y++) {
+            for (int x = 0; x < original.width; x++) {
+                max = Math.max(max, original.unsafe_get(x, y));
+            }
+        }
+        if (max == 1f) {
+            return original;
+        } else {
+            GrayF32 normalized = original.createSameShape();
+            for (int y = 0; y < original.height; y++) {
+                for (int x = 0; x < original.width; x++) {
+                    normalized.unsafe_set(x, y, original.unsafe_get(x, y) / max);
+                }
+            }
+            return normalized;
+        }
     }
 
 }

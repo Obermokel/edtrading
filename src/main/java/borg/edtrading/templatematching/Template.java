@@ -7,9 +7,13 @@ import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.image.GrayF32;
 import borg.edtrading.Constants;
 import borg.edtrading.screenshots.Region;
+import borg.edtrading.util.ImageUtil;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -35,7 +39,7 @@ public class Template {
 
     public static Template createNewFromRegion(Region region, String templateSetName, String templateText) throws IOException {
         String lastTransformation = region.getTransformations().get(region.getTransformations().size() - 1);
-        GrayF32 pixels = normalize((GrayF32) region.getImageData(lastTransformation));
+        GrayF32 pixels = ImageUtil.normalize((GrayF32) region.getImageData(lastTransformation));
         File setDir = new File(Constants.TEMPLATES_DIR, templateSetName);
         File textDir = new File(setDir, textToFolder(templateText));
         textDir.mkdirs();
@@ -48,10 +52,33 @@ public class Template {
 
     public static Template fromFile(File file) throws IOException {
         String transformation = file.getName().substring(file.getName().lastIndexOf("#") + 1, file.getName().lastIndexOf("."));
-        GrayF32 pixels = normalize(ConvertBufferedImage.convertFrom(ImageIO.read(file), (GrayF32) null));
+        GrayF32 pixels = ImageUtil.normalize(ConvertBufferedImage.convertFrom(ImageIO.read(file), (GrayF32) null));
         String text = folderToText(file.getParentFile().getName());
 
         return new Template(file, transformation, pixels, text);
+    }
+
+    public static List<Template> fromFolder(String templateSetName) throws IOException {
+        List<Template> result = new ArrayList<>();
+        File setDir = new File(Constants.TEMPLATES_DIR, templateSetName);
+        File[] textDirs = setDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.isDirectory();
+            }
+        });
+        for (File textDir : textDirs) {
+            File[] files = textDir.listFiles(new FileFilter() {
+                @Override
+                public boolean accept(File file) {
+                    return file.getName().endsWith(".png") && !file.getName().endsWith("_mask.png");
+                }
+            });
+            for (File file : files) {
+                result.add(Template.fromFile(file));
+            }
+        }
+        return result;
     }
 
     @Override
@@ -60,9 +87,13 @@ public class Template {
     }
 
     public GrayF32 scalePixelsToSize(int width, int height) {
-        GrayF32 scaled = new GrayF32(width, height);
-        new FDistort().input(this.getPixels()).output(scaled).interp(TypeInterpolate.BICUBIC).scaleExt().apply();
-        return scaled;
+        if (this.getPixels().getWidth() == width && this.getPixels().getHeight() == height) {
+            return this.getPixels();
+        } else {
+            GrayF32 scaled = new GrayF32(width, height);
+            new FDistort().input(this.getPixels()).output(scaled).interp(TypeInterpolate.BICUBIC).scaleExt().apply();
+            return scaled;
+        }
     }
 
     /**
@@ -105,22 +136,6 @@ public class Template {
      */
     public int getHeight() {
         return this.pixels.height;
-    }
-
-    private static GrayF32 normalize(GrayF32 original) {
-        float max = 0f;
-        for (int y = 0; y < original.height; y++) {
-            for (int x = 0; x < original.width; x++) {
-                max = Math.max(max, original.unsafe_get(x, y));
-            }
-        }
-        GrayF32 normalized = original.createSameShape();
-        for (int y = 0; y < original.height; y++) {
-            for (int x = 0; x < original.width; x++) {
-                normalized.unsafe_set(x, y, original.unsafe_get(x, y) / max);
-            }
-        }
-        return normalized;
     }
 
     private static String folderToText(String folder) {
