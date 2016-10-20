@@ -56,7 +56,6 @@ public class TextLine {
                 lastCharY = Math.max(lastCharY, m.getyInScreenshot());
             }
             avgCharHeight = avgCharHeight / matches.size();
-            logger.debug(screenshot + ": avg char height = " + avgCharHeight + ", first char y = " + firstCharY + ", last char y = " + lastCharY);
 
             // Identify y coords which have many chars
             LinkedHashMap<Integer, Integer> numCharsByY = new LinkedHashMap<>(lastCharY - firstCharY);
@@ -88,7 +87,6 @@ public class TextLine {
                     matchesByY.put(y, yMatches);
                 }
             }
-            logger.debug(screenshot + ": Grouped matches into " + matchesByY.size() + " y-coords");
 
             // Finally build text lines. If chars are at the same y-coord but very far apart x-coord wise, then build multiple text lines for that y-coord.
             for (int y : matchesByY.keySet()) {
@@ -144,9 +142,6 @@ public class TextLine {
                     return new Integer(tl1.getY()).compareTo(new Integer(tl2.getY()));
                 }
             });
-            for (TextLine tl : result) {
-                logger.debug(screenshot + ": " + tl);
-            }
         }
 
         return result;
@@ -154,11 +149,32 @@ public class TextLine {
 
     @Override
     public String toString() {
+        return this.toText() + " (" + this.getX() + "/" + this.getY() + ", " + this.getWidth() + "x" + this.getHeight() + ")";
+    }
+
+    public String toText() {
         String text = "";
+
+        int avgCharHeight = 0;
         for (Match m : this.getMatches()) {
-            text += m.getTemplate().getText();
+            avgCharHeight += m.getRegion().getHeight();
         }
-        return text + " (" + this.getX() + "/" + this.getY() + ", " + this.getWidth() + "x" + this.getHeight() + ")";
+        avgCharHeight = avgCharHeight / this.getMatches().size();
+        int minWordSpace = avgCharHeight / 2;
+        int minKeyValueSpace = avgCharHeight * 2;
+
+        int lastMatchEndX = -1;
+        for (Match m : this.getMatches()) {
+            int spaceToLast = m.getxInScreenshot() - lastMatchEndX;
+            if (spaceToLast >= minKeyValueSpace) {
+                text += "    ";
+            } else if (spaceToLast >= minWordSpace) {
+                text += " ";
+            }
+            text += m.getTemplate().getText();
+            lastMatchEndX = m.getxInScreenshot() + m.getRegion().getWidth();
+        }
+        return text.trim();
     }
 
     public Screenshot getScreenshot() {

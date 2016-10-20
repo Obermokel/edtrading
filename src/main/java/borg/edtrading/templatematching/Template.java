@@ -6,6 +6,7 @@ import boofcv.gui.image.VisualizeImageData;
 import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.image.GrayF32;
 import borg.edtrading.Constants;
+import borg.edtrading.imagetransformation.Transformation;
 import borg.edtrading.screenshots.Region;
 import borg.edtrading.util.ImageUtil;
 
@@ -25,37 +26,33 @@ import javax.imageio.ImageIO;
 public class Template {
 
     private final File file;
-    private final String transformation;
     private final GrayF32 pixels;
     // TODO mask
     private final String text;
 
-    private Template(File file, String transformation, GrayF32 pixels, String text) {
+    private Template(File file, GrayF32 pixels, String text) {
         this.file = file;
-        this.transformation = transformation;
         this.pixels = pixels;
         this.text = text;
     }
 
     public static Template createNewFromRegion(Region region, String templateSetName, String templateText) throws IOException {
-        String lastTransformation = region.getTransformations().get(region.getTransformations().size() - 1);
-        GrayF32 pixels = ImageUtil.normalize((GrayF32) region.getImageData(lastTransformation));
+        GrayF32 pixels = ImageUtil.normalize((GrayF32) region.getImageData(Transformation.LAST));
         File setDir = new File(Constants.TEMPLATES_DIR, templateSetName);
         File textDir = new File(setDir, textToFolder(templateText));
         textDir.mkdirs();
         String fn = region.getScreenshot().getFile().getName().substring(0, region.getScreenshot().getFile().getName().lastIndexOf("."));
-        File file = new File(textDir, String.format("%s#%s#%d.%d#%s.png", textToFolder(templateText), fn, region.getxInScreenshot(), region.getyInScreenshot(), lastTransformation));
+        File file = new File(textDir, String.format("%s#%s#%d.%d.png", textToFolder(templateText), fn, region.getxInScreenshot(), region.getyInScreenshot()));
         ImageIO.write(VisualizeImageData.grayMagnitude(pixels, null, -1), "png", file);
 
-        return new Template(file, lastTransformation, pixels, templateText);
+        return new Template(file, pixels, templateText);
     }
 
     public static Template fromFile(File file) throws IOException {
-        String transformation = file.getName().substring(file.getName().lastIndexOf("#") + 1, file.getName().lastIndexOf("."));
         GrayF32 pixels = ImageUtil.normalize(ConvertBufferedImage.convertFrom(ImageIO.read(file), (GrayF32) null));
         String text = folderToText(file.getParentFile().getName());
 
-        return new Template(file, transformation, pixels, text);
+        return new Template(file, pixels, text);
     }
 
     public static List<Template> fromFolder(String templateSetName) throws IOException {
@@ -101,13 +98,6 @@ public class Template {
      */
     public File getFile() {
         return this.file;
-    }
-
-    /**
-     * Name of the transformation that has been used to create the pixel data of this template
-     */
-    public String getTransformation() {
-        return this.transformation;
     }
 
     /**

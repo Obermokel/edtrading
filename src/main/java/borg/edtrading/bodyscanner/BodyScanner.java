@@ -2,7 +2,7 @@ package borg.edtrading.bodyscanner;
 
 import boofcv.gui.image.VisualizeImageData;
 import boofcv.struct.image.GrayU8;
-import borg.edtrading.data.ScannedBodyInfo;
+import boofcv.struct.image.ImageGray;
 import borg.edtrading.imagetransformation.Transformation;
 import borg.edtrading.imagetransformation.simple.GaussianBlurTransformation;
 import borg.edtrading.imagetransformation.simple.KeepBodyScannerTextOnlyTransformation;
@@ -58,6 +58,7 @@ public class BodyScanner {
     private final List<Template> alphanumTemplates;
 
     private boolean debugAlphanumTemplates = false;
+    private boolean debugTextLines = false;
 
     public BodyScanner() throws IOException {
         this.characterLocator = new CharacterLocator(2, 40, 16, 40, 1);
@@ -78,28 +79,36 @@ public class BodyScanner {
         GrayU8 thresholdedImage = (GrayU8) region.getImageData(Transformation.LAST);
         region.applyTransformation(new GaussianBlurTransformation(2, -1));
 
-        // Find likely character locations and match them against the alphanum templates
+        // Find likely character locations and match them against the alphanum templates.
+        // The alphanum templates are better to detect than small punctuation chars like dot, comma etc which are only a few pixels.
+        // Also, the relevant words never start or end with a punctuation char. Therefore, we can find individual lines
+        // of text from the matched alphanum chars.
         List<Rectangle> typicalCharacterSizeLocations = this.characterLocator.findLocationsOfTypicalCharacterSize(thresholdedImage);
         if (this.isDebugAlphanumTemplates()) {
             result.setAlphanumTemplatesDebugImage(this.debugAlphanumTemplates(region, typicalCharacterSizeLocations, this.alphanumTemplates));
         }
-        List<Match> matches = new ArrayList<>(typicalCharacterSizeLocations.size());
+        List<Match> alphanumMatches = new ArrayList<>(typicalCharacterSizeLocations.size());
         for (Rectangle r : typicalCharacterSizeLocations) {
             Region charRegion = region.getSubregion(r.x, r.y, r.width, r.height);
             Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, this.alphanumTemplates);
             if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED) {
-                matches.add(bestMatch);
+                alphanumMatches.add(bestMatch);
             }
         }
-        TextLine.matchesToTextLines(matches);
 
-        ScannedBodyInfo scannedBodyInfo = null;
+        // Now we should know quite certain where most alphanum chars are and can group them into text lines.
+        // The text lines are more or less also just rectangles. Each such rectangle can then be scanned completely
+        // in order to also find punctuation chars.
+        List<TextLine> textLines = TextLine.matchesToTextLines(alphanumMatches);
+        if (this.isDebugTextLines()) {
+            result.setTextLinesDebugImage(this.debugTextLines(region, textLines));
+        }
 
         return result;
     }
 
     private BufferedImage debugAlphanumTemplates(Region region, List<Rectangle> typicalCharacterSizeLocations, List<Template> alphanumTemplates) throws IOException {
-        BufferedImage gi = VisualizeImageData.grayMagnitude((GrayU8) region.getImageData(Transformation.LAST), null, -1);
+        BufferedImage gi = VisualizeImageData.grayMagnitude((ImageGray) region.getImageData(Transformation.LAST), null, -1);
         BufferedImage bi = new BufferedImage(gi.getWidth(), gi.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = bi.createGraphics();
         g.drawImage(gi, 0, 0, null);
@@ -144,6 +153,23 @@ public class BodyScanner {
         return bi;
     }
 
+    private BufferedImage debugTextLines(Region region, List<TextLine> textLines) {
+        BufferedImage gi = VisualizeImageData.grayMagnitude((ImageGray) region.getImageData(Transformation.LAST), null, -1);
+        BufferedImage bi = new BufferedImage(gi.getWidth(), gi.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = bi.createGraphics();
+        g.drawImage(gi, 0, 0, null);
+        g.setFont(new Font("Consolas", Font.PLAIN, 22));
+        for (TextLine tl : textLines) {
+            g.setColor(Color.GRAY);
+            g.drawRect(tl.getX(), tl.getY(), tl.getWidth(), tl.getHeight());
+            g.setColor(Color.GREEN);
+            g.drawString(tl.toText(), tl.getX(), tl.getY());
+        }
+
+        // Return debug image
+        return bi;
+    }
+
     CharacterLocator getCharacterLocator() {
         return this.characterLocator;
     }
@@ -162,6 +188,14 @@ public class BodyScanner {
 
     public void setDebugAlphanumTemplates(boolean debugAlphanumTemplates) {
         this.debugAlphanumTemplates = debugAlphanumTemplates;
+    }
+
+    public boolean isDebugTextLines() {
+        return this.debugTextLines;
+    }
+
+    public void setDebugTextLines(boolean debugTextLines) {
+        this.debugTextLines = debugTextLines;
     }
 
 }
