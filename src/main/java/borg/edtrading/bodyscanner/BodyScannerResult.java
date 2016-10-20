@@ -14,6 +14,7 @@ public class BodyScannerResult {
     private Screenshot screenshot = null;
     private BufferedImage alphanumTemplatesDebugImage = null;
     private BufferedImage textLinesDebugImage = null;
+    private BufferedImage allTemplatesDebugImage = null;
 
     public BodyScannerResult(Screenshot screenshot) {
         this.setScreenshot(screenshot);
@@ -41,6 +42,14 @@ public class BodyScannerResult {
 
     public void setTextLinesDebugImage(BufferedImage textLinesDebugImage) {
         this.textLinesDebugImage = textLinesDebugImage;
+    }
+
+    public BufferedImage getAllTemplatesDebugImage() {
+        return this.allTemplatesDebugImage;
+    }
+
+    public void setAllTemplatesDebugImage(BufferedImage allTemplatesDebugImage) {
+        this.allTemplatesDebugImage = allTemplatesDebugImage;
     }
 
 }

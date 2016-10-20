@@ -58,6 +58,72 @@ public class CharacterLocator {
         return result;
     }
 
+    public List<Rectangle> findLocationsWithinTextLines(GrayU8 image, List<TextLine> textLines) {
+        List<Rectangle> result = new ArrayList<>();
+
+        for (TextLine tl : textLines) {
+            // Make the text line box double the height (because brackets or ° are higher than normal chars).
+            // Also expand it a bit to the right in order to catch trailing units like °, or trailing comma.
+            Rectangle scanRect = new Rectangle(tl.getX(), tl.getY() - tl.getHeight() / 2, tl.getWidth() + 2 * tl.getHeight(), 2 * tl.getHeight());
+
+            // Scan horizontally
+            for (int x = scanRect.x; x < scanRect.x + scanRect.width; x++) {
+                // Find the start of a new char
+                if (ImageStatistics.max(image.subimage(x, scanRect.y, x + 1, scanRect.y + scanRect.height)) > 0) {
+                    int xStartContainsWhite = x;
+                    // Find the end of the char
+                    for (; x < scanRect.x + scanRect.width; x++) {
+                        if (ImageStatistics.max(image.subimage(x, scanRect.y, x + 1, scanRect.y + scanRect.height)) <= 0) {
+                            int xEndAllBlack = x;
+                            // Add the char and break out to search for the next one
+                            Rectangle r = shrink(image, xStartContainsWhite, scanRect.y, xEndAllBlack, scanRect.y + scanRect.height);
+                            Rectangle rWithBorder = new Rectangle(r.x - this.border, r.y - this.border, r.width + 2 * this.border, r.height + 2 * this.border);
+                            result.add(rWithBorder);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Rectangle shrink(GrayU8 image, int x0, int y0, int x1, int y1) {
+        Rectangle r = new Rectangle(x0, y0, x1 - x0, y1 - y0);
+
+        boolean shrinked = false;
+        do {
+            shrinked = false;
+
+            // From the right
+            if (ImageStatistics.max(image.subimage(r.x + r.width - 1, r.y, r.x + r.width, r.y + r.height)) <= 0) {
+                r = new Rectangle(r.x, r.y, r.width - 1, r.height);
+                shrinked = true;
+            }
+
+            // From the bottom
+            if (ImageStatistics.max(image.subimage(r.x, r.y + r.height - 1, r.x + r.width, r.y + r.height)) <= 0) {
+                r = new Rectangle(r.x, r.y, r.width, r.height - 1);
+                shrinked = true;
+            }
+
+            // From the left
+            if (ImageStatistics.max(image.subimage(r.x, r.y, r.x + 1, r.y + r.height)) <= 0) {
+                r = new Rectangle(r.x + 1, r.y, r.width - 1, r.height);
+                shrinked = true;
+            }
+
+            // From the top
+            if (ImageStatistics.max(image.subimage(r.x, r.y, r.x + r.width, r.y + 1)) <= 0) {
+                r = new Rectangle(r.x, r.y + 1, r.width, r.height - 1);
+                shrinked = true;
+            }
+        } while (shrinked);
+
+        return r;
+    }
+
     private Rectangle expand(GrayU8 image, int x, int y) {
         Rectangle r = new Rectangle(x, y, 1, 1);
 

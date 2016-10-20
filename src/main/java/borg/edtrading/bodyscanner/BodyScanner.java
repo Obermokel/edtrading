@@ -59,9 +59,10 @@ public class BodyScanner {
 
     private boolean debugAlphanumTemplates = false;
     private boolean debugTextLines = false;
+    private boolean debugAllTemplates = false;
 
     public BodyScanner() throws IOException {
-        this.characterLocator = new CharacterLocator(2, 40, 16, 40, 1);
+        this.characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
         this.allTemplates = Template.fromFolder("BodyScanner");
         this.alphanumTemplates = Template.fromFolder("BodyScanner").stream().filter(t -> t.getText().matches("\\w")).collect(Collectors.toList());
     }
@@ -102,6 +103,18 @@ public class BodyScanner {
         List<TextLine> textLines = TextLine.matchesToTextLines(alphanumMatches);
         if (this.isDebugTextLines()) {
             result.setTextLinesDebugImage(this.debugTextLines(region, textLines));
+        }
+        List<Rectangle> locationsWithinTextLines = this.characterLocator.findLocationsWithinTextLines(thresholdedImage, textLines);
+        if (this.isDebugAllTemplates()) {
+            result.setAllTemplatesDebugImage(this.debugAlphanumTemplates(region, locationsWithinTextLines, this.allTemplates));
+        }
+        List<Match> allMatches = new ArrayList<>(locationsWithinTextLines.size());
+        for (Rectangle r : locationsWithinTextLines) {
+            Region charRegion = region.getSubregion(r.x, r.y, r.width, r.height);
+            Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, this.allTemplates);
+            if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED) {
+                allMatches.add(bestMatch);
+            }
         }
 
         return result;
@@ -196,6 +209,14 @@ public class BodyScanner {
 
     public void setDebugTextLines(boolean debugTextLines) {
         this.debugTextLines = debugTextLines;
+    }
+
+    public boolean isDebugAllTemplates() {
+        return this.debugAllTemplates;
+    }
+
+    public void setDebugAllTemplates(boolean debugAllTemplates) {
+        this.debugAllTemplates = debugAllTemplates;
     }
 
 }

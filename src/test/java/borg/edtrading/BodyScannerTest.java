@@ -36,6 +36,7 @@ public class BodyScannerTest {
         BodyScanner scanner = new BodyScanner();
         scanner.setDebugAlphanumTemplates(true);
         scanner.setDebugTextLines(true);
+        scanner.setDebugAllTemplates(true);
 
         //File sourceFile = selectRandomScreenshot();
         File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-10 05-37-59 Pethes.png");
@@ -47,6 +48,9 @@ public class BodyScannerTest {
         }
         if (result.getTextLinesDebugImage() != null) {
             ImageIO.write(result.getTextLinesDebugImage(), "PNG", new File(Constants.TEMP_DIR, "TextLinesDebugImage " + sourceFile.getName()));
+        }
+        if (result.getAllTemplatesDebugImage() != null) {
+            ImageIO.write(result.getAllTemplatesDebugImage(), "PNG", new File(Constants.TEMP_DIR, "AllTemplatesDebugImage " + sourceFile.getName()));
         }
         //}
     }
