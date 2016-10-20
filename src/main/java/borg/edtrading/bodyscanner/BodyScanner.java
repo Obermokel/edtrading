@@ -79,12 +79,12 @@ public class BodyScanner {
         region.applyTransformation(new GaussianBlurTransformation(2, -1));
 
         // Find likely character locations and match them against the alphanum templates
-        List<Rectangle> possibleCharacterLocations = this.characterLocator.findLocationsOfTypicalCharacterSize(thresholdedImage);
+        List<Rectangle> typicalCharacterSizeLocations = this.characterLocator.findLocationsOfTypicalCharacterSize(thresholdedImage);
         if (this.isDebugAlphanumTemplates()) {
-            result.setAlphanumTemplatesDebugImage(this.debugAlphanumTemplates(region, possibleCharacterLocations, this.alphanumTemplates));
+            result.setAlphanumTemplatesDebugImage(this.debugAlphanumTemplates(region, typicalCharacterSizeLocations, this.alphanumTemplates));
         }
-        List<Match> matches = new ArrayList<>(possibleCharacterLocations.size());
-        for (Rectangle r : possibleCharacterLocations) {
+        List<Match> matches = new ArrayList<>(typicalCharacterSizeLocations.size());
+        for (Rectangle r : typicalCharacterSizeLocations) {
             Region charRegion = region.getSubregion(r.x, r.y, r.width, r.height);
             Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, this.alphanumTemplates);
             if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED) {
@@ -98,14 +98,14 @@ public class BodyScanner {
         return result;
     }
 
-    private BufferedImage debugAlphanumTemplates(Region region, List<Rectangle> possibleCharacterLocations, List<Template> alphanumTemplates) throws IOException {
+    private BufferedImage debugAlphanumTemplates(Region region, List<Rectangle> typicalCharacterSizeLocations, List<Template> alphanumTemplates) throws IOException {
         BufferedImage gi = VisualizeImageData.grayMagnitude((GrayU8) region.getImageData(Transformation.LAST), null, -1);
         BufferedImage bi = new BufferedImage(gi.getWidth(), gi.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = bi.createGraphics();
         g.drawImage(gi, 0, 0, null);
         g.setFont(new Font("Consolas", Font.PLAIN, 22));
         g.setColor(Color.GRAY);
-        for (Rectangle r : possibleCharacterLocations) {
+        for (Rectangle r : typicalCharacterSizeLocations) {
             g.drawRect(r.x, r.y, r.width, r.height);
         }
 
@@ -114,7 +114,7 @@ public class BodyScanner {
         int nGuessed = 0;
         int nUnknown = 0;
         int nCrap = 0;
-        for (Rectangle r : possibleCharacterLocations) {
+        for (Rectangle r : typicalCharacterSizeLocations) {
             Region charRegion = region.getSubregion(r.x, r.y, r.width, r.height);
             Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, alphanumTemplates);
             if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_KNOWN) {
