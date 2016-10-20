@@ -38,7 +38,7 @@ public class BodyScannerTest {
         scanner.setDebugTextLines(true);
 
         //File sourceFile = selectRandomScreenshot();
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-10 04-35-07 Wolf 25.png");
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-10 05-37-59 Pethes.png");
         //for (File sourceFile : selectAllScreenshots()) {
         logger.trace("Testing " + sourceFile.getName());
         BodyScannerResult result = scanner.scanScreenshotFile(sourceFile);

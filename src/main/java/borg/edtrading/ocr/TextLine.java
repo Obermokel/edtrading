@@ -167,7 +167,7 @@ public class TextLine {
         for (Match m : this.getMatches()) {
             int spaceToLast = m.getxInScreenshot() - lastMatchEndX;
             if (spaceToLast >= minKeyValueSpace) {
-                text += "    ";
+                text += " → ";
             } else if (spaceToLast >= minWordSpace) {
                 text += " ";
             }
