@@ -79,7 +79,7 @@ public class BodyScanner {
         region.applyTransformation(new GaussianBlurTransformation(2, -1));
 
         // Find likely character locations and match them against the alphanum templates
-        List<Rectangle> possibleCharacterLocations = this.characterLocator.locateCharacters(thresholdedImage);
+        List<Rectangle> possibleCharacterLocations = this.characterLocator.findLocationsOfTypicalCharacterSize(thresholdedImage);
         if (this.isDebugAlphanumTemplates()) {
             result.setAlphanumTemplatesDebugImage(this.debugAlphanumTemplates(region, possibleCharacterLocations, this.alphanumTemplates));
         }

@@ -68,7 +68,7 @@ public class BodyScannerTest {
 
         Region region2160sharp = screenshot2160.getAsRegion();
         region2160sharp.applyTransformation(new BodyScannerCharMatchingTransformation(false));
-        List<Rectangle> rects = new CharacterLocator(2, 40, 16, 40, 1).locateCharacters((GrayU8) region2160sharp.getImageData(Transformation.LAST));
+        List<Rectangle> rects = new CharacterLocator(2, 40, 16, 40, 1).findLocationsOfTypicalCharacterSize((GrayU8) region2160sharp.getImageData(Transformation.LAST));
 
         List<Match> matches = new ArrayList<>(rects.size());
         Region region2160blurred = screenshot2160.getAsRegion();
@@ -90,7 +90,7 @@ public class BodyScannerTest {
         // Detect char locations
         Region region2160sharp = screenshot2160.getAsRegion();
         region2160sharp.applyTransformation(new BodyScannerCharMatchingTransformation(false));
-        List<Rectangle> rects = new CharacterLocator(2, 40, 16, 40, 1).locateCharacters((GrayU8) region2160sharp.getImageData(Transformation.LAST));
+        List<Rectangle> rects = new CharacterLocator(2, 40, 16, 40, 1).findLocationsOfTypicalCharacterSize((GrayU8) region2160sharp.getImageData(Transformation.LAST));
 
         BufferedImage gi = VisualizeImageData.grayMagnitude((GrayU8) region2160sharp.getImageData(Transformation.LAST), null, -1);
         BufferedImage bi = new BufferedImage(gi.getWidth(), gi.getHeight(), BufferedImage.TYPE_INT_RGB);

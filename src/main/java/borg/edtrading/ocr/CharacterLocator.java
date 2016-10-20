@@ -33,7 +33,7 @@ public class CharacterLocator {
         this.border = border;
     }
 
-    public List<Rectangle> locateCharacters(GrayU8 image) {
+    public List<Rectangle> findLocationsOfTypicalCharacterSize(GrayU8 image) {
         List<Rectangle> result = new ArrayList<>();
 
         GrayU8 copy = image.clone();
