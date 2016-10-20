@@ -57,6 +57,7 @@ public class BodyMatchesParser {
             }
             scannedBodyInfo.setDistanceLs(fixAndRemoveDistance("ARRIVALPOINT:", bodyNameMatches, sortedNameIndexes));
         }
+        findAndRemove("Select", bodyNameMatches, sortedNameIndexes); // Select button text...
         List<Match> remainingNameMatches = new ArrayList<>();
         for (int i = 0; i < bodyNameMatches.size(); i++) {
             if (bodyNameMatches.get(i).getShouldHaveBeen() != null) {
@@ -233,6 +234,7 @@ public class BodyMatchesParser {
         }
 
         findAndRemove("BACK", bodyInfoMatches, sortedLabelIndexes); // Back button...
+        findAndRemove("EXIT", bodyInfoMatches, sortedLabelIndexes); // Exit button...
 
         // Now that we have all labels we can start to parse the values
         if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_STAR) {
