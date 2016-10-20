@@ -1,10 +1,10 @@
 package borg.edtrading.eddb;
 
 import borg.edtrading.Constants;
+import borg.edtrading.bodyscanner.ScannedBodyInfo;
 import borg.edtrading.data.BodyInfo;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;
-import borg.edtrading.data.ScannedBodyInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;

@@ -1,7 +1,7 @@
 package borg.edtrading;
 
+import borg.edtrading.bodyscanner.ScannedBodyInfo;
 import borg.edtrading.data.Item;
-import borg.edtrading.data.ScannedBodyInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

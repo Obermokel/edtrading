@@ -1,12 +1,9 @@
-package borg.edtrading.ocrOLD;
+package borg.edtrading.bodyscanner;
 
 import borg.edtrading.Constants;
-import borg.edtrading.bodyscanner.BodyScanner;
 import borg.edtrading.data.BodyInfo;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;
-import borg.edtrading.data.ScannedBodyInfo;
-import borg.edtrading.data.ScannedRingInfo;
 import borg.edtrading.ocr.TextLine;
 import borg.edtrading.templatematching.Match;
 import borg.edtrading.templatematching.Template;
@@ -34,9 +31,9 @@ import java.util.regex.Pattern;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class ScannedBodyInfoParser {
+public class BodyMatchesParser {
 
-    static final Logger logger = LogManager.getLogger(ScannedBodyInfoParser.class);
+    static final Logger logger = LogManager.getLogger(BodyMatchesParser.class);
 
     private static String currentScreenshotFilename = "";
 

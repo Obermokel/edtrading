@@ -3,7 +3,6 @@ package borg.edtrading.bodyscanner;
 import boofcv.gui.image.VisualizeImageData;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageGray;
-import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.imagetransformation.Transformation;
 import borg.edtrading.imagetransformation.simple.GaussianBlurTransformation;
 import borg.edtrading.imagetransformation.simple.KeepBodyScannerTextOnlyTransformation;
@@ -11,7 +10,6 @@ import borg.edtrading.imagetransformation.simple.RgbToGrayTransformation;
 import borg.edtrading.imagetransformation.simple.ThresholdTransformation;
 import borg.edtrading.ocr.CharacterLocator;
 import borg.edtrading.ocr.TextLine;
-import borg.edtrading.ocrOLD.ScannedBodyInfoParser;
 import borg.edtrading.screenshots.Region;
 import borg.edtrading.screenshots.Screenshot;
 import borg.edtrading.templatematching.Match;
@@ -140,7 +138,7 @@ public class BodyScanner {
         }
         String filename = screenshotFile.getName();
         String systemName = MiscUtil.systemNameFromFilename(screenshotFile);
-        ScannedBodyInfo sbi = ScannedBodyInfoParser.fromScannedAndSortedMatches(filename, systemName, bodyNameMatches, bodyInfoMatches);
+        ScannedBodyInfo sbi = BodyMatchesParser.fromScannedAndSortedMatches(filename, systemName, bodyNameMatches, bodyInfoMatches);
         System.out.println(sbi);
 
         return result;
