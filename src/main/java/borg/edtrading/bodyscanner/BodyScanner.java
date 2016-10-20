@@ -58,8 +58,9 @@ public class BodyScanner {
     private final List<Template> alphanumTemplates;
 
     private boolean debugAlphanumTemplates = false;
-    private boolean debugTextLines = false;
+    private boolean debugAlphanumTextLines = false;
     private boolean debugAllTemplates = false;
+    private boolean debugAllTextLines = false;
 
     public BodyScanner() throws IOException {
         this.characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
@@ -101,7 +102,7 @@ public class BodyScanner {
         // The text lines are more or less also just rectangles. Each such rectangle can then be scanned completely
         // in order to also find punctuation chars.
         List<TextLine> alphanumTextLines = TextLine.matchesToTextLines(alphanumMatches);
-        if (this.isDebugTextLines()) {
+        if (this.isDebugAlphanumTextLines()) {
             result.setAlphanumTextLinesDebugImage(this.debugTextLines(region, alphanumTextLines));
         }
         List<Rectangle> locationsWithinTextLines = this.characterLocator.findLocationsWithinTextLines(thresholdedImage, alphanumTextLines);
@@ -119,7 +120,7 @@ public class BodyScanner {
 
         // Build text lines again, this time from all matches
         List<TextLine> allTextLines = TextLine.matchesToTextLines(allMatches);
-        if (this.isDebugTextLines()) {
+        if (this.isDebugAllTextLines()) {
             result.setAllTextLinesDebugImage(this.debugTextLines(region, allTextLines));
         }
 
@@ -213,12 +214,12 @@ public class BodyScanner {
         this.debugAlphanumTemplates = debugAlphanumTemplates;
     }
 
-    public boolean isDebugTextLines() {
-        return this.debugTextLines;
+    public boolean isDebugAlphanumTextLines() {
+        return this.debugAlphanumTextLines;
     }
 
-    public void setDebugTextLines(boolean debugTextLines) {
-        this.debugTextLines = debugTextLines;
+    public void setDebugAlphanumTextLines(boolean debugAlphanumTextLines) {
+        this.debugAlphanumTextLines = debugAlphanumTextLines;
     }
 
     public boolean isDebugAllTemplates() {
@@ -227,6 +228,14 @@ public class BodyScanner {
 
     public void setDebugAllTemplates(boolean debugAllTemplates) {
         this.debugAllTemplates = debugAllTemplates;
+    }
+
+    public boolean isDebugAllTextLines() {
+        return this.debugAllTextLines;
+    }
+
+    public void setDebugAllTextLines(boolean debugAllTextLines) {
+        this.debugAllTextLines = debugAllTextLines;
     }
 
 }

@@ -35,8 +35,9 @@ public class BodyScannerTest {
         logger.trace("Creating the scanner...");
         BodyScanner scanner = new BodyScanner();
         scanner.setDebugAlphanumTemplates(true);
-        scanner.setDebugTextLines(true);
+        scanner.setDebugAlphanumTextLines(true);
         scanner.setDebugAllTemplates(true);
+        scanner.setDebugAllTextLines(true);
 
         //File sourceFile = selectRandomScreenshot();
         File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-10 05-37-59 Pethes.png");
