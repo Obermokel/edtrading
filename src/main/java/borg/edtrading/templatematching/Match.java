@@ -2,6 +2,8 @@ package borg.edtrading.templatematching;
 
 import borg.edtrading.screenshots.Region;
 
+import java.util.Locale;
+
 /**
  * Successful match of a template against a screenshot region
  *
@@ -25,6 +27,11 @@ public class Match {
         this.y = y;
         this.error = error;
         this.errorPerPixel = errorPerPixel;
+    }
+
+    @Override
+    public String toString() {
+        return "<" + this.getTemplate().getText() + "> (" + String.format(Locale.US, "%.3f", this.getErrorPerPixel()) + ")";
     }
 
     /**

@@ -56,19 +56,23 @@ public class TextLine {
                 lastCharY = Math.max(lastCharY, m.getyInScreenshot());
             }
             avgCharHeight = avgCharHeight / matches.size();
+            //logger.debug("avgCharHeight=" + avgCharHeight);
 
             // Identify y coords which have many chars
             LinkedHashMap<Integer, Integer> numCharsByY = new LinkedHashMap<>(lastCharY - firstCharY);
-            for (int y = firstCharY; y < lastCharY; y++) {
+            for (int y = firstCharY; y <= lastCharY; y++) {
                 int n = 0;
                 for (Match m : matches) {
                     if (Math.abs((m.getyInScreenshot() - (avgCharHeight - m.getRegion().getHeight())) - y) <= avgCharHeight / 2) {
                         n++;
                     }
                 }
-                numCharsByY.put(y, n);
+                if (n > 0) {
+                    numCharsByY.put(y, n);
+                }
             }
             MiscUtil.sortMapByValueReverse(numCharsByY);
+            //logger.debug("numCharsByY[" + numCharsByY.size() + "]=" + numCharsByY);
 
             // Group matches by y
             Map<Integer, List<Match>> matchesByY = new LinkedHashMap<>();
@@ -87,6 +91,7 @@ public class TextLine {
                     matchesByY.put(y, yMatches);
                 }
             }
+            //logger.debug("matchesByY[" + matchesByY.size() + "]=" + matchesByY);
 
             // Finally build text lines. If chars are at the same y-coord but very far apart x-coord wise, then build multiple text lines for that y-coord.
             for (int y : matchesByY.keySet()) {
