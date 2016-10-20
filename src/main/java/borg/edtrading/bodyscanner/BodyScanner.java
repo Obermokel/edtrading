@@ -86,7 +86,7 @@ public class BodyScanner {
         // of text from the matched alphanum chars.
         List<Rectangle> typicalCharacterSizeLocations = this.characterLocator.findLocationsOfTypicalCharacterSize(thresholdedImage);
         if (this.isDebugAlphanumTemplates()) {
-            result.setAlphanumTemplatesDebugImage(this.debugAlphanumTemplates(region, typicalCharacterSizeLocations, this.alphanumTemplates));
+            result.setAlphanumTemplatesDebugImage(this.debugTemplates(region, typicalCharacterSizeLocations, this.alphanumTemplates));
         }
         List<Match> alphanumMatches = new ArrayList<>(typicalCharacterSizeLocations.size());
         for (Rectangle r : typicalCharacterSizeLocations) {
@@ -102,11 +102,11 @@ public class BodyScanner {
         // in order to also find punctuation chars.
         List<TextLine> alphanumTextLines = TextLine.matchesToTextLines(alphanumMatches);
         if (this.isDebugTextLines()) {
-            result.setTextLinesDebugImage(this.debugTextLines(region, alphanumTextLines));
+            result.setAlphanumTextLinesDebugImage(this.debugTextLines(region, alphanumTextLines));
         }
         List<Rectangle> locationsWithinTextLines = this.characterLocator.findLocationsWithinTextLines(thresholdedImage, alphanumTextLines);
         if (this.isDebugAllTemplates()) {
-            result.setAllTemplatesDebugImage(this.debugAlphanumTemplates(region, locationsWithinTextLines, this.allTemplates));
+            result.setAllTemplatesDebugImage(this.debugTemplates(region, locationsWithinTextLines, this.allTemplates));
         }
         List<Match> allMatches = new ArrayList<>(locationsWithinTextLines.size());
         for (Rectangle r : locationsWithinTextLines) {
@@ -120,20 +120,21 @@ public class BodyScanner {
         // Build text lines again, this time from all matches
         List<TextLine> allTextLines = TextLine.matchesToTextLines(allMatches);
         if (this.isDebugTextLines()) {
-            result.setTextLinesDebugImage(this.debugTextLines(region, allTextLines));
+            result.setAllTextLinesDebugImage(this.debugTextLines(region, allTextLines));
         }
 
         return result;
     }
 
-    private BufferedImage debugAlphanumTemplates(Region region, List<Rectangle> typicalCharacterSizeLocations, List<Template> alphanumTemplates) throws IOException {
+    private BufferedImage debugTemplates(Region region, List<Rectangle> typicalCharacterSizeLocations, List<Template> templates) throws IOException {
         BufferedImage gi = VisualizeImageData.grayMagnitude((ImageGray) region.getImageData(Transformation.LAST), null, -1);
         BufferedImage bi = new BufferedImage(gi.getWidth(), gi.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = bi.createGraphics();
         g.drawImage(gi, 0, 0, null);
         g.setFont(new Font("Consolas", Font.PLAIN, 22));
-        g.setColor(Color.GRAY);
         for (Rectangle r : typicalCharacterSizeLocations) {
+            //g.setColor(Color.GRAY);
+            g.setColor(new Color(63 + (int) Math.round(192 * Math.random()), 63 + (int) Math.round(192 * Math.random()), 63 + (int) Math.round(192 * Math.random())));
             g.drawRect(r.x, r.y, r.width, r.height);
         }
 
@@ -144,7 +145,7 @@ public class BodyScanner {
         int nCrap = 0;
         for (Rectangle r : typicalCharacterSizeLocations) {
             Region charRegion = region.getSubregion(r.x, r.y, r.width, r.height);
-            Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, alphanumTemplates);
+            Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, templates);
             if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_KNOWN) {
                 nKnown++;
                 Template.createNewFromRegion(charRegion, "KNOWN", bestMatch.getTemplate().getText());
@@ -179,12 +180,14 @@ public class BodyScanner {
         g.drawImage(gi, 0, 0, null);
         g.setFont(new Font("Consolas", Font.PLAIN, 22));
         for (TextLine tl : textLines) {
-            g.setColor(Color.GRAY);
+            //g.setColor(Color.GRAY);
+            g.setColor(new Color(63 + (int) Math.round(192 * Math.random()), 63 + (int) Math.round(192 * Math.random()), 63 + (int) Math.round(192 * Math.random())));
             g.drawRect(tl.getX(), tl.getY(), tl.getWidth(), tl.getHeight());
             g.setColor(Color.GREEN);
             g.drawString(tl.toText(), tl.getX(), tl.getY());
-            logger.debug(tl.toText());
+            logger.debug(tl);
         }
+        logger.debug(region.getScreenshot().getFile().getName() + ": lines=" + textLines.size());
 
         // Return debug image
         return bi;

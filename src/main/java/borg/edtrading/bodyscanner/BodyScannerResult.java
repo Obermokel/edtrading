@@ -13,8 +13,9 @@ public class BodyScannerResult {
 
     private Screenshot screenshot = null;
     private BufferedImage alphanumTemplatesDebugImage = null;
-    private BufferedImage textLinesDebugImage = null;
+    private BufferedImage alphanumTextLinesDebugImage = null;
     private BufferedImage allTemplatesDebugImage = null;
+    private BufferedImage allTextLinesDebugImage = null;
 
     public BodyScannerResult(Screenshot screenshot) {
         this.setScreenshot(screenshot);
@@ -36,12 +37,12 @@ public class BodyScannerResult {
         this.alphanumTemplatesDebugImage = alphanumTemplatesDebugImage;
     }
 
-    public BufferedImage getTextLinesDebugImage() {
-        return this.textLinesDebugImage;
+    public BufferedImage getAlphanumTextLinesDebugImage() {
+        return this.alphanumTextLinesDebugImage;
     }
 
-    public void setTextLinesDebugImage(BufferedImage textLinesDebugImage) {
-        this.textLinesDebugImage = textLinesDebugImage;
+    public void setAlphanumTextLinesDebugImage(BufferedImage alphanumTextLinesDebugImage) {
+        this.alphanumTextLinesDebugImage = alphanumTextLinesDebugImage;
     }
 
     public BufferedImage getAllTemplatesDebugImage() {
@@ -50,6 +51,14 @@ public class BodyScannerResult {
 
     public void setAllTemplatesDebugImage(BufferedImage allTemplatesDebugImage) {
         this.allTemplatesDebugImage = allTemplatesDebugImage;
+    }
+
+    public BufferedImage getAllTextLinesDebugImage() {
+        return this.allTextLinesDebugImage;
+    }
+
+    public void setAllTextLinesDebugImage(BufferedImage allTextLinesDebugImage) {
+        this.allTextLinesDebugImage = allTextLinesDebugImage;
     }
 
 }

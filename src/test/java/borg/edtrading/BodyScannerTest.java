@@ -34,7 +34,7 @@ public class BodyScannerTest {
 
         logger.trace("Creating the scanner...");
         BodyScanner scanner = new BodyScanner();
-        scanner.setDebugAlphanumTemplates(false);
+        scanner.setDebugAlphanumTemplates(true);
         scanner.setDebugTextLines(true);
         scanner.setDebugAllTemplates(true);
 
@@ -46,11 +46,14 @@ public class BodyScannerTest {
         if (result.getAlphanumTemplatesDebugImage() != null) {
             ImageIO.write(result.getAlphanumTemplatesDebugImage(), "PNG", new File(Constants.TEMP_DIR, "AlphanumTemplatesDebugImage " + sourceFile.getName()));
         }
-        if (result.getTextLinesDebugImage() != null) {
-            ImageIO.write(result.getTextLinesDebugImage(), "PNG", new File(Constants.TEMP_DIR, "TextLinesDebugImage " + sourceFile.getName()));
+        if (result.getAlphanumTextLinesDebugImage() != null) {
+            ImageIO.write(result.getAlphanumTextLinesDebugImage(), "PNG", new File(Constants.TEMP_DIR, "AlphanumTextLinesDebugImage " + sourceFile.getName()));
         }
         if (result.getAllTemplatesDebugImage() != null) {
             ImageIO.write(result.getAllTemplatesDebugImage(), "PNG", new File(Constants.TEMP_DIR, "AllTemplatesDebugImage " + sourceFile.getName()));
+        }
+        if (result.getAllTextLinesDebugImage() != null) {
+            ImageIO.write(result.getAllTextLinesDebugImage(), "PNG", new File(Constants.TEMP_DIR, "AllTextLinesDebugImage " + sourceFile.getName()));
         }
         //}
     }
