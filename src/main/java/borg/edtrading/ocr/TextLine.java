@@ -165,16 +165,18 @@ public class TextLine {
 
         int lastMatchEndX = -1;
         for (Match m : this.getMatches()) {
-            int spaceToLast = m.getxInScreenshot() - lastMatchEndX;
-            if (spaceToLast >= minKeyValueSpace) {
-                text += " → ";
-            } else if (spaceToLast >= minWordSpace) {
-                text += " ";
+            if (lastMatchEndX >= 0) {
+                int spaceToLast = m.getxInScreenshot() - lastMatchEndX;
+                if (spaceToLast >= minKeyValueSpace) {
+                    text += " → ";
+                } else if (spaceToLast >= minWordSpace) {
+                    text += " ";
+                }
             }
             text += m.getTemplate().getText();
             lastMatchEndX = m.getxInScreenshot() + m.getRegion().getWidth();
         }
-        return text.trim();
+        return text;
     }
 
     public Screenshot getScreenshot() {

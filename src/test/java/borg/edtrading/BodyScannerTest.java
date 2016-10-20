@@ -34,7 +34,7 @@ public class BodyScannerTest {
 
         logger.trace("Creating the scanner...");
         BodyScanner scanner = new BodyScanner();
-        scanner.setDebugAlphanumTemplates(true);
+        scanner.setDebugAlphanumTemplates(false);
         scanner.setDebugTextLines(true);
         scanner.setDebugAllTemplates(true);
 

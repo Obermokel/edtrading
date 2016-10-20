@@ -100,11 +100,11 @@ public class BodyScanner {
         // Now we should know quite certain where most alphanum chars are and can group them into text lines.
         // The text lines are more or less also just rectangles. Each such rectangle can then be scanned completely
         // in order to also find punctuation chars.
-        List<TextLine> textLines = TextLine.matchesToTextLines(alphanumMatches);
+        List<TextLine> alphanumTextLines = TextLine.matchesToTextLines(alphanumMatches);
         if (this.isDebugTextLines()) {
-            result.setTextLinesDebugImage(this.debugTextLines(region, textLines));
+            result.setTextLinesDebugImage(this.debugTextLines(region, alphanumTextLines));
         }
-        List<Rectangle> locationsWithinTextLines = this.characterLocator.findLocationsWithinTextLines(thresholdedImage, textLines);
+        List<Rectangle> locationsWithinTextLines = this.characterLocator.findLocationsWithinTextLines(thresholdedImage, alphanumTextLines);
         if (this.isDebugAllTemplates()) {
             result.setAllTemplatesDebugImage(this.debugAlphanumTemplates(region, locationsWithinTextLines, this.allTemplates));
         }
@@ -115,6 +115,12 @@ public class BodyScanner {
             if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED) {
                 allMatches.add(bestMatch);
             }
+        }
+
+        // Build text lines again, this time from all matches
+        List<TextLine> allTextLines = TextLine.matchesToTextLines(allMatches);
+        if (this.isDebugTextLines()) {
+            result.setTextLinesDebugImage(this.debugTextLines(region, allTextLines));
         }
 
         return result;
@@ -177,6 +183,7 @@ public class BodyScanner {
             g.drawRect(tl.getX(), tl.getY(), tl.getWidth(), tl.getHeight());
             g.setColor(Color.GREEN);
             g.drawString(tl.toText(), tl.getX(), tl.getY());
+            logger.debug(tl.toText());
         }
 
         // Return debug image
