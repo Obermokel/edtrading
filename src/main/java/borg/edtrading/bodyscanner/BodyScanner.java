@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
@@ -49,7 +50,7 @@ public class BodyScanner {
      * If error/pixel is less or equal than this value we assume that the pixels represent an unknown char. If
      * error/pixel is higher it is likely to be crap.
      */
-    private static final float ERROR_PER_PIXEL_UNKNOWN = 0.25f;
+    private static final float ERROR_PER_PIXEL_UNKNOWN = 0.075f;
 
     static final Logger logger = LogManager.getLogger(BodyScanner.class);
 
@@ -128,6 +129,7 @@ public class BodyScanner {
     }
 
     private BufferedImage debugTemplates(Region region, List<Rectangle> typicalCharacterSizeLocations, List<Template> templates) throws IOException {
+        Random rand = new Random();
         BufferedImage gi = VisualizeImageData.grayMagnitude((ImageGray) region.getImageData(Transformation.LAST), null, -1);
         BufferedImage bi = new BufferedImage(gi.getWidth(), gi.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = bi.createGraphics();
@@ -135,7 +137,7 @@ public class BodyScanner {
         g.setFont(new Font("Consolas", Font.PLAIN, 22));
         for (Rectangle r : typicalCharacterSizeLocations) {
             //g.setColor(Color.GRAY);
-            g.setColor(new Color(63 + (int) Math.round(192 * Math.random()), 63 + (int) Math.round(192 * Math.random()), 63 + (int) Math.round(192 * Math.random())));
+            g.setColor(new Color(64 + rand.nextInt(128), 64 + rand.nextInt(128), 64 + rand.nextInt(128)));
             g.drawRect(r.x, r.y, r.width, r.height);
         }
 
@@ -150,22 +152,50 @@ public class BodyScanner {
             if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_KNOWN) {
                 nKnown++;
                 Template.createNewFromRegion(charRegion, "KNOWN", bestMatch.getTemplate().getText());
+                g.setFont(new Font("Consolas", Font.PLAIN, 22));
                 g.setColor(Color.GREEN);
                 g.drawString(bestMatch.getTemplate().getText(), r.x, r.y);
+                //                AffineTransform transform = g.getTransform();
+                //                g.rotate(Math.PI / 2, r.x, r.y + r.height);
+                //                g.setFont(new Font("Arial", Font.PLAIN, 10));
+                //                g.setColor(Color.WHITE);
+                //                g.drawString(String.format(Locale.US, "%.3f", bestMatch.getErrorPerPixel()).substring(1), r.x, r.y + r.height);
+                //                g.setTransform(transform);
             } else if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED) {
                 nGuessed++;
                 Template.createNewFromRegion(charRegion, "GUESSED", bestMatch.getTemplate().getText());
+                g.setFont(new Font("Consolas", Font.PLAIN, 22));
                 g.setColor(Color.YELLOW);
                 g.drawString(bestMatch.getTemplate().getText(), r.x, r.y);
+                //                AffineTransform transform = g.getTransform();
+                //                g.rotate(Math.PI / 2, r.x, r.y + r.height);
+                //                g.setFont(new Font("Arial", Font.PLAIN, 10));
+                //                g.setColor(Color.WHITE);
+                //                g.drawString(String.format(Locale.US, "%.3f", bestMatch.getErrorPerPixel()).substring(1), r.x, r.y + r.height);
+                //                g.setTransform(transform);
             } else if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_UNKNOWN) {
                 nUnknown++;
                 Template.createNewFromRegion(charRegion, "UNKNOWN", "UNKNOWN");
+                g.setFont(new Font("Consolas", Font.PLAIN, 22));
                 g.setColor(Color.RED);
                 g.drawString(bestMatch.getTemplate().getText(), r.x, r.y);
+                //                AffineTransform transform = g.getTransform();
+                //                g.rotate(Math.PI / 2, r.x, r.y + r.height);
+                //                g.setFont(new Font("Arial", Font.PLAIN, 10));
+                //                g.setColor(Color.WHITE);
+                //                g.drawString(String.format(Locale.US, "%.3f", bestMatch.getErrorPerPixel()).substring(1), r.x, r.y + r.height);
+                //                g.setTransform(transform);
             } else {
                 nCrap++;
+                g.setFont(new Font("Consolas", Font.PLAIN, 22));
                 g.setColor(Color.RED);
                 g.drawRect(r.x, r.y, r.width, r.height);
+                //                AffineTransform transform = g.getTransform();
+                //                g.rotate(Math.PI / 2, r.x, r.y + r.height);
+                //                g.setFont(new Font("Arial", Font.PLAIN, 10));
+                //                g.setColor(Color.WHITE);
+                //                g.drawString(String.format(Locale.US, "%.3f", bestMatch.getErrorPerPixel()).substring(1), r.x, r.y + r.height);
+                //                g.setTransform(transform);
             }
         }
         logger.debug(region.getScreenshot().getFile().getName() + ": known=" + nKnown + "; guessed=" + nGuessed + "; unknown=" + nUnknown + "; crap=" + nCrap);
@@ -175,6 +205,7 @@ public class BodyScanner {
     }
 
     private BufferedImage debugTextLines(Region region, List<TextLine> textLines) {
+        Random rand = new Random();
         BufferedImage gi = VisualizeImageData.grayMagnitude((ImageGray) region.getImageData(Transformation.LAST), null, -1);
         BufferedImage bi = new BufferedImage(gi.getWidth(), gi.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = bi.createGraphics();
@@ -182,11 +213,10 @@ public class BodyScanner {
         g.setFont(new Font("Consolas", Font.PLAIN, 22));
         for (TextLine tl : textLines) {
             //g.setColor(Color.GRAY);
-            g.setColor(new Color(63 + (int) Math.round(192 * Math.random()), 63 + (int) Math.round(192 * Math.random()), 63 + (int) Math.round(192 * Math.random())));
+            g.setColor(new Color(64 + rand.nextInt(128), 64 + rand.nextInt(128), 64 + rand.nextInt(128)));
             g.drawRect(tl.getX(), tl.getY(), tl.getWidth(), tl.getHeight());
             g.setColor(Color.GREEN);
             g.drawString(tl.toText(), tl.getX(), tl.getY());
-            logger.debug(tl);
         }
         logger.debug(region.getScreenshot().getFile().getName() + ": lines=" + textLines.size());
 
