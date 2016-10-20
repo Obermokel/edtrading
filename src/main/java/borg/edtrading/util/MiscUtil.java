@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -24,6 +25,14 @@ import java.util.Locale;
 public abstract class MiscUtil {
 
     static final Logger logger = LogManager.getLogger(MiscUtil.class);
+
+    public static String systemNameFromFilename(File screenshotFile) {
+        String systemName = null;
+        if (screenshotFile.getName().matches("\\d{4}\\-\\d{2}\\-\\d{2} \\d{2}\\-\\d{2}\\-\\d{2} .+\\.png")) {
+            systemName = screenshotFile.getName().substring("0000-00-00 00-00-00 ".length()).replace(".png", "");
+        }
+        return systemName;
+    }
 
     public static float levenshteinError(CharSequence mostLikelyCorrectReferenceString, CharSequence someOtherString) {
         float dist = StringUtils.getLevenshteinDistance(mostLikelyCorrectReferenceString.toString().toLowerCase(), someOtherString.toString().toLowerCase());

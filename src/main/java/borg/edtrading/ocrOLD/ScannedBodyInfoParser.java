@@ -1,23 +1,21 @@
 package borg.edtrading.ocrOLD;
 
 import borg.edtrading.Constants;
-import borg.edtrading.boofcv.TemplateMatch;
-import borg.edtrading.boofcv.TemplateMatcher;
-import borg.edtrading.data.Body;
+import borg.edtrading.bodyscanner.BodyScanner;
 import borg.edtrading.data.BodyInfo;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.data.ScannedRingInfo;
-import borg.edtrading.util.MatchSorter;
-import borg.edtrading.util.MatchSorter.MatchGroup;
+import borg.edtrading.ocr.TextLine;
+import borg.edtrading.templatematching.Match;
+import borg.edtrading.templatematching.Template;
 import borg.edtrading.util.MiscUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -31,8 +29,6 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.imageio.ImageIO;
-
 /**
  * ScannedBodyInfoParser
  *
@@ -44,7 +40,7 @@ public class ScannedBodyInfoParser {
 
     private static String currentScreenshotFilename = "";
 
-    public static ScannedBodyInfo fromScannedAndSortedMatches(String screenshotFilename, String systemName, List<TemplateMatch> bodyNameMatches, List<TemplateMatch> bodyInfoMatches, List<Body> eddbBodies) {
+    public static ScannedBodyInfo fromScannedAndSortedMatches(String screenshotFilename, String systemName, List<Match> bodyNameMatches, List<Match> bodyInfoMatches) {
         currentScreenshotFilename = screenshotFilename;
 
         ScannedBodyInfo scannedBodyInfo = new ScannedBodyInfo(screenshotFilename, systemName);
@@ -64,7 +60,7 @@ public class ScannedBodyInfoParser {
             }
             scannedBodyInfo.setDistanceLs(fixAndRemoveDistance("ARRIVALPOINT:", bodyNameMatches, sortedNameIndexes));
         }
-        List<TemplateMatch> remainingNameMatches = new ArrayList<>();
+        List<Match> remainingNameMatches = new ArrayList<>();
         for (int i = 0; i < bodyNameMatches.size(); i++) {
             if (bodyNameMatches.get(i).getShouldHaveBeen() != null) {
                 break;
@@ -74,10 +70,14 @@ public class ScannedBodyInfoParser {
                 remainingNameMatches.add(bodyNameMatches.get(i));
             }
         }
-        List<MatchGroup> remainingNameWords = MatchSorter.sortMatches(remainingNameMatches);
         String bodyName = "";
-        for (MatchGroup mg : remainingNameWords) {
-            bodyName = (bodyName + " " + mg.getText()).trim();
+        //        List<MatchGroup> remainingNameWords = MatchSorter.sortMatches(remainingNameMatches);
+        //        for (MatchGroup mg : remainingNameWords) {
+        //            bodyName = (bodyName + " " + mg.getText()).trim();
+        //        }
+        List<TextLine> remainingTextLines = TextLine.matchesToTextLines(remainingNameMatches);
+        if (remainingTextLines.size() > 0) {
+            bodyName = remainingTextLines.get(0).toText();
         }
         bodyName = removePixelErrorsFromBodyName(bodyName);
         bodyName = fixGeneratedBodyName(systemName, bodyName);
@@ -295,22 +295,22 @@ public class ScannedBodyInfoParser {
 
         // TODO Remove this debug output
         System.out.print("Scanned: ");
-        for (TemplateMatch m : bodyNameMatches) {
+        for (Match m : bodyNameMatches) {
             System.out.print("<" + m.getTemplate().getText() + ">");
         }
         System.out.println();
         System.out.print("Parsed:  ");
-        for (TemplateMatch m : bodyNameMatches) {
+        for (Match m : bodyNameMatches) {
             System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
         }
         System.out.println();
         System.out.print("Scanned: ");
-        for (TemplateMatch m : bodyInfoMatches) {
+        for (Match m : bodyInfoMatches) {
             System.out.print("<" + m.getTemplate().getText() + ">");
         }
         System.out.println();
         System.out.print("Parsed:  ");
-        for (TemplateMatch m : bodyInfoMatches) {
+        for (Match m : bodyInfoMatches) {
             System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
         }
         System.out.println();
@@ -321,12 +321,12 @@ public class ScannedBodyInfoParser {
         return scannedBodyInfo;
     }
 
-    private static String fixAndRemoveRingName(String beforeLabel, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes, String systemName, String bodyName) {
+    private static String fixAndRemoveRingName(String beforeLabel, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes, String systemName, String bodyName) {
         Integer labelIndex = indexOf(beforeLabel, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = labelIndex;
             int startIndex = labelIndex;
-            List<TemplateMatch> remainingMatches = new ArrayList<>();
+            List<Match> remainingMatches = new ArrayList<>();
             for (int i = labelIndex - 1; i >= 0; i--) {
                 if (matches.get(i).getShouldHaveBeen() != null) {
                     break;
@@ -337,10 +337,14 @@ public class ScannedBodyInfoParser {
                     startIndex = i;
                 }
             }
-            List<MatchGroup> remainingNameWords = MatchSorter.sortMatches(remainingMatches);
             String ringName = bodyName;
-            for (MatchGroup mg : remainingNameWords) {
-                ringName = (ringName + " " + mg.getText()).trim();
+            //            List<MatchGroup> remainingNameWords = MatchSorter.sortMatches(remainingMatches);
+            //            for (MatchGroup mg : remainingNameWords) {
+            //                ringName = (ringName + " " + mg.getText()).trim();
+            //            }
+            List<TextLine> remainingTextLines = TextLine.matchesToTextLines(remainingMatches);
+            if (remainingTextLines.size() > 0) {
+                ringName = remainingTextLines.get(0).toText();
             }
             ringName = removePixelErrorsFromBodyName(ringName);
             ringName = fixGeneratedBodyName(systemName, ringName);
@@ -358,9 +362,9 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static void learnWronglyDetectedChars(List<TemplateMatch> fixedMatches) {
+    private static void learnWronglyDetectedChars(List<Match> fixedMatches) {
         Set<String> learned = new HashSet<>();
-        for (TemplateMatch m : fixedMatches) {
+        for (Match m : fixedMatches) {
             if (m != null && m.getShouldHaveBeen() != null) {
                 // We know what it should have been
                 if (!m.getShouldHaveBeen().equals(m.getTemplate().getText())) {
@@ -368,29 +372,21 @@ public class ScannedBodyInfoParser {
                     if (!isSameUppercaseAndLowercase(m.getShouldHaveBeen(), m.getTemplate().getText())) {
                         if (!is0vsO(m.getShouldHaveBeen(), m.getTemplate().getText()) || Constants.LEARN_0_VS_O) {
                             // It is totally wrong, or we are allowed to learn difficult chars like 0<->O
-                            String folderName = TemplateMatcher.textToFolder(m.getShouldHaveBeen());
-                            File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, folderName);
-                            autoLearnFolder.mkdirs();
                             try {
-                                ImageIO.write(m.getMatchedImage(), "PNG", new File(autoLearnFolder, "LEARNED#" + folderName + "#" + m.getMatch().x + "#" + m.getMatch().y + "#" + currentScreenshotFilename));
-                                logger.trace("Learned new '" + m.getShouldHaveBeen() + "' from " + currentScreenshotFilename);
+                                Template.createNewFromRegion(m.getRegion(), "LEARNED_FIXED", m.getShouldHaveBeen());
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
                         }
                     }
-                } else if (m.getErrorPerPixel() > 750.0 && m.getErrorPerPixel() <= 1500.0) {
+                } else if (m.getErrorPerPixel() > BodyScanner.ERROR_PER_PIXEL_KNOWN && m.getErrorPerPixel() <= BodyScanner.ERROR_PER_PIXEL_GUESSED) {
                     // It has been detected/guessed correctly and is quite, but not totally off.
                     if (!learned.contains(m.getTemplate().getText())) {
                         // It has not yet been learned in this session
                         learned.add(m.getTemplate().getText());
 
-                        String folderName = TemplateMatcher.textToFolder(m.getTemplate().getText());
-                        File autoLearnFolder = new File(Constants.AUTO_LEARNED_DIR, folderName);
-                        autoLearnFolder.mkdirs();
                         try {
-                            ImageIO.write(m.getMatchedImage(), "PNG", new File(autoLearnFolder, "LEARNED#" + folderName + "#" + m.getMatch().x + "#" + m.getMatch().y + "#" + currentScreenshotFilename));
-                            logger.trace("Learned new '" + m.getShouldHaveBeen() + "' from " + currentScreenshotFilename);
+                            Template.createNewFromRegion(m.getRegion(), "LEARNED_VARIANT", m.getShouldHaveBeen());
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -558,20 +554,20 @@ public class ScannedBodyInfoParser {
         }
     }
 
-    private static Integer findAndRemove(CharSequence chars, List<TemplateMatch> templateMatches, SortedMap<Integer, String> sortedPreviousIndexes) {
+    private static Integer findAndRemove(CharSequence chars, List<Match> templateMatches, SortedMap<Integer, String> sortedPreviousIndexes) {
         String storeWithPrefix = "";
 
         return findAndRemove(chars, templateMatches, storeWithPrefix, sortedPreviousIndexes);
     }
 
-    private static Integer findAndRemove(CharSequence chars, List<TemplateMatch> templateMatches, String storeWithPrefix, SortedMap<Integer, String> sortedPreviousIndexes) {
+    private static Integer findAndRemove(CharSequence chars, List<Match> templateMatches, String storeWithPrefix, SortedMap<Integer, String> sortedPreviousIndexes) {
         int lastKnownIndex = sortedPreviousIndexes.isEmpty() ? 0 : sortedPreviousIndexes.lastKey();
         int veryLastIndex = templateMatches.size();
 
         return findAndRemove(chars, templateMatches, lastKnownIndex, veryLastIndex, storeWithPrefix, sortedPreviousIndexes);
     }
 
-    private static Integer findAndRemove(CharSequence chars, List<TemplateMatch> templateMatches, final int fromIndex, final int toIndex, String storeWithPrefix, SortedMap<Integer, String> sortedPreviousIndexes) {
+    private static Integer findAndRemove(CharSequence chars, List<Match> templateMatches, final int fromIndex, final int toIndex, String storeWithPrefix, SortedMap<Integer, String> sortedPreviousIndexes) {
         // Search for best start index
         final float maxErr = maxLevenshteinError(chars);
         Integer bestStartIndex = null;
@@ -635,7 +631,7 @@ public class ScannedBodyInfoParser {
                         int idxInScan = idxInRef + lookAround;
                         int k = bestStartIndex + idxInScan;
                         if (k >= 0 && k < templateMatches.size()) {
-                            TemplateMatch match = templateMatches.get(k);
+                            Match match = templateMatches.get(k);
                             if (match != null && match.getShouldHaveBeen() == null) {
                                 char shouldHaveBeen = remainingReferenceText.charAt(idxInRef);
                                 remainingReferenceText.setCharAt(idxInRef, '?');
@@ -682,12 +678,12 @@ public class ScannedBodyInfoParser {
         return referenceText;
     }
 
-    private static CharSequence getScannedText(List<TemplateMatch> templateMatches, int startIndex, int length) {
+    private static CharSequence getScannedText(List<Match> templateMatches, int startIndex, int length) {
         StringBuilder scannedText = new StringBuilder();
         for (int j = 0; j < length; j++) {
             int k = startIndex + j;
             if (k >= 0 && k < templateMatches.size()) {
-                TemplateMatch match = templateMatches.get(k);
+                Match match = templateMatches.get(k);
                 if (match == null || match.getShouldHaveBeen() != null) {
                     break;
                 } else {
@@ -747,7 +743,7 @@ public class ScannedBodyInfoParser {
         return fixedText;
     }
 
-    private static BigDecimal fixAndRemoveDistance(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveDistance(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -794,7 +790,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveAge(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveAge(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -836,7 +832,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveSolarMasses(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveSolarMasses(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -878,7 +874,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveSolarRadius(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveSolarRadius(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -920,7 +916,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveEarthMasses(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveEarthMasses(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -962,7 +958,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveRadius(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveRadius(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1005,7 +1001,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveGravity(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveGravity(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1048,7 +1044,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveSurfaceTemp(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveSurfaceTemp(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1094,7 +1090,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveSurfacePressure(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveSurfacePressure(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1136,7 +1132,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BodyInfo fixAndRemoveVolcanism(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BodyInfo fixAndRemoveVolcanism(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1180,7 +1176,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BodyInfo fixAndRemoveAtmosphereType(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BodyInfo fixAndRemoveAtmosphereType(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1224,7 +1220,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveOrbitalPeriod(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveOrbitalPeriod(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1267,7 +1263,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveSemiMajorAxis(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveSemiMajorAxis(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1310,7 +1306,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveOrbitalEccentricity(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveOrbitalEccentricity(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1352,7 +1348,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveOrbitalInclination(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveOrbitalInclination(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1396,7 +1392,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveArgOfPeriapsis(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveArgOfPeriapsis(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1439,7 +1435,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveRotationalPeriod(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveRotationalPeriod(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1482,7 +1478,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveAxialTilt(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveAxialTilt(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1526,7 +1522,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BodyInfo fixAndRemoveRingType(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BodyInfo fixAndRemoveRingType(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1570,7 +1566,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveMoonMasses(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveMoonMasses(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1612,7 +1608,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveRingMass(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveRingMass(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1655,7 +1651,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static BigDecimal fixAndRemoveRingRadius(String label, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static BigDecimal fixAndRemoveRingRadius(String label, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         Integer labelIndex = indexOf(label, sortedLabelIndexes);
         if (labelIndex != null) {
             int endIndex = indexAfter(labelIndex, sortedLabelIndexes, matches.size());
@@ -1698,7 +1694,7 @@ public class ScannedBodyInfoParser {
         return null;
     }
 
-    private static LinkedHashMap<BodyInfo, BigDecimal> fixAndRemoveComposition(String label, String prefix, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static LinkedHashMap<BodyInfo, BigDecimal> fixAndRemoveComposition(String label, String prefix, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         LinkedHashMap<BodyInfo, BigDecimal> result = new LinkedHashMap<>();
         BigDecimal totalSumPercent = BigDecimal.ZERO;
         if (indexOf(label, sortedLabelIndexes) != null) {
@@ -1811,7 +1807,7 @@ public class ScannedBodyInfoParser {
         }
     }
 
-    private static LinkedHashMap<Item, BigDecimal> fixAndRemovePlanetMaterials(String label, String prefix, List<TemplateMatch> matches, SortedMap<Integer, String> sortedLabelIndexes) {
+    private static LinkedHashMap<Item, BigDecimal> fixAndRemovePlanetMaterials(String label, String prefix, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes) {
         LinkedHashMap<Item, BigDecimal> result = new LinkedHashMap<>();
         BigDecimal totalSumPercent = BigDecimal.ZERO;
         if (indexOf(label, sortedLabelIndexes) != null) {

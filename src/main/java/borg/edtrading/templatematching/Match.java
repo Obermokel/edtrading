@@ -16,6 +16,8 @@ public class Match {
     private final float error;
     private final float errorPerPixel;
 
+    private String shouldHaveBeen = null;
+
     public Match(Region region, Template template, int x, int y, float error, float errorPerPixel) {
         this.region = region;
         this.template = template;
@@ -73,6 +75,14 @@ public class Match {
 
     public float getErrorPerPixel() {
         return this.errorPerPixel;
+    }
+
+    public String getShouldHaveBeen() {
+        return this.shouldHaveBeen;
+    }
+
+    public void setShouldHaveBeen(String shouldHaveBeen) {
+        this.shouldHaveBeen = shouldHaveBeen;
     }
 
 }

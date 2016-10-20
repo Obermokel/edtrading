@@ -3,6 +3,7 @@ package borg.edtrading.bodyscanner;
 import boofcv.gui.image.VisualizeImageData;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageGray;
+import borg.edtrading.data.ScannedBodyInfo;
 import borg.edtrading.imagetransformation.Transformation;
 import borg.edtrading.imagetransformation.simple.GaussianBlurTransformation;
 import borg.edtrading.imagetransformation.simple.KeepBodyScannerTextOnlyTransformation;
@@ -10,11 +11,13 @@ import borg.edtrading.imagetransformation.simple.RgbToGrayTransformation;
 import borg.edtrading.imagetransformation.simple.ThresholdTransformation;
 import borg.edtrading.ocr.CharacterLocator;
 import borg.edtrading.ocr.TextLine;
+import borg.edtrading.ocrOLD.ScannedBodyInfoParser;
 import borg.edtrading.screenshots.Region;
 import borg.edtrading.screenshots.Screenshot;
 import borg.edtrading.templatematching.Match;
 import borg.edtrading.templatematching.Template;
 import borg.edtrading.templatematching.TemplateMatcher;
+import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,17 +43,17 @@ public class BodyScanner {
     /**
      * If error/pixel is less or equal than this value we should be 99.9% safe that it has been detected correctly.
      */
-    private static final float ERROR_PER_PIXEL_KNOWN = 0.015f;
+    public static final float ERROR_PER_PIXEL_KNOWN = 0.015f;
     /**
      * If error/pixel is less or equal than this value the detection quality should be good enough for only slight
      * errors which can be corrected with levenshtein and known texts.
      */
-    private static final float ERROR_PER_PIXEL_GUESSED = 0.05f;
+    public static final float ERROR_PER_PIXEL_GUESSED = 0.05f;
     /**
      * If error/pixel is less or equal than this value we assume that the pixels represent an unknown char. If
      * error/pixel is higher it is likely to be crap.
      */
-    private static final float ERROR_PER_PIXEL_UNKNOWN = 0.075f;
+    public static final float ERROR_PER_PIXEL_UNKNOWN = 0.075f;
 
     static final Logger logger = LogManager.getLogger(BodyScanner.class);
 
@@ -124,6 +127,21 @@ public class BodyScanner {
         if (this.isDebugAllTextLines()) {
             result.setAllTextLinesDebugImage(this.debugTextLines(region, allTextLines));
         }
+
+        // TODO
+        List<Match> bodyNameMatches = new ArrayList<>();
+        List<Match> bodyInfoMatches = new ArrayList<>();
+        for (TextLine tl : allTextLines) {
+            if (tl.getX() > screenshot.getResizedWidth() * 0.333) {
+                bodyNameMatches.addAll(tl.getMatches());
+            } else {
+                bodyInfoMatches.addAll(tl.getMatches());
+            }
+        }
+        String filename = screenshotFile.getName();
+        String systemName = MiscUtil.systemNameFromFilename(screenshotFile);
+        ScannedBodyInfo sbi = ScannedBodyInfoParser.fromScannedAndSortedMatches(filename, systemName, bodyNameMatches, bodyInfoMatches);
+        System.out.println(sbi);
 
         return result;
     }

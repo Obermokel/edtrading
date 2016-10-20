@@ -31,6 +31,8 @@ public class BodyScannerTest {
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "KNOWN"));
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "UNKNOWN"));
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "GUESSED"));
+        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"));
+        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_VARIANT"));
 
         logger.trace("Creating the scanner...");
         BodyScanner scanner = new BodyScanner();
