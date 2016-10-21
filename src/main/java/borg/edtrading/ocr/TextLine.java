@@ -63,7 +63,7 @@ public class TextLine {
             for (int y = firstCharY; y <= lastCharY; y++) {
                 int n = 0;
                 for (Match m : matches) {
-                    if (Math.abs((m.getyInScreenshot() - (avgCharHeight - m.getRegion().getHeight())) - y) <= avgCharHeight / 2) {
+                    if (Math.abs((m.getyInScreenshot() - (avgCharHeight - m.getRegion().getHeight())) - y) <= avgCharHeight * 0.5f) {
                         n++;
                     }
                 }
@@ -82,7 +82,7 @@ public class TextLine {
                 ListIterator<Match> it = remainingMatches.listIterator();
                 while (it.hasNext()) {
                     Match candidateMatch = it.next();
-                    if (Math.abs((candidateMatch.getyInScreenshot() - (avgCharHeight - candidateMatch.getRegion().getHeight())) - y) <= avgCharHeight / 2) {
+                    if (Math.abs((candidateMatch.getyInScreenshot() - (avgCharHeight - candidateMatch.getRegion().getHeight())) - y) <= avgCharHeight * 0.75f) {
                         yMatches.add(candidateMatch);
                         it.remove();
                     }

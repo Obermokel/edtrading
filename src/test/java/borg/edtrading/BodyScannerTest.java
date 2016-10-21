@@ -44,7 +44,8 @@ public class BodyScannerTest {
         //File sourceFile = selectRandomScreenshot();
         //2016-09-29 08-16-28 Paul-Friedrichs Star
         //2016-10-03 08-37-57 Altair
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-03 08-37-57 Altair.png");
+        //2016-09-29 08-24-03 BD+63 1764
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-29 08-24-03 BD+63 1764.png");
         //for (File sourceFile : selectAllScreenshots()) {
         logger.trace("Testing " + sourceFile.getName());
         BodyScannerResult result = scanner.scanScreenshotFile(sourceFile);
@@ -60,7 +61,39 @@ public class BodyScannerTest {
         if (result.getAllTextLinesDebugImage() != null) {
             ImageIO.write(result.getAllTextLinesDebugImage(), "PNG", new File(Constants.TEMP_DIR, "AllTextLinesDebugImage " + sourceFile.getName()));
         }
+
+        //            copyLearnedChars(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"), new File(Constants.TEMPLATES_DIR, "BodyScanner"));
+        //            copyLearnedChars(new File(Constants.TEMPLATES_DIR, "LEARNED_VARIANT"), new File(Constants.TEMPLATES_DIR, "BodyScanner"));
+        //            scanner = new BodyScanner();
         //}
+    }
+
+    static void copyLearnedChars(File learnedSetDir, File targetSetDir) throws IOException {
+        final Random random = new Random(System.currentTimeMillis());
+        File[] templateTextDirs = learnedSetDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.isDirectory();
+            }
+        });
+        if (templateTextDirs != null) {
+            for (File templateTextDir : templateTextDirs) {
+                // Learn max 1 per type
+                File[] pngFiles = templateTextDir.listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        return file.getName().endsWith(".png");
+                    }
+                });
+                if (pngFiles != null && pngFiles.length >= 1) {
+                    File randomPngFile = pngFiles[random.nextInt(pngFiles.length)];
+                    File targetFile = new File(targetSetDir, templateTextDir.getName() + "/LEARNED#" + randomPngFile.getName());
+                    FileUtils.copyFile(randomPngFile, targetFile);
+                }
+            }
+            // Clean learned
+            FileUtils.cleanDirectory(learnedSetDir);
+        }
     }
 
     static File selectRandomScreenshot() {

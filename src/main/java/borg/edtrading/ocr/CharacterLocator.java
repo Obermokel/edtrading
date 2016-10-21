@@ -80,7 +80,7 @@ public class CharacterLocator {
                             Rectangle r = shrink(image, xStartContainsWhite, scanRect.y, xEndAllBlack, scanRect.y + scanRect.height);
                             if (r.width * r.height <= 32) {
                                 // Small punctuation char. Make it full height, otherwise ' and , look the same.
-                                r = new Rectangle(r.x, scanRect.y, r.width, scanRect.height);
+                                r = new Rectangle(r.x, tl.getY() - Math.round(tl.getHeight() / 6f), r.width, tl.getHeight() + Math.round(tl.getHeight() / 3f));
                             }
                             Rectangle rWithBorder = new Rectangle(r.x - this.border, r.y - this.border, r.width + 2 * this.border, r.height + 2 * this.border);
                             result.add(rWithBorder);

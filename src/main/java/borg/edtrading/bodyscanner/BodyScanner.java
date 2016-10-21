@@ -79,9 +79,11 @@ public class BodyScanner {
         Region region = screenshot.getAsRegion();
         region.applyTransformation("BSTO", new KeepBodyScannerTextOnlyTransformation());
         region.applyTransformation("GRAY", new RgbToGrayTransformation());
-        region.applyTransformation("THRESHHIGH", new ThresholdTransformation(224), "GRAY"); // Apply a very strong threshold for char locating
+        //        region.applyTransformation("THRESHHIGH", new ThresholdTransformation(224), "GRAY"); // Apply a very strong threshold for char locating
+        //        GrayU8 thresholdedImage = (GrayU8) region.getImageData(Transformation.LAST);
+        //        region.applyTransformation("THRESHMED", new ThresholdTransformation(128), "GRAY"); // Apply a moderate threshold for char matching
+        region.applyTransformation("THRESH", new ThresholdTransformation(128));
         GrayU8 thresholdedImage = (GrayU8) region.getImageData(Transformation.LAST);
-        region.applyTransformation("THRESHMED", new ThresholdTransformation(128), "GRAY"); // Apply a moderate threshold for char matching
         region.applyTransformation("BLUR", new GaussianBlurTransformation(2, -1));
 
         // Find likely character locations and match them against the alphanum templates.
@@ -96,7 +98,7 @@ public class BodyScanner {
         for (Rectangle r : typicalCharacterSizeLocations) {
             Region charRegion = region.getSubregion(r.x, r.y, r.width, r.height);
             Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, this.alphanumTemplates);
-            if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED) {
+            if (bestMatch != null && bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED) {
                 alphanumMatches.add(bestMatch);
             }
         }
@@ -116,7 +118,7 @@ public class BodyScanner {
         for (Rectangle r : locationsWithinTextLines) {
             Region charRegion = region.getSubregion(r.x, r.y, r.width, r.height);
             Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, this.allTemplates);
-            if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED) {
+            if (bestMatch != null && bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED) {
                 allMatches.add(bestMatch);
             }
         }
@@ -176,7 +178,9 @@ public class BodyScanner {
         for (Rectangle r : typicalCharacterSizeLocations) {
             Region charRegion = region.getSubregion(r.x, r.y, r.width, r.height);
             Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, templates);
-            if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_KNOWN) {
+            if (bestMatch == null) {
+                // Most likely complete black
+            } else if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_KNOWN) {
                 nKnown++;
                 Template.createNewFromRegion(charRegion, "KNOWN", bestMatch.getTemplate().getText());
                 g.setFont(new Font("Consolas", Font.PLAIN, 22));
