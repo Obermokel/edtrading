@@ -77,12 +77,12 @@ public class BodyScanner {
 
         // Apply transformations
         Region region = screenshot.getAsRegion();
-        region.applyTransformation(new KeepBodyScannerTextOnlyTransformation());
-        region.applyTransformation(new RgbToGrayTransformation());
-        region.applyTransformation(new ThresholdTransformation(224), RgbToGrayTransformation.class.getSimpleName()); // Apply a very strong threshold for char locating
+        region.applyTransformation("BSTO", new KeepBodyScannerTextOnlyTransformation());
+        region.applyTransformation("GRAY", new RgbToGrayTransformation());
+        region.applyTransformation("THRESHHIGH", new ThresholdTransformation(224), "GRAY"); // Apply a very strong threshold for char locating
         GrayU8 thresholdedImage = (GrayU8) region.getImageData(Transformation.LAST);
-        region.applyTransformation(new ThresholdTransformation(128), RgbToGrayTransformation.class.getSimpleName()); // Apply a moderate threshold for char matching
-        region.applyTransformation(new GaussianBlurTransformation(2, -1));
+        region.applyTransformation("THRESHMED", new ThresholdTransformation(128), "GRAY"); // Apply a moderate threshold for char matching
+        region.applyTransformation("BLUR", new GaussianBlurTransformation(2, -1));
 
         // Find likely character locations and match them against the alphanum templates.
         // The alphanum templates are better to detect than small punctuation chars like dot, comma etc which are only a few pixels.
@@ -135,6 +135,16 @@ public class BodyScanner {
                 bodyNameMatches.addAll(tl.getMatches());
             } else {
                 bodyInfoMatches.addAll(tl.getMatches());
+            }
+        }
+        for (TextLine tl : allTextLines) {
+            if (tl.getX() > screenshot.getResizedWidth() * 0.333) {
+                logger.debug(tl.toText());
+            }
+        }
+        for (TextLine tl : allTextLines) {
+            if (tl.getX() <= screenshot.getResizedWidth() * 0.333) {
+                logger.debug(tl.toText());
             }
         }
         String filename = screenshotFile.getName();

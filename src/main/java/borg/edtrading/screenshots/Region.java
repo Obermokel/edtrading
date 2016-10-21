@@ -127,8 +127,8 @@ public class Region {
      *
      * @throws NoSuchTransformationException
      */
-    public Region applyTransformation(Transformation t) throws NoSuchTransformationException {
-        return this.applyTransformation(t, Transformation.LAST);
+    public Region applyTransformation(String name, Transformation t) throws NoSuchTransformationException {
+        return this.applyTransformation(name, t, Transformation.LAST);
     }
 
     /**
@@ -144,11 +144,11 @@ public class Region {
      *
      * @throws NoSuchTransformationException
      */
-    public Region applyTransformation(Transformation t, String applyOn) throws NoSuchTransformationException {
+    public Region applyTransformation(String name, Transformation t, String applyOn) throws NoSuchTransformationException {
         ImageBase<?> inputImage = this.getImageData(applyOn);
         ImageBase<?> transformedImage = t.transform(inputImage);
-        this.transformed.remove(t.getName());
-        this.transformed.put(t.getName(), transformedImage);
+        this.transformed.remove(name);
+        this.transformed.put(name, transformedImage);
         return this;
     }
 

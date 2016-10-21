@@ -34,11 +34,6 @@ public class CannyEdgeTransformation implements Transformation {
     }
 
     @Override
-    public String getName() {
-        return this.getClass().getSimpleName();
-    }
-
-    @Override
     public ImageBase<?> transform(ImageBase<?> inputImage) throws TransformationException {
         try {
             GrayU8 inputGrayU8 = (GrayU8) inputImage;

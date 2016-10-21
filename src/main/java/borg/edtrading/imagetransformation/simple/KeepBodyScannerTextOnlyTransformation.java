@@ -25,11 +25,6 @@ public class KeepBodyScannerTextOnlyTransformation implements Transformation {
     static final Logger logger = LogManager.getLogger(KeepBodyScannerTextOnlyTransformation.class);
 
     @Override
-    public String getName() {
-        return this.getClass().getSimpleName();
-    }
-
-    @Override
     public ImageBase<?> transform(ImageBase<?> inputImage) throws TransformationException {
         if (!(inputImage instanceof Planar<?>)) {
             throw new TransformationException("inputImage must be a Planar");

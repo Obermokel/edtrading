@@ -24,11 +24,6 @@ public class RgbToGrayTransformation implements Transformation {
     static final Logger logger = LogManager.getLogger(RgbToGrayTransformation.class);
 
     @Override
-    public String getName() {
-        return this.getClass().getSimpleName();
-    }
-
-    @Override
     public ImageBase<?> transform(ImageBase<?> inputImage) throws TransformationException {
         try {
             Planar<GrayU8> inputPlanarU8 = (Planar<GrayU8>) inputImage;

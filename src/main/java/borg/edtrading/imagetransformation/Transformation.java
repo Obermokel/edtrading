@@ -12,8 +12,6 @@ public interface Transformation {
     String ORIGINAL = "%ORIGINAL%";
     String LAST = "%LAST%";
 
-    String getName();
-
     /**
      * @throws TransformationException
      */

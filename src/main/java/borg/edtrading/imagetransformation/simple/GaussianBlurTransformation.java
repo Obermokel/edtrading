@@ -32,11 +32,6 @@ public class GaussianBlurTransformation implements Transformation {
     }
 
     @Override
-    public String getName() {
-        return this.getClass().getSimpleName();
-    }
-
-    @Override
     public ImageBase<?> transform(ImageBase<?> inputImage) throws TransformationException {
         try {
             GrayF32 inputGrayF32 = inputImage instanceof GrayU8 ? ConvertImage.convert((GrayU8) inputImage, (GrayF32) null) : (GrayF32) inputImage;

@@ -33,11 +33,6 @@ public class ThresholdTransformation implements Transformation {
     }
 
     @Override
-    public String getName() {
-        return this.getClass().getSimpleName();
-    }
-
-    @Override
     public ImageBase<?> transform(ImageBase<?> inputImage) throws TransformationException {
         try {
             return GThresholdImageOps.threshold((ImageGray) inputImage, null, this.getThreshold(), false);
