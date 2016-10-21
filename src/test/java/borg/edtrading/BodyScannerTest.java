@@ -36,15 +36,15 @@ public class BodyScannerTest {
 
         logger.trace("Creating the scanner...");
         BodyScanner scanner = new BodyScanner();
-        scanner.setDebugAlphanumTemplates(true);
-        scanner.setDebugAlphanumTextLines(true);
+        scanner.setDebugAlphanumTemplates(false);
+        scanner.setDebugAlphanumTextLines(false);
         scanner.setDebugAllTemplates(true);
         scanner.setDebugAllTextLines(true);
 
         //File sourceFile = selectRandomScreenshot();
         //2016-09-29 08-16-28 Paul-Friedrichs Star
         //2016-10-03 08-37-57 Altair
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-29 08-16-28 Paul-Friedrichs Star.png");
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-03 08-37-57 Altair.png");
         //for (File sourceFile : selectAllScreenshots()) {
         logger.trace("Testing " + sourceFile.getName());
         BodyScannerResult result = scanner.scanScreenshotFile(sourceFile);
