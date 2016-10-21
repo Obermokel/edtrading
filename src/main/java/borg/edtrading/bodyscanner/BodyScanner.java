@@ -46,7 +46,7 @@ public class BodyScanner {
      * If error/pixel is less or equal than this value the detection quality should be good enough for only slight
      * errors which can be corrected with levenshtein and known texts.
      */
-    public static final float ERROR_PER_PIXEL_GUESSED = 0.05f;
+    public static final float ERROR_PER_PIXEL_GUESSED = 0.045f;
     /**
      * If error/pixel is less or equal than this value we assume that the pixels represent an unknown char. If
      * error/pixel is higher it is likely to be crap.
@@ -67,7 +67,7 @@ public class BodyScanner {
     public BodyScanner() throws IOException {
         this.characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
         this.allTemplates = Template.fromFolder("BodyScanner");
-        this.alphanumTemplates = Template.fromFolder("BodyScanner").stream().filter(t -> t.getText().matches("\\w")).collect(Collectors.toList());
+        this.alphanumTemplates = Template.fromFolder("BodyScanner").stream().filter(t -> t.getText().matches("[A-Za-z0-9\\-]")).collect(Collectors.toList());
     }
 
     public BodyScannerResult scanScreenshotFile(File screenshotFile) throws IOException {
@@ -79,8 +79,9 @@ public class BodyScanner {
         Region region = screenshot.getAsRegion();
         region.applyTransformation(new KeepBodyScannerTextOnlyTransformation());
         region.applyTransformation(new RgbToGrayTransformation());
-        region.applyTransformation(new ThresholdTransformation(128));
+        region.applyTransformation(new ThresholdTransformation(224), RgbToGrayTransformation.class.getSimpleName()); // Apply a very strong threshold for char locating
         GrayU8 thresholdedImage = (GrayU8) region.getImageData(Transformation.LAST);
+        region.applyTransformation(new ThresholdTransformation(128), RgbToGrayTransformation.class.getSimpleName()); // Apply a moderate threshold for char matching
         region.applyTransformation(new GaussianBlurTransformation(2, -1));
 
         // Find likely character locations and match them against the alphanum templates.

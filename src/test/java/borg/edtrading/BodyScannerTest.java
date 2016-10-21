@@ -42,7 +42,9 @@ public class BodyScannerTest {
         scanner.setDebugAllTextLines(true);
 
         //File sourceFile = selectRandomScreenshot();
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-10 05-37-59 Pethes.png");
+        //2016-09-29 08-16-28 Paul-Friedrichs Star
+        //2016-10-03 08-37-57 Altair
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-29 08-16-28 Paul-Friedrichs Star.png");
         //for (File sourceFile : selectAllScreenshots()) {
         logger.trace("Testing " + sourceFile.getName());
         BodyScannerResult result = scanner.scanScreenshotFile(sourceFile);
