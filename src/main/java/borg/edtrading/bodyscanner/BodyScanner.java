@@ -141,6 +141,11 @@ public class BodyScanner {
             result.setAllTextLinesDebugImage(this.debugTextLines(region, allTextLines));
             for (TextLine tl : allTextLines) {
                 logger.debug(tl);
+                if (tl.toText().startsWith("ATMOSPHERETYPE: ")) {
+                    for (Match m : tl.getMatches()) {
+                        logger.debug(m);
+                    }
+                }
             }
         }
 

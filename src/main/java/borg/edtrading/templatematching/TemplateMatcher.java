@@ -68,7 +68,7 @@ public class TemplateMatcher {
                 // Use the region size for error/pixel calculation because we are using the scaled template
                 float errorPerPixel = error / (region.getWidth() * region.getHeight());
                 bestError = error;
-                bestMatch = new Match(region, t, 0, 0, error, errorPerPixel);
+                bestMatch = new Match(region, t, 0, 0, region.getWidth(), region.getHeight(), error, errorPerPixel);
             }
         }
         return bestMatch;
@@ -111,7 +111,7 @@ public class TemplateMatcher {
                         // Use the template size for error/pixel calculation because we are using the unscaled template
                         float errorPerPixel = error / (templatePixels.getWidth() * templatePixels.getHeight());
                         bestError = error;
-                        bestMatch = new Match(region, template, xInRegion, yInRegion, error, errorPerPixel);
+                        bestMatch = new Match(region, template, xInRegion, yInRegion, templatePixels.width, templatePixels.height, error, errorPerPixel);
                     }
                 }
             }

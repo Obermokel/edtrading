@@ -15,18 +15,22 @@ public class Match {
 
     private final Region region;
     private final Template template;
-    private final int x;
-    private final int y;
+    private final int xInRegion;
+    private final int yInRegion;
+    private final int width;
+    private final int height;
     private final float error;
     private final float errorPerPixel;
 
     private String shouldHaveBeen = null;
 
-    public Match(Region region, Template template, int x, int y, float error, float errorPerPixel) {
+    public Match(Region region, Template template, int xInRegion, int yInRegion, int width, int height, float error, float errorPerPixel) {
         this.region = region;
         this.template = template;
-        this.x = x;
-        this.y = y;
+        this.xInRegion = xInRegion;
+        this.yInRegion = yInRegion;
+        this.width = width;
+        this.height = height;
         this.error = error;
         this.errorPerPixel = errorPerPixel;
     }
@@ -37,9 +41,9 @@ public class Match {
     }
 
     public boolean overlapsWithAny(List<Match> other, int border) {
-        Rectangle rThis = new Rectangle(this.getxInRegion() - border, this.getyInRegion() - border, this.getTemplate().getWidth() + 2 * border, this.getTemplate().getHeight() + 2 * border);
+        Rectangle rThis = new Rectangle(this.getxInScreenshot() - border, this.getyInScreenshot() - border, this.getWidth() + 2 * border, this.getHeight() + 2 * border);
         for (Match m : other) {
-            Rectangle rOther = new Rectangle(m.getxInRegion() - border, m.getyInRegion() - border, m.getTemplate().getWidth() + 2 * border, m.getTemplate().getHeight() + 2 * border);
+            Rectangle rOther = new Rectangle(m.getxInScreenshot() - border, m.getyInScreenshot() - border, m.getWidth() + 2 * border, m.getHeight() + 2 * border);
             if (rThis.intersects(rOther)) {
                 return true;
             }
@@ -65,14 +69,22 @@ public class Match {
      * X coord in the region
      */
     public int getxInRegion() {
-        return this.x;
+        return this.xInRegion;
     }
 
     /**
      * Y coord in the region
      */
     public int getyInRegion() {
-        return this.y;
+        return this.yInRegion;
+    }
+
+    public int getWidth() {
+        return this.width;
+    }
+
+    public int getHeight() {
+        return this.height;
     }
 
     /**
