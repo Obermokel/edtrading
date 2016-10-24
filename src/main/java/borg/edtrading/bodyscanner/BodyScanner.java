@@ -139,20 +139,10 @@ public class BodyScanner {
                 bodyInfoMatches.addAll(tl.getMatches());
             }
         }
-        for (TextLine tl : allTextLines) {
-            if (tl.getX() > screenshot.getResizedWidth() * 0.333) {
-                logger.debug(tl.toText());
-            }
-        }
-        for (TextLine tl : allTextLines) {
-            if (tl.getX() <= screenshot.getResizedWidth() * 0.333) {
-                logger.debug(tl.toText());
-            }
-        }
         String filename = screenshotFile.getName();
         String systemName = MiscUtil.systemNameFromFilename(screenshotFile);
         ScannedBodyInfo sbi = BodyMatchesParser.fromScannedAndSortedMatches(filename, systemName, bodyNameMatches, bodyInfoMatches);
-        System.out.println(sbi);
+        result.setScannedBodyInfo(sbi);
 
         return result;
     }

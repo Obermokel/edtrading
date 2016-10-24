@@ -1,16 +1,23 @@
 package borg.edtrading;
 
+import borg.edtrading.bodyscanner.BodyScanner;
+import borg.edtrading.bodyscanner.BodyScannerResult;
 import borg.edtrading.bodyscanner.ScannedBodyInfo;
 import borg.edtrading.data.Item;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 
 /**
@@ -22,8 +29,58 @@ public class BodyScannerApp {
 
     static final Logger logger = LogManager.getLogger(BodyScannerApp.class);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        logger.trace("Cleaning dirs...");
+        FileUtils.cleanDirectory(Constants.TEMP_DIR);
+        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "KNOWN"));
+        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "UNKNOWN"));
+        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "GUESSED"));
+        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"));
+        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_VARIANT"));
 
+        File debugFile = new File(Constants.TEMP_DIR, "debug.txt");
+
+        logger.trace("Creating the scanner...");
+        BodyScanner scanner = new BodyScanner();
+
+        Map<String, ScannedBodyInfo> resultsByBodyName = new TreeMap<>();
+        int n = 0;
+        List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
+        for (File screenshotFile : screenshotFiles) {
+            n++;
+            logger.trace("Processing file " + n + " of " + screenshotFiles.size() + ": " + screenshotFile.getName());
+            BodyScannerResult result = scanner.scanScreenshotFile(screenshotFile);
+            ScannedBodyInfo sbi = result.getScannedBodyInfo();
+            FileUtils.write(debugFile, sbi.toString() + "\n\n", "UTF-8", true);
+            if (resultsByBodyName.containsKey(sbi.getBodyName())) {
+                ScannedBodyInfo prevSBI = resultsByBodyName.get(sbi.getBodyName());
+                logger.warn("Replacing existing scanner result for " + sbi.getBodyName() + " from " + prevSBI.getScreenshotFilename() + " with the new result from " + sbi.getScreenshotFilename());
+            }
+            resultsByBodyName.put(sbi.getBodyName(), sbi);
+        }
+
+        List<ScannedBodyInfo> results = new ArrayList<>(resultsByBodyName.size());
+        for (String bodyName : resultsByBodyName.keySet()) {
+            logger.debug(bodyName);
+            results.add(resultsByBodyName.get(bodyName));
+        }
+
+        printStats(results);
+        System.out.println("Highest gravity: " + highestGravity(results, true).getGravityG() + "G (" + highestGravity(results, true).getBodyName() + ")");
+    }
+
+    static ScannedBodyInfo highestGravity(List<ScannedBodyInfo> scannedBodyInfos, boolean landableOnly) {
+        ScannedBodyInfo result = null;
+        BigDecimal max = BigDecimal.ZERO;
+        for (ScannedBodyInfo sbi : scannedBodyInfos) {
+            if (sbi.getGravityG() != null && sbi.getGravityG().compareTo(max) > 0) {
+                if (!landableOnly || (sbi.getPlanetMaterials() != null && sbi.getPlanetMaterials().size() > 0)) {
+                    result = sbi;
+                    max = sbi.getGravityG();
+                }
+            }
+        }
+        return result;
     }
 
     static void printStats(List<ScannedBodyInfo> scannedBodyInfos) {
@@ -63,6 +120,34 @@ public class BodyScannerApp {
 
             System.out.println(String.format(Locale.US, "%-15s %9.1f%% %9.1f%% %9.1f%%    %s", element.getName(), highest, median, frequency, name));
         }
+    }
+
+    static File selectRandomScreenshot() {
+        File dir = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR);
+        File[] files = dir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                return f.getName().endsWith(".png");
+            }
+        });
+        Random rand = new Random();
+        return files[rand.nextInt(files.length)];
+    }
+
+    static List<File> selectAllScreenshots() {
+        File dir = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR);
+        File[] fileArray = dir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                return f.getName().endsWith(".png");
+            }
+        });
+        List<File> fileList = new ArrayList<>(fileArray.length);
+        for (File f : fileArray) {
+            fileList.add(f);
+        }
+        Collections.shuffle(fileList);
+        return fileList;
     }
 
 }
