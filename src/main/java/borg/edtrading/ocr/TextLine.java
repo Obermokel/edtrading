@@ -1,5 +1,6 @@
 package borg.edtrading.ocr;
 
+import borg.edtrading.bodyscanner.BodyScanner;
 import borg.edtrading.screenshots.Screenshot;
 import borg.edtrading.templatematching.Match;
 import org.apache.logging.log4j.LogManager;
@@ -60,7 +61,9 @@ public class TextLine {
             List<Word> words = new ArrayList<>();
             List<Match> remainingMatches = new ArrayList<>(matches);
             while (!remainingMatches.isEmpty()) {
-                WordBuilder wb = new WordBuilder(remainingMatches.remove(0), avgCharHeight);
+                Match seedingMatch = remainingMatches.remove(0);
+                WordBuilder wb = new WordBuilder(seedingMatch, avgCharHeight);
+                float known = seedingMatch.getErrorPerPixel() <= BodyScanner.ERROR_PER_PIXEL_KNOWN ? 1 : 0;
 
                 boolean grown = false;
                 do {
@@ -69,13 +72,14 @@ public class TextLine {
                     while (it.hasNext()) {
                         Match wordCandidate = it.next();
                         if (wb.addToWord(wordCandidate)) {
+                            known += wordCandidate.getErrorPerPixel() <= BodyScanner.ERROR_PER_PIXEL_KNOWN ? 1 : 0;
                             it.remove();
                             grown = true;
                         }
                     }
                 } while (grown);
 
-                if (wb.matches.size() > 1) {
+                if (wb.matches.size() > 1 && known / wb.matches.size() >= 0.5f) {
                     words.add(wb.build());
                 }
             }
