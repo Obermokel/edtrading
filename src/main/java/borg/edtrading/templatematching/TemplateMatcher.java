@@ -24,8 +24,8 @@ public class TemplateMatcher {
     public List<Match> allNonOverlappingTemplates(Region region, List<Template> templates) {
         List<Match> allMatches = new ArrayList<>();
         for (Template t : templates) {
-            if ((t.getWidth() - 2) <= region.getWidth() && (t.getHeight() - 2) <= region.getHeight()) {
-                Match m = bestMatchingLocation(region, t, 1);
+            if (t.getWidth() <= region.getWidth() && t.getHeight() <= region.getHeight()) {
+                Match m = bestMatchingLocation(region, t);
                 if (m != null) {
                     allMatches.add(m);
                 }
@@ -39,7 +39,7 @@ public class TemplateMatcher {
         });
         List<Match> nonOverlappingMatches = new ArrayList<>();
         for (Match m : allMatches) {
-            if (!m.overlapsWithAny(nonOverlappingMatches, -1)) {
+            if (!m.overlapsWithAny(nonOverlappingMatches, 0)) {
                 nonOverlappingMatches.add(m);
             }
         }
@@ -98,8 +98,8 @@ public class TemplateMatcher {
             GrayF32 templatePixels = cropTemplate <= 0 ? template.getPixels() : template.getPixels().subimage(cropTemplate, cropTemplate, template.getWidth() - 2 * cropTemplate, template.getHeight() - 2 * cropTemplate);
             float bestError = 999999999.9f;
             Match bestMatch = null;
-            for (int yInRegion = 0; yInRegion < (region.getHeight() - templatePixels.getHeight()); yInRegion++) {
-                for (int xInRegion = 0; xInRegion < (region.getWidth() - templatePixels.getWidth()); xInRegion++) {
+            for (int yInRegion = 0; yInRegion <= (region.getHeight() - templatePixels.getHeight()); yInRegion++) {
+                for (int xInRegion = 0; xInRegion <= (region.getWidth() - templatePixels.getWidth()); xInRegion++) {
                     float error = 0.0f;
                     for (int yInTemplate = 0; yInTemplate < templatePixels.getHeight() && error < bestError; yInTemplate++) {
                         for (int xInTemplate = 0; xInTemplate < templatePixels.getWidth() && error < bestError; xInTemplate++) {

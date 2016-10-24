@@ -128,9 +128,6 @@ public class BodyScanner {
                 nonOverlappingMatches = nonOverlappingMatches.stream().filter(m -> m.getErrorPerPixel() <= ERROR_PER_PIXEL_UNKNOWN).collect(Collectors.toList());
                 if (nonOverlappingMatches.size() >= 2) {
                     allMatches.addAll(nonOverlappingMatches);
-                    //                    String pos = charRegion.getxInScreenshot() + "." + charRegion.getyInScreenshot();
-                    //                    String chars = StringUtils.join(nonOverlappingMatches.stream().map(m -> m.getTemplate().getText()).collect(Collectors.toList()).toArray());
-                    //                    charRegion.saveToFile(new File(Constants.TEMP_DIR, "MULTIMATCH_" + pos + "_" + chars + "_" + region.getScreenshot().getFile().getName()), Transformation.LAST);
                 }
             }
         }
@@ -223,6 +220,7 @@ public class BodyScanner {
                 //                g.setTransform(transform);
             } else {
                 nCrap++;
+                Template.createNewFromRegion(charRegion, "CRAP", "CRAP");
                 g.setFont(new Font("Consolas", Font.PLAIN, 22));
                 g.setColor(Color.RED);
                 g.drawRect(r.x, r.y, r.width, r.height);
@@ -232,6 +230,19 @@ public class BodyScanner {
                 //                g.setColor(Color.WHITE);
                 //                g.drawString(String.format(Locale.US, "%.3f", bestMatch.getErrorPerPixel()).substring(1), r.x, r.y + r.height);
                 //                g.setTransform(transform);
+            }
+
+            if (bestMatch != null && bestMatch.getErrorPerPixel() > ERROR_PER_PIXEL_GUESSED) {
+                List<Match> nonOverlappingMatches = new TemplateMatcher().allNonOverlappingTemplates(charRegion, templates);
+                nonOverlappingMatches = nonOverlappingMatches.stream().filter(m -> m.getErrorPerPixel() <= ERROR_PER_PIXEL_UNKNOWN).collect(Collectors.toList());
+                if (nonOverlappingMatches.size() >= 2) {
+                    g.setFont(new Font("Consolas", Font.PLAIN, 22));
+                    g.setColor(Color.MAGENTA);
+                    for (Match m : nonOverlappingMatches) {
+                        g.drawRect(m.getxInScreenshot(), m.getyInScreenshot(), m.getWidth(), m.getHeight());
+                        g.drawString(m.getTemplate().getText(), m.getxInScreenshot(), m.getyInScreenshot());
+                    }
+                }
             }
         }
         logger.debug(region.getScreenshot().getFile().getName() + ": known=" + nKnown + "; guessed=" + nGuessed + "; unknown=" + nUnknown + "; crap=" + nCrap);

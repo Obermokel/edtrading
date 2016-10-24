@@ -28,6 +28,7 @@ public class BodyScannerTest {
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "KNOWN"));
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "UNKNOWN"));
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "GUESSED"));
+        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "CRAP"));
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"));
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_VARIANT"));
 
@@ -42,7 +43,7 @@ public class BodyScannerTest {
         //2016-09-29 08-16-28 Paul-Friedrichs Star
         //2016-10-03 08-37-57 Altair
         //2016-09-29 08-24-03 BD+63 1764
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-28 08-21-00 Eta Coronae Borealis.png");
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-23 13-06-29 Calhuacan.png");
         //for (File sourceFile : BodyScannerApp.selectAllScreenshots()) {
         logger.trace("Testing " + sourceFile.getName());
         BodyScannerResult result = scanner.scanScreenshotFile(sourceFile);

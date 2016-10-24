@@ -40,6 +40,7 @@ public class BodyScannerApp {
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "KNOWN"));
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "UNKNOWN"));
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "GUESSED"));
+        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "CRAP"));
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"));
         FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_VARIANT"));
 
