@@ -65,7 +65,7 @@ public class CharacterLocator {
             // Make the text line box double the height (because brackets or ° are higher than normal chars).
             // Also expand it a bit to the right in order to catch trailing units like °, or trailing comma.
             // Alsp expand it a bit to the left in order to catch leading sign like -.
-            Rectangle scanRect = new Rectangle(tl.getX() - tl.getHeight(), tl.getY() - tl.getHeight() / 2, tl.getWidth() + 3 * tl.getHeight(), 2 * tl.getHeight());
+            Rectangle scanRect = new Rectangle(tl.getX() - tl.getHeight(), tl.getY() - tl.getHeight() / 2, tl.getWidth() + 4 * tl.getHeight(), 2 * tl.getHeight());
 
             // Scan horizontally
             for (int x = scanRect.x; x < scanRect.x + scanRect.width; x++) {

@@ -46,7 +46,7 @@ public class BodyScanner {
      * If error/pixel is less or equal than this value the detection quality should be good enough for only slight
      * errors which can be corrected with levenshtein and known texts.
      */
-    public static final float ERROR_PER_PIXEL_GUESSED = 0.045f;
+    public static final float ERROR_PER_PIXEL_GUESSED = 0.040f;
     /**
      * If error/pixel is less or equal than this value we assume that the pixels represent an unknown char. If
      * error/pixel is higher it is likely to be crap.
@@ -109,6 +109,9 @@ public class BodyScanner {
         List<TextLine> alphanumTextLines = TextLine.matchesToTextLines(alphanumMatches);
         if (this.isDebugAlphanumTextLines()) {
             result.setAlphanumTextLinesDebugImage(this.debugTextLines(region, alphanumTextLines));
+            for (TextLine tl : alphanumTextLines) {
+                logger.debug(tl);
+            }
         }
         List<Rectangle> locationsWithinTextLines = this.characterLocator.findLocationsWithinTextLines(thresholdedImage, alphanumTextLines);
         if (this.isDebugAllTemplates()) {
@@ -136,6 +139,9 @@ public class BodyScanner {
         List<TextLine> allTextLines = TextLine.matchesToTextLines(allMatches);
         if (this.isDebugAllTextLines()) {
             result.setAllTextLinesDebugImage(this.debugTextLines(region, allTextLines));
+            for (TextLine tl : allTextLines) {
+                logger.debug(tl);
+            }
         }
 
         // TODO
