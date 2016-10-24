@@ -28,8 +28,8 @@ public class ScannedRingInfo {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getRingName()).append(" // ");
         sb.append(this.getRingType() == null ? null : this.getRingType().getName()).append(" // ");
-        sb.append(String.format(Locale.US, "%.1fMT", this.getMassMt())).append(" // ");
-        sb.append(String.format(Locale.US, "%.0fKM to %.0fKM", this.getInnerRadiusKm(), this.getOuterRadiusKm()));
+        sb.append(String.format(Locale.US, "%,.1fMT", this.getMassMt())).append(" // ");
+        sb.append(String.format(Locale.US, "%,.0fKM to %,.0fKM", this.getInnerRadiusKm(), this.getOuterRadiusKm()));
         return sb.toString();
     }
 

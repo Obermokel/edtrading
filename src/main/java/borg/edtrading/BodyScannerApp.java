@@ -12,8 +12,11 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -28,6 +31,8 @@ import java.util.TreeMap;
 public class BodyScannerApp {
 
     static final Logger logger = LogManager.getLogger(BodyScannerApp.class);
+
+    private static final DateFormat DF_ETA = new SimpleDateFormat("MMM dd @ HH:mm");
 
     public static void main(String[] args) throws IOException {
         logger.trace("Cleaning dirs...");
@@ -44,8 +49,11 @@ public class BodyScannerApp {
         BodyScanner scanner = new BodyScanner();
 
         Map<String, ScannedBodyInfo> resultsByBodyName = new TreeMap<>();
-        int n = 0;
         List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
+        int n = 0;
+        int total = screenshotFiles.size();
+        int batchSize = 10;
+        long startBatch = System.currentTimeMillis();
         for (File screenshotFile : screenshotFiles) {
             n++;
             logger.trace("Processing file " + n + " of " + screenshotFiles.size() + ": " + screenshotFile.getName());
@@ -57,6 +65,17 @@ public class BodyScannerApp {
                 logger.warn("Replacing existing scanner result for " + sbi.getBodyName() + " from " + prevSBI.getScreenshotFilename() + " with the new result from " + sbi.getScreenshotFilename());
             }
             resultsByBodyName.put(sbi.getBodyName(), sbi);
+
+            // Print ETA
+            if (n % batchSize == 0) {
+                long millis = System.currentTimeMillis() - startBatch;
+                double screenshotsPerSec = ((double) batchSize / Math.max(1, millis)) * 1000d;
+                int screenshotsRemaining = total - n;
+                double secondsRemaining = screenshotsRemaining / screenshotsPerSec;
+                Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
+                logger.trace(String.format("Processed %,d of %,d screenshots (%.1f/min) -- ETA %s", n, total, screenshotsPerSec * 60, DF_ETA.format(eta)));
+                startBatch = System.currentTimeMillis();
+            }
         }
 
         List<ScannedBodyInfo> results = new ArrayList<>(resultsByBodyName.size());

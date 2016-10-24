@@ -13,12 +13,11 @@
 
     <Loggers>
         <logger name="borg" level="DEBUG"></logger>
-        <logger name="borg.edtrading.BodyInfoTest" level="TRACE"></logger>
+        <logger name="borg.edtrading.BodyScannerApp" level="TRACE"></logger>
         <logger name="borg.edtrading.BodyScannerTest" level="TRACE"></logger>
         <logger name="borg.edtrading.boofcv.TemplateMatcher" level="INFO"></logger>
-        <!-- logger name="borg.edtrading.data.ScannedBodyInfo" level="TRACE"></logger -->
         <!-- logger name="borg.edtrading.eddb.BodyUpdater" level="TRACE"></logger -->
-        <!-- logger name="borg.edtrading.ocr.ScannedBodyInfoParser" level="TRACE"></logger -->
+        <!-- logger name="borg.edtrading.bodyscanner.BodyMatchesParser" level="TRACE"></logger -->
 
         <Root level="ERROR">
             <AppenderRef ref="STDOUT" />
