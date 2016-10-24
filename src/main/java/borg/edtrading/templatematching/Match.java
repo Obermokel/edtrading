@@ -2,6 +2,8 @@ package borg.edtrading.templatematching;
 
 import borg.edtrading.screenshots.Region;
 
+import java.awt.Rectangle;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -32,6 +34,17 @@ public class Match {
     @Override
     public String toString() {
         return "<" + this.getTemplate().getText() + "> (" + String.format(Locale.US, "%.3f", this.getErrorPerPixel()) + ")";
+    }
+
+    public boolean overlapsWithAny(List<Match> other, int border) {
+        Rectangle rThis = new Rectangle(this.getxInRegion() - border, this.getyInRegion() - border, this.getTemplate().getWidth() + 2 * border, this.getTemplate().getHeight() + 2 * border);
+        for (Match m : other) {
+            Rectangle rOther = new Rectangle(m.getxInRegion() - border, m.getyInRegion() - border, m.getTemplate().getWidth() + 2 * border, m.getTemplate().getHeight() + 2 * border);
+            if (rThis.intersects(rOther)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

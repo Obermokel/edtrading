@@ -120,6 +120,15 @@ public class BodyScanner {
             Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, this.allTemplates);
             if (bestMatch != null && bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED) {
                 allMatches.add(bestMatch);
+            } else {
+                List<Match> nonOverlappingMatches = new TemplateMatcher().allNonOverlappingTemplates(charRegion, this.alphanumTemplates);
+                nonOverlappingMatches = nonOverlappingMatches.stream().filter(m -> m.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED).collect(Collectors.toList());
+                if (nonOverlappingMatches.size() >= 2) {
+                    allMatches.addAll(nonOverlappingMatches);
+                    //                    String pos = charRegion.getxInScreenshot() + "." + charRegion.getyInScreenshot();
+                    //                    String chars = StringUtils.join(nonOverlappingMatches.stream().map(m -> m.getTemplate().getText()).collect(Collectors.toList()).toArray());
+                    //                    charRegion.saveToFile(new File(Constants.TEMP_DIR, "MULTIMATCH_" + pos + "_" + chars + "_" + region.getScreenshot().getFile().getName()), Transformation.LAST);
+                }
             }
         }
 
@@ -147,14 +156,14 @@ public class BodyScanner {
         return result;
     }
 
-    private BufferedImage debugTemplates(Region region, List<Rectangle> typicalCharacterSizeLocations, List<Template> templates) throws IOException {
+    private BufferedImage debugTemplates(Region region, List<Rectangle> locations, List<Template> templates) throws IOException {
         Random rand = new Random();
         BufferedImage gi = VisualizeImageData.grayMagnitude((ImageGray) region.getImageData(Transformation.LAST), null, -1);
         BufferedImage bi = new BufferedImage(gi.getWidth(), gi.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = bi.createGraphics();
         g.drawImage(gi, 0, 0, null);
         g.setFont(new Font("Consolas", Font.PLAIN, 22));
-        for (Rectangle r : typicalCharacterSizeLocations) {
+        for (Rectangle r : locations) {
             //g.setColor(Color.GRAY);
             g.setColor(new Color(64 + rand.nextInt(128), 64 + rand.nextInt(128), 64 + rand.nextInt(128)));
             g.drawRect(r.x, r.y, r.width, r.height);
@@ -165,7 +174,7 @@ public class BodyScanner {
         int nGuessed = 0;
         int nUnknown = 0;
         int nCrap = 0;
-        for (Rectangle r : typicalCharacterSizeLocations) {
+        for (Rectangle r : locations) {
             Region charRegion = region.getSubregion(r.x, r.y, r.width, r.height);
             Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, templates);
             if (bestMatch == null) {

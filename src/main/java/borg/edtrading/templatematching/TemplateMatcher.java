@@ -7,6 +7,9 @@ import borg.edtrading.util.ImageUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -17,6 +20,31 @@ import java.util.List;
 public class TemplateMatcher {
 
     static final Logger logger = LogManager.getLogger(TemplateMatcher.class);
+
+    public List<Match> allNonOverlappingTemplates(Region region, List<Template> templates) {
+        List<Match> allMatches = new ArrayList<>();
+        for (Template t : templates) {
+            if ((t.getWidth() - 2) <= region.getWidth() && (t.getHeight() - 2) <= region.getHeight()) {
+                Match m = bestMatchingLocation(region, t, 1);
+                if (m != null) {
+                    allMatches.add(m);
+                }
+            }
+        }
+        Collections.sort(allMatches, new Comparator<Match>() {
+            @Override
+            public int compare(Match m1, Match m2) {
+                return new Double(m1.getErrorPerPixel()).compareTo(new Double(m2.getErrorPerPixel()));
+            }
+        });
+        List<Match> nonOverlappingMatches = new ArrayList<>();
+        for (Match m : allMatches) {
+            if (!m.overlapsWithAny(nonOverlappingMatches, -1)) {
+                nonOverlappingMatches.add(m);
+            }
+        }
+        return nonOverlappingMatches;
+    }
 
     /**
      * Scales each template to the size of the screenshot region and finds the best matching one
@@ -53,24 +81,35 @@ public class TemplateMatcher {
      * @throws IllegalArgumentException If the template is larger than the screenshot region
      */
     public Match bestMatchingLocation(Region region, Template template) throws IllegalArgumentException {
-        if (template.getWidth() > region.getWidth() || template.getHeight() > region.getHeight()) {
+        return this.bestMatchingLocation(region, template, 0);
+    }
+
+    /**
+     * Scans the screenshot region to find the best location of the (unscaled) template
+     *
+     * @return The best matching location, never <code>null</code>
+     * @throws IllegalArgumentException If the template is larger than the screenshot region
+     */
+    public Match bestMatchingLocation(Region region, Template template, int cropTemplate) throws IllegalArgumentException {
+        if ((template.getWidth() - 2 * cropTemplate) > region.getWidth() || (template.getHeight() - 2 * cropTemplate) > region.getHeight()) {
             throw new IllegalArgumentException("Template " + template + " is larger than " + region);
         } else {
             GrayF32 regionPixels = ImageUtil.normalize((GrayF32) region.getImageData(Transformation.LAST));
+            GrayF32 templatePixels = cropTemplate <= 0 ? template.getPixels() : template.getPixels().subimage(cropTemplate, cropTemplate, template.getWidth() - 2 * cropTemplate, template.getHeight() - 2 * cropTemplate);
             float bestError = 999999999.9f;
             Match bestMatch = null;
-            for (int yInRegion = 0; yInRegion < (region.getHeight() - template.getHeight()); yInRegion++) {
-                for (int xInRegion = 0; xInRegion < (region.getWidth() - template.getWidth()); xInRegion++) {
+            for (int yInRegion = 0; yInRegion < (region.getHeight() - templatePixels.getHeight()); yInRegion++) {
+                for (int xInRegion = 0; xInRegion < (region.getWidth() - templatePixels.getWidth()); xInRegion++) {
                     float error = 0.0f;
-                    for (int yInTemplate = 0; yInTemplate < template.getHeight() && error < bestError; yInTemplate++) {
-                        for (int xInTemplate = 0; xInTemplate < template.getWidth() && error < bestError; xInTemplate++) {
-                            float diff = regionPixels.unsafe_get(xInRegion + xInTemplate, yInRegion + yInTemplate) - template.getPixels().unsafe_get(xInTemplate, yInTemplate);
+                    for (int yInTemplate = 0; yInTemplate < templatePixels.getHeight() && error < bestError; yInTemplate++) {
+                        for (int xInTemplate = 0; xInTemplate < templatePixels.getWidth() && error < bestError; xInTemplate++) {
+                            float diff = regionPixels.unsafe_get(xInRegion + xInTemplate, yInRegion + yInTemplate) - templatePixels.unsafe_get(xInTemplate, yInTemplate);
                             error += (diff * diff);
                         }
                     }
                     if (error < bestError) {
                         // Use the template size for error/pixel calculation because we are using the unscaled template
-                        float errorPerPixel = error / (template.getWidth() * template.getHeight());
+                        float errorPerPixel = error / (templatePixels.getWidth() * templatePixels.getHeight());
                         bestError = error;
                         bestMatch = new Match(region, template, xInRegion, yInRegion, error, errorPerPixel);
                     }
