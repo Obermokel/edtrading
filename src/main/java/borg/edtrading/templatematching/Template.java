@@ -14,7 +14,9 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -29,6 +31,8 @@ public class Template {
     private final GrayF32 pixels;
     // TODO mask
     private final String text;
+
+    private final Map<String, GrayF32> scaledPixelsCache = new HashMap<>();
 
     private Template(File file, GrayF32 pixels, String text) {
         this.file = file;
@@ -86,9 +90,12 @@ public class Template {
     public GrayF32 scalePixelsToSize(int width, int height) {
         if (this.getPixels().getWidth() == width && this.getPixels().getHeight() == height) {
             return this.getPixels();
+        } else if (this.scaledPixelsCache.containsKey(width + "x" + height)) {
+            return this.scaledPixelsCache.get(width + "x" + height);
         } else {
             GrayF32 scaled = new GrayF32(width, height);
             new FDistort().input(this.getPixels()).output(scaled).interp(TypeInterpolate.BICUBIC).scaleExt().apply();
+            this.scaledPixelsCache.put(width + "x" + height, scaled);
             return scaled;
         }
     }
