@@ -78,7 +78,7 @@ public class CharacterLocator {
                             int xEndAllBlack = x;
                             // Add the char and break out to search for the next one
                             Rectangle r = shrink(image, xStartContainsWhite, scanRect.y, xEndAllBlack, scanRect.y + scanRect.height);
-                            if (r.width * r.height <= 32) {
+                            if (r.width * r.height <= 36) {
                                 // Small punctuation char. Make it full height, otherwise ' and , look the same.
                                 r = new Rectangle(r.x, tl.getY() - Math.round(tl.getHeight() / 6f), r.width, tl.getHeight() + Math.round(tl.getHeight() / 3f));
                             }

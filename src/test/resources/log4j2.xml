@@ -16,6 +16,7 @@
         <logger name="borg.edtrading.BodyScannerApp" level="TRACE"></logger>
         <logger name="borg.edtrading.BodyScannerTest" level="TRACE"></logger>
         <logger name="borg.edtrading.boofcv.TemplateMatcher" level="INFO"></logger>
+        <logger name="borg.edtrading.ocr.TextLine" level="INFO"></logger>
         <!-- logger name="borg.edtrading.eddb.BodyUpdater" level="TRACE"></logger -->
         <!-- logger name="borg.edtrading.bodyscanner.BodyMatchesParser" level="TRACE"></logger -->
 
