@@ -34,7 +34,7 @@ public class BodyScannerTest {
 
         logger.trace("Creating the scanner...");
         BodyScanner scanner = new BodyScanner();
-        scanner.setDebugAlphanumTemplates(true);
+        scanner.setDebugAlphanumTemplates(false);
         scanner.setDebugAlphanumTextLines(true);
         scanner.setDebugAllTemplates(true);
         scanner.setDebugAllTextLines(true);
@@ -43,7 +43,7 @@ public class BodyScannerTest {
         //2016-09-29 08-16-28 Paul-Friedrichs Star
         //2016-10-03 08-37-57 Altair
         //2016-09-29 08-24-03 BD+63 1764
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-23 13-06-29 Calhuacan.png");
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-09-28 08-21-00 Eta Coronae Borealis.png");
         //for (File sourceFile : BodyScannerApp.selectAllScreenshots()) {
         logger.trace("Testing " + sourceFile.getName());
         BodyScannerResult result = scanner.scanScreenshotFile(sourceFile);

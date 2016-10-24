@@ -37,58 +37,57 @@ public class BodyMatchesParser {
 
     private static String currentScreenshotFilename = "";
 
-    public static ScannedBodyInfo fromScannedAndSortedMatches(String screenshotFilename, String systemName, List<Match> bodyNameMatches, List<Match> bodyInfoMatches) {
+    public static ScannedBodyInfo fromScannedAndSortedMatches(String screenshotFilename, String systemName, List<TextLine> bodyNameLines, List<Match> bodyInfoMatches) {
         currentScreenshotFilename = screenshotFilename;
 
         ScannedBodyInfo scannedBodyInfo = new ScannedBodyInfo(screenshotFilename, systemName);
 
         // >>>> START BODY NAME >>>>
-        SortedMap<Integer, String> sortedNameIndexes = new TreeMap<>();
-        if (findAndRemove("ARRIVALPOINT:", bodyNameMatches, sortedNameIndexes) == null) {
-            // Name only
-        } else {
-            // Name, then distance, then type
-            for (BodyInfo bi : BodyInfo.byPrefix("TYPE_")) {
-                String nameWithoutSpaces = bi.getName().replaceAll("\\s", "");
-                if (findAndRemove(nameWithoutSpaces, bodyNameMatches, "TYPE_", sortedNameIndexes) != null) {
-                    scannedBodyInfo.setBodyType(bi);
-                    break; // Expect only one hit
+        String bodyName = "";
+        BigDecimal distanceLs = null;
+        BodyInfo bodyType = null;
+        if (bodyNameLines.size() >= 1) {
+            TextLine nameLine = bodyNameLines.get(0);
+            List<Match> nameMatches = nameLine.getMatches();
+
+            bodyName = nameLine.toText();
+            bodyName = removePixelErrorsFromBodyName(bodyName);
+            bodyName = fixGeneratedBodyName(systemName, bodyName);
+            String fixedText = bodyName.toUpperCase().replaceAll("\\s", "");
+            if (nameMatches.size() == fixedText.length()) {
+                for (int i = 0; i < fixedText.length(); i++) {
+                    char shouldHaveBeen = fixedText.charAt(i);
+                    nameMatches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
                 }
             }
-            scannedBodyInfo.setDistanceLs(fixAndRemoveDistance("ARRIVALPOINT:", bodyNameMatches, sortedNameIndexes));
         }
-        findAndRemove("Select", bodyNameMatches, sortedNameIndexes); // Select button text...
-        List<Match> remainingNameMatches = new ArrayList<>();
-        for (int i = 0; i < bodyNameMatches.size(); i++) {
-            if (bodyNameMatches.get(i).getShouldHaveBeen() != null) {
-                break;
-            } else if ("▪".equals(bodyNameMatches.get(i).getTemplate().getText())) {
-                // Skip
-            } else {
-                remainingNameMatches.add(bodyNameMatches.get(i));
+        if (bodyNameLines.size() >= 2) {
+            TextLine arrivalLine = bodyNameLines.get(1);
+            List<Match> arrivalMatches = arrivalLine.getMatches();
+
+            SortedMap<Integer, String> sortedIndexes = new TreeMap<>();
+            if (findAndRemove("ARRIVALPOINT:", arrivalMatches, sortedIndexes) != null) {
+                distanceLs = fixAndRemoveDistance("ARRIVALPOINT:", arrivalMatches, sortedIndexes);
             }
         }
-        String bodyName = "";
-        //        List<MatchGroup> remainingNameWords = MatchSorter.sortMatches(remainingNameMatches);
-        //        for (MatchGroup mg : remainingNameWords) {
-        //            bodyName = (bodyName + " " + mg.getText()).trim();
-        //        }
-        List<TextLine> remainingTextLines = TextLine.matchesToTextLines(remainingNameMatches);
-        if (remainingTextLines.size() > 0) {
-            bodyName = remainingTextLines.get(0).toText();
-        }
-        bodyName = removePixelErrorsFromBodyName(bodyName);
-        bodyName = fixGeneratedBodyName(systemName, bodyName);
-        String fixedText = bodyName.toUpperCase().replaceAll("\\s", "");
-        // Set shouldHaveBeen, effectively removing the matches
-        if (remainingNameMatches.size() == fixedText.length()) {
-            for (int i = 0; i < remainingNameMatches.size(); i++) {
-                char shouldHaveBeen = fixedText.charAt(i);
-                remainingNameMatches.get(i).setShouldHaveBeen(Character.toString(shouldHaveBeen));
+        if (bodyNameLines.size() >= 3) {
+            TextLine typeLine = bodyNameLines.get(2);
+            List<Match> typeMatches = typeLine.getMatches();
+
+            bodyType = BodyInfo.findBestMatching(typeLine.toText().replace("0", "O"), "TYPE_");
+            if (bodyType != null) {
+                SortedMap<Integer, String> sortedIndexes = new TreeMap<>();
+                String nameWithoutSpaces = bodyType.getName().replaceAll("\\s", "");
+                findAndRemove(nameWithoutSpaces, typeMatches, "TYPE_", sortedIndexes);
             }
         }
-        // Set the name
         scannedBodyInfo.setBodyName(bodyName);
+        scannedBodyInfo.setDistanceLs(distanceLs);
+        scannedBodyInfo.setBodyType(bodyType);
+        List<Match> bodyNameMatches = new ArrayList<>();
+        for (TextLine tl : bodyNameLines) {
+            bodyNameMatches.addAll(tl.getMatches());
+        }
         // <<<< END BODY NAME <<<<
 
         // Store the indexes of all labels. This allows us to later extract the values. In most cases we have label, value, label, value, ...

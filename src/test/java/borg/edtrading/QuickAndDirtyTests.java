@@ -28,7 +28,7 @@ public class QuickAndDirtyTests {
     static final Logger logger = LogManager.getLogger(QuickAndDirtyTests.class);
 
     public static void main(String[] args) throws IOException {
-        File file = new File(Constants.TEMPLATES_DIR, "CRAP\\CRAP\\CRAP#2016-10-03 22-56-11 Nogatas#255.1024.png");
+        File file = new File(Constants.TEMPLATES_DIR, "CRAP\\CRAP\\CRAP#2016-09-28 07-42-51 Sol#273.1153.png");
         Screenshot screenshot = Screenshot.loadFromFile(file, 37, 23, null);
         Region region = screenshot.getAsRegion();
         region.applyTransformation("GRAY", new RgbToGrayTransformation());

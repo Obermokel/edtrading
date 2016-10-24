@@ -100,6 +100,12 @@ public class BodyScanner {
             Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, this.alphanumTemplates);
             if (bestMatch != null && bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED) {
                 alphanumMatches.add(bestMatch);
+            } else {
+                List<Match> nonOverlappingMatches = new TemplateMatcher().allNonOverlappingTemplates(charRegion, this.alphanumTemplates);
+                nonOverlappingMatches = nonOverlappingMatches.stream().filter(m -> m.getErrorPerPixel() <= ERROR_PER_PIXEL_UNKNOWN).collect(Collectors.toList());
+                if (nonOverlappingMatches.size() >= 2) {
+                    alphanumMatches.addAll(nonOverlappingMatches);
+                }
             }
         }
 
@@ -142,18 +148,18 @@ public class BodyScanner {
         }
 
         // TODO
-        List<Match> bodyNameMatches = new ArrayList<>();
+        List<TextLine> bodyNameLines = new ArrayList<>();
         List<Match> bodyInfoMatches = new ArrayList<>();
         for (TextLine tl : allTextLines) {
             if (tl.getX() > screenshot.getResizedWidth() * 0.333) {
-                bodyNameMatches.addAll(tl.getMatches());
+                bodyNameLines.add(tl);
             } else {
                 bodyInfoMatches.addAll(tl.getMatches());
             }
         }
         String filename = screenshotFile.getName();
         String systemName = MiscUtil.systemNameFromFilename(screenshotFile);
-        ScannedBodyInfo sbi = BodyMatchesParser.fromScannedAndSortedMatches(filename, systemName, bodyNameMatches, bodyInfoMatches);
+        ScannedBodyInfo sbi = BodyMatchesParser.fromScannedAndSortedMatches(filename, systemName, bodyNameLines, bodyInfoMatches);
         result.setScannedBodyInfo(sbi);
 
         return result;

@@ -37,12 +37,14 @@ public class TemplateMatcher {
                 return new Double(m1.getErrorPerPixel()).compareTo(new Double(m2.getErrorPerPixel()));
             }
         });
+        //logger.debug(allMatches);
         List<Match> nonOverlappingMatches = new ArrayList<>();
         for (Match m : allMatches) {
             if (!m.overlapsWithAny(nonOverlappingMatches, 0)) {
                 nonOverlappingMatches.add(m);
             }
         }
+        //logger.debug(nonOverlappingMatches);
         return nonOverlappingMatches;
     }
 
