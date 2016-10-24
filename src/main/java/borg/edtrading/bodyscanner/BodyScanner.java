@@ -121,11 +121,11 @@ public class BodyScanner {
         for (Rectangle r : locationsWithinTextLines) {
             Region charRegion = region.getSubregion(r.x, r.y, r.width, r.height);
             Match bestMatch = new TemplateMatcher().bestMatchingTemplate(charRegion, this.allTemplates);
-            if (bestMatch != null && bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED) {
+            if (bestMatch != null && bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_UNKNOWN) {
                 allMatches.add(bestMatch);
             } else {
                 List<Match> nonOverlappingMatches = new TemplateMatcher().allNonOverlappingTemplates(charRegion, this.alphanumTemplates);
-                nonOverlappingMatches = nonOverlappingMatches.stream().filter(m -> m.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED).collect(Collectors.toList());
+                nonOverlappingMatches = nonOverlappingMatches.stream().filter(m -> m.getErrorPerPixel() <= ERROR_PER_PIXEL_UNKNOWN).collect(Collectors.toList());
                 if (nonOverlappingMatches.size() >= 2) {
                     allMatches.addAll(nonOverlappingMatches);
                     //                    String pos = charRegion.getxInScreenshot() + "." + charRegion.getyInScreenshot();

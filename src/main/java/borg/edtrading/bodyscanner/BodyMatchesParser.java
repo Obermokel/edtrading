@@ -293,6 +293,11 @@ public class BodyMatchesParser {
         }
 
         // TODO Remove this debug output
+        //        System.out.print("         ");
+        //        for (int i = 0; i < bodyNameMatches.size(); i++) {
+        //            System.out.print(String.format("%-3d", i));
+        //        }
+        //        System.out.println();
         //        System.out.print("Scanned: ");
         //        for (Match m : bodyNameMatches) {
         //            System.out.print("<" + m.getTemplate().getText() + ">");
@@ -301,6 +306,11 @@ public class BodyMatchesParser {
         //        System.out.print("Parsed:  ");
         //        for (Match m : bodyNameMatches) {
         //            System.out.print("<" + (m.getShouldHaveBeen() == null ? "?" : m.getShouldHaveBeen()) + ">");
+        //        }
+        //        System.out.println();
+        //        System.out.print("         ");
+        //        for (int i = 0; i < bodyInfoMatches.size(); i++) {
+        //            System.out.print(String.format("%-3d", i));
         //        }
         //        System.out.println();
         //        System.out.print("Scanned: ");
