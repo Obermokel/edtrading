@@ -12,6 +12,8 @@ import java.awt.image.BufferedImage;
 public class BodyScannerResult {
 
     private Screenshot screenshot = null;
+    private BufferedImage thresholdDebugImage = null;
+    private BufferedImage blurredDebugImage = null;
     private BufferedImage alphanumTemplatesDebugImage = null;
     private BufferedImage alphanumTextLinesDebugImage = null;
     private BufferedImage allTemplatesDebugImage = null;
@@ -29,6 +31,22 @@ public class BodyScannerResult {
 
     public void setScreenshot(Screenshot screenshot) {
         this.screenshot = screenshot;
+    }
+
+    public BufferedImage getThresholdDebugImage() {
+        return this.thresholdDebugImage;
+    }
+
+    public void setThresholdDebugImage(BufferedImage thresholdDebugImage) {
+        this.thresholdDebugImage = thresholdDebugImage;
+    }
+
+    public BufferedImage getBlurredDebugImage() {
+        return this.blurredDebugImage;
+    }
+
+    public void setBlurredDebugImage(BufferedImage blurredDebugImage) {
+        this.blurredDebugImage = blurredDebugImage;
     }
 
     public BufferedImage getAlphanumTemplatesDebugImage() {

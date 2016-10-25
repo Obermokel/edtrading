@@ -63,12 +63,20 @@ public class BodyScannerTest {
 
             logger.trace("Testing " + screenshotFile.getName());
             BodyScanner scanner = new BodyScanner();
-            scanner.setDebugAlphanumTemplates(true);
-            scanner.setDebugAlphanumTextLines(true);
+            scanner.setDebugThresholdImage(false);
+            scanner.setDebugBlurredImage(false);
+            scanner.setDebugAlphanumTemplates(false);
+            scanner.setDebugAlphanumTextLines(false);
             scanner.setDebugAllTemplates(false);
-            scanner.setDebugAllTextLines(true);
+            scanner.setDebugAllTextLines(false);
             scanner.setDebugFinal(true);
             BodyScannerResult result = scanner.scanScreenshotFile(screenshotFile);
+            if (result.getThresholdDebugImage() != null) {
+                ImageIO.write(result.getThresholdDebugImage(), "PNG", new File(Constants.TEMP_DIR, "ThresholdDebugImage " + screenshotFile.getName()));
+            }
+            if (result.getBlurredDebugImage() != null) {
+                ImageIO.write(result.getBlurredDebugImage(), "PNG", new File(Constants.TEMP_DIR, "BlurredDebugImage " + screenshotFile.getName()));
+            }
             if (result.getAlphanumTemplatesDebugImage() != null) {
                 ImageIO.write(result.getAlphanumTemplatesDebugImage(), "PNG", new File(Constants.TEMP_DIR, "AlphanumTemplatesDebugImage " + screenshotFile.getName()));
             }

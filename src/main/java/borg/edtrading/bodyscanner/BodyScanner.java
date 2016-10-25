@@ -2,6 +2,7 @@ package borg.edtrading.bodyscanner;
 
 import boofcv.gui.image.VisualizeImageData;
 import boofcv.io.image.ConvertBufferedImage;
+import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageGray;
 import borg.edtrading.imagetransformation.Transformation;
@@ -49,7 +50,7 @@ public class BodyScanner {
      * If error/pixel is less or equal than this value the detection quality should be good enough for only slight
      * errors which can be corrected with levenshtein and known texts.
      */
-    public static final float ERROR_PER_PIXEL_GUESSED = 0.040f;
+    public static final float ERROR_PER_PIXEL_GUESSED = 0.035f;
     /**
      * If error/pixel is less or equal than this value we assume that the pixels represent an unknown char. If
      * error/pixel is higher it is likely to be crap.
@@ -62,6 +63,8 @@ public class BodyScanner {
     private final List<Template> allTemplates;
     private final List<Template> alphanumTemplates;
 
+    private boolean debugThresholdImage = false;
+    private boolean debugBlurredImage = false;
     private boolean debugAlphanumTemplates = false;
     private boolean debugAlphanumTextLines = false;
     private boolean debugAllTemplates = false;
@@ -89,6 +92,13 @@ public class BodyScanner {
         region.applyTransformation("THRESH", new ThresholdTransformation(128));
         GrayU8 thresholdedImage = (GrayU8) region.getImageData(Transformation.LAST);
         region.applyTransformation("BLUR", new GaussianBlurTransformation(2, -1));
+        GrayF32 blurredImage = (GrayF32) region.getImageData(Transformation.LAST);
+        if (this.isDebugThresholdImage()) {
+            result.setThresholdDebugImage(VisualizeImageData.grayMagnitude(thresholdedImage, null, -1));
+        }
+        if (this.isDebugBlurredImage()) {
+            result.setBlurredDebugImage(VisualizeImageData.grayMagnitude(blurredImage, null, -1));
+        }
 
         // Find likely character locations and match them against the alphanum templates.
         // The alphanum templates are better to detect than small punctuation chars like dot, comma etc which are only a few pixels.
@@ -312,6 +322,22 @@ public class BodyScanner {
 
     List<Template> getAlphanumTemplates() {
         return this.alphanumTemplates;
+    }
+
+    public boolean isDebugThresholdImage() {
+        return this.debugThresholdImage;
+    }
+
+    public void setDebugThresholdImage(boolean debugThresholdImage) {
+        this.debugThresholdImage = debugThresholdImage;
+    }
+
+    public boolean isDebugBlurredImage() {
+        return this.debugBlurredImage;
+    }
+
+    public void setDebugBlurredImage(boolean debugBlurredImage) {
+        this.debugBlurredImage = debugBlurredImage;
     }
 
     public boolean isDebugAlphanumTemplates() {
