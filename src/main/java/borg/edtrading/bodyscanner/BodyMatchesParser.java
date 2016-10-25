@@ -292,6 +292,15 @@ public class BodyMatchesParser {
             scannedBodyInfo.setRings(rings);
         }
 
+        try {
+            // FIXME Remove debug output!!!
+            if (scannedBodyInfo.getAtmosphereType() == BodyInfo.ATMOSPHERE_TYPE_MATEALLIC_VAPOUR) {
+                logger.debug("ATMOSPHERE_TYPE_MATEALLIC_VAPOUR: " + currentScreenshotFilename);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         // TODO Remove this debug output
         //        System.out.print("         ");
         //        for (int i = 0; i < bodyNameMatches.size(); i++) {

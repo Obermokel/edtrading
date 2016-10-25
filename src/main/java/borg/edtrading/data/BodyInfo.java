@@ -38,7 +38,17 @@ public enum BodyInfo {
     TYPE_WATER_GIANT("Water giant"),
     TYPE_WATER_WORLD("Water world"),
 
-    STAR_TYPE_T_TAURI("T Tauri type stars are very young stars"),
+    // O, B, Neutron, BH
+    STAR_TYPE_CLASS_A("Class A stars are hot white or bluish white main"), // 2016-10-02 06-57-39 Sirius.png
+    STAR_TYPE_CLASS_F("Class F stars are white main sequence stars. They"), // 2016-10-06 22-55-53 Delta Equulei.png
+    STAR_TYPE_CLASS_G("Class G stars are white-yellow main sequence"), // 2016-09-28 08-21-26 Eta Coronae Borealis.png
+    STAR_TYPE_CLASS_K("Class K stars are yellow-orange main sequence"), // 2016-10-02 09-52-08 Skogulumari.png
+    STAR_TYPE_CLASS_L("Class L dwarfs are dwarf stars that are cooler than"), // 2016-10-10 04-03-43 HIP 9774.png
+    STAR_TYPE_CLASS_M("Class M stars are red stars that form the bulk of"), // 2016-10-03 11-48-27 Yimanbin.png
+    STAR_TYPE_CLASS_T("Class T dwarfs are brown dwarfs with a surface"), // 2016-10-23 12-31-14 Agastariya (1).png
+    STAR_TYPE_CLASS_Y("Class Y dwarfs are the coolest of the brown dwarfs"), // 2016-10-02 07-09-36 Xi Ursae Majoris.png
+    STAR_TYPE_T_TAURI("T Tauri type stars are very young stars"), // 2016-10-03 13-35-08 Meliontit.png
+    STAR_TYPE_WHITE_DWARF("White Dwarf stars are stellar remnants. Nuclear"), // 2016-10-02 06-57-48 Sirius.png
 
     TERRAFORMING_NOT_TERRAFORMABLE("Not terraformable"),
     TERRAFORMING_CANDIDATE_FOR_TERRAFORMING("Candidate for terraforming"),

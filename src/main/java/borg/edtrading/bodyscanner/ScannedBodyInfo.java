@@ -181,7 +181,12 @@ public class ScannedBodyInfo {
         // ---- RINGS ----
         if (this.getRings() != null) {
             for (ScannedRingInfo sri : this.getRings()) {
-                sb.append(sri.toString()).append("\n");
+                sb.append(String.format(Locale.US, "%-21s\t%s", "  RING NAME:", sri.getRingName())).append("\n");
+                sb.append(String.format(Locale.US, "%-21s\t%s", "  RING TYPE:", sri.getRingType() == null ? null : sri.getRingType().getName())).append("\n");
+                sb.append(String.format(Locale.US, "%-21s\t%,.1fMT", "  MASS:", sri.getMassMt())).append("\n");
+                sb.append(String.format(Locale.US, "%-21s\t%,.2fAU", "  SEMI MAJOR AXIS:", sri.getSemiMajorAxisAU())).append("\n");
+                sb.append(String.format(Locale.US, "%-21s\t%,.0fKM", "  INNER RADIUS:", sri.getInnerRadiusKm())).append("\n");
+                sb.append(String.format(Locale.US, "%-21s\t%,.0fKM", "  OUTER RADIUS:", sri.getOuterRadiusKm())).append("\n");
             }
         }
 

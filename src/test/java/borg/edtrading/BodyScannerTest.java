@@ -12,6 +12,8 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -42,9 +44,9 @@ public class BodyScannerTest {
         //2016-09-29 08-16-28 Paul-Friedrichs Star
         //2016-10-03 08-37-57 Altair
         //2016-09-29 08-24-03 BD+63 1764
-        //List<File> screenshotFiles = BodyScannerApp.selectSpecificScreenshot("2016-09-30 17-21-51 Deciat.png");
+        List<File> screenshotFiles = BodyScannerApp.selectSpecificScreenshot("2016-10-02 06-57-48 Sirius.png");
         //List<File> screenshotFiles = BodyScannerApp.selectRandomScreenshot();
-        List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
+        //List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
         int n = 0;
         int total = screenshotFiles.size();
         int batchSize = 10;
@@ -63,12 +65,12 @@ public class BodyScannerTest {
 
             logger.trace("Testing " + screenshotFile.getName());
             BodyScanner scanner = new BodyScanner();
-            scanner.setDebugThresholdImage(false);
-            scanner.setDebugBlurredImage(false);
-            scanner.setDebugAlphanumTemplates(false);
-            scanner.setDebugAlphanumTextLines(false);
-            scanner.setDebugAllTemplates(false);
-            scanner.setDebugAllTextLines(false);
+            scanner.setDebugThresholdImage(true);
+            scanner.setDebugBlurredImage(true);
+            scanner.setDebugAlphanumTemplates(true);
+            scanner.setDebugAlphanumTextLines(true);
+            scanner.setDebugAllTemplates(true);
+            scanner.setDebugAllTextLines(true);
             scanner.setDebugFinal(true);
             BodyScannerResult result = scanner.scanScreenshotFile(screenshotFile);
             if (result.getThresholdDebugImage() != null) {
@@ -122,8 +124,28 @@ public class BodyScannerTest {
                 });
                 if (pngFiles != null && pngFiles.length >= 1) {
                     File randomPngFile = pngFiles[random.nextInt(pngFiles.length)];
-                    File targetFile = new File(targetSetDir, templateTextDir.getName() + "/LEARNED#" + randomPngFile.getName());
+                    File targetDir = new File(targetSetDir, templateTextDir.getName());
+                    File targetFile = new File(targetDir, "LEARNED#" + randomPngFile.getName());
                     FileUtils.copyFile(randomPngFile, targetFile);
+
+                    // Limit to the newest 10
+                    File[] learned = targetDir.listFiles(new FileFilter() {
+                        @Override
+                        public boolean accept(File file) {
+                            return file.getName().endsWith(".png");
+                        }
+                    });
+                    Arrays.sort(learned, new Comparator<File>() {
+                        @Override
+                        public int compare(File f1, File f2) {
+                            return -1 * new Long(f1.lastModified()).compareTo(new Long(f2.lastModified()));
+                        }
+                    });
+                    for (int i = 0; i < learned.length; i++) {
+                        if (i >= 10) {
+                            learned[i].delete();
+                        }
+                    }
                 }
             }
             // Clean learned

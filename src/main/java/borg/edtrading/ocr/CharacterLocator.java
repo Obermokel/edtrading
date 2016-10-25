@@ -62,11 +62,13 @@ public class CharacterLocator {
         List<Rectangle> result = new ArrayList<>();
 
         for (TextLine tl : textLines) {
+            int avgCharHeight = TextBuilder.computeAvgCharHeight(tl.getMatches());
+
             // Make the text line box double the height (because brackets or ° are higher than normal chars).
             // Also expand it a bit to the right in order to catch trailing units like °, or trailing comma.
             // Alsp expand it a bit to the left in order to catch leading sign like -.
-            int scanHeight = Math.round(1.50f * tl.getHeight()); // <- Test last materials line of 2016-09-28 07-58-50 Har Itari.png
-            int scanY = Math.round(tl.getyInScreenshot() - 0.25f * tl.getHeight());
+            int scanHeight = Math.round(1.50f * avgCharHeight); // <- Test last materials line of 2016-09-28 07-58-50 Har Itari.png
+            int scanY = Math.round(tl.getyInScreenshot() - 0.25f * avgCharHeight);
             Rectangle scanRect = new Rectangle(tl.getxInScreenshot() - tl.getHeight(), scanY, tl.getWidth() + 4 * tl.getHeight(), scanHeight);
 
             // Scan horizontally
