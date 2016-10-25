@@ -10,9 +10,13 @@ import org.apache.logging.log4j.Logger;
 
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
 import java.awt.image.BufferedImage;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * ImageUtil
@@ -24,6 +28,99 @@ public abstract class ImageUtil {
     static final Logger logger = LogManager.getLogger(ImageUtil.class);
 
     private static final float ASPECT_RATIO_16_BY_9 = 16f / 9f;
+
+    public static int fillArea(GrayU8 image, Point startPoint, int fillColor) {
+        int replacedColor = image.unsafe_get(startPoint.x, startPoint.y);
+        image.unsafe_set(startPoint.x, startPoint.y, fillColor);
+        int filledPixels = 1;
+
+        if (replacedColor == fillColor) {
+            return 0;
+        }
+
+        LinkedHashSet<Point> open = findNeighbourPixels(image, startPoint, replacedColor);
+        while (!open.isEmpty()) {
+            //            System.out.println(open.size());
+            Iterator<Point> it = open.iterator();
+            Point nextPoint = it.next();
+            it.remove();
+            image.unsafe_set(nextPoint.x, nextPoint.y, fillColor);
+            filledPixels++;
+            Set<Point> nextNeighbours = findNeighbourPixels(image, nextPoint, replacedColor);
+            for (Point nextNeighbour : nextNeighbours) {
+                if (!open.contains(nextNeighbour)) {
+                    open.add(nextNeighbour);
+                }
+            }
+        }
+
+        return filledPixels;
+    }
+
+    private static LinkedHashSet<Point> findNeighbourPixels(GrayU8 image, Point p, int rgb) {
+        LinkedHashSet<Point> result = new LinkedHashSet<>();
+        Point above = pointAbove(p, image);
+        if (above != null && image.unsafe_get(above.x, above.y) == rgb) {
+            result.add(above);
+        }
+        Point right = pointRight(p, image);
+        if (right != null && image.unsafe_get(right.x, right.y) == rgb) {
+            result.add(right);
+        }
+        Point below = pointBelow(p, image);
+        if (below != null && image.unsafe_get(below.x, below.y) == rgb) {
+            result.add(below);
+        }
+        Point left = pointLeft(p, image);
+        if (left != null && image.unsafe_get(left.x, left.y) == rgb) {
+            result.add(left);
+        }
+        return result;
+    }
+
+    private static Point pointAbove(Point current, GrayU8 image) {
+        Point other = new Point(current.x, current.y - 1);
+        if (insideImage(other, image)) {
+            return other;
+        } else {
+            return null;
+        }
+    }
+
+    private static Point pointRight(Point current, GrayU8 image) {
+        Point other = new Point(current.x + 1, current.y);
+        if (insideImage(other, image)) {
+            return other;
+        } else {
+            return null;
+        }
+    }
+
+    private static Point pointBelow(Point current, GrayU8 image) {
+        Point other = new Point(current.x, current.y + 1);
+        if (insideImage(other, image)) {
+            return other;
+        } else {
+            return null;
+        }
+    }
+
+    private static Point pointLeft(Point current, GrayU8 image) {
+        Point other = new Point(current.x - 1, current.y);
+        if (insideImage(other, image)) {
+            return other;
+        } else {
+            return null;
+        }
+    }
+
+    private static boolean insideImage(Point p, GrayU8 i) {
+        return insideImage(p.x, p.y, i);
+    }
+
+    private static boolean insideImage(int x, int y, GrayU8 i) {
+        return x >= 0 && y >= 0 && x < i.getWidth() && y < i.getHeight();
+    }
 
     public static BufferedImage toFullHd(BufferedImage original) {
         return scaleAndCrop(original, 1920, 1080);

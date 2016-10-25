@@ -125,7 +125,7 @@ public class TextBuilder {
         int numAvgChars = 0;
         // Try to use only digits and uppercase letters because they always go from the baseline to the top
         for (Match m : matches) {
-            if (m.getTemplate().getText().matches("[0-9A-Z]")) {
+            if (m.getTemplate().getText().matches("[0-9A-Zbdfhikl]")) {
                 avgCharHeight += m.getRegion().getHeight();
                 numAvgChars++;
             }

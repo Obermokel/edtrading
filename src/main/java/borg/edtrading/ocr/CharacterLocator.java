@@ -1,11 +1,12 @@
 package borg.edtrading.ocr;
 
-import boofcv.alg.misc.ImageMiscOps;
 import boofcv.alg.misc.ImageStatistics;
 import boofcv.struct.image.GrayU8;
+import borg.edtrading.util.ImageUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,8 @@ public class CharacterLocator {
                     Rectangle r = expand(copy, x, y);
 
                     // Fill black to not detect again
-                    ImageMiscOps.fillRectangle(copy, 0, r.x, r.y, r.width, r.height);
+                    //ImageMiscOps.fillRectangle(copy, 0, r.x, r.y, r.width, r.height);
+                    ImageUtil.fillArea(copy, new Point(x, y), 0);
 
                     // Check size and add to result
                     if (r.width >= this.minWidth && r.width <= this.maxWidth && r.height >= this.minHeight && r.height <= this.maxHeight) {
