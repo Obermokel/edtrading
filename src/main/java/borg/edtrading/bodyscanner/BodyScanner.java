@@ -71,7 +71,7 @@ public class BodyScanner {
     public BodyScanner() throws IOException {
         this.characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
         this.allTemplates = Template.fromFolder("BodyScanner");
-        this.alphanumTemplates = Template.fromFolder("BodyScanner").stream().filter(t -> t.getText().matches("[A-Za-z0-9]")).collect(Collectors.toList());
+        this.alphanumTemplates = this.allTemplates.stream().filter(t -> t.getText().matches("[A-Za-z0-9]")).collect(Collectors.toList());
     }
 
     public BodyScannerResult scanScreenshotFile(File screenshotFile) throws IOException {
