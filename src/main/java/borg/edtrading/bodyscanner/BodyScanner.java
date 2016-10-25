@@ -11,6 +11,7 @@ import borg.edtrading.imagetransformation.simple.ThresholdTransformation;
 import borg.edtrading.ocr.CharacterLocator;
 import borg.edtrading.ocr.TextBuilder;
 import borg.edtrading.ocr.TextLine;
+import borg.edtrading.ocr.Word;
 import borg.edtrading.screenshots.Region;
 import borg.edtrading.screenshots.Screenshot;
 import borg.edtrading.templatematching.Match;
@@ -155,7 +156,9 @@ public class BodyScanner {
             if (tl.getxInScreenshot() > screenshot.getResizedWidth() * 0.333) {
                 bodyNameLines.add(tl);
             } else {
-                bodyInfoMatches.addAll(tl.getMatches());
+                for (Word w : tl.getSortedWords()) {
+                    bodyInfoMatches.addAll(w.getSortedMatches());
+                }
             }
         }
         String filename = screenshotFile.getName();

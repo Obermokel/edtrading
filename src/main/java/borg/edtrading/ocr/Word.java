@@ -44,11 +44,7 @@ public class Word {
     public String toText() {
         String text = "";
 
-        int avgCharHeight = 0;
-        for (Match m : this.getSortedMatches()) {
-            avgCharHeight += m.getRegion().getHeight();
-        }
-        avgCharHeight = avgCharHeight / this.getSortedMatches().size();
+        int avgCharHeight = TextBuilder.computeAvgCharHeight(this.getSortedMatches());
         int minWordSpace = avgCharHeight / 2;
         int minKeyValueSpace = avgCharHeight * 2;
 
@@ -65,6 +61,7 @@ public class Word {
             text += m.getTemplate().getText();
             lastMatchEndX = m.getxInScreenshot() + m.getRegion().getWidth();
         }
+
         return text;
     }
 

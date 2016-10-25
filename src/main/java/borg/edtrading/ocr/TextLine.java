@@ -9,6 +9,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -24,14 +25,14 @@ public class TextLine {
     private final int yInScreenshot;
     private final int width;
     private final int height;
-    private final List<Match> matches;
+    private final List<Word> sortedWords;
 
-    private TextLine(int xInScreenshot, int yInScreenshot, int width, int height, List<Match> matches) {
+    private TextLine(int xInScreenshot, int yInScreenshot, int width, int height, List<Word> sortedWords) {
         this.xInScreenshot = xInScreenshot;
         this.yInScreenshot = yInScreenshot;
         this.width = width;
         this.height = height;
-        this.matches = matches;
+        this.sortedWords = sortedWords;
     }
 
     @Override
@@ -41,29 +42,22 @@ public class TextLine {
 
     public String toText() {
         String text = "";
-
-        int avgCharHeight = 0;
-        for (Match m : this.getMatches()) {
-            avgCharHeight += m.getRegion().getHeight();
-        }
-        avgCharHeight = avgCharHeight / this.getMatches().size();
-        int minWordSpace = avgCharHeight / 2;
-        int minKeyValueSpace = avgCharHeight * 2;
-
-        int lastMatchEndX = -1;
-        for (Match m : this.getMatches()) {
-            if (lastMatchEndX >= 0) {
-                int spaceToLast = m.getxInScreenshot() - lastMatchEndX;
-                if (spaceToLast >= minKeyValueSpace) {
-                    text += " → ";
-                } else if (spaceToLast >= minWordSpace) {
-                    text += " ";
-                }
+        Iterator<Word> it = this.getSortedWords().iterator();
+        while (it.hasNext()) {
+            text += it.next().toText();
+            if (it.hasNext()) {
+                text += " → ";
             }
-            text += m.getTemplate().getText();
-            lastMatchEndX = m.getxInScreenshot() + m.getRegion().getWidth();
         }
         return text;
+    }
+
+    public List<Match> getMatches() {
+        List<Match> result = new ArrayList<>();
+        for (Word w : this.getSortedWords()) {
+            result.addAll(w.getSortedMatches());
+        }
+        return result;
     }
 
     public int getxInScreenshot() {
@@ -82,8 +76,8 @@ public class TextLine {
         return this.height;
     }
 
-    public List<Match> getMatches() {
-        return this.matches;
+    public List<Word> getSortedWords() {
+        return this.sortedWords;
     }
 
     public static class TextLineBuilder {
@@ -116,21 +110,19 @@ public class TextLine {
             int minY = 999999999;
             int maxX = -999999999;
             int maxY = -999999999;
-            List<Match> matches = new ArrayList<>();
             for (Word w : this.words) {
                 minX = Math.min(minX, w.getxInScreenshot());
                 minY = Math.min(minY, w.getyInScreenshot());
                 maxX = Math.max(maxX, w.getxInScreenshot() + w.getWidth());
                 maxY = Math.max(maxY, w.getyInScreenshot() + w.getHeight());
-                matches.addAll(w.getSortedMatches());
             }
-            Collections.sort(matches, new Comparator<Match>() {
+            Collections.sort(this.words, new Comparator<Word>() {
                 @Override
-                public int compare(Match m1, Match m2) {
-                    return new Integer(m1.getxInScreenshot()).compareTo(new Integer(m2.getxInScreenshot()));
+                public int compare(Word w1, Word w2) {
+                    return new Integer(w1.getxInScreenshot()).compareTo(new Integer(w2.getxInScreenshot()));
                 }
             });
-            return new TextLine(minX, minY, maxX - minX, maxY - minY, matches);
+            return new TextLine(minX, minY, maxX - minX, maxY - minY, this.words);
         }
 
     }

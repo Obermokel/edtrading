@@ -120,7 +120,7 @@ public class TextBuilder {
         return words;
     }
 
-    private static int computeAvgCharHeight(List<Match> matches) {
+    static int computeAvgCharHeight(List<Match> matches) {
         int avgCharHeight = 0;
         int numAvgChars = 0;
         // Try to use only digits and uppercase letters because they always go from the baseline to the top
