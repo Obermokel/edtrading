@@ -350,7 +350,12 @@ public class BodyMatchesParser {
             //            for (MatchGroup mg : remainingNameWords) {
             //                ringName = (ringName + " " + mg.getText()).trim();
             //            }
-            List<TextLine> remainingTextLines = TextLine.matchesToTextLines(remainingMatches);
+            List<TextLine> remainingTextLines = new ArrayList<>();
+            try {
+                remainingTextLines = TextLine.matchesToTextLines(remainingMatches);
+            } catch (Exception e) {
+                logger.error(currentScreenshotFilename + ": Failed to parse ring name matches", e);
+            }
             if (remainingTextLines.size() > 0) {
                 ringName = remainingTextLines.get(0).toText();
             }
@@ -730,6 +735,9 @@ public class BodyMatchesParser {
     private static String lastCharsToUnit(String text, String unit) {
         String fixedText = text;
         if (fixedText.length() > unit.length()) {
+            if ("D".equals(unit) && (fixedText.endsWith("O") || fixedText.endsWith("0"))) {
+                fixedText = fixedText.substring(0, fixedText.length() - 1) + "D";
+            }
             Pattern p = Pattern.compile("(▪*[\\d\\.\\-,]+)([^\\d\\.\\-,]{" + unit.length() + "})(▪*)"); // 0-n crap at start, 1-n digits, exact number of unit chars, 0-n crap at end
             Matcher m = p.matcher(text);
             if (m.matches()) {
