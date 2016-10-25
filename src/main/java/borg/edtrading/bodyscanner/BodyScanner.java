@@ -9,6 +9,7 @@ import borg.edtrading.imagetransformation.simple.KeepBodyScannerTextOnlyTransfor
 import borg.edtrading.imagetransformation.simple.RgbToGrayTransformation;
 import borg.edtrading.imagetransformation.simple.ThresholdTransformation;
 import borg.edtrading.ocr.CharacterLocator;
+import borg.edtrading.ocr.TextBuilder;
 import borg.edtrading.ocr.TextLine;
 import borg.edtrading.screenshots.Region;
 import borg.edtrading.screenshots.Screenshot;
@@ -112,7 +113,7 @@ public class BodyScanner {
         // Now we should know quite certain where most alphanum chars are and can group them into text lines.
         // The text lines are more or less also just rectangles. Each such rectangle can then be scanned completely
         // in order to also find punctuation chars.
-        List<TextLine> alphanumTextLines = TextLine.matchesToTextLines(alphanumMatches);
+        List<TextLine> alphanumTextLines = TextBuilder.matchesToText(alphanumMatches);
         if (this.isDebugAlphanumTextLines()) {
             result.setAlphanumTextLinesDebugImage(this.debugTextLines(region, alphanumTextLines));
             for (TextLine tl : alphanumTextLines) {
@@ -139,7 +140,7 @@ public class BodyScanner {
         }
 
         // Build text lines again, this time from all matches
-        List<TextLine> allTextLines = TextLine.matchesToTextLines(allMatches);
+        List<TextLine> allTextLines = TextBuilder.matchesToText(allMatches);
         if (this.isDebugAllTextLines()) {
             result.setAllTextLinesDebugImage(this.debugTextLines(region, allTextLines));
             for (TextLine tl : allTextLines) {
@@ -151,7 +152,7 @@ public class BodyScanner {
         List<TextLine> bodyNameLines = new ArrayList<>();
         List<Match> bodyInfoMatches = new ArrayList<>();
         for (TextLine tl : allTextLines) {
-            if (tl.getX() > screenshot.getResizedWidth() * 0.333) {
+            if (tl.getxInScreenshot() > screenshot.getResizedWidth() * 0.333) {
                 bodyNameLines.add(tl);
             } else {
                 bodyInfoMatches.addAll(tl.getMatches());
@@ -267,9 +268,9 @@ public class BodyScanner {
         for (TextLine tl : textLines) {
             //g.setColor(Color.GRAY);
             g.setColor(new Color(64 + rand.nextInt(128), 64 + rand.nextInt(128), 64 + rand.nextInt(128)));
-            g.drawRect(tl.getX(), tl.getY(), tl.getWidth(), tl.getHeight());
+            g.drawRect(tl.getxInScreenshot(), tl.getyInScreenshot(), tl.getWidth(), tl.getHeight());
             g.setColor(Color.GREEN);
-            g.drawString(tl.toText(), tl.getX(), tl.getY());
+            g.drawString(tl.toText(), tl.getxInScreenshot(), tl.getyInScreenshot());
         }
         logger.debug(region.getScreenshot().getFile().getName() + ": lines=" + textLines.size());
 

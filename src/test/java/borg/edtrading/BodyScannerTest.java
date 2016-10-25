@@ -34,8 +34,8 @@ public class BodyScannerTest {
 
         logger.trace("Creating the scanner...");
         BodyScanner scanner = new BodyScanner();
-        scanner.setDebugAlphanumTemplates(true);
-        scanner.setDebugAlphanumTextLines(true);
+        scanner.setDebugAlphanumTemplates(false);
+        scanner.setDebugAlphanumTextLines(false);
         scanner.setDebugAllTemplates(true);
         scanner.setDebugAllTextLines(true);
 
@@ -43,9 +43,14 @@ public class BodyScannerTest {
         //2016-09-29 08-16-28 Paul-Friedrichs Star
         //2016-10-03 08-37-57 Altair
         //2016-09-29 08-24-03 BD+63 1764
-        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-02 07-29-09 Dahan.png");
+        File sourceFile = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR + "\\2016-10-10 05-37-55 Pethes.png");
         //for (File sourceFile : BodyScannerApp.selectAllScreenshots()) {
         logger.trace("Testing " + sourceFile.getName());
+        scanner = new BodyScanner();
+        scanner.setDebugAlphanumTemplates(true);
+        scanner.setDebugAlphanumTextLines(false);
+        scanner.setDebugAllTemplates(true);
+        scanner.setDebugAllTextLines(true);
         BodyScannerResult result = scanner.scanScreenshotFile(sourceFile);
         if (result.getAlphanumTemplatesDebugImage() != null) {
             ImageIO.write(result.getAlphanumTemplatesDebugImage(), "PNG", new File(Constants.TEMP_DIR, "AlphanumTemplatesDebugImage " + sourceFile.getName()));
@@ -61,10 +66,9 @@ public class BodyScannerTest {
         }
 
         //copyLearnedChars(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"), new File(Constants.TEMPLATES_DIR, "BodyScanner"));
-        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"));
-        //            copyLearnedChars(new File(Constants.TEMPLATES_DIR, "LEARNED_VARIANT"), new File(Constants.TEMPLATES_DIR, "BodyScanner"));
-        //            scanner = new BodyScanner();
-        //        }
+        //FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"));
+        //copyLearnedChars(new File(Constants.TEMPLATES_DIR, "LEARNED_VARIANT"), new File(Constants.TEMPLATES_DIR, "BodyScanner"));
+        //}
     }
 
     static void copyLearnedChars(File learnedSetDir, File targetSetDir) throws IOException {

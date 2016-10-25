@@ -4,6 +4,7 @@ import borg.edtrading.Constants;
 import borg.edtrading.data.BodyInfo;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;
+import borg.edtrading.ocr.TextBuilder;
 import borg.edtrading.ocr.TextLine;
 import borg.edtrading.templatematching.Match;
 import borg.edtrading.templatematching.Template;
@@ -352,7 +353,7 @@ public class BodyMatchesParser {
             //            }
             List<TextLine> remainingTextLines = new ArrayList<>();
             try {
-                remainingTextLines = TextLine.matchesToTextLines(remainingMatches);
+                remainingTextLines = TextBuilder.matchesToText(remainingMatches);
             } catch (Exception e) {
                 logger.error(currentScreenshotFilename + ": Failed to parse ring name matches", e);
             }
