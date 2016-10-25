@@ -103,8 +103,22 @@ public class EddbHistory {
         return false;
     }
 
+    public boolean isScreenshotFailed(String screenshotFilename) throws IOException {
+        final String searchFor = ("|SCREENSHOT|FAILED|null|null|" + screenshotFilename).toLowerCase();
+        for (String entry : this.history) {
+            if (entry.toLowerCase().contains(searchFor)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void addScreenshotFinished(String systemName, String bodyName, String screenshotFilename) throws IOException {
         this.log(systemName, bodyName, "SCREENSHOT", "FINISHED", null, null, screenshotFilename);
+    }
+
+    public void addScreenshotFailed(String systemName, String bodyName, String screenshotFilename) throws IOException {
+        this.log(systemName, bodyName, "SCREENSHOT", "FAILED", null, null, screenshotFilename);
     }
 
     public void set(String systemName, String bodyName, String fieldName, String newValue, String screenshotFilename) throws IOException {

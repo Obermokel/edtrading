@@ -1,6 +1,5 @@
 TODO:
-* TemplateMatcher soll Kombinationen direkt splitten damit die nicht in unknown landen
-* Nicht so viele Punkte (.) lernen
+* w, x, z
 * Terraforming
 * Body Image
 * Star catalogue IDs
@@ -39,3 +38,5 @@ DONE:
 * 2016-10-02 09-57-16 CF 16001.png uppercase/lowercase beim lernen...
 * 2016-09-28 08-01-53 Arque.png: Sum of atmosphere is 99.4: ist tatsächlich so: {ATMOSPHERE_COMPONENT_WATER=98.4, ATMOSPHERE_COMPONENT_AMMONIA=0.5, ATMOSPHERE_COMPONENT_METHANE=0.5}
 * 2016-10-03 13-08-43 Dafnharian.png: Sum of atmosphere is 97.9: ist tatsächlich so: {ATMOSPHERE_COMPONENT_HELIUM=85.9, ATMOSPHERE_COMPONENT_HYDROGEN=8.1, ATMOSPHERE_COMPONENT_NITROGEN=3.9}
+* TemplateMatcher soll Kombinationen direkt splitten damit die nicht in unknown landen
+* Nicht so viele Punkte (.) lernen

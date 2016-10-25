@@ -106,7 +106,7 @@ public class BodyScanner {
                 alphanumMatches.add(bestMatch);
             } else {
                 List<Match> nonOverlappingMatches = new TemplateMatcher().allNonOverlappingTemplates(charRegion, this.alphanumTemplates);
-                nonOverlappingMatches = nonOverlappingMatches.stream().filter(m -> m.getErrorPerPixel() <= ERROR_PER_PIXEL_UNKNOWN).collect(Collectors.toList());
+                nonOverlappingMatches = nonOverlappingMatches.stream().filter(m -> m.getErrorPerPixel() <= ERROR_PER_PIXEL_GUESSED).collect(Collectors.toList());
                 if (nonOverlappingMatches.size() >= 2) {
                     alphanumMatches.addAll(nonOverlappingMatches);
                 }
@@ -181,7 +181,7 @@ public class BodyScanner {
         Graphics2D g = bi.createGraphics();
         g.drawImage(gi, 0, 0, null);
         g.setColor(Color.GREEN);
-        g.setFont(new Font("Consolas", Font.PLAIN, 22));
+        g.setFont(new Font("Consolas", Font.PLAIN, 32));
         for (TextLine tl : allTextLines) {
             for (Word w : tl.getSortedWords()) {
                 g.drawString(w.toText(true), w.getxInScreenshot(), w.getyInScreenshot());

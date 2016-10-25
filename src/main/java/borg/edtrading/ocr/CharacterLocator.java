@@ -65,8 +65,9 @@ public class CharacterLocator {
             // Make the text line box double the height (because brackets or ° are higher than normal chars).
             // Also expand it a bit to the right in order to catch trailing units like °, or trailing comma.
             // Alsp expand it a bit to the left in order to catch leading sign like -.
-            int extraHeight = Math.round(0.75f * tl.getHeight());
-            Rectangle scanRect = new Rectangle(tl.getxInScreenshot() - tl.getHeight(), tl.getyInScreenshot() - extraHeight / 2, tl.getWidth() + 4 * tl.getHeight(), tl.getHeight() + extraHeight);
+            int scanHeight = Math.round(1.40f * tl.getHeight()); // <- Test last materials line of 2016-09-28 07-58-50 Har Itari.png
+            int scanY = Math.round(tl.getyInScreenshot() - 0.20f * tl.getHeight());
+            Rectangle scanRect = new Rectangle(tl.getxInScreenshot() - tl.getHeight(), scanY, tl.getWidth() + 4 * tl.getHeight(), scanHeight);
 
             // Scan horizontally
             for (int x = scanRect.x; x < scanRect.x + scanRect.width; x++) {
@@ -81,7 +82,7 @@ public class CharacterLocator {
                             Rectangle r = shrink(image, xStartContainsWhite, scanRect.y, xEndAllBlack, scanRect.y + scanRect.height);
                             if (r.width * r.height <= 36) {
                                 // Small punctuation char. Make it full height, otherwise ' and , look the same.
-                                r = new Rectangle(r.x, tl.getyInScreenshot() - Math.round(tl.getHeight() / 6f), r.width, tl.getHeight() + Math.round(tl.getHeight() / 3f));
+                                r = new Rectangle(r.x, scanY, r.width, scanHeight);
                             }
                             Rectangle rWithBorder = new Rectangle(r.x - this.border, r.y - this.border, r.width + 2 * this.border, r.height + 2 * this.border);
                             result.add(rWithBorder);

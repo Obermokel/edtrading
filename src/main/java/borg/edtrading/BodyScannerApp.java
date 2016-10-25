@@ -4,6 +4,9 @@ import borg.edtrading.bodyscanner.BodyScanner;
 import borg.edtrading.bodyscanner.BodyScannerResult;
 import borg.edtrading.bodyscanner.ScannedBodyInfo;
 import borg.edtrading.data.Item;
+import borg.edtrading.eddb.BodyUpdater;
+import borg.edtrading.eddb.SystemNotFoundException;
+import borg.edtrading.util.ImageUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,13 +18,15 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
 import java.util.TreeMap;
+
+import javax.imageio.ImageIO;
 
 /**
  * BodyScannerApp
@@ -35,58 +40,86 @@ public class BodyScannerApp {
     private static final DateFormat DF_ETA = new SimpleDateFormat("MMM dd @ HH:mm");
 
     public static void main(String[] args) throws IOException {
-        logger.trace("Cleaning dirs...");
-        FileUtils.cleanDirectory(Constants.TEMP_DIR);
-        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "KNOWN"));
-        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "UNKNOWN"));
-        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "GUESSED"));
-        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "CRAP"));
-        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"));
-        FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_VARIANT"));
+        final boolean doEddbUpdate = false;
 
-        File debugFile = new File(Constants.TEMP_DIR, "debug.txt");
+        BodyUpdater bodyUpdater = doEddbUpdate ? new BodyUpdater(args[0], args[1]) : null;
 
-        logger.trace("Creating the scanner...");
-        BodyScanner scanner = new BodyScanner();
+        try {
+            logger.trace("Cleaning dirs...");
+            FileUtils.cleanDirectory(Constants.TEMP_DIR);
+            FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "KNOWN"));
+            FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "UNKNOWN"));
+            FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "GUESSED"));
+            FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "CRAP"));
+            FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"));
+            FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_VARIANT"));
 
-        Map<String, ScannedBodyInfo> resultsByBodyName = new TreeMap<>();
-        List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
-        int n = 0;
-        int total = screenshotFiles.size();
-        int batchSize = 10;
-        long startBatch = System.currentTimeMillis();
-        for (File screenshotFile : screenshotFiles) {
-            n++;
-            logger.trace("Processing file " + n + " of " + screenshotFiles.size() + ": " + screenshotFile.getName());
-            BodyScannerResult result = scanner.scanScreenshotFile(screenshotFile);
-            ScannedBodyInfo sbi = result.getScannedBodyInfo();
-            FileUtils.write(debugFile, sbi.toString() + "\n\n", "UTF-8", true);
-            if (resultsByBodyName.containsKey(sbi.getBodyName())) {
-                ScannedBodyInfo prevSBI = resultsByBodyName.get(sbi.getBodyName());
-                logger.warn("Replacing existing scanner result for " + sbi.getBodyName() + " from " + prevSBI.getScreenshotFilename() + " with the new result from " + sbi.getScreenshotFilename());
+            File debugFile = new File(Constants.TEMP_DIR, "debug.txt");
+
+            logger.trace("Creating the scanner...");
+            BodyScanner scanner = new BodyScanner();
+            scanner.setDebugFinal(true);
+
+            Map<String, ScannedBodyInfo> resultsByBodyName = new TreeMap<>();
+            List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
+            int n = 0;
+            int total = screenshotFiles.size();
+            int batchSize = 10;
+            long startBatch = System.currentTimeMillis();
+            for (File screenshotFile : screenshotFiles) {
+                try {
+                    // Print ETA
+                    if (++n % batchSize == 0) {
+                        long millis = System.currentTimeMillis() - startBatch;
+                        double screenshotsPerSec = ((double) batchSize / Math.max(1, millis)) * 1000d;
+                        int screenshotsRemaining = total - n;
+                        double secondsRemaining = screenshotsRemaining / screenshotsPerSec;
+                        Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
+                        logger.trace(String.format("Processed %,d of %,d screenshots (%.1f/min) -- ETA %s", n, total, screenshotsPerSec * 60, DF_ETA.format(eta)));
+                        startBatch = System.currentTimeMillis();
+                    }
+
+                    // Fast skip?
+                    if (bodyUpdater != null && (bodyUpdater.isScreenshotFinished(screenshotFile.getName()) || bodyUpdater.isScreenshotFailed(screenshotFile.getName()))) {
+                        continue;
+                    }
+
+                    // Parse!
+                    logger.trace("Processing screenshot " + n + " of " + screenshotFiles.size() + ": " + screenshotFile.getName());
+                    BodyScannerResult result = scanner.scanScreenshotFile(screenshotFile);
+                    ScannedBodyInfo sbi = result.getScannedBodyInfo();
+                    FileUtils.write(debugFile, sbi.toString() + "\n\n", "UTF-8", true);
+                    if (result.getFinalDebugImage() != null) {
+                        ImageIO.write(ImageUtil.toFullHd(result.getFinalDebugImage()), "PNG", new File(Constants.TEMP_DIR, screenshotFile.getName()));
+                    }
+                    if (resultsByBodyName.containsKey(sbi.getBodyName())) {
+                        ScannedBodyInfo prevSBI = resultsByBodyName.get(sbi.getBodyName());
+                        logger.warn("Replacing existing scanner result for '" + sbi.getBodyName() + "' from " + prevSBI.getScreenshotFilename() + " with the new result from " + sbi.getScreenshotFilename());
+                    }
+                    resultsByBodyName.put(sbi.getBodyName(), sbi);
+
+                    // Update!
+                    if (doEddbUpdate) {
+                        bodyUpdater.updateBody(sbi);
+                    }
+                } catch (SystemNotFoundException | IllegalArgumentException e) {
+                    logger.error("Failed to update body info for " + screenshotFile.getName(), e);
+                }
             }
-            resultsByBodyName.put(sbi.getBodyName(), sbi);
 
-            // Print ETA
-            if (n % batchSize == 0) {
-                long millis = System.currentTimeMillis() - startBatch;
-                double screenshotsPerSec = ((double) batchSize / Math.max(1, millis)) * 1000d;
-                int screenshotsRemaining = total - n;
-                double secondsRemaining = screenshotsRemaining / screenshotsPerSec;
-                Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
-                logger.trace(String.format("Processed %,d of %,d screenshots (%.1f/min) -- ETA %s", n, total, screenshotsPerSec * 60, DF_ETA.format(eta)));
-                startBatch = System.currentTimeMillis();
+            List<ScannedBodyInfo> results = new ArrayList<>(resultsByBodyName.size());
+            for (String bodyName : resultsByBodyName.keySet()) {
+                logger.debug(bodyName);
+                results.add(resultsByBodyName.get(bodyName));
+            }
+
+            printStats(results);
+            System.out.println("Highest gravity: " + highestGravity(results, true).getGravityG() + "G (" + highestGravity(results, true).getBodyName() + ")");
+        } finally {
+            if (bodyUpdater != null) {
+                bodyUpdater.close();
             }
         }
-
-        List<ScannedBodyInfo> results = new ArrayList<>(resultsByBodyName.size());
-        for (String bodyName : resultsByBodyName.keySet()) {
-            logger.debug(bodyName);
-            results.add(resultsByBodyName.get(bodyName));
-        }
-
-        printStats(results);
-        System.out.println("Highest gravity: " + highestGravity(results, true).getGravityG() + "G (" + highestGravity(results, true).getBodyName() + ")");
     }
 
     static ScannedBodyInfo highestGravity(List<ScannedBodyInfo> scannedBodyInfos, boolean landableOnly) {
@@ -142,16 +175,12 @@ public class BodyScannerApp {
         }
     }
 
-    static File selectRandomScreenshot() {
-        File dir = new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR);
-        File[] files = dir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File f) {
-                return f.getName().endsWith(".png");
-            }
-        });
-        Random rand = new Random();
-        return files[rand.nextInt(files.length)];
+    static List<File> selectSpecificScreenshot(String filename) {
+        return Arrays.asList(new File(new File(Constants.SURFACE_MATS_DIR, Constants.SURFACE_MATS_SUBDIR), filename));
+    }
+
+    static List<File> selectRandomScreenshot() {
+        return selectAllScreenshots().subList(0, 1);
     }
 
     static List<File> selectAllScreenshots() {

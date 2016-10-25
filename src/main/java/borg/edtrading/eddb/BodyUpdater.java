@@ -93,6 +93,7 @@ public class BodyUpdater implements Closeable {
                 this.history.addScreenshotFinished(scannedBodyInfo.getSystemName(), scannedBodyInfo.getBodyName(), scannedBodyInfo.getScreenshotFilename());
             } catch (TimeoutException | NoSuchElementException | InvalidElementStateException e) {
                 logger.error("Failed to process " + scannedBodyInfo.getScreenshotFilename(), e);
+                this.history.addScreenshotFailed(scannedBodyInfo.getSystemName(), scannedBodyInfo.getBodyName(), scannedBodyInfo.getScreenshotFilename());
                 if (this.driver instanceof TakesScreenshot) {
                     try {
                         final String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
@@ -103,7 +104,6 @@ public class BodyUpdater implements Closeable {
                         logger.warn("Failed to take screenshot: " + se);
                     }
                 }
-                this.history.removeAll(scannedBodyInfo.getSystemName(), scannedBodyInfo.getBodyName());
             }
         }
     }
@@ -503,23 +503,30 @@ public class BodyUpdater implements Closeable {
     }
 
     private void createBody(ScannedBodyInfo scannedBodyInfo) throws IOException {
-        final String systemName = scannedBodyInfo.getSystemName();
-        final String bodyName = fixBodyName(systemName, scannedBodyInfo.getBodyName());
-        final String filename = scannedBodyInfo.getScreenshotFilename();
+        if (scannedBodyInfo.getBodyGroup() == null) {
+            throw new IllegalArgumentException("scannedBodyInfo has no bodyGroup");
+        } else if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_RINGS) {
+            throw new IllegalArgumentException("Cannot create new body of type RINGS. Corresponding STAR or PLANET must be created first.");
+        } else {
+            final String systemName = scannedBodyInfo.getSystemName();
+            final String bodyName = fixBodyName(systemName, scannedBodyInfo.getBodyName());
+            final String bodyGroup = scannedBodyInfo.getBodyGroup().getName();
+            final String filename = scannedBodyInfo.getScreenshotFilename();
 
-        BigDecimal distanceLsInteger = scannedBodyInfo.getDistanceLs() == null ? null : new BigDecimal(scannedBodyInfo.getDistanceLs().intValue());
+            BigDecimal distanceLsInteger = scannedBodyInfo.getDistanceLs() == null ? null : new BigDecimal(scannedBodyInfo.getDistanceLs().intValue());
 
-        logger.info("Creating new body '" + bodyName + "' in system '" + systemName + "'");
+            logger.info("Creating new body '" + bodyName + "' in system '" + systemName + "'");
 
-        logger.trace("Clicking on 'Add new body to system " + systemName + "' link");
-        this.driver.findElement(By.linkText("Add new body to system " + systemName)).click();
+            logger.trace("Clicking on 'Add new body to system " + systemName + "' link");
+            this.driver.findElement(By.linkText("Add new body to system " + systemName)).click();
 
-        this.updateTextField("bodyform-name", systemName, bodyName, EddbHistory.FIELD_BODY_NAME, bodyName, filename);
-        this.updateSearchableDropdown("s2id_bodyform-group_id", null, systemName, bodyName, EddbHistory.FIELD_BODY_GROUP, "Planet", filename);
-        this.updateNumericField("bodyform-distance_to_spawn", systemName, bodyName, EddbHistory.FIELD_DISTANCE_FROM_ARRIVAL, distanceLsInteger, filename);
+            this.updateTextField("bodyform-name", systemName, bodyName, EddbHistory.FIELD_BODY_NAME, bodyName, filename);
+            this.updateSearchableDropdown("s2id_bodyform-group_id", null, systemName, bodyName, EddbHistory.FIELD_BODY_GROUP, bodyGroup, filename);
+            this.updateNumericField("bodyform-distance_to_spawn", systemName, bodyName, EddbHistory.FIELD_DISTANCE_FROM_ARRIVAL, distanceLsInteger, filename);
 
-        logger.trace("Submitting 'Add new body to system " + systemName + "' form");
-        this.submitBodyPage();
+            logger.trace("Submitting 'Add new body to system " + systemName + "' form");
+            this.submitBodyPage();
+        }
     }
 
     private void submitBodyPage() {
@@ -531,6 +538,16 @@ public class BodyUpdater implements Closeable {
         return this.history.isScreenshotFinished(filename);
     }
 
+    public boolean isScreenshotFailed(String filename) throws IOException {
+        return this.history.isScreenshotFailed(filename);
+    }
+
+    /**
+     * TODO Check scanner fix, maybe add two variants (scanned vs beautified)
+     *
+     * @deprecated Should already be fixed by the scanner?
+     */
+    @Deprecated
     private static String fixBodyName(String systemName, String bodyName) {
         if (bodyName.toLowerCase().startsWith(systemName.toLowerCase() + " ")) {
             return systemName + bodyName.substring(systemName.length());
