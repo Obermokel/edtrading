@@ -381,28 +381,31 @@ public class BodyMatchesParser {
         for (Match m : fixedMatches) {
             if (m != null && m.getShouldHaveBeen() != null) {
                 // We know what it should have been
-                if (!m.getShouldHaveBeen().equals(m.getTemplate().getText())) {
-                    // It is NOT what it should have been
-                    if (!isSameUppercaseAndLowercase(m.getShouldHaveBeen(), m.getTemplate().getText())) {
-                        if (!is0vsO(m.getShouldHaveBeen(), m.getTemplate().getText()) || Constants.LEARN_0_VS_O) {
-                            // It is totally wrong, or we are allowed to learn difficult chars like 0<->O
+                if (m.getxInRegion() == 0 && m.getyInRegion() == 0) {
+                    // It is a full region match, not a partial region match
+                    if (!m.getShouldHaveBeen().equals(m.getTemplate().getText())) {
+                        // It is NOT what it should have been
+                        if (!isSameUppercaseAndLowercase(m.getShouldHaveBeen(), m.getTemplate().getText())) {
+                            if (!is0vsO(m.getShouldHaveBeen(), m.getTemplate().getText()) || Constants.LEARN_0_VS_O) {
+                                // It is totally wrong, or we are allowed to learn difficult chars like 0<->O
+                                try {
+                                    Template.createNewFromRegion(m.getRegion(), "LEARNED_FIXED", m.getShouldHaveBeen());
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    } else if (m.getErrorPerPixel() > BodyScanner.ERROR_PER_PIXEL_KNOWN && m.getErrorPerPixel() <= BodyScanner.ERROR_PER_PIXEL_GUESSED) {
+                        // It has been detected/guessed correctly and is quite, but not totally off.
+                        if (!learned.contains(m.getTemplate().getText())) {
+                            // It has not yet been learned in this session
+                            learned.add(m.getTemplate().getText());
+
                             try {
-                                Template.createNewFromRegion(m.getRegion(), "LEARNED_FIXED", m.getShouldHaveBeen());
+                                Template.createNewFromRegion(m.getRegion(), "LEARNED_VARIANT", m.getShouldHaveBeen());
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                        }
-                    }
-                } else if (m.getErrorPerPixel() > BodyScanner.ERROR_PER_PIXEL_KNOWN && m.getErrorPerPixel() <= BodyScanner.ERROR_PER_PIXEL_GUESSED) {
-                    // It has been detected/guessed correctly and is quite, but not totally off.
-                    if (!learned.contains(m.getTemplate().getText())) {
-                        // It has not yet been learned in this session
-                        learned.add(m.getTemplate().getText());
-
-                        try {
-                            Template.createNewFromRegion(m.getRegion(), "LEARNED_VARIANT", m.getShouldHaveBeen());
-                        } catch (IOException e) {
-                            e.printStackTrace();
                         }
                     }
                 }
