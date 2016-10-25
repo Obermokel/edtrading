@@ -385,7 +385,7 @@ public class BodyMatchesParser {
                     // It is a full region match, not a partial region match
                     if (!m.getShouldHaveBeen().equals(m.getTemplate().getText())) {
                         // It is NOT what it should have been
-                        if (!isSameUppercaseAndLowercase(m.getShouldHaveBeen(), m.getTemplate().getText())) {
+                        if (!isSameUppercaseAndLowercase(m.getShouldHaveBeen(), m.getTemplate().getText()) || Constants.LEARN_Z_VS_z) {
                             if (!is0vsO(m.getShouldHaveBeen(), m.getTemplate().getText()) || Constants.LEARN_0_VS_O) {
                                 // It is totally wrong, or we are allowed to learn difficult chars like 0<->O
                                 try {
@@ -507,9 +507,10 @@ public class BodyMatchesParser {
         boolean isSs = "S".equalsIgnoreCase(shouldHaveBeen) && "s".equalsIgnoreCase(actuallyIs);
         boolean isVv = "V".equalsIgnoreCase(shouldHaveBeen) && "v".equalsIgnoreCase(actuallyIs);
         boolean isWw = "W".equalsIgnoreCase(shouldHaveBeen) && "w".equalsIgnoreCase(actuallyIs);
+        boolean isXx = "X".equalsIgnoreCase(shouldHaveBeen) && "x".equalsIgnoreCase(actuallyIs);
         boolean isZz = "Z".equalsIgnoreCase(shouldHaveBeen) && "z".equalsIgnoreCase(actuallyIs);
 
-        return isCc || isOo || isSs || isVv || isWw || isZz;
+        return isCc || isOo || isSs || isVv || isWw || isXx || isZz;
     }
 
     private static boolean is0vsO(String shouldHaveBeen, String actuallyIs) {

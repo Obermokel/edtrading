@@ -42,9 +42,9 @@ public class BodyScannerTest {
         //2016-09-29 08-16-28 Paul-Friedrichs Star
         //2016-10-03 08-37-57 Altair
         //2016-09-29 08-24-03 BD+63 1764
-        List<File> screenshotFiles = BodyScannerApp.selectSpecificScreenshot("2016-09-30 17-21-51 Deciat.png");
+        //List<File> screenshotFiles = BodyScannerApp.selectSpecificScreenshot("2016-09-30 17-21-51 Deciat.png");
         //List<File> screenshotFiles = BodyScannerApp.selectRandomScreenshot();
-        //List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
+        List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
         int n = 0;
         int total = screenshotFiles.size();
         int batchSize = 10;
@@ -104,11 +104,11 @@ public class BodyScannerTest {
         File[] templateTextDirs = learnedSetDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {
-                if (learnedSetDir.getName().contains("FIXED")) {
-                    return file.isDirectory() && (file.getName().equals("D") || file.getName().equals("_punkt") || file.getName().equals("_komma") || file.getName().equals("_strich") || file.getName().equals("_apostroph"));
-                } else {
-                    return file.isDirectory();
-                }
+                //                if (learnedSetDir.getName().contains("FIXED")) {
+                //                    return file.isDirectory() && (file.getName().equals("D") || file.getName().equals("_punkt") || file.getName().equals("_komma") || file.getName().equals("_strich") || file.getName().equals("_apostroph"));
+                //                } else {
+                return file.isDirectory();
+                //                }
             }
         });
         if (templateTextDirs != null) {
