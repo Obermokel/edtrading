@@ -41,10 +41,14 @@ public class TextLine {
     }
 
     public String toText() {
+        return this.toText(false);
+    }
+
+    public String toText(boolean preferShouldHaveBeen) {
         String text = "";
         Iterator<Word> it = this.getSortedWords().iterator();
         while (it.hasNext()) {
-            text += it.next().toText();
+            text += it.next().toText(preferShouldHaveBeen);
             if (it.hasNext()) {
                 text += " → ";
             }

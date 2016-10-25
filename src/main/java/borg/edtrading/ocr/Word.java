@@ -42,11 +42,15 @@ public class Word {
     }
 
     public String toText() {
+        return this.toText(false);
+    }
+
+    public String toText(boolean preferShouldHaveBeen) {
         String text = "";
 
         int avgCharHeight = TextBuilder.computeAvgCharHeight(this.getSortedMatches());
-        int minWordSpace = avgCharHeight / 2;
-        int minKeyValueSpace = avgCharHeight * 2;
+        int minWordSpace = Math.round(avgCharHeight * 0.4f);
+        int minKeyValueSpace = Math.round(avgCharHeight * 1.5f);
 
         int lastMatchEndX = -1;
         for (Match m : this.getSortedMatches()) {
@@ -58,7 +62,11 @@ public class Word {
                     text += " ";
                 }
             }
-            text += m.getTemplate().getText();
+            if (preferShouldHaveBeen && m.getShouldHaveBeen() != null) {
+                text += m.getShouldHaveBeen();
+            } else {
+                text += m.getTemplate().getText();
+            }
             lastMatchEndX = m.getxInScreenshot() + m.getRegion().getWidth();
         }
 
@@ -99,9 +107,10 @@ public class Word {
          * @return <code>true</code> if the <code>candidateMatch</code> has been added to the word
          */
         public boolean addToWord(Match candidateMatch) {
-            Rectangle candidateRect = new Rectangle(candidateMatch.getxInScreenshot() - this.avgCharHeight, candidateMatch.getyInScreenshot(), candidateMatch.getWidth() + 2 * this.avgCharHeight, candidateMatch.getHeight());
+            int expand = Math.round(this.avgCharHeight * 0.75f);
+            Rectangle candidateRect = new Rectangle(candidateMatch.getxInScreenshot() - expand, candidateMatch.getyInScreenshot(), candidateMatch.getWidth() + 2 * expand, candidateMatch.getHeight());
             for (Match existingMatch : this.matches) {
-                Rectangle existingRect = new Rectangle(existingMatch.getxInScreenshot() - this.avgCharHeight, existingMatch.getyInScreenshot(), existingMatch.getWidth() + 2 * this.avgCharHeight, existingMatch.getHeight());
+                Rectangle existingRect = new Rectangle(existingMatch.getxInScreenshot() - expand, existingMatch.getyInScreenshot(), existingMatch.getWidth() + 2 * expand, existingMatch.getHeight());
                 if (candidateRect.intersects(existingRect)) {
                     this.matches.add(candidateMatch);
                     return true;

@@ -38,6 +38,7 @@ public class BodyScannerTest {
         scanner.setDebugAlphanumTextLines(false);
         scanner.setDebugAllTemplates(true);
         scanner.setDebugAllTextLines(true);
+        scanner.setDebugFinal(true);
 
         //File sourceFile = BodyScannerApp.selectRandomScreenshot();
         //2016-09-29 08-16-28 Paul-Friedrichs Star
@@ -51,6 +52,7 @@ public class BodyScannerTest {
         scanner.setDebugAlphanumTextLines(false);
         scanner.setDebugAllTemplates(true);
         scanner.setDebugAllTextLines(true);
+        scanner.setDebugFinal(true);
         BodyScannerResult result = scanner.scanScreenshotFile(sourceFile);
         if (result.getAlphanumTemplatesDebugImage() != null) {
             ImageIO.write(result.getAlphanumTemplatesDebugImage(), "PNG", new File(Constants.TEMP_DIR, "AlphanumTemplatesDebugImage " + sourceFile.getName()));
@@ -63,6 +65,9 @@ public class BodyScannerTest {
         }
         if (result.getAllTextLinesDebugImage() != null) {
             ImageIO.write(result.getAllTextLinesDebugImage(), "PNG", new File(Constants.TEMP_DIR, "AllTextLinesDebugImage " + sourceFile.getName()));
+        }
+        if (result.getFinalDebugImage() != null) {
+            ImageIO.write(result.getFinalDebugImage(), "PNG", new File(Constants.TEMP_DIR, "FinalDebugImage " + sourceFile.getName()));
         }
 
         //copyLearnedChars(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"), new File(Constants.TEMPLATES_DIR, "BodyScanner"));

@@ -16,6 +16,7 @@ public class BodyScannerResult {
     private BufferedImage alphanumTextLinesDebugImage = null;
     private BufferedImage allTemplatesDebugImage = null;
     private BufferedImage allTextLinesDebugImage = null;
+    private BufferedImage finalDebugImage = null;
     private ScannedBodyInfo scannedBodyInfo = null;
 
     public BodyScannerResult(Screenshot screenshot) {
@@ -60,6 +61,14 @@ public class BodyScannerResult {
 
     public void setAllTextLinesDebugImage(BufferedImage allTextLinesDebugImage) {
         this.allTextLinesDebugImage = allTextLinesDebugImage;
+    }
+
+    public BufferedImage getFinalDebugImage() {
+        return this.finalDebugImage;
+    }
+
+    public void setFinalDebugImage(BufferedImage finalDebugImage) {
+        this.finalDebugImage = finalDebugImage;
     }
 
     public ScannedBodyInfo getScannedBodyInfo() {

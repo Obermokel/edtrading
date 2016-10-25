@@ -1,6 +1,7 @@
 package borg.edtrading.bodyscanner;
 
 import boofcv.gui.image.VisualizeImageData;
+import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageGray;
 import borg.edtrading.imagetransformation.Transformation;
@@ -65,6 +66,7 @@ public class BodyScanner {
     private boolean debugAlphanumTextLines = false;
     private boolean debugAllTemplates = false;
     private boolean debugAllTextLines = false;
+    private boolean debugFinal = false;
 
     public BodyScanner() throws IOException {
         this.characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
@@ -166,7 +168,26 @@ public class BodyScanner {
         ScannedBodyInfo sbi = BodyMatchesParser.fromScannedAndSortedMatches(filename, systemName, bodyNameLines, bodyInfoMatches);
         result.setScannedBodyInfo(sbi);
 
+        if (this.isDebugFinal()) {
+            result.setFinalDebugImage(this.debugFinal(region, allTextLines));
+        }
+
         return result;
+    }
+
+    private BufferedImage debugFinal(Region region, List<TextLine> allTextLines) {
+        BufferedImage gi = ConvertBufferedImage.convertTo_U8(region.getOriginalRGB(), null, true);
+        BufferedImage bi = new BufferedImage(gi.getWidth(), gi.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = bi.createGraphics();
+        g.drawImage(gi, 0, 0, null);
+        g.setColor(Color.GREEN);
+        g.setFont(new Font("Consolas", Font.PLAIN, 22));
+        for (TextLine tl : allTextLines) {
+            for (Word w : tl.getSortedWords()) {
+                g.drawString(w.toText(true), w.getxInScreenshot(), w.getyInScreenshot());
+            }
+        }
+        return bi;
     }
 
     private BufferedImage debugTemplates(Region region, List<Rectangle> locations, List<Template> templates) throws IOException {
@@ -323,6 +344,14 @@ public class BodyScanner {
 
     public void setDebugAllTextLines(boolean debugAllTextLines) {
         this.debugAllTextLines = debugAllTextLines;
+    }
+
+    public boolean isDebugFinal() {
+        return this.debugFinal;
+    }
+
+    public void setDebugFinal(boolean debugFinal) {
+        this.debugFinal = debugFinal;
     }
 
 }
