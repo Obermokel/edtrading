@@ -1129,7 +1129,7 @@ public class BodyMatchesParser {
             try {
                 // Pattern: #,##0.00
                 BigDecimal min = new BigDecimal("0.00"); // Screenshot: 2016-09-28 07-44-10 Sol.png
-                BigDecimal max = new BigDecimal("2899653.25"); // Screenshot: 2016-09-28 08-01-53 Arque.png
+                BigDecimal max = new BigDecimal("3166833.00"); // Screenshot: 2016-10-21 08-26-51 Furuhjelm III-674.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
