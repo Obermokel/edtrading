@@ -57,9 +57,9 @@ public class BodyScannerTest {
         //2016-09-29 08-16-28 Paul-Friedrichs Star
         //2016-10-03 08-37-57 Altair
         //2016-09-29 08-24-03 BD+63 1764
-        //List<File> screenshotFiles = BodyScannerApp.selectSpecificScreenshot("2016-10-06 22-56-16 Delta Equulei.png");
+        List<File> screenshotFiles = BodyScannerApp.selectSpecificScreenshot("2016-09-28 08-14-17 Ross 847.png");
         //List<File> screenshotFiles = BodyScannerApp.selectRandomScreenshot();
-        List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
+        //List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
         int n = 0;
         int total = screenshotFiles.size();
         int batchSize = 10;
@@ -109,7 +109,6 @@ public class BodyScannerTest {
             }
 
             copyLearnedChars(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"), new File(Constants.TEMPLATES_DIR, "BodyScanner"));
-            //FileUtils.cleanDirectory(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"));
             copyLearnedChars(new File(Constants.TEMPLATES_DIR, "LEARNED_VARIANT"), new File(Constants.TEMPLATES_DIR, "BodyScanner"));
         }
     }

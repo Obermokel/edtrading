@@ -107,6 +107,7 @@ public class BodyMatchesParser {
         }
 
         // The other labels depend on the body group.
+        int nRings = 0;
         if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_STAR) {
             // TODO Parse star class from description text
             for (BodyInfo bi : BodyInfo.byPrefix("STAR_TYPE_")) {
@@ -198,25 +199,54 @@ public class BodyMatchesParser {
             findAndRemove("ORBITALECCENTRICITY:", bodyInfoMatches, sortedLabelIndexes);
             findAndRemove("ORBITALINCLINATION:", bodyInfoMatches, sortedLabelIndexes);
             findAndRemove("ARGOFPERIAPSIS:", bodyInfoMatches, sortedLabelIndexes);
+        } else if (scannedBodyInfo.getBodyGroup() == BodyInfo.GROUP_RINGS) {
+            // Search for rings
+            String expectedRingNamePrefix = bodyName.replaceAll("\\s", "");
+            while (findAndRemove(expectedRingNamePrefix, bodyInfoMatches, "RING" + (nRings + 1) + "_NAME_", sortedLabelIndexes) != null) {
+                nRings++;
+                findAndRemove("RINGTYPE:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
+                findAndRemove("MASS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
+                findAndRemove("SEMIMAJORAXIS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
+                findAndRemove("INNERRADIUS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
+                findAndRemove("OUTERRADIUS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
+            }
+
+            // Could contain the last lines of a ringed planet or ringed star.
+            // Remove/learn them.
+            findAndRemove("SOLARRADIUS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("SURFACETEMP:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ORBITALPERIOD:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("SEMIMAJORAXIS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ORBITALECCENTRICITY:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ORBITALINCLINATION:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ARGOFPERIAPSIS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+
+            findAndRemove("RADIUS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("GRAVITY:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("SURFACETEMP:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            if (findAndRemove("SURFACEPRESSURE:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes) != null) {
+                findAndRemove("ATMOSPHERES", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes); // Remove the unit of surface pressure because it is long and may collide with later labels
+            }
+            findAndRemove("VOLCANISM:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ATMOSPHERETYPE:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ATMOSPHERE:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("COMPOSITION:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ORBITALPERIOD:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("SEMIMAJORAXIS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ORBITALECCENTRICITY:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ORBITALINCLINATION:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ARGOFPERIAPSIS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ROTATIONALPERIOD:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("(TIDALLYLOCKED)", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("AXIALTILT:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("PLANETMATERIALS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
         }
 
         // Always search for star catalogue IDs
-        findAndRemove("STARCATALOGUEID:", bodyInfoMatches, sortedLabelIndexes);
-        findAndRemove("GLIESE:", bodyInfoMatches, sortedLabelIndexes);
-        findAndRemove("HIPP:", bodyInfoMatches, sortedLabelIndexes);
-        findAndRemove("HD:", bodyInfoMatches, sortedLabelIndexes);
-
-        // Search for rings
-        int nRings = 0;
-        String expectedRingNamePrefix = bodyName.replaceAll("\\s", "");
-        while (findAndRemove(expectedRingNamePrefix, bodyInfoMatches, "RING" + (nRings + 1) + "_NAME_", sortedLabelIndexes) != null) {
-            nRings++;
-            findAndRemove("RINGTYPE:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
-            findAndRemove("MASS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
-            findAndRemove("SEMIMAJORAXIS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
-            findAndRemove("INNERRADIUS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
-            findAndRemove("OUTERRADIUS:", bodyInfoMatches, "RING" + nRings + "_", sortedLabelIndexes);
-        }
+        findAndRemove("STARCATALOGUEID:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+        findAndRemove("GLIESE:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+        findAndRemove("HIPP:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+        findAndRemove("HD:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
 
         // Reserves again (the one before rings)
         Integer idxRingtype = indexOf("RING1_RINGTYPE:", sortedLabelIndexes);
