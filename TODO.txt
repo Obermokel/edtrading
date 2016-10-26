@@ -1,4 +1,9 @@
 TODO:
+* BodyUpdater: Stars, Rings, ...
+* Namen auch für Sterne fixen (bodyName==systemName)
+* Bei Namen keine UNKNOWN akzeptieren, vllt nichtmal GUESSED
+* Scheiß auf 100% comp/mats/atmo!
+* 0, O und D sind einfach kacke :-(
 * w, x, z
 * Terraforming
 * Body Image
