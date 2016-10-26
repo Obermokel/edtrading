@@ -1,7 +1,7 @@
 TODO:
 * BodyUpdater: Stars, Rings, ...
-* Namen auch für Sterne fixen (bodyName==systemName)
 * Bei Namen keine UNKNOWN akzeptieren, vllt nichtmal GUESSED
+* Ring Names checken
 * 0, O und D sind einfach kacke :-(
 * w, x, z
 * Terraforming
@@ -45,3 +45,4 @@ DONE:
 * TemplateMatcher soll Kombinationen direkt splitten damit die nicht in unknown landen
 * Nicht so viele Punkte (.) lernen
 * Scheiß auf 100% comp/mats/atmo!
+* Namen auch für Sterne fixen (bodyName==systemName)

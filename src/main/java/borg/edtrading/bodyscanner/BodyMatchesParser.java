@@ -342,8 +342,6 @@ public class BodyMatchesParser {
     private static String fixAndRemoveRingName(String beforeLabel, List<Match> matches, SortedMap<Integer, String> sortedLabelIndexes, String systemName, String bodyName) {
         Integer labelIndex = indexOf(beforeLabel, sortedLabelIndexes);
         if (labelIndex != null) {
-            int endIndex = labelIndex;
-            int startIndex = labelIndex;
             List<Match> remainingMatches = new ArrayList<>();
             for (int i = labelIndex - 1; i >= 0; i--) {
                 if (matches.get(i).getShouldHaveBeen() != null) {
@@ -352,14 +350,9 @@ public class BodyMatchesParser {
                     // Skip
                 } else {
                     remainingMatches.add(0, matches.get(i));
-                    startIndex = i;
                 }
             }
             String ringName = bodyName;
-            //            List<MatchGroup> remainingNameWords = MatchSorter.sortMatches(remainingMatches);
-            //            for (MatchGroup mg : remainingNameWords) {
-            //                ringName = (ringName + " " + mg.getText()).trim();
-            //            }
             List<TextLine> remainingTextLines = new ArrayList<>();
             try {
                 remainingTextLines = TextBuilder.matchesToText(remainingMatches);
@@ -455,6 +448,10 @@ public class BodyMatchesParser {
                     partOfScannedBodyNameToReplaceWithSystemName = partOfScannedBodyName;
                     bestMatchSoFar = err;
                 }
+            }
+            float fullNameErr = MiscUtil.levenshteinError(systemName.replace("0", "O").replace("l", "I"), scannedBodyName.replace("0", "O").replace("l", "I"));
+            if (fullNameErr <= 0.25f && fullNameErr < bestMatchSoFar) {
+                partOfScannedBodyNameToReplaceWithSystemName = scannedBodyName;
             }
             if (partOfScannedBodyNameToReplaceWithSystemName != null) {
                 fixedBodyName = scannedBodyName.replace(partOfScannedBodyNameToReplaceWithSystemName, systemName);
