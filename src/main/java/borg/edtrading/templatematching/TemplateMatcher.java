@@ -51,26 +51,32 @@ public class TemplateMatcher {
     /**
      * Scales each template to the size of the screenshot region and finds the best matching one
      *
-     * @return The best matching template, never <code>null</code>
+     * @return The best matching template, or <code>null</code>
      */
     public Match bestMatchingTemplate(Region region, List<Template> templates) {
         float bestError = 999999999.9f;
+        float regionAR = (float) region.getWidth() / (float) region.getHeight();
         Match bestMatch = null;
         for (Template t : templates) {
-            GrayF32 scaledTemplatePixels = t.scalePixelsToSize(region.getWidth(), region.getHeight());
-            GrayF32 regionPixels = ImageUtil.normalize((GrayF32) region.getImageData(Transformation.LAST));
-            float error = 0.0f;
-            for (int y = 0; y < region.getHeight() && error < bestError; y++) {
-                for (int x = 0; x < region.getWidth() && error < bestError; x++) {
-                    float diff = regionPixels.unsafe_get(x, y) - scaledTemplatePixels.unsafe_get(x, y);
-                    error += (diff * diff);
+            float templateAR = (float) t.getWidth() / (float) t.getHeight();
+            if (templateAR > regionAR * 1.25f || templateAR < regionAR / 1.25f) {
+                // Too far off
+            } else {
+                GrayF32 scaledTemplatePixels = t.scalePixelsToSize(region.getWidth(), region.getHeight());
+                GrayF32 regionPixels = ImageUtil.normalize((GrayF32) region.getImageData(Transformation.LAST));
+                float error = 0.0f;
+                for (int y = 0; y < region.getHeight() && error < bestError; y++) {
+                    for (int x = 0; x < region.getWidth() && error < bestError; x++) {
+                        float diff = regionPixels.unsafe_get(x, y) - scaledTemplatePixels.unsafe_get(x, y);
+                        error += (diff * diff);
+                    }
                 }
-            }
-            if (error < bestError) {
-                // Use the region size for error/pixel calculation because we are using the scaled template
-                float errorPerPixel = error / (region.getWidth() * region.getHeight());
-                bestError = error;
-                bestMatch = new Match(region, t, 0, 0, region.getWidth(), region.getHeight(), error, errorPerPixel);
+                if (error < bestError) {
+                    // Use the region size for error/pixel calculation because we are using the scaled template
+                    float errorPerPixel = error / (region.getWidth() * region.getHeight());
+                    bestError = error;
+                    bestMatch = new Match(region, t, 0, 0, region.getWidth(), region.getHeight(), error, errorPerPixel);
+                }
             }
         }
         return bestMatch;
