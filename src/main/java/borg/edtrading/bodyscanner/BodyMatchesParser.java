@@ -781,7 +781,7 @@ public class BodyMatchesParser {
             }
             try {
                 // Pattern: #,##0.00LS
-                BigDecimal min = new BigDecimal("5.76"); // Screenshot: 2016-10-03 22-44-20 Sakarabru.png
+                BigDecimal min = new BigDecimal("2.00"); // Screenshot: 2016-10-10 04-33-04 Ross 780.png
                 BigDecimal max = new BigDecimal("526274.25"); // Screenshot: 2016-10-02 20-02-39 Jaradharre.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("B", "8"); // Replace all chars which cannot occur
@@ -828,8 +828,8 @@ public class BodyMatchesParser {
             }
             try {
                 // Pattern: #,##0
-                BigDecimal min = new BigDecimal("20"); // Screenshot: 2016-10-01 21-50-10 Condovichs.png
-                BigDecimal max = new BigDecimal("12986"); // Screenshot: 2016-09-30 17-10-03 Flech.png
+                BigDecimal min = new BigDecimal("14"); // Screenshot: 2016-10-10 05-39-29 Gooheimar.png
+                BigDecimal max = new BigDecimal("13042"); // Screenshot: 2016-10-10 04-19-56 Kareco.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousands(fixedText);
@@ -1083,7 +1083,7 @@ public class BodyMatchesParser {
             try {
                 // Pattern: #,##0K (planets) or #,##0.00K (stars)
                 BigDecimal min = new BigDecimal("20"); // Screenshot: 2016-10-01 22-22-54 Damocan.png
-                BigDecimal max = new BigDecimal("10373"); // Screenshot: 2016-10-02 06-57-39 Sirius.png
+                BigDecimal max = new BigDecimal("23048"); // Screenshot: 2016-10-10 04-46-02 Slink's Eye.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousands(fixedText);
@@ -1474,7 +1474,7 @@ public class BodyMatchesParser {
             try {
                 // Pattern: 0.0D
                 BigDecimal min = new BigDecimal("0.2"); // Screenshot: 2016-09-28 07-58-40 Har Itari.png
-                BigDecimal max = new BigDecimal("445.4"); // Screenshot: 2016-10-02 18-53-46 LHS 3317.png
+                BigDecimal max = new BigDecimal("536.4"); // Screenshot: 2016-10-10 05-41-47 LHS 1050.png
                 String fixedText = scannedText.toString();
                 fixedText = fixedText.replace("o", "0").replace("O", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
