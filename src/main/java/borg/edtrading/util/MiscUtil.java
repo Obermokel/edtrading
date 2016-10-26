@@ -28,10 +28,15 @@ public abstract class MiscUtil {
 
     public static String systemNameFromFilename(File screenshotFile) {
         String systemName = null;
+        // Remove date and file extension
         if (screenshotFile.getName().matches("\\d{4}\\-\\d{2}\\-\\d{2} \\d{2}\\-\\d{2}\\-\\d{2} .+\\.png")) {
             systemName = screenshotFile.getName().substring("0000-00-00 00-00-00 ".length()).replace(".png", "");
         }
-        return systemName;
+        // Remove numbers like (1) or highres markers like (Highres)
+        if (systemName.contains("(") && systemName.contains(")")) {
+            systemName = systemName.substring(0, systemName.indexOf("("));
+        }
+        return systemName.trim();
     }
 
     public static float levenshteinError(CharSequence mostLikelyCorrectReferenceString, CharSequence someOtherString) {
