@@ -33,11 +33,20 @@ public class Screenshot {
         // Load as BufferedImage
         BufferedImage bi = ImageIO.read(file);
 
+        // No resizing?
+        if (targetWidth <= 0) {
+            targetWidth = bi.getWidth();
+        }
+        if (targetHeight <= 0) {
+            targetHeight = bi.getHeight();
+        }
+
         // If we have a previous screenshot of the same format we can re-use memory
         boolean sameFormatAsPrevious = false;
         if (previosScreenshot != null) {
-            Planar<GrayU8> p = previosScreenshot.getOriginalImage();
-            sameFormatAsPrevious = bi.getWidth() == p.getWidth() && bi.getHeight() == p.getHeight() && bi.getRaster().getNumBands() == p.getNumBands();
+            Planar<GrayU8> po = previosScreenshot.getOriginalImage();
+            Planar<GrayU8> pr = previosScreenshot.getResizedImage();
+            sameFormatAsPrevious = bi.getWidth() == po.getWidth() && bi.getHeight() == po.getHeight() && bi.getRaster().getNumBands() == po.getNumBands() && targetWidth == pr.getWidth() && targetHeight == pr.getHeight();
         }
 
         // Convert into planar (A)RGB
