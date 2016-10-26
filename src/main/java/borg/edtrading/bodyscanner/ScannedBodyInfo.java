@@ -58,6 +58,11 @@ public class ScannedBodyInfo {
     private BodyInfo ringType = null;
     private BigDecimal moonMasses = null;
 
+    public ScannedBodyInfo(String screenshotFilename, String systemName) {
+        this.setScreenshotFilename(screenshotFilename);
+        this.setSystemName(systemName);
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -193,9 +198,132 @@ public class ScannedBodyInfo {
         return sb.toString().trim();
     }
 
-    public ScannedBodyInfo(String screenshotFilename, String systemName) {
-        this.setScreenshotFilename(screenshotFilename);
-        this.setSystemName(systemName);
+    public void addMissing(ScannedBodyInfo other) {
+        if (!this.getBodyName().equalsIgnoreCase(other.getBodyName())) {
+            throw new IllegalArgumentException("Cannot merge data from '" + other.getBodyName() + "' into '" + this.getBodyName() + "'");
+        } else {
+            if (this.getBodyGroup() == null || this.getBodyGroup() == BodyInfo.GROUP_RINGS) {
+                this.setBodyGroup(other.getBodyGroup());
+            }
+            if (this.getStarType() == null) {
+                this.setStarType(other.getStarType());
+            }
+            if (this.getAgeMillionYears() == null) {
+                this.setAgeMillionYears(other.getAgeMillionYears());
+            }
+            if (this.getSolarMasses() == null) {
+                this.setSolarMasses(other.getSolarMasses());
+            }
+            if (this.getSolarRadius() == null) {
+                this.setSolarRadius(other.getSolarRadius());
+            }
+            if (this.getBodyType() == null) {
+                this.setBodyType(other.getBodyType());
+            }
+            if (this.getTerraforming() == null) {
+                this.setTerraforming(other.getTerraforming());
+            }
+            if (this.getDistanceLs() == null) {
+                this.setDistanceLs(other.getDistanceLs());
+            }
+            if (this.getSystemReserves() == null) {
+                this.setSystemReserves(other.getSystemReserves());
+            }
+            if (this.getEarthMasses() == null) {
+                this.setEarthMasses(other.getEarthMasses());
+            }
+            if (this.getRadiusKm() == null) {
+                this.setRadiusKm(other.getRadiusKm());
+            }
+            if (this.getGravityG() == null) {
+                this.setGravityG(other.getGravityG());
+            }
+            if (this.getSurfaceTempK() == null) {
+                this.setSurfaceTempK(other.getSurfaceTempK());
+            }
+            if (this.getSurfacePressureAtmospheres() == null) {
+                this.setSurfacePressureAtmospheres(other.getSurfacePressureAtmospheres());
+            }
+            if (this.getVolcanism() == null) {
+                this.setVolcanism(other.getVolcanism());
+            }
+            if (this.getAtmosphereType() == null) {
+                this.setAtmosphereType(other.getAtmosphereType());
+            }
+            if (this.getAtmosphere() == null) {
+                this.setAtmosphere(other.getAtmosphere());
+            }
+            if (this.getComposition() == null) {
+                this.setComposition(other.getComposition());
+            }
+            if (this.getOrbitalPeriodD() == null) {
+                this.setOrbitalPeriodD(other.getOrbitalPeriodD());
+            }
+            if (this.getSemiMajorAxisAU() == null) {
+                this.setSemiMajorAxisAU(other.getSemiMajorAxisAU());
+            }
+            if (this.getOrbitalEccentricity() == null) {
+                this.setOrbitalEccentricity(other.getOrbitalEccentricity());
+            }
+            if (this.getOrbitalInclinationDeg() == null) {
+                this.setOrbitalInclinationDeg(other.getOrbitalInclinationDeg());
+            }
+            if (this.getArgOfPeriapsisDeg() == null) {
+                this.setArgOfPeriapsisDeg(other.getArgOfPeriapsisDeg());
+            }
+            if (this.getRotationalPeriodD() == null) {
+                this.setRotationalPeriodD(other.getRotationalPeriodD());
+            }
+            if (this.getTidallyLocked() == null) {
+                this.setTidallyLocked(other.getTidallyLocked());
+            }
+            if (this.getAxialTiltDeg() == null) {
+                this.setAxialTiltDeg(other.getAxialTiltDeg());
+            }
+            if (this.getPlanetMaterials() == null) {
+                this.setPlanetMaterials(other.getPlanetMaterials());
+            }
+            if (this.getRingType() == null) {
+                this.setRingType(other.getRingType());
+            }
+            if (this.getMoonMasses() == null) {
+                this.setMoonMasses(other.getMoonMasses());
+            }
+            if (this.getRings() == null || this.getRings().isEmpty()) {
+                this.setRings(other.getRings());
+            } else {
+                if (other.getRings() != null) {
+                    for (ScannedRingInfo otherSri : other.getRings()) {
+                        ScannedRingInfo thisSri = null;
+                        for (ScannedRingInfo sri : this.getRings()) {
+                            if (sri.getRingName() != null && sri.getRingName().equalsIgnoreCase(otherSri.getRingName())) {
+                                thisSri = sri;
+                                break;
+                            }
+                        }
+                        if (thisSri == null) {
+                            this.getRings().add(otherSri);
+                        } else {
+                            if (thisSri.getRingType() == null) {
+                                thisSri.setRingType(otherSri.getRingType());
+                            }
+                            if (thisSri.getMassMt() == null) {
+                                thisSri.setMassMt(otherSri.getMassMt());
+                            }
+                            if (thisSri.getSemiMajorAxisAU() == null) {
+                                thisSri.setSemiMajorAxisAU(otherSri.getSemiMajorAxisAU());
+                            }
+                            if (thisSri.getInnerRadiusKm() == null) {
+                                thisSri.setInnerRadiusKm(otherSri.getInnerRadiusKm());
+                            }
+                            if (thisSri.getOuterRadiusKm() == null) {
+                                thisSri.setOuterRadiusKm(otherSri.getOuterRadiusKm());
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public String getScreenshotFilename() {

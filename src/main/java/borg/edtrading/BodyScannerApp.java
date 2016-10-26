@@ -94,7 +94,7 @@ public class BodyScannerApp {
                     }
                     if (resultsByBodyName.containsKey(sbi.getBodyName())) {
                         ScannedBodyInfo prevSBI = resultsByBodyName.get(sbi.getBodyName());
-                        logger.warn("Replacing existing scanner result for '" + sbi.getBodyName() + "' from " + prevSBI.getScreenshotFilename() + " with the new result from " + sbi.getScreenshotFilename());
+                        sbi.addMissing(prevSBI);
                     }
                     resultsByBodyName.put(sbi.getBodyName(), sbi);
 
@@ -160,7 +160,7 @@ public class BodyScannerApp {
                 }
             }
         }
-        System.out.println("\n>>>> >>>> >>>> >>>> RESULTS FROM " + nPlanets + " PLANETS <<<< <<<< <<<< <<<<\n");
+        System.out.println("\n>>>> >>>> >>>> >>>> RESULTS FROM " + nPlanets + " LANDABLE PLANETS <<<< <<<< <<<< <<<<\n");
         System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "ELEMENT", "HIGHEST", "MEDIAN", "OCCURENCE"));
         System.out.println(String.format(Locale.US, "%-15s %10s %10s %10s", "---------------", "----------", "----------", "----------"));
         for (Item element : highestOccurences.keySet()) {
