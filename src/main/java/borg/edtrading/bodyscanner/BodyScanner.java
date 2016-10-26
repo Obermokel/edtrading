@@ -225,7 +225,7 @@ public class BodyScanner {
                 // Most likely complete black
             } else if (bestMatch.getErrorPerPixel() <= ERROR_PER_PIXEL_KNOWN) {
                 nKnown++;
-                Template.createNewFromRegion(charRegion, "KNOWN", bestMatch.getTemplate().getText());
+                //Template.createNewFromRegion(charRegion, "KNOWN", bestMatch.getTemplate().getText());
                 g.setFont(new Font("Consolas", Font.PLAIN, 22));
                 g.setColor(Color.GREEN);
                 g.drawString(bestMatch.getTemplate().getText(), r.x, r.y);

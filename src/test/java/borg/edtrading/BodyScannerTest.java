@@ -57,9 +57,9 @@ public class BodyScannerTest {
         //2016-09-29 08-16-28 Paul-Friedrichs Star
         //2016-10-03 08-37-57 Altair
         //2016-09-29 08-24-03 BD+63 1764
-        List<File> screenshotFiles = BodyScannerApp.selectSpecificScreenshot("2016-10-02 07-39-46 LHS 301.png");
+        //List<File> screenshotFiles = BodyScannerApp.selectSpecificScreenshot("2016-10-06 22-56-16 Delta Equulei.png");
         //List<File> screenshotFiles = BodyScannerApp.selectRandomScreenshot();
-        //List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
+        List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
         int n = 0;
         int total = screenshotFiles.size();
         int batchSize = 10;
@@ -83,7 +83,7 @@ public class BodyScannerTest {
             scanner.setDebugAlphanumTemplates(false);
             scanner.setDebugAlphanumTextLines(false);
             scanner.setDebugAllTemplates(true);
-            scanner.setDebugAllTextLines(true);
+            scanner.setDebugAllTextLines(false);
             scanner.setDebugFinal(true);
             BodyScannerResult result = scanner.scanScreenshotFile(screenshotFile);
             if (result.getThresholdDebugImage() != null) {
@@ -160,7 +160,7 @@ public class BodyScannerTest {
                     File targetFile = new File(targetDir, "LEARNED#" + randomPngFile.getName());
                     FileUtils.copyFile(randomPngFile, targetFile);
 
-                    // Limit to the newest 10
+                    // Limit to the newest 50
                     File[] learned = targetDir.listFiles(new FileFilter() {
                         @Override
                         public boolean accept(File file) {
@@ -174,7 +174,7 @@ public class BodyScannerTest {
                         }
                     });
                     for (int i = 0; i < learned.length; i++) {
-                        if (i >= 10 && !learned[i].getName().startsWith("CRAP")) {
+                        if (i >= 50 && !learned[i].getName().startsWith("CRAP")) {
                             learned[i].delete();
                         }
                     }

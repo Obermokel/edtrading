@@ -18,10 +18,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -379,7 +377,6 @@ public class BodyMatchesParser {
     }
 
     private static void learnWronglyDetectedChars(List<Match> fixedMatches) {
-        Set<String> learned = new HashSet<>();
         for (Match m : fixedMatches) {
             if (m != null && m.getShouldHaveBeen() != null) {
                 // We know what it should have been
@@ -399,15 +396,10 @@ public class BodyMatchesParser {
                         }
                     } else if (m.getErrorPerPixel() > BodyScanner.ERROR_PER_PIXEL_KNOWN && m.getErrorPerPixel() <= BodyScanner.ERROR_PER_PIXEL_GUESSED) {
                         // It has been detected/guessed correctly and is quite, but not totally off.
-                        if (!learned.contains(m.getTemplate().getText())) {
-                            // It has not yet been learned in this session
-                            learned.add(m.getTemplate().getText());
-
-                            try {
-                                Template.createNewFromRegion(m.getRegion(), "LEARNED_VARIANT", m.getShouldHaveBeen());
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                        try {
+                            Template.createNewFromRegion(m.getRegion(), "LEARNED_VARIANT", m.getShouldHaveBeen());
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     }
                 }
