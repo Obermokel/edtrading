@@ -2,7 +2,6 @@ TODO:
 * BodyUpdater: Stars, Rings, ...
 * Namen auch für Sterne fixen (bodyName==systemName)
 * Bei Namen keine UNKNOWN akzeptieren, vllt nichtmal GUESSED
-* Scheiß auf 100% comp/mats/atmo!
 * 0, O und D sind einfach kacke :-(
 * w, x, z
 * Terraforming
@@ -45,3 +44,4 @@ DONE:
 * 2016-10-03 13-08-43 Dafnharian.png: Sum of atmosphere is 97.9: ist tatsächlich so: {ATMOSPHERE_COMPONENT_HELIUM=85.9, ATMOSPHERE_COMPONENT_HYDROGEN=8.1, ATMOSPHERE_COMPONENT_NITROGEN=3.9}
 * TemplateMatcher soll Kombinationen direkt splitten damit die nicht in unknown landen
 * Nicht so viele Punkte (.) lernen
+* Scheiß auf 100% comp/mats/atmo!

@@ -1789,8 +1789,8 @@ public class BodyMatchesParser {
             }
             LinkedHashMap<String, BigDecimal> fixedPercentages = fixPercentagesTo100(wrongPercentages);
             if (fixedPercentages == null) {
-                logger.warn(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
-                return null;
+                //logger.warn(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
+                return result;
             } else {
                 logger.info(
                         currentScreenshotFilename + ": Fixed sum of " + label.toLowerCase().replace(":", "") + " from " + sumOfPercentages(wrongPercentages) + "% " + wrongPercentages + " to " + sumOfPercentages(fixedPercentages) + "% " + fixedPercentages);
@@ -1830,8 +1830,8 @@ public class BodyMatchesParser {
                 return result;
             }
         } else if (Math.abs(100.0 - totalSumPercent.doubleValue()) > 0.5) {
-            logger.debug(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
-            return null;
+            //logger.debug(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
+            return result;
         } else {
             return result;
         }
@@ -1899,8 +1899,8 @@ public class BodyMatchesParser {
             }
             LinkedHashMap<String, BigDecimal> fixedPercentages = fixPercentagesTo100(wrongPercentages);
             if (fixedPercentages == null) {
-                logger.warn(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
-                return null;
+                //logger.warn(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
+                return result;
             } else {
                 logger.info(
                         currentScreenshotFilename + ": Fixed sum of " + label.toLowerCase().replace(":", "") + " from " + sumOfPercentages(wrongPercentages) + "% " + wrongPercentages + " to " + sumOfPercentages(fixedPercentages) + "% " + fixedPercentages);
@@ -1940,8 +1940,8 @@ public class BodyMatchesParser {
                 return result;
             }
         } else if (Math.abs(100.0 - totalSumPercent.doubleValue()) > 0.5) {
-            logger.debug(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
-            return null;
+            //logger.debug(currentScreenshotFilename + ": Sum of " + label.toLowerCase().replace(":", "") + " is " + totalSumPercent + ": " + result);
+            return result;
         } else {
             return result;
         }
