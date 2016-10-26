@@ -36,6 +36,10 @@ public abstract class MiscUtil {
         if (systemName.contains("(") && systemName.contains(")")) {
             systemName = systemName.substring(0, systemName.indexOf("("));
         }
+        // Remove numbers like _1
+        if (systemName.contains("_")) {
+            systemName = systemName.substring(0, systemName.indexOf("_"));
+        }
         return systemName.trim();
     }
 
