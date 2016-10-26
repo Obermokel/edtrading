@@ -114,7 +114,11 @@ public class BodyScannerApp {
             }
 
             printStats(results);
-            System.out.println("Highest gravity: " + highestGravity(results, true).getGravityG() + "G (" + highestGravity(results, true).getBodyName() + ")");
+            System.out.println();
+            System.out.println("Highest gravity:          " + highestGravity(results, true).getGravityG() + "G (" + highestGravity(results, true).getBodyName() + ")");
+            System.out.println("Shortest orbital period:  " + shortestOrbitalPeriod(results, true).getOrbitalPeriodD() + "D (" + shortestOrbitalPeriod(results, true).getBodyName() + ")");
+            System.out.println("Hottest surface temp:     " + hottestSurfaceTemp(results, true).getSurfaceTempK() + "K (" + hottestSurfaceTemp(results, true).getBodyName() + ")");
+            System.out.println("Coolest surface temp:     " + coolestSurfaceTemp(results, true).getSurfaceTempK() + "K (" + coolestSurfaceTemp(results, true).getBodyName() + ")");
         } finally {
             if (bodyUpdater != null) {
                 bodyUpdater.close();
@@ -130,6 +134,48 @@ public class BodyScannerApp {
                 if (!landableOnly || (sbi.getPlanetMaterials() != null && sbi.getPlanetMaterials().size() > 0)) {
                     result = sbi;
                     max = sbi.getGravityG();
+                }
+            }
+        }
+        return result;
+    }
+
+    static ScannedBodyInfo shortestOrbitalPeriod(List<ScannedBodyInfo> scannedBodyInfos, boolean landableOnly) {
+        ScannedBodyInfo result = null;
+        BigDecimal min = new BigDecimal("999999999");
+        for (ScannedBodyInfo sbi : scannedBodyInfos) {
+            if (sbi.getOrbitalPeriodD() != null && sbi.getOrbitalPeriodD().compareTo(min) < 0) {
+                if (!landableOnly || (sbi.getPlanetMaterials() != null && sbi.getPlanetMaterials().size() > 0)) {
+                    result = sbi;
+                    min = sbi.getOrbitalPeriodD();
+                }
+            }
+        }
+        return result;
+    }
+
+    static ScannedBodyInfo hottestSurfaceTemp(List<ScannedBodyInfo> scannedBodyInfos, boolean landableOnly) {
+        ScannedBodyInfo result = null;
+        BigDecimal max = BigDecimal.ZERO;
+        for (ScannedBodyInfo sbi : scannedBodyInfos) {
+            if (sbi.getSurfaceTempK() != null && sbi.getSurfaceTempK().compareTo(max) > 0) {
+                if (!landableOnly || (sbi.getPlanetMaterials() != null && sbi.getPlanetMaterials().size() > 0)) {
+                    result = sbi;
+                    max = sbi.getSurfaceTempK();
+                }
+            }
+        }
+        return result;
+    }
+
+    static ScannedBodyInfo coolestSurfaceTemp(List<ScannedBodyInfo> scannedBodyInfos, boolean landableOnly) {
+        ScannedBodyInfo result = null;
+        BigDecimal min = new BigDecimal("999999999");
+        for (ScannedBodyInfo sbi : scannedBodyInfos) {
+            if (sbi.getSurfaceTempK() != null && sbi.getSurfaceTempK().compareTo(min) < 0) {
+                if (!landableOnly || (sbi.getPlanetMaterials() != null && sbi.getPlanetMaterials().size() > 0)) {
+                    result = sbi;
+                    min = sbi.getSurfaceTempK();
                 }
             }
         }
