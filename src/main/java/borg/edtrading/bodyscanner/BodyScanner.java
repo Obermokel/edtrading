@@ -163,19 +163,17 @@ public class BodyScanner {
 
         // TODO
         List<TextLine> bodyNameLines = new ArrayList<>();
-        List<Match> bodyInfoMatches = new ArrayList<>();
+        List<TextLine> bodyInfoLines = new ArrayList<>();
         for (TextLine tl : allTextLines) {
             if (tl.getxInScreenshot() > screenshot.getResizedWidth() * 0.333) {
                 bodyNameLines.add(tl);
             } else {
-                for (Word w : tl.getSortedWords()) {
-                    bodyInfoMatches.addAll(w.getSortedMatches());
-                }
+                bodyInfoLines.add(tl);
             }
         }
         String filename = screenshotFile.getName();
         String systemName = MiscUtil.systemNameFromFilename(screenshotFile);
-        ScannedBodyInfo sbi = BodyMatchesParser.fromScannedAndSortedMatches(filename, systemName, bodyNameLines, bodyInfoMatches);
+        ScannedBodyInfo sbi = BodyMatchesParser.fromScannedAndSortedLines(filename, systemName, bodyNameLines, bodyInfoLines);
         result.setScannedBodyInfo(sbi);
 
         if (this.isDebugFinal()) {

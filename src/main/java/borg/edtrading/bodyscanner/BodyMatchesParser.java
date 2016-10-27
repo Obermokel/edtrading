@@ -6,6 +6,23 @@ import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.ocr.TextBuilder;
 import borg.edtrading.ocr.TextLine;
+import borg.edtrading.ocr.Word;
+import borg.edtrading.ocr.fixer.Fixer;
+import borg.edtrading.ocr.fixer.FixerException;
+import borg.edtrading.ocr.fixer.general.BodyNameFixer;
+import borg.edtrading.ocr.fixer.planets.ArgOfPeriapsisFixer;
+import borg.edtrading.ocr.fixer.planets.ArrivalPointFixer;
+import borg.edtrading.ocr.fixer.planets.AxialTiltFixer;
+import borg.edtrading.ocr.fixer.planets.EarthMassesFixer;
+import borg.edtrading.ocr.fixer.planets.GravityFixer;
+import borg.edtrading.ocr.fixer.planets.OrbitalEccentricityFixer;
+import borg.edtrading.ocr.fixer.planets.OrbitalInclinationFixer;
+import borg.edtrading.ocr.fixer.planets.OrbitalPeriodFixer;
+import borg.edtrading.ocr.fixer.planets.RadiusFixer;
+import borg.edtrading.ocr.fixer.planets.RotationalPeriodFixer;
+import borg.edtrading.ocr.fixer.planets.SemiMajorAxisFixer;
+import borg.edtrading.ocr.fixer.planets.SurfacePressureFixer;
+import borg.edtrading.ocr.fixer.planets.SurfaceTempFixer;
 import borg.edtrading.templatematching.Match;
 import borg.edtrading.templatematching.Template;
 import borg.edtrading.util.MiscUtil;
@@ -20,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -35,6 +53,273 @@ public class BodyMatchesParser {
     static final Logger logger = LogManager.getLogger(BodyMatchesParser.class);
 
     private static String currentScreenshotFilename = "";
+
+    public static ScannedBodyInfo fromScannedAndSortedLines(String screenshotFilename, String systemName, List<TextLine> bodyNameLines, List<TextLine> bodyInfoLines) {
+        currentScreenshotFilename = screenshotFilename;
+
+        ScannedBodyInfo scannedBodyInfo = new ScannedBodyInfo(screenshotFilename, systemName);
+
+        // >>>> START BODY NAME >>>>
+
+        // Find all lines which start with a label
+        Map<String, List<TextLine>> textLinesByLabel = new LinkedHashMap<>();
+        textLinesByLabel.put("BODYNAME:", Arrays.asList(bodyNameLines.get(0)));
+        findAndFixLabel("ARRIVALPOINT:", bodyNameLines, textLinesByLabel);
+        findAndFixLabel("ATMOSPHERETYPE:", bodyNameLines, textLinesByLabel);
+
+        // Find value-only lines
+        for (BodyInfo bi : BodyInfo.byPrefix("TYPE_")) {
+            findAndFixLabel(bi.getName().replaceAll("\\s", ""), bodyNameLines, textLinesByLabel);
+        }
+        findAndFixLabel("Select", bodyNameLines, textLinesByLabel);
+
+        // Find all lines which do not have a label and add them to the previous label
+        for (TextLine tl : bodyNameLines) {
+            maybeAddToPreviousLabel(tl, textLinesByLabel, bodyNameLines);
+        }
+
+        // TODO Remove debug output
+        for (String label : textLinesByLabel.keySet()) {
+            logger.debug(String.format("%-21s ", label) + textLinesByLabel.get(label));
+        }
+
+        scannedBodyInfo.setBodyName((String) findAndFixValue("BODYNAME:", textLinesByLabel, new BodyNameFixer()));
+        scannedBodyInfo.setDistanceLs((BigDecimal) findAndFixValue("ARRIVALPOINT:", textLinesByLabel, new ArrivalPointFixer()));
+        //scannedBodyInfo.setAtmosphereType((BigDecimal) findAndFixValue("ATMOSPHERETYPE:", textLinesByLabel, new GravityFixer()));
+
+        // <<<< END BODY NAME <<<<
+
+        // >>>> START BODY INFO >>>>
+
+        // Find all lines which start with a label
+        textLinesByLabel = new LinkedHashMap<>();
+        findAndFixLabel("EARTHMASSES:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("RADIUS:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("GRAVITY:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("SURFACETEMP:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("SURFACEPRESSURE:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("ATMOSPHERES", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("VOLCANISM:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("ATMOSPHERETYPE:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("ATMOSPHERE:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("COMPOSITION:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("ORBITALPERIOD:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("SEMIMAJORAXIS:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("ORBITALECCENTRICITY:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("ORBITALINCLINATION:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("ARGOFPERIAPSIS:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("ROTATIONALPERIOD:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("(TIDALLYLOCKED)", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("AXIALTILT:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("PLANETMATERIALS:", bodyInfoLines, textLinesByLabel);
+
+        findAndFixLabel("AGE:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("SOLARMASSES:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("MILLIONYEARS", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("SOLARRADIUS:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("SURFACETEMP:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("ORBITALPERIOD:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("SEMIMAJORAXIS:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("ORBITALECCENTRICITY:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("ORBITALINCLINATION:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("ARGOFPERIAPSIS:", bodyInfoLines, textLinesByLabel);
+
+        findAndFixLabel("MOONMASSES:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("RINGTYPE:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("ORBITALPERIOD:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("SEMIMAJORAXIS:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("ORBITALECCENTRICITY:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("ORBITALINCLINATION:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("ARGOFPERIAPSIS:", bodyInfoLines, textLinesByLabel);
+
+        findAndFixLabel("RINGTYPE:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("MASS:", bodyInfoLines, textLinesByLabel);
+        //findAndFixLabel("SEMIMAJORAXIS:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("INNERRADIUS:", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("OUTERRADIUS:", bodyInfoLines, textLinesByLabel);
+
+        // Find value-only lines
+        for (BodyInfo bi : BodyInfo.byPrefix("TERRAFORMING_")) {
+            findAndFixLabel(bi.getName().replaceAll("\\s", ""), bodyInfoLines, textLinesByLabel);
+        }
+        for (BodyInfo bi : BodyInfo.byPrefix("RESERVES_")) {
+            findAndFixLabel(bi.getName().replaceAll("\\s", ""), bodyInfoLines, textLinesByLabel);
+        }
+        for (BodyInfo bi : BodyInfo.byPrefix("RESERVES_")) {
+            findAndFixLabel(bi.getName().replaceAll("\\s", ""), bodyInfoLines, textLinesByLabel);
+        }
+        for (BodyInfo bi : BodyInfo.byPrefix("STAR_TYPE_")) {
+            findAndFixLabel(bi.getName().replaceAll("\\s", ""), bodyInfoLines, textLinesByLabel);
+        }
+        findAndFixLabel("BALANCE", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("BACK", bodyInfoLines, textLinesByLabel);
+        findAndFixLabel("EXIT", bodyInfoLines, textLinesByLabel);
+
+        // Find all lines which do not have a label and add them to the previous label
+        for (TextLine tl : bodyInfoLines) {
+            maybeAddToPreviousLabel(tl, textLinesByLabel, bodyInfoLines);
+        }
+
+        // Set body group depending on what labels have been found
+        if (textLinesByLabel.containsKey("EARTHMASSES:")) {
+            scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_PLANET);
+        } else if (textLinesByLabel.containsKey("SOLARMASSES:")) {
+            scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_STAR);
+        } else if (textLinesByLabel.containsKey("MOONMASSES:")) {
+            scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_BELT);
+        } else {
+            scannedBodyInfo.setBodyGroup(BodyInfo.GROUP_RINGS);
+        }
+
+        // TODO Remove debug output
+        for (String label : textLinesByLabel.keySet()) {
+            logger.debug(String.format("%-21s ", label) + textLinesByLabel.get(label));
+        }
+
+        scannedBodyInfo.setEarthMasses((BigDecimal) findAndFixValue("EARTHMASSES:", textLinesByLabel, new EarthMassesFixer()));
+        scannedBodyInfo.setRadiusKm((BigDecimal) findAndFixValue("RADIUS:", textLinesByLabel, new RadiusFixer()));
+        scannedBodyInfo.setGravityG((BigDecimal) findAndFixValue("GRAVITY:", textLinesByLabel, new GravityFixer()));
+        scannedBodyInfo.setSurfaceTempK((BigDecimal) findAndFixValue("SURFACETEMP:", textLinesByLabel, new SurfaceTempFixer()));
+        scannedBodyInfo.setSurfacePressureAtmospheres((BigDecimal) findAndFixValue("SURFACEPRESSURE:", textLinesByLabel, new SurfacePressureFixer()));
+        //TODO scannedBodyInfo.setVolcanism((BigDecimal) findAndFixValue("VOLCANISM:", textLinesByLabel, new RadiusFixer()));
+        //TODO scannedBodyInfo.setAtmosphereType((BigDecimal) findAndFixValue("ATMOSPHERETYPE:", textLinesByLabel, new RadiusFixer()));
+        //TODO scannedBodyInfo.setAtmosphere((BigDecimal) findAndFixValue("ATMOSPHERE:", textLinesByLabel, new RadiusFixer()));
+        //TODO scannedBodyInfo.setComposition((BigDecimal) findAndFixValue("COMPOSITION:", textLinesByLabel, new RadiusFixer()));
+        scannedBodyInfo.setOrbitalPeriodD((BigDecimal) findAndFixValue("ORBITALPERIOD:", textLinesByLabel, new OrbitalPeriodFixer()));
+        scannedBodyInfo.setSemiMajorAxisAU((BigDecimal) findAndFixValue("SEMIMAJORAXIS:", textLinesByLabel, new SemiMajorAxisFixer()));
+        scannedBodyInfo.setOrbitalEccentricity((BigDecimal) findAndFixValue("ORBITALECCENTRICITY:", textLinesByLabel, new OrbitalEccentricityFixer()));
+        scannedBodyInfo.setOrbitalInclinationDeg((BigDecimal) findAndFixValue("ORBITALINCLINATION:", textLinesByLabel, new OrbitalInclinationFixer()));
+        scannedBodyInfo.setArgOfPeriapsisDeg((BigDecimal) findAndFixValue("ARGOFPERIAPSIS:", textLinesByLabel, new ArgOfPeriapsisFixer()));
+        scannedBodyInfo.setRotationalPeriodD((BigDecimal) findAndFixValue("ROTATIONALPERIOD:", textLinesByLabel, new RotationalPeriodFixer()));
+        scannedBodyInfo.setAxialTiltDeg((BigDecimal) findAndFixValue("AXIALTILT:", textLinesByLabel, new AxialTiltFixer()));
+        //TODO scannedBodyInfo.setPlanetMaterials((BigDecimal) findAndFixValue("PLANETMATERIALS:", textLinesByLabel, new RadiusFixer()));
+
+        // <<<< END BODY INFO <<<<
+
+        return scannedBodyInfo;
+    }
+
+    private static Object findAndFixValue(String label, Map<String, List<TextLine>> textLinesByLabel, Fixer fixer) {
+        List<TextLine> textLines = textLinesByLabel.get(label);
+        if (textLines == null || textLines.isEmpty()) {
+            return null;
+        } else {
+            List<Match> matches = new ArrayList<>();
+            for (TextLine tl : textLines) {
+                for (Word w : tl.getSortedWords()) {
+                    for (Match m : w.getSortedMatches()) {
+                        if (m.getShouldHaveBeen() == null) {
+                            matches.add(m);
+                        }
+                    }
+                }
+            }
+            if (matches.isEmpty()) {
+                return null;
+            } else {
+                try {
+                    return fixer.fix(matches);
+                } catch (FixerException e) {
+                    logger.warn(currentScreenshotFilename + ": Failed to fix value using " + fixer.getClass().getSimpleName() + ": " + e.getMessage());
+                    return null;
+                }
+            }
+        }
+    }
+
+    private static String maybeAddToPreviousLabel(TextLine currentTextLine, Map<String, List<TextLine>> textLinesByLabel, List<TextLine> sortedTextLines) {
+        // Is it already labeled?
+        for (List<TextLine> labeledTextLines : textLinesByLabel.values()) {
+            if (labeledTextLines.contains(currentTextLine)) {
+                return null; // Was already labeled
+            }
+        }
+
+        // It is not. Search the previous label.
+        int currentIndex = sortedTextLines.indexOf(currentTextLine);
+        int maxIndex = -1;
+        String previousLabel = null;
+        for (String label : textLinesByLabel.keySet()) {
+            List<TextLine> textLines = textLinesByLabel.get(label);
+            for (TextLine tl : textLines) {
+                int index = sortedTextLines.indexOf(tl);
+                if (index > maxIndex && index < currentIndex) {
+                    maxIndex = index;
+                    previousLabel = label;
+                }
+            }
+        }
+
+        // Add and return
+        if (previousLabel == null) {
+            logger.warn(currentScreenshotFilename + ": Did not find a previous label for " + currentTextLine);
+        } else {
+            logger.debug(currentScreenshotFilename + ": Added " + currentTextLine + " to " + previousLabel);
+            textLinesByLabel.get(previousLabel).add(currentTextLine);
+        }
+
+        return previousLabel;
+    }
+
+    private static TextLine findAndFixLabel(String label, List<TextLine> textLines, Map<String, List<TextLine>> textLinesByLabel) {
+        // Find
+        final float maxError = maxLevenshteinError(label);
+
+        TextLine bestTextLine = null;
+        float bestError = 1.0f;
+        int usedWords = -1;
+        for (TextLine tl : textLines) {
+            List<Word> words = tl.getSortedWords();
+            for (int numWords = 1; numWords <= words.size(); numWords++) {
+                String scannedText = wordsToText(words, 0, numWords);
+                if (scannedText != null && (!label.contains(":") || scannedText.contains(":"))) {
+                    float error = MiscUtil.levenshteinError(label, scannedText);
+                    if (error <= maxError && error < bestError) {
+                        bestTextLine = tl;
+                        bestError = error;
+                        usedWords = numWords;
+                    }
+                }
+            }
+        }
+
+        if (bestTextLine == null) {
+            return null;
+        } else {
+            // Add
+            List<TextLine> textLinesForLabel = textLinesByLabel.get(label);
+            if (textLinesForLabel == null) {
+                textLinesForLabel = new ArrayList<>(1);
+                textLinesByLabel.put(label, textLinesForLabel);
+            }
+            textLinesForLabel.add(bestTextLine);
+
+            // Fix
+            List<Match> matches = new ArrayList<>(label.length());
+            for (int wordIndex = 0; wordIndex < usedWords; wordIndex++) {
+                matches.addAll(bestTextLine.getSortedWords().get(wordIndex).getSortedMatches());
+            }
+            findAndRemove(label, matches, new TreeMap<>());
+
+            // Return
+            return bestTextLine;
+        }
+    }
+
+    private static String wordsToText(List<Word> words, int firstWordIndex, int numWords) {
+        String text = "";
+        for (int i = 0; i < numWords; i++) {
+            Word w = words.get(firstWordIndex + i);
+            for (Match m : w.getSortedMatches()) {
+                if (m.getShouldHaveBeen() != null) {
+                    return null; // Abort. Contains matches which have already been identified.
+                } else {
+                    text += m.getTemplate().getText(); // Concat and continue
+                }
+            }
+        }
+        return text;
+    }
 
     public static ScannedBodyInfo fromScannedAndSortedMatches(String screenshotFilename, String systemName, List<TextLine> bodyNameLines, List<Match> bodyInfoMatches) {
         currentScreenshotFilename = screenshotFilename;

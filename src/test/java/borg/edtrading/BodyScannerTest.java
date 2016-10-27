@@ -57,7 +57,7 @@ public class BodyScannerTest {
         //2016-09-29 08-16-28 Paul-Friedrichs Star
         //2016-10-03 08-37-57 Altair
         //2016-09-29 08-24-03 BD+63 1764
-        List<File> screenshotFiles = BodyScannerApp.selectSpecificScreenshot("2016-10-02 11-24-43 LHS 3505.png");
+        List<File> screenshotFiles = BodyScannerApp.selectSpecificScreenshot("2016-10-03 12-41-02 Binjia.png");
         //List<File> screenshotFiles = BodyScannerApp.selectRandomScreenshot();
         //List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
         int n = 0;

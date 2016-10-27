@@ -1,0 +1,27 @@
+package borg.edtrading.ocr.fixer.planets;
+
+import borg.edtrading.ocr.fixer.AbstractBigDecimalWithOptionalUnitFixer;
+
+public class GravityFixer extends AbstractBigDecimalWithOptionalUnitFixer {
+
+    @Override
+    protected String getUnit() {
+        return "G";
+    }
+
+    @Override
+    protected boolean patternHasSign() {
+        return false;
+    }
+
+    @Override
+    protected boolean patternHasThousands() {
+        return false;
+    }
+
+    @Override
+    protected int patternNumDecimals() {
+        return 2;
+    }
+
+}

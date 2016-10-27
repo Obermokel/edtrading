@@ -41,6 +41,16 @@ public class Word {
         return this.toText() + " (" + this.getxInScreenshot() + "/" + this.getyInScreenshot() + ", " + this.getWidth() + "x" + this.getHeight() + ")";
     }
 
+    @Override
+    public boolean equals(Object that) {
+        return this == that || (that instanceof Word && this.toString().equals(that.toString()));
+    }
+
+    @Override
+    public int hashCode() {
+        return this.toString().hashCode();
+    }
+
     public String toText() {
         return this.toText(false);
     }
