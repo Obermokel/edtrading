@@ -213,33 +213,33 @@ public class BodyMatchesParser {
 
             // Could contain the last lines of a ringed planet or ringed star.
             // Remove/learn them.
-            findAndRemove("SOLARRADIUS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("SURFACETEMP:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("ORBITALPERIOD:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("SEMIMAJORAXIS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("ORBITALECCENTRICITY:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("ORBITALINCLINATION:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("ARGOFPERIAPSIS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("SOLARRADIUS:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("SURFACETEMP:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ORBITALPERIOD:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("SEMIMAJORAXIS:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ORBITALECCENTRICITY:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ORBITALINCLINATION:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ARGOFPERIAPSIS:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
 
-            findAndRemove("RADIUS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("GRAVITY:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("SURFACETEMP:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            if (findAndRemove("SURFACEPRESSURE:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes) != null) {
-                findAndRemove("ATMOSPHERES", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes); // Remove the unit of surface pressure because it is long and may collide with later labels
+            findAndRemove("RADIUS:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("GRAVITY:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("SURFACETEMP:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            if (findAndRemove("SURFACEPRESSURE:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes) != null) {
+                findAndRemove("ATMOSPHERES", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes); // Remove the unit of surface pressure because it is long and may collide with later labels
             }
-            findAndRemove("VOLCANISM:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("ATMOSPHERETYPE:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("ATMOSPHERE:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("COMPOSITION:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("ORBITALPERIOD:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("SEMIMAJORAXIS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("ORBITALECCENTRICITY:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("ORBITALINCLINATION:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("ARGOFPERIAPSIS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("ROTATIONALPERIOD:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("(TIDALLYLOCKED)", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("AXIALTILT:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
-            findAndRemove("PLANETMATERIALS:", bodyInfoMatches, 0, sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("VOLCANISM:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ATMOSPHERETYPE:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ATMOSPHERE:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("COMPOSITION:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ORBITALPERIOD:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("SEMIMAJORAXIS:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ORBITALECCENTRICITY:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ORBITALINCLINATION:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ARGOFPERIAPSIS:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("ROTATIONALPERIOD:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("(TIDALLYLOCKED)", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("AXIALTILT:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
+            findAndRemove("PLANETMATERIALS:", bodyInfoMatches, 0, sortedLabelIndexes.isEmpty() ? bodyInfoMatches.size() : sortedLabelIndexes.lastKey(), "", sortedLabelIndexes);
         }
 
         // Always search for star catalogue IDs
@@ -1283,6 +1283,9 @@ public class BodyMatchesParser {
                 BigDecimal min = new BigDecimal("0.2"); // Screenshot: 2016-09-28 07-58-40 Har Itari.png
                 BigDecimal max = new BigDecimal("7350826.0"); // Screenshot: 2016-09-30 16-57-43 HIP 2453.png
                 String fixedText = scannedText.toString();
+                if (fixedText.matches(".+[\\.,].[DO0o]")) {
+                    fixedText = fixedText.substring(0, fixedText.length() - 1).replace("D", "0") + "D";
+                }
                 fixedText = fixedText.replace("o", "0").replace("O", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
                 fixedText = lastCharsToUnit(fixedText, "D");
@@ -1498,6 +1501,9 @@ public class BodyMatchesParser {
                 BigDecimal min = new BigDecimal("0.2"); // Screenshot: 2016-09-28 07-58-40 Har Itari.png
                 BigDecimal max = new BigDecimal("536.4"); // Screenshot: 2016-10-10 05-41-47 LHS 1050.png
                 String fixedText = scannedText.toString();
+                if (fixedText.matches(".+[\\.,].[DO0o]")) {
+                    fixedText = fixedText.substring(0, fixedText.length() - 1).replace("D", "0") + "D";
+                }
                 fixedText = fixedText.replace("o", "0").replace("O", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousandsExceptLast(fixedText);
                 fixedText = lastCharsToUnit(fixedText, "D");
@@ -1714,6 +1720,12 @@ public class BodyMatchesParser {
                 BigDecimal min = new BigDecimal("7549"); // Screenshot: 2016-10-01 22-39-34 Moirai.png
                 BigDecimal max = new BigDecimal("516969"); // Screenshot: 2016-09-28 08-00-48 Arque.png
                 String fixedText = scannedText.toString();
+                if (fixedText.contains("KM")) {
+                    fixedText = fixedText.substring(0, fixedText.indexOf("KM") + 2);
+                    while (fixedText.length() < scannedText.length()) {
+                        fixedText += "▪";
+                    }
+                }
                 fixedText = fixedText.replace("o", "0").replace("O", "0").replace("D", "0").replace("S", "5").replace("B", "8"); // Replace all chars which cannot occur
                 fixedText = allSeparatorsToThousands(fixedText);
                 fixedText = lastCharsToUnit(fixedText, "KM");

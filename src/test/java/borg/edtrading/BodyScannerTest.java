@@ -57,7 +57,7 @@ public class BodyScannerTest {
         //2016-09-29 08-16-28 Paul-Friedrichs Star
         //2016-10-03 08-37-57 Altair
         //2016-09-29 08-24-03 BD+63 1764
-        List<File> screenshotFiles = BodyScannerApp.selectSpecificScreenshot("2016-09-28 08-14-17 Ross 847.png");
+        List<File> screenshotFiles = BodyScannerApp.selectSpecificScreenshot("2016-10-02 11-24-43 LHS 3505.png");
         //List<File> screenshotFiles = BodyScannerApp.selectRandomScreenshot();
         //List<File> screenshotFiles = BodyScannerApp.selectAllScreenshots();
         int n = 0;
@@ -78,12 +78,12 @@ public class BodyScannerTest {
 
             logger.trace("Testing " + screenshotFile.getName());
             BodyScanner scanner = new BodyScanner();
-            scanner.setDebugThresholdImage(false);
-            scanner.setDebugBlurredImage(false);
-            scanner.setDebugAlphanumTemplates(false);
-            scanner.setDebugAlphanumTextLines(false);
+            scanner.setDebugThresholdImage(true);
+            scanner.setDebugBlurredImage(true);
+            scanner.setDebugAlphanumTemplates(true);
+            scanner.setDebugAlphanumTextLines(true);
             scanner.setDebugAllTemplates(true);
-            scanner.setDebugAllTextLines(false);
+            scanner.setDebugAllTextLines(true);
             scanner.setDebugFinal(true);
             BodyScannerResult result = scanner.scanScreenshotFile(screenshotFile);
             if (result.getThresholdDebugImage() != null) {
@@ -107,6 +107,7 @@ public class BodyScannerTest {
             if (result.getFinalDebugImage() != null) {
                 ImageIO.write(ImageUtil.toFullHd(result.getFinalDebugImage()), "PNG", new File(Constants.TEMP_DIR, "FinalDebugImage " + screenshotFile.getName()));
             }
+            logger.debug(result.getScannedBodyInfo());
 
             copyLearnedChars(new File(Constants.TEMPLATES_DIR, "LEARNED_FIXED"), new File(Constants.TEMPLATES_DIR, "BodyScanner"));
             copyLearnedChars(new File(Constants.TEMPLATES_DIR, "LEARNED_VARIANT"), new File(Constants.TEMPLATES_DIR, "BodyScanner"));
