@@ -43,7 +43,7 @@ public class AyStar {
             throw new IllegalArgumentException("goal not in useable star systems");
         } else {
             //this.open = new PriorityQueue<>(new ProfitComparator());
-            this.open = new PriorityQueue<>();
+            this.open = new PriorityQueue<>(new LeastJumpsComparator(goal, 0.66 * maxJumpsWithoutScooping));
             this.closed = new HashSet<>();
             this.source = source;
             this.goal = goal;
