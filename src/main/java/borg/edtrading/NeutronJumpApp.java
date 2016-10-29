@@ -32,7 +32,7 @@ public class NeutronJumpApp {
         StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Altair");
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByExactName("Colonia"); // Eol Prou RS-T d3-94
+        StarSystem targetSystem = galaxy.searchStarSystemByExactName("VY Canis Majoris"); // Eol Prou RS-T d3-94
         logger.debug("To: " + targetSystem);
 
         double directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
@@ -85,7 +85,7 @@ public class NeutronJumpApp {
                 wayPercent = -1 * Math.abs(wayPercent); // -0.5 .. 0.0 .. -0.5
                 wayPercent += 0.5; // 0.0 .. 0.5 .. 0.0
                 wayPercent *= 2; // 0.0 .. 1.0 .. 0.0
-                double maxTotalDistance = directDistanceSourceToTarget + 10 + wayPercent * tenPercentDirectDistance; // Always +10ly and the closer to halfway the more of a 10% extra
+                double maxTotalDistance = directDistanceSourceToTarget + 50 + wayPercent * tenPercentDirectDistance; // Always +50ly and the closer to halfway the more of a 10% extra
 
                 double fromSource = body.getStarSystem().distanceTo(sourceSystem);
                 double toTarget = body.getStarSystem().distanceTo(targetSystem);
@@ -104,7 +104,7 @@ public class NeutronJumpApp {
                 wayPercent = -1 * Math.abs(wayPercent); // -0.5 .. 0.0 .. -0.5
                 wayPercent += 0.5; // 0.0 .. 0.5 .. 0.0
                 wayPercent *= 2; // 0.0 .. 1.0 .. 0.0
-                double maxTotalDistance = directDistanceSourceToTarget + 10 + wayPercent * tenPercentDirectDistance; // Always +10ly and the closer to halfway the more of a 10% extra
+                double maxTotalDistance = directDistanceSourceToTarget + 50 + wayPercent * tenPercentDirectDistance; // Always +50ly and the closer to halfway the more of a 10% extra
 
                 double fromSource = body.getStarSystem().distanceTo(sourceSystem);
                 double toTarget = body.getStarSystem().distanceTo(targetSystem);
@@ -125,7 +125,7 @@ public class NeutronJumpApp {
                 wayPercent = -1 * Math.abs(wayPercent); // -0.5 .. 0.0 .. -0.5
                 wayPercent += 0.5; // 0.0 .. 0.5 .. 0.0
                 wayPercent *= 2; // 0.0 .. 1.0 .. 0.0
-                double maxTotalDistance = directDistanceSourceToTarget + 10 + wayPercent * tenPercentDirectDistance; // Always +10ly and the closer to halfway the more of a 10% extra
+                double maxTotalDistance = directDistanceSourceToTarget + 50 + wayPercent * tenPercentDirectDistance; // Always +50ly and the closer to halfway the more of a 10% extra
 
                 double fromSource = system.distanceTo(sourceSystem);
                 double toTarget = system.distanceTo(targetSystem);
