@@ -64,7 +64,7 @@ public class AyStar {
             Path path = this.open.poll();
 
             if (logger.isTraceEnabled()) {
-                logger.trace("open=" + this.open.size() + ", closed=" + this.closed.size() + " || " + String.format("%d hop(s), %.0f Ly", path.getTotalHops(), path.getTotalDistanceLy()));
+                logger.trace("open=" + this.open.size() + ", closed=" + this.closed.size() + " || " + String.format("%d jump(s), %.0f Ly", path.getTotalJumps(), path.getTotalDistanceLy()));
             }
 
             if (this.closed.contains(path.getStarSystem())) {
@@ -77,7 +77,7 @@ public class AyStar {
             }
 
             if (this.closed.size() % 1000 == 0 && logger.isDebugEnabled()) {
-                logger.debug("open=" + this.open.size() + ", closed=" + this.closed.size() + " || " + String.format("%d hop(s), %.0f Ly", path.getTotalHops(), path.getTotalDistanceLy()));
+                logger.debug("open=" + this.open.size() + ", closed=" + this.closed.size() + " || " + String.format("%d jump(s), %.0f Ly", path.getTotalJumps(), path.getTotalDistanceLy()));
             }
 
             if (path.getStarSystem().equals(this.goal)) {
@@ -98,32 +98,6 @@ public class AyStar {
 
         return null;
     }
-
-    //    private Route toRoute(Path zzz) {
-    //        List<Hop> hops = new ArrayList<>();
-    //        Path path = zzz;
-    //        while (path != null) {
-    //            Path prev = path.getPrev();
-    //            if (prev != null) {
-    //                Station pfroms = prev.getStarSystem();
-    //                Station ptos = path.getStarSystem();
-    //                Hop hop = new Hop(pfroms, ptos);
-    //                hop.updateWithBestTrade(marketEntriesByStationId);
-    //                hops.add(0, hop);
-    //            }
-    //            path = prev;
-    //        }
-    //
-    //        Route route = null;
-    //        for (Hop hop : hops) {
-    //            if (route == null) {
-    //                route = new Route(source, goal, hop);
-    //            } else {
-    //                route = route.copyAndAddHop(hop);
-    //            }
-    //        }
-    //        return route;
-    //    }
 
     private Set<StarSystem> findNeighbours(Path path) {
         final StarSystem currentStarSystem = path.getStarSystem();
@@ -178,6 +152,7 @@ public class AyStar {
                 }
             }
         }
+        //logger.debug("Found " + result.size() + " systems around sector " + currentSector + " with jump range = " + currentJumpRange);
 
         return result;
     }

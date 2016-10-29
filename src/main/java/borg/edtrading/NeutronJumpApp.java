@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -32,7 +34,7 @@ public class NeutronJumpApp {
         StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Altair");
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByExactName("VY Canis Majoris"); // Eol Prou RS-T d3-94
+        StarSystem targetSystem = galaxy.searchStarSystemByExactName("Colonia"); // Eol Prou RS-T d3-94
         logger.debug("To: " + targetSystem);
 
         double directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
@@ -76,7 +78,7 @@ public class NeutronJumpApp {
         logger.debug("all:         " + allNeutronStars.size());
 
         //final double maxTotalDistance = 1.10 * directDistanceSourceToTarget;
-        final double tenPercentDirectDistance = 0.1 * directDistanceSourceToTarget;
+        final double tenPercentDirectDistance = 0.2 * directDistanceSourceToTarget;
         List<Body> usableNeutronStars = new ArrayList<>();
         for (Body body : arrivalNeutronStars) {
             if (body.getStarSystem() != null) {
@@ -85,7 +87,7 @@ public class NeutronJumpApp {
                 wayPercent = -1 * Math.abs(wayPercent); // -0.5 .. 0.0 .. -0.5
                 wayPercent += 0.5; // 0.0 .. 0.5 .. 0.0
                 wayPercent *= 2; // 0.0 .. 1.0 .. 0.0
-                double maxTotalDistance = directDistanceSourceToTarget + 50 + wayPercent * tenPercentDirectDistance; // Always +50ly and the closer to halfway the more of a 10% extra
+                double maxTotalDistance = directDistanceSourceToTarget + 99 + wayPercent * tenPercentDirectDistance; // Always +99ly and the closer to halfway the more of a 10% extra
 
                 double fromSource = body.getStarSystem().distanceTo(sourceSystem);
                 double toTarget = body.getStarSystem().distanceTo(targetSystem);
@@ -96,6 +98,16 @@ public class NeutronJumpApp {
         }
         logger.debug("usable:      " + usableNeutronStars.size());
         Set<StarSystem> starSystemsWithNeutronStars = usableNeutronStars.stream().map(b -> b.getStarSystem()).collect(Collectors.toSet());
+
+        SortedMap<Double, StarSystem> neutronStarsByDistance = new TreeMap<>();
+        for (StarSystem starSystem : starSystemsWithNeutronStars) {
+            neutronStarsByDistance.put(starSystem.distanceTo(sourceSystem), starSystem);
+        }
+        for (Double distance : neutronStarsByDistance.keySet()) {
+            StarSystem starSystem = neutronStarsByDistance.get(distance);
+            logger.debug(String.format("%7.1fly: %s", distance, starSystem.toString()));
+        }
+
         List<Body> usableScoopableStars = new ArrayList<>();
         for (Body body : arrivalScoopableStars) {
             if (body.getStarSystem() != null) {
@@ -104,7 +116,7 @@ public class NeutronJumpApp {
                 wayPercent = -1 * Math.abs(wayPercent); // -0.5 .. 0.0 .. -0.5
                 wayPercent += 0.5; // 0.0 .. 0.5 .. 0.0
                 wayPercent *= 2; // 0.0 .. 1.0 .. 0.0
-                double maxTotalDistance = directDistanceSourceToTarget + 50 + wayPercent * tenPercentDirectDistance; // Always +50ly and the closer to halfway the more of a 10% extra
+                double maxTotalDistance = directDistanceSourceToTarget + 99 + wayPercent * tenPercentDirectDistance; // Always +99ly and the closer to halfway the more of a 10% extra
 
                 double fromSource = body.getStarSystem().distanceTo(sourceSystem);
                 double toTarget = body.getStarSystem().distanceTo(targetSystem);
@@ -125,7 +137,7 @@ public class NeutronJumpApp {
                 wayPercent = -1 * Math.abs(wayPercent); // -0.5 .. 0.0 .. -0.5
                 wayPercent += 0.5; // 0.0 .. 0.5 .. 0.0
                 wayPercent *= 2; // 0.0 .. 1.0 .. 0.0
-                double maxTotalDistance = directDistanceSourceToTarget + 50 + wayPercent * tenPercentDirectDistance; // Always +50ly and the closer to halfway the more of a 10% extra
+                double maxTotalDistance = directDistanceSourceToTarget + 99 + wayPercent * tenPercentDirectDistance; // Always +99ly and the closer to halfway the more of a 10% extra
 
                 double fromSource = system.distanceTo(sourceSystem);
                 double toTarget = system.distanceTo(targetSystem);
@@ -145,14 +157,14 @@ public class NeutronJumpApp {
         if (path == null) {
             logger.warn("No path found");
         } else {
-            logger.info("Found path with " + path.getTotalHops() + " jumps:");
+            logger.info("Found path with " + path.getTotalJumps() + " jumps:");
             Path p = path;
             while (p != null) {
                 String extraDistanceLy = "";
                 if (p.getPrev() != null) {
                     extraDistanceLy = " (+" + String.format("%.0fly", p.getStarSystem().distanceTo(p.getPrev().getStarSystem())) + ")";
                 }
-                logger.info(String.format("Jump #%-3d\t%-24s\tDistance: %5.0fly", p.getTotalHops(), p.getStarSystem().getName(), p.getTotalDistanceLy()) + extraDistanceLy);
+                logger.info(String.format("Jump #%-3d\t%-24s\tDistance: %5.0fly", p.getTotalJumps(), p.getStarSystem().getName(), p.getTotalDistanceLy()) + extraDistanceLy);
                 p = p.getPrev();
             }
         }

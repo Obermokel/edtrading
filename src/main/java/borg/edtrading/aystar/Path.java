@@ -11,6 +11,7 @@ public class Path implements Comparable<Path> {
 
     private Path prev = null;
     private StarSystem starSystem = null;
+    private int totalJumps = 0;
     private double totalDistanceLy = 0;
 
     public Path(StarSystem starSystem) {
@@ -24,7 +25,19 @@ public class Path implements Comparable<Path> {
     public Path(Path prev, StarSystem starSystem, double extraDistanceLy) {
         this.setPrev(prev);
         this.setStarSystem(starSystem);
+        this.setTotalJumps(prev.getTotalJumps() + 1);
         this.setTotalDistanceLy(prev.getTotalDistanceLy() + extraDistanceLy);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        long temp;
+        temp = Double.doubleToLongBits(this.totalDistanceLy);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
+        result = prime * result + this.totalJumps;
+        return result;
     }
 
     @Override
@@ -42,49 +55,21 @@ public class Path implements Comparable<Path> {
         if (Double.doubleToLongBits(this.totalDistanceLy) != Double.doubleToLongBits(other.totalDistanceLy)) {
             return false;
         }
-        if (this.prev == null) {
-            if (other.prev != null) {
-                return false;
-            }
-        } else if (!this.prev.equals(other.prev)) {
-            return false;
-        }
-        if (this.starSystem == null) {
-            if (other.starSystem != null) {
-                return false;
-            }
-        } else if (!this.starSystem.equals(other.starSystem)) {
+        if (this.totalJumps != other.totalJumps) {
             return false;
         }
         return true;
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        long temp;
-        temp = Double.doubleToLongBits(this.totalDistanceLy);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        result = prime * result + ((this.prev == null) ? 0 : this.prev.hashCode());
-        result = prime * result + ((this.starSystem == null) ? 0 : this.starSystem.hashCode());
-        return result;
-    }
-
-    @Override
     public int compareTo(Path other) {
-        return new Integer(this.getTotalHops()).compareTo(other.getTotalHops());
-    }
-
-    public int getTotalHops() {
-        int hops = 0;
-        Path p = this.prev;
-        while (p != null) {
-            hops++;
-            p = p.prev;
+        int byDistance = new Double(this.getTotalDistanceLy()).compareTo(other.getTotalDistanceLy());
+        if (byDistance != 0) {
+            return byDistance;
+        } else {
+            int byJumps = new Integer(this.getTotalJumps()).compareTo(other.getTotalJumps());
+            return byJumps;
         }
-        return hops;
     }
 
     public Path getPrev() {
@@ -101,6 +86,14 @@ public class Path implements Comparable<Path> {
 
     public void setStarSystem(StarSystem starSystem) {
         this.starSystem = starSystem;
+    }
+
+    public int getTotalJumps() {
+        return this.totalJumps;
+    }
+
+    public void setTotalJumps(int totalJumps) {
+        this.totalJumps = totalJumps;
     }
 
     public double getTotalDistanceLy() {
