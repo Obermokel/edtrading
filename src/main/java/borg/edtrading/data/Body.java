@@ -29,16 +29,20 @@ public class Body {
     private StarSystem starSystem = null;
     @SerializedName("group_name")
     private String groupName = null; // Star, Planet, ...
+    @SerializedName("type_id")
+    private Long typeId = null;
     @SerializedName("type_name")
     private String typeName = null; // Rocky body, High metal content world, ...
     private Long distance_to_arrival = null; // Ls, Missing decimal places
+    private Boolean is_main_star = null;
+    private String spectral_class = null;
     private Double solar_masses = null;
     private Double solar_radius = null;
     private Double earth_masses = null;
     private Double moon_masses = null;
     private Double radius = null; // KM
     private Double gravity = null; // G
-    private Long surface_temperature = null; // K
+    private Double surface_temperature = null; // K
     private Double surface_pressure = null; // Atmospheres
     private List<SolidComposition> solid_composition = null;
     private Double orbital_period = null; // D
@@ -124,6 +128,14 @@ public class Body {
         this.groupName = groupName;
     }
 
+    public Long getTypeId() {
+        return this.typeId;
+    }
+
+    public void setTypeId(Long typeId) {
+        this.typeId = typeId;
+    }
+
     public String getTypeName() {
         return this.typeName;
     }
@@ -138,6 +150,22 @@ public class Body {
 
     public void setDistance_to_arrival(Long distance_to_arrival) {
         this.distance_to_arrival = distance_to_arrival;
+    }
+
+    public Boolean getIs_main_star() {
+        return this.is_main_star;
+    }
+
+    public void setIs_main_star(Boolean is_main_star) {
+        this.is_main_star = is_main_star;
+    }
+
+    public String getSpectral_class() {
+        return this.spectral_class;
+    }
+
+    public void setSpectral_class(String spectral_class) {
+        this.spectral_class = spectral_class;
     }
 
     public Double getSolar_masses() {
@@ -188,11 +216,11 @@ public class Body {
         this.gravity = gravity;
     }
 
-    public Long getSurface_temperature() {
+    public Double getSurface_temperature() {
         return this.surface_temperature;
     }
 
-    public void setSurface_temperature(Long surface_temperature) {
+    public void setSurface_temperature(Double surface_temperature) {
         this.surface_temperature = surface_temperature;
     }
 

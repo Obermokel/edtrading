@@ -5,6 +5,9 @@ import borg.edtrading.json.BooleanDigitDeserializer;
 import borg.edtrading.json.SecondsSinceEpochDeserializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -94,17 +97,39 @@ public class Galaxy {
 
     private static Map<Long, StarSystem> readStarSystems(Gson gson) throws IOException {
         logger.debug("Loading star systems...");
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.SYSTEMS_FILE), "UTF-8"))) {
-            List<StarSystem> starSystems = Arrays.asList(gson.fromJson(reader, StarSystem[].class));
-            starSystems.forEach(o -> o.setCoord(new Coord(o.getX(), o.getY(), o.getZ())));
-            return starSystems.stream().collect(Collectors.toMap(StarSystem::getId, Function.identity()));
+        if (Constants.SYSTEMS_FILE.getName().toLowerCase().endsWith(".json")) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.SYSTEMS_FILE), "UTF-8"))) {
+                List<StarSystem> starSystems = Arrays.asList(gson.fromJson(reader, StarSystem[].class));
+                starSystems.forEach(o -> o.setCoord(new Coord(o.getX(), o.getY(), o.getZ())));
+                return starSystems.stream().collect(Collectors.toMap(StarSystem::getId, Function.identity()));
+            }
+        } else {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.SYSTEMS_FILE), "UTF-8"))) {
+                List<StarSystem> starSystems = new ArrayList<>();
+                Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(reader);
+                for (CSVRecord record : records) {
+                    starSystems.add(new StarSystem(record));
+                }
+                starSystems.forEach(o -> o.setCoord(new Coord(o.getX(), o.getY(), o.getZ())));
+                return starSystems.stream().collect(Collectors.toMap(StarSystem::getId, Function.identity()));
+            }
         }
     }
 
     private static Map<Long, Body> readBodies(Gson gson, Map<Long, StarSystem> starSystems) throws IOException {
         logger.debug("Loading bodies...");
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.BODIES_FILE), "UTF-8"))) {
-            List<Body> bodies = Arrays.asList(gson.fromJson(reader, Body[].class));
+            List<Body> bodies = new ArrayList<>();
+            String line = reader.readLine();
+            while (line != null) {
+                try {
+                    Body[] body = gson.fromJson("[" + line + "]", Body[].class);
+                    bodies.addAll(Arrays.asList(body));
+                } catch (JsonSyntaxException e) {
+                    logger.warn("Corrupt line in " + Constants.BODIES_FILE.getName() + ": " + line, e);
+                }
+                line = reader.readLine();
+            }
             bodies.forEach(b -> b.setStarSystem(starSystems.get(b.getStarSystemId())));
             return bodies.stream().collect(Collectors.toMap(Body::getId, Function.identity()));
         }

@@ -2,6 +2,7 @@ package borg.edtrading.data;
 
 import borg.edtrading.util.MiscUtil;
 import com.google.gson.annotations.SerializedName;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -32,6 +33,21 @@ public class StarSystem {
     private String primaryEconomy = null;
     @SerializedName("needs_permit")
     private Boolean needsPermit = null;
+
+    public StarSystem() {
+        // Default
+    }
+
+    public StarSystem(CSVRecord record) {
+        this.setId(MiscUtil.getAsLong(record.get("id")));
+        this.setName(MiscUtil.getAsString(record.get("name")));
+        this.setX(MiscUtil.getAsDouble(record.get("x")));
+        this.setY(MiscUtil.getAsDouble(record.get("y")));
+        this.setZ(MiscUtil.getAsDouble(record.get("z")));
+        this.setPopulation(MiscUtil.getAsLong(record.get("population")));
+        this.setPrimaryEconomy(MiscUtil.getAsString(record.get("primary_economy")));
+        this.setNeedsPermit(MiscUtil.getAsBoolean(record.get("needs_permit")));
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -70,6 +86,10 @@ public class StarSystem {
 
     public double distanceTo(StarSystem other) {
         return this.getCoord().distanceTo(other.getCoord());
+    }
+
+    public double distanceManhattanTo(StarSystem other) {
+        return this.getCoord().distanceManhattanTo(other.getCoord());
     }
 
     public Long getId() {
