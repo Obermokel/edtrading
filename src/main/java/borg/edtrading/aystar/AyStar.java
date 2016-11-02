@@ -36,14 +36,12 @@ public class AyStar {
     private double ladenAndFueledBaseJumpRange = 0;
     private int maxJumpsWithoutScooping = 0;
 
-    private double maxTotalDistanceLy = 0;
-
     public void initialize(StarSystem source, StarSystem goal, Set<StarSystem> starSystemsWithNeutronStars, Set<StarSystem> starSystemsWithScoopableStars, double ladenAndFueledBaseJumpRange, int maxJumpsWithoutScooping) {
         if (!starSystemsWithNeutronStars.contains(goal) && !starSystemsWithScoopableStars.contains(goal)) {
             throw new IllegalArgumentException("goal not in useable star systems");
         } else {
             //this.open = new PriorityQueue<>(new ProfitComparator());
-            this.open = new PriorityQueue<>(new LeastJumpsComparator(goal, 0.66 * maxJumpsWithoutScooping));
+            this.open = new PriorityQueue<>(new LeastJumpsComparator(goal, 1));
             this.closed = new HashSet<>();
             this.source = source;
             this.goal = goal;
@@ -52,8 +50,6 @@ public class AyStar {
             this.starSystemsWithScoopableStarsBySector = mapBySector(starSystemsWithScoopableStars);
             this.ladenAndFueledBaseJumpRange = ladenAndFueledBaseJumpRange;
             this.maxJumpsWithoutScooping = maxJumpsWithoutScooping;
-
-            this.maxTotalDistanceLy = 2 * this.source.distanceTo(this.goal);
 
             this.open.add(new Path(source));
         }
@@ -90,9 +86,9 @@ public class AyStar {
             for (StarSystem neighbour : neighbours) {
                 double extraDistanceLy = path.getStarSystem().distanceTo(neighbour);
                 Path newPath = new Path(path, neighbour, extraDistanceLy);
-                if (newPath.getTotalDistanceLy() <= this.maxTotalDistanceLy) {
-                    this.open.offer(newPath);
-                }
+                //if (newPath.getTotalDistanceLy() <= this.maxTotalDistanceLy) {
+                this.open.offer(newPath);
+                //}
             }
         }
 
@@ -102,11 +98,10 @@ public class AyStar {
     private Set<StarSystem> findNeighbours(Path path) {
         final StarSystem currentStarSystem = path.getStarSystem();
         final Coord currentCoord = currentStarSystem.getCoord();
-        final double currentDistanceToGoal = currentStarSystem.distanceTo(goal);
 
         // Do we have an overcharged FSD?
         final double currentJumpRange = this.starSystemsWithNeutronStars.contains(currentStarSystem) ? 4 * ladenAndFueledBaseJumpRange : ladenAndFueledBaseJumpRange;
-        final double currentJumpRangeManhattan = 1.5 * currentJumpRange;
+        //final double currentJumpRangeManhattan = 1.5 * currentJumpRange;
 
         // Do we need to scoop?
         int jumpsWithoutScooping = 0;
@@ -124,16 +119,17 @@ public class AyStar {
         // Find reachable systems
         Set<StarSystem> systemsInRange = new HashSet<>();
         if (!mustScoop) {
-            systemsInRange.addAll(this.starSystemsWithNeutronStars.stream().filter(st -> st.distanceTo(currentStarSystem) <= currentJumpRange).collect(Collectors.toSet()));
+            Set<StarSystem> neutronInRange = this.starSystemsWithNeutronStars.stream().filter(st -> st.distanceTo(currentStarSystem) <= currentJumpRange).collect(Collectors.toSet());
+            systemsInRange.addAll(neutronInRange);
         }
         List<StarSystem> scoopableSystemsInCloseSectors = findSystemsBySector(this.starSystemsWithScoopableStarsBySector, currentCoord, currentJumpRange);
-        systemsInRange.addAll(scoopableSystemsInCloseSectors.stream().filter(st -> st.distanceManhattanTo(currentStarSystem) <= currentJumpRangeManhattan && st.distanceTo(currentStarSystem) <= currentJumpRange).collect(Collectors.toSet()));
+        systemsInRange.addAll(scoopableSystemsInCloseSectors.stream().filter(st -> st.distanceTo(currentStarSystem) <= currentJumpRange).collect(Collectors.toSet()));
 
         // Keep only those which bring us closer to the goal, i.e. the new system is closer to the goal than our current distance to the goal
-        Set<StarSystem> systemsInTravelDirection = systemsInRange.stream().filter(st -> st.distanceTo(goal) < currentDistanceToGoal).collect(Collectors.toSet());
+        //Set<StarSystem> systemsInTravelDirection = systemsInRange.stream().filter(st -> st.distanceTo(goal) < currentDistanceToGoal).collect(Collectors.toSet());
 
         // Finished
-        return systemsInTravelDirection;
+        return systemsInRange;
     }
 
     private static List<StarSystem> findSystemsBySector(Map<Coord, List<StarSystem>> systemsBySector, Coord currentCoord, double currentJumpRange) {

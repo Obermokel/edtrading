@@ -5,17 +5,18 @@ import borg.edtrading.aystar.Path;
 import borg.edtrading.data.Body;
 import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.StarSystem;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -27,11 +28,13 @@ public class NeutronJumpApp {
 
     static final Logger logger = LogManager.getLogger(NeutronJumpApp.class);
 
+    private static final Long TYPE_ID_NEUTRON_STAR = new Long(3);
+
     public static void main(String[] args) throws IOException {
         Galaxy galaxy = Galaxy.readDataFromFiles();
         logger.debug(galaxy.getStarSystemsById().size() + " star systems");
 
-        StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Altair");
+        StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Boewnst KS-S c20-959");
         logger.debug("From: " + sourceSystem);
 
         StarSystem targetSystem = galaxy.searchStarSystemByExactName("Colonia"); // Eol Prou RS-T d3-94
@@ -40,116 +43,18 @@ public class NeutronJumpApp {
         double directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
         logger.debug("Direct distance: " + String.format("%.0fly", directDistanceSourceToTarget));
 
-        Long typeIdNeutronStar = new Long(3);
-        List<String> scoopableSpectralClasses = Arrays.asList("O", "B", "A", "F", "G", "K", "M");
-        List<Body> arrivalNeutronStars = new ArrayList<>();
-        List<Body> distantNeutronStars = new ArrayList<>();
-        List<Body> unknownNeutronStars = new ArrayList<>();
-        List<Body> suspiciousNeutronStars = new ArrayList<>();
-        List<Body> arrivalScoopableStars = new ArrayList<>();
-        for (Body body : galaxy.getBodiesById().values()) {
-            if (typeIdNeutronStar.equals(body.getTypeId())) {
-                //logger.debug(String.format("%-30s\t%-15s\t%8d\t%s\t%6.0fly", body.getName(), body.getTypeName(), body.getDistance_to_arrival(), body.getIs_main_star(), body.getStarSystem() == null ? null : body.getStarSystem().distanceTo(systemAltair)));
-                if (Boolean.TRUE.equals(body.getIs_main_star())) {
-                    arrivalNeutronStars.add(body);
-                } else if (Boolean.FALSE.equals(body.getIs_main_star())) {
-                    distantNeutronStars.add(body);
-                } else {
-                    unknownNeutronStars.add(body);
-                }
-            } else if (body.getTypeName() != null && body.getTypeName().toLowerCase().contains("neutron")) {
-                //logger.warn(body);
-                suspiciousNeutronStars.add(body);
-            } else {
-                if (scoopableSpectralClasses.contains(body.getSpectral_class()) && Boolean.TRUE.equals(body.getIs_main_star())) {
-                    arrivalScoopableStars.add(body);
-                }
+        List<Body> arrivalNeutronStars = findArrivalNeutronStars(galaxy.getBodiesById().values());
+        Set<StarSystem> starSystemsWithNeutronStars = bodiesToSystems(arrivalNeutronStars);
+        starSystemsWithNeutronStars.addAll(findMappingProjectNeutronStars(galaxy));
+        Set<StarSystem> starSystemsWithScoopableStars = new HashSet<>(galaxy.getStarSystemsById().values());
+        starSystemsWithScoopableStars.removeAll(starSystemsWithNeutronStars);
+        starSystemsWithScoopableStars.add(targetSystem);
+
+        for (StarSystem ss : starSystemsWithNeutronStars) {
+            if (ss.distanceTo(sourceSystem) < 4 * 47.5) {
+                logger.debug(ss + ": " + ss.distanceTo(sourceSystem));
             }
         }
-        List<Body> allNeutronStars = new ArrayList<>();
-        allNeutronStars.addAll(arrivalNeutronStars);
-        allNeutronStars.addAll(distantNeutronStars);
-        allNeutronStars.addAll(unknownNeutronStars);
-        allNeutronStars.addAll(suspiciousNeutronStars);
-        logger.debug("arrival:     " + arrivalNeutronStars.size());
-        logger.debug("distant:     " + distantNeutronStars.size());
-        logger.debug("unknown:     " + unknownNeutronStars.size());
-        logger.debug("suspicious:  " + suspiciousNeutronStars.size());
-        logger.debug("all:         " + allNeutronStars.size());
-
-        //final double maxTotalDistance = 1.10 * directDistanceSourceToTarget;
-        final double tenPercentDirectDistance = 0.2 * directDistanceSourceToTarget;
-        List<Body> usableNeutronStars = new ArrayList<>();
-        for (Body body : arrivalNeutronStars) {
-            if (body.getStarSystem() != null) {
-                double wayPercent = body.getStarSystem().distanceTo(sourceSystem) / directDistanceSourceToTarget; // 0 .. 1
-                wayPercent -= 0.5; // -0.5 .. 0.0 .. +0.5
-                wayPercent = -1 * Math.abs(wayPercent); // -0.5 .. 0.0 .. -0.5
-                wayPercent += 0.5; // 0.0 .. 0.5 .. 0.0
-                wayPercent *= 2; // 0.0 .. 1.0 .. 0.0
-                double maxTotalDistance = directDistanceSourceToTarget + 99 + wayPercent * tenPercentDirectDistance; // Always +99ly and the closer to halfway the more of a 10% extra
-
-                double fromSource = body.getStarSystem().distanceTo(sourceSystem);
-                double toTarget = body.getStarSystem().distanceTo(targetSystem);
-                if (fromSource + toTarget <= maxTotalDistance) {
-                    usableNeutronStars.add(body);
-                }
-            }
-        }
-        logger.debug("usable:      " + usableNeutronStars.size());
-        Set<StarSystem> starSystemsWithNeutronStars = usableNeutronStars.stream().map(b -> b.getStarSystem()).collect(Collectors.toSet());
-
-        SortedMap<Double, StarSystem> neutronStarsByDistance = new TreeMap<>();
-        for (StarSystem starSystem : starSystemsWithNeutronStars) {
-            neutronStarsByDistance.put(starSystem.distanceTo(sourceSystem), starSystem);
-        }
-        for (Double distance : neutronStarsByDistance.keySet()) {
-            StarSystem starSystem = neutronStarsByDistance.get(distance);
-            logger.debug(String.format("%7.1fly: %s", distance, starSystem.toString()));
-        }
-
-        List<Body> usableScoopableStars = new ArrayList<>();
-        for (Body body : arrivalScoopableStars) {
-            if (body.getStarSystem() != null) {
-                double wayPercent = body.getStarSystem().distanceTo(sourceSystem) / directDistanceSourceToTarget; // 0 .. 1
-                wayPercent -= 0.5; // -0.5 .. 0.0 .. +0.5
-                wayPercent = -1 * Math.abs(wayPercent); // -0.5 .. 0.0 .. -0.5
-                wayPercent += 0.5; // 0.0 .. 0.5 .. 0.0
-                wayPercent *= 2; // 0.0 .. 1.0 .. 0.0
-                double maxTotalDistance = directDistanceSourceToTarget + 99 + wayPercent * tenPercentDirectDistance; // Always +99ly and the closer to halfway the more of a 10% extra
-
-                double fromSource = body.getStarSystem().distanceTo(sourceSystem);
-                double toTarget = body.getStarSystem().distanceTo(targetSystem);
-                if (fromSource + toTarget <= maxTotalDistance) {
-                    usableScoopableStars.add(body);
-                }
-            }
-        }
-        logger.debug("scoopable:   " + arrivalScoopableStars.size());
-        Set<StarSystem> starSystemsWithScoopableStars = usableScoopableStars.stream().map(b -> b.getStarSystem()).collect(Collectors.toSet());
-
-        // >>>> start dirty >>>>
-        starSystemsWithScoopableStars = new HashSet<>();
-        for (StarSystem system : galaxy.getStarSystemsById().values()) {
-            if (!starSystemsWithNeutronStars.contains(system)) {
-                double wayPercent = system.distanceTo(sourceSystem) / directDistanceSourceToTarget; // 0 .. 1
-                wayPercent -= 0.5; // -0.5 .. 0.0 .. +0.5
-                wayPercent = -1 * Math.abs(wayPercent); // -0.5 .. 0.0 .. -0.5
-                wayPercent += 0.5; // 0.0 .. 0.5 .. 0.0
-                wayPercent *= 2; // 0.0 .. 1.0 .. 0.0
-                double maxTotalDistance = directDistanceSourceToTarget + 99 + wayPercent * tenPercentDirectDistance; // Always +99ly and the closer to halfway the more of a 10% extra
-
-                double fromSource = system.distanceTo(sourceSystem);
-                double toTarget = system.distanceTo(targetSystem);
-                if (fromSource + toTarget <= maxTotalDistance) {
-                    starSystemsWithScoopableStars.add(system);
-                }
-            }
-        }
-        logger.debug("scoopable:   " + starSystemsWithScoopableStars.size());
-        // <<<< end dirty <<<<
-
-        starSystemsWithScoopableStars.add(targetSystem); // Do not care
 
         AyStar ayStar = new AyStar();
         ayStar.initialize(sourceSystem, targetSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, 47.5, 7);
@@ -168,6 +73,82 @@ public class NeutronJumpApp {
                 p = p.getPrev();
             }
         }
+    }
+
+    private static Set<StarSystem> findMappingProjectNeutronStars(Galaxy galaxy) throws IOException {
+        File neutronStarNamesFile = new File(Constants.EDTRADING_BASE_DIR, "neutron stars.txt");
+        File neutronStarIdsFile = new File(Constants.EDTRADING_BASE_DIR, "neutron stars.dat");
+        Set<StarSystem> neutronStars = null;
+        if (!neutronStarIdsFile.exists() || neutronStarNamesFile.lastModified() > neutronStarIdsFile.lastModified()) {
+            neutronStars = findStarSystemsWithName(galaxy.getStarSystemsById().values(), FileUtils.readLines(neutronStarNamesFile, "UTF-8"));
+            FileUtils.write(neutronStarIdsFile, neutronStars.stream().map(ss -> String.valueOf(ss.getId())).collect(Collectors.joining("\n")), "UTF-8", false);
+        } else {
+            neutronStars = findStarSystemsWithId(galaxy.getStarSystemsById(), FileUtils.readLines(neutronStarIdsFile, "UTF-8"));
+        }
+        return neutronStars;
+    }
+
+    private static Set<StarSystem> findStarSystemsWithId(Map<Long, StarSystem> starSystemsById, List<String> ids) {
+        Set<StarSystem> result = new HashSet<>(ids.size());
+
+        List<Long> longIds = ids.stream().map(n -> Long.valueOf(n)).collect(Collectors.toList());
+        for (Long id : longIds) {
+            StarSystem starSystem = starSystemsById.get(id);
+            if (starSystem != null) {
+                result.add(starSystem);
+            }
+        }
+
+        logger.debug("Found " + result.size() + " of all " + ids.size() + " IDs");
+
+        return result;
+    }
+
+    private static Set<StarSystem> findStarSystemsWithName(Collection<StarSystem> starSystems, List<String> names) {
+        Set<StarSystem> result = new HashSet<>(names.size());
+
+        List<String> lowercaseNames = names.stream().map(n -> n.toLowerCase()).collect(Collectors.toList());
+        for (StarSystem starSystem : starSystems) {
+            for (String name : lowercaseNames) {
+                if (name.startsWith(starSystem.getName().toLowerCase())) {
+                    result.add(starSystem);
+                }
+            }
+        }
+
+        logger.debug("Found " + result.size() + " of all " + names.size() + " names");
+
+        return result;
+    }
+
+    private static List<Body> findArrivalNeutronStars(Collection<Body> bodies) {
+        List<Body> result = new ArrayList<>();
+
+        for (Body body : bodies) {
+            if (TYPE_ID_NEUTRON_STAR.equals(body.getTypeId())) {
+                if (Boolean.TRUE.equals(body.getIs_main_star())) {
+                    result.add(body);
+                }
+            }
+        }
+
+        logger.debug(result.size() + " of all " + bodies.size() + " bodies are arrival neutron stars");
+
+        return result;
+    }
+
+    private static Set<StarSystem> bodiesToSystems(Collection<Body> bodies) {
+        Set<StarSystem> result = new HashSet<>(bodies.size());
+
+        for (Body body : bodies) {
+            if (body.getStarSystem() != null) {
+                result.add(body.getStarSystem());
+            }
+        }
+
+        logger.debug(result.size() + " of all " + bodies.size() + " bodies have a known star system");
+
+        return result;
     }
 
 }
