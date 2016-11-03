@@ -343,7 +343,9 @@ public class Body implements Serializable {
         return this.getName().toLowerCase();
     }
 
-    public static class SolidComposition {
+    public static class SolidComposition implements Serializable {
+
+        private static final long serialVersionUID = 1833959122381501627L;
 
         private Long solid_component_id = null;
         private String solid_component_name = null;

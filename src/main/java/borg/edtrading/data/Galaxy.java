@@ -8,14 +8,20 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -97,41 +103,65 @@ public class Galaxy {
 
     private static Map<Long, StarSystem> readStarSystems(Gson gson) throws IOException {
         logger.debug("Loading star systems...");
-        if (Constants.SYSTEMS_FILE.getName().toLowerCase().endsWith(".json")) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.SYSTEMS_FILE), "UTF-8"))) {
-                List<StarSystem> starSystems = Arrays.asList(gson.fromJson(reader, StarSystem[].class));
-                starSystems.forEach(o -> o.setCoord(new Coord(o.getX(), o.getY(), o.getZ())));
-                return starSystems.stream().collect(Collectors.toMap(StarSystem::getId, Function.identity()));
+        File serFile = new File(Constants.TEMP_DIR, Constants.SYSTEMS_FILE.getName() + ".ser");
+        if (serFile.exists() && serFile.lastModified() > Constants.SYSTEMS_FILE.lastModified()) {
+            try (BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(serFile))) {
+                return (Map<Long, StarSystem>) SerializationUtils.deserialize(inputStream);
             }
         } else {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.SYSTEMS_FILE), "UTF-8"))) {
-                List<StarSystem> starSystems = new ArrayList<>();
-                Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(reader);
-                for (CSVRecord record : records) {
-                    starSystems.add(new StarSystem(record));
+            Map<Long, StarSystem> starSystemsById = null;
+            if (Constants.SYSTEMS_FILE.getName().toLowerCase().endsWith(".json")) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.SYSTEMS_FILE), "UTF-8"))) {
+                    List<StarSystem> starSystems = Arrays.asList(gson.fromJson(reader, StarSystem[].class));
+                    starSystems.forEach(o -> o.setCoord(new Coord(o.getX(), o.getY(), o.getZ())));
+                    starSystemsById = starSystems.stream().collect(Collectors.toMap(StarSystem::getId, Function.identity()));
                 }
-                starSystems.forEach(o -> o.setCoord(new Coord(o.getX(), o.getY(), o.getZ())));
-                return starSystems.stream().collect(Collectors.toMap(StarSystem::getId, Function.identity()));
+            } else {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.SYSTEMS_FILE), "UTF-8"))) {
+                    List<StarSystem> starSystems = new ArrayList<>();
+                    Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(reader);
+                    for (CSVRecord record : records) {
+                        starSystems.add(new StarSystem(record));
+                    }
+                    starSystems.forEach(o -> o.setCoord(new Coord(o.getX(), o.getY(), o.getZ())));
+                    starSystemsById = starSystems.stream().collect(Collectors.toMap(StarSystem::getId, Function.identity()));
+                }
             }
+            try (BufferedOutputStream inputStream = new BufferedOutputStream(new FileOutputStream(serFile))) {
+                SerializationUtils.serialize((Serializable) starSystemsById, inputStream);
+            }
+            return starSystemsById;
         }
     }
 
     private static Map<Long, Body> readBodies(Gson gson, Map<Long, StarSystem> starSystems) throws IOException {
         logger.debug("Loading bodies...");
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.BODIES_FILE), "UTF-8"))) {
-            List<Body> bodies = new ArrayList<>();
-            String line = reader.readLine();
-            while (line != null) {
-                try {
-                    Body[] body = gson.fromJson("[" + line + "]", Body[].class);
-                    bodies.addAll(Arrays.asList(body));
-                } catch (JsonSyntaxException e) {
-                    logger.warn("Corrupt line in " + Constants.BODIES_FILE.getName() + ": " + line, e);
-                }
-                line = reader.readLine();
+        File serFile = new File(Constants.TEMP_DIR, Constants.BODIES_FILE.getName() + ".ser");
+        if (serFile.exists() && serFile.lastModified() > Constants.BODIES_FILE.lastModified()) {
+            try (BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(serFile))) {
+                return (Map<Long, Body>) SerializationUtils.deserialize(inputStream);
             }
-            bodies.forEach(b -> b.setStarSystem(starSystems.get(b.getStarSystemId())));
-            return bodies.stream().collect(Collectors.toMap(Body::getId, Function.identity()));
+        } else {
+            Map<Long, Body> bodiesById = null;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.BODIES_FILE), "UTF-8"))) {
+                List<Body> bodies = new ArrayList<>();
+                String line = reader.readLine();
+                while (line != null) {
+                    try {
+                        Body[] body = gson.fromJson("[" + line + "]", Body[].class);
+                        bodies.addAll(Arrays.asList(body));
+                    } catch (JsonSyntaxException e) {
+                        logger.warn("Corrupt line in " + Constants.BODIES_FILE.getName() + ": " + line, e);
+                    }
+                    line = reader.readLine();
+                }
+                bodies.forEach(b -> b.setStarSystem(starSystems.get(b.getStarSystemId())));
+                bodiesById = bodies.stream().collect(Collectors.toMap(Body::getId, Function.identity()));
+            }
+            try (BufferedOutputStream inputStream = new BufferedOutputStream(new FileOutputStream(serFile))) {
+                SerializationUtils.serialize((Serializable) bodiesById, inputStream);
+            }
+            return bodiesById;
         }
     }
 
