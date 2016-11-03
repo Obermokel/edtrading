@@ -9,6 +9,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -16,7 +17,9 @@ import java.util.Map;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class StarSystem {
+public class StarSystem implements Serializable {
+
+    private static final long serialVersionUID = 9060200802576806089L;
 
     static final Logger logger = LogManager.getLogger(StarSystem.class);
 

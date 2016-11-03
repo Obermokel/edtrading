@@ -1,11 +1,15 @@
 package borg.edtrading.data;
 
+import java.io.Serializable;
+
 /**
  * Coord
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class Coord {
+public class Coord implements Serializable {
+
+    private static final long serialVersionUID = 5669964958955683695L;
 
     private final double x;
     private final double y;

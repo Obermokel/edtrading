@@ -8,6 +8,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +17,9 @@ import java.util.Map;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class Body {
+public class Body implements Serializable {
+
+    private static final long serialVersionUID = -8919832272745731972L;
 
     static final Logger logger = LogManager.getLogger(Body.class);
 
