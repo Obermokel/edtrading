@@ -12,7 +12,7 @@ public class Path implements Comparable<Path> {
     private Path prev = null;
     private StarSystem starSystem = null;
     private int totalJumps = 0;
-    private double totalDistanceLy = 0;
+    private float totalDistanceLy = 0;
 
     public Path(StarSystem starSystem) {
         this.setStarSystem(starSystem);
@@ -22,22 +22,11 @@ public class Path implements Comparable<Path> {
      * @param extraDistanceLy
      *            From prev to starSystem, NOT in total
      */
-    public Path(Path prev, StarSystem starSystem, double extraDistanceLy) {
+    public Path(Path prev, StarSystem starSystem, float extraDistanceLy) {
         this.setPrev(prev);
         this.setStarSystem(starSystem);
         this.setTotalJumps(prev.getTotalJumps() + 1);
         this.setTotalDistanceLy(prev.getTotalDistanceLy() + extraDistanceLy);
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        long temp;
-        temp = Double.doubleToLongBits(this.totalDistanceLy);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        result = prime * result + this.totalJumps;
-        return result;
     }
 
     @Override
@@ -52,7 +41,7 @@ public class Path implements Comparable<Path> {
             return false;
         }
         Path other = (Path) obj;
-        if (Double.doubleToLongBits(this.totalDistanceLy) != Double.doubleToLongBits(other.totalDistanceLy)) {
+        if (Float.floatToIntBits(this.totalDistanceLy) != Float.floatToIntBits(other.totalDistanceLy)) {
             return false;
         }
         if (this.totalJumps != other.totalJumps) {
@@ -62,8 +51,17 @@ public class Path implements Comparable<Path> {
     }
 
     @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Float.floatToIntBits(this.totalDistanceLy);
+        result = prime * result + this.totalJumps;
+        return result;
+    }
+
+    @Override
     public int compareTo(Path other) {
-        int byDistance = new Double(this.getTotalDistanceLy()).compareTo(other.getTotalDistanceLy());
+        int byDistance = new Float(this.getTotalDistanceLy()).compareTo(other.getTotalDistanceLy());
         if (byDistance != 0) {
             return byDistance;
         } else {
@@ -96,11 +94,11 @@ public class Path implements Comparable<Path> {
         this.totalJumps = totalJumps;
     }
 
-    public double getTotalDistanceLy() {
+    public float getTotalDistanceLy() {
         return this.totalDistanceLy;
     }
 
-    public void setTotalDistanceLy(double ly) {
+    public void setTotalDistanceLy(float ly) {
         this.totalDistanceLy = ly;
     }
 

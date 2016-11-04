@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public class StarSystem implements Serializable {
 
-    private static final long serialVersionUID = 9060200802576806089L;
+    private static final long serialVersionUID = -2199129316269236404L;
 
     static final Logger logger = LogManager.getLogger(StarSystem.class);
 
@@ -27,9 +27,9 @@ public class StarSystem implements Serializable {
 
     private Long id = null;
     private String name = null;
-    private Double x = null;
-    private Double y = null;
-    private Double z = null;
+    private Float x = null;
+    private Float y = null;
+    private Float z = null;
     private Coord coord = null;
     private Long population = null;
     @SerializedName("primary_economy")
@@ -44,9 +44,9 @@ public class StarSystem implements Serializable {
     public StarSystem(CSVRecord record) {
         this.setId(MiscUtil.getAsLong(record.get("id")));
         this.setName(MiscUtil.getAsString(record.get("name")));
-        this.setX(MiscUtil.getAsDouble(record.get("x")));
-        this.setY(MiscUtil.getAsDouble(record.get("y")));
-        this.setZ(MiscUtil.getAsDouble(record.get("z")));
+        this.setX(MiscUtil.getAsFloat(record.get("x")));
+        this.setY(MiscUtil.getAsFloat(record.get("y")));
+        this.setZ(MiscUtil.getAsFloat(record.get("z")));
         this.setPopulation(MiscUtil.getAsLong(record.get("population")));
         this.setPrimaryEconomy(MiscUtil.getAsString(record.get("primary_economy")));
         this.setNeedsPermit(MiscUtil.getAsBoolean(record.get("needs_permit")));
@@ -87,13 +87,13 @@ public class StarSystem implements Serializable {
         return String.format("#%d %s (%s)", this.getId(), this.getName(), this.getCoord());
     }
 
-    public double distanceTo(StarSystem other) {
+    public float distanceTo(StarSystem other) {
         return this.getCoord().distanceTo(other.getCoord());
     }
 
-    public double distanceManhattanTo(StarSystem other) {
-        return this.getCoord().distanceManhattanTo(other.getCoord());
-    }
+    //    public float distanceManhattanTo(StarSystem other) {
+    //        return this.getCoord().distanceManhattanTo(other.getCoord());
+    //    }
 
     public Long getId() {
         return this.id;
@@ -111,27 +111,27 @@ public class StarSystem implements Serializable {
         this.name = name;
     }
 
-    public Double getX() {
+    public Float getX() {
         return this.x;
     }
 
-    public void setX(Double x) {
+    public void setX(Float x) {
         this.x = x;
     }
 
-    public Double getY() {
+    public Float getY() {
         return this.y;
     }
 
-    public void setY(Double y) {
+    public void setY(Float y) {
         this.y = y;
     }
 
-    public Double getZ() {
+    public Float getZ() {
         return this.z;
     }
 
-    public void setZ(Double z) {
+    public void setZ(Float z) {
         this.z = z;
     }
 

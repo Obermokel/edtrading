@@ -39,10 +39,10 @@ public class NeutronJumpApp {
         StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Altair"); // Altair, Boewnst KS-S c20-959
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByExactName("Maridal"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
+        StarSystem targetSystem = galaxy.searchStarSystemByExactName("VY Canis Majoris"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
         logger.debug("To: " + targetSystem);
 
-        double directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
+        float directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
         logger.debug("Direct distance: " + String.format("%.0fly", directDistanceSourceToTarget));
 
         List<Body> arrivalNeutronStars = findArrivalNeutronStars(galaxy.getBodiesById().values());
@@ -57,7 +57,7 @@ public class NeutronJumpApp {
 
         final long start = System.currentTimeMillis();
         AyStar ayStar = new AyStar();
-        ayStar.initialize(sourceSystem, targetSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, 47.5, 7);
+        ayStar.initialize(sourceSystem, targetSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, 47.5f, 7);
         Path path = ayStar.findPath();
         if (path == null) {
             logger.warn("No path found");

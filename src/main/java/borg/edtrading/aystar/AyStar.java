@@ -33,12 +33,12 @@ public class AyStar {
     private Set<StarSystem> starSystemsWithNeutronStars = null;
     private Set<StarSystem> starSystemsWithScoopableStars = null;
     private Map<Coord, List<StarSystem>> starSystemsWithScoopableStarsBySector = null;
-    private double ladenAndFueledBaseJumpRange = 0;
+    private float ladenAndFueledBaseJumpRange = 0;
     private int maxJumpsWithoutScooping = 0;
-    private double maxTotalDistanceLy = 0;
+    private float maxTotalDistanceLy = 0;
     private Path closestToGoalSoFar = null;
 
-    public void initialize(StarSystem source, StarSystem goal, Set<StarSystem> starSystemsWithNeutronStars, Set<StarSystem> starSystemsWithScoopableStars, double ladenAndFueledBaseJumpRange, int maxJumpsWithoutScooping) {
+    public void initialize(StarSystem source, StarSystem goal, Set<StarSystem> starSystemsWithNeutronStars, Set<StarSystem> starSystemsWithScoopableStars, float ladenAndFueledBaseJumpRange, int maxJumpsWithoutScooping) {
         if (!starSystemsWithNeutronStars.contains(goal) && !starSystemsWithScoopableStars.contains(goal)) {
             throw new IllegalArgumentException("goal not in useable star systems");
         } else {
@@ -51,7 +51,7 @@ public class AyStar {
             this.starSystemsWithNeutronStars = starSystemsWithNeutronStars;
             this.starSystemsWithScoopableStars = starSystemsWithScoopableStars;
             this.starSystemsWithScoopableStarsBySector = mapBySector(starSystemsWithScoopableStars);
-            this.maxTotalDistanceLy = 1.5 * source.distanceTo(goal);
+            this.maxTotalDistanceLy = 1.5f * source.distanceTo(goal);
             this.closestToGoalSoFar = null;
 
             this.open.add(new Path(source));
@@ -89,7 +89,7 @@ public class AyStar {
 
             for (StarSystem neighbour : neighbours) {
                 if (!this.closed.contains(neighbour)) {
-                    double extraDistanceLy = path.getStarSystem().distanceTo(neighbour);
+                    float extraDistanceLy = path.getStarSystem().distanceTo(neighbour);
                     Path newPath = new Path(path, neighbour, extraDistanceLy);
                     if (newPath.getTotalDistanceLy() + newPath.getStarSystem().distanceTo(this.goal) <= this.maxTotalDistanceLy) {
                         this.open.offer(newPath);
@@ -114,10 +114,10 @@ public class AyStar {
     private List<StarSystem> findNeighbours(Path path) {
         final StarSystem currentStarSystem = path.getStarSystem();
         final Coord currentCoord = currentStarSystem.getCoord();
-        final double currentDistanceToGoal = currentStarSystem.distanceTo(this.goal);
+        final float currentDistanceToGoal = currentStarSystem.distanceTo(this.goal);
 
         // Do we have an overcharged FSD?
-        final double currentJumpRange = this.starSystemsWithNeutronStars.contains(currentStarSystem) ? 4 * ladenAndFueledBaseJumpRange : ladenAndFueledBaseJumpRange;
+        final float currentJumpRange = this.starSystemsWithNeutronStars.contains(currentStarSystem) ? 4f * ladenAndFueledBaseJumpRange : ladenAndFueledBaseJumpRange;
         //final double currentJumpRangeManhattan = 1.5 * currentJumpRange;
 
         // Do we need to scoop?
@@ -150,7 +150,7 @@ public class AyStar {
         return systemsInRange;
     }
 
-    private static List<StarSystem> findSystemsBySector(Map<Coord, List<StarSystem>> systemsBySector, Coord currentCoord, double currentJumpRange) {
+    private static List<StarSystem> findSystemsBySector(Map<Coord, List<StarSystem>> systemsBySector, Coord currentCoord, float currentJumpRange) {
         List<StarSystem> result = new ArrayList<>();
 
         Coord currentSector = coordToSector(currentCoord);

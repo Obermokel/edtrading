@@ -9,13 +9,13 @@ import java.io.Serializable;
  */
 public class Coord implements Serializable {
 
-    private static final long serialVersionUID = 5669964958955683695L;
+    private static final long serialVersionUID = 1052805326828839956L;
 
-    private final double x;
-    private final double y;
-    private final double z;
+    private final float x;
+    private final float y;
+    private final float z;
 
-    public Coord(double x, double y, double z) {
+    public Coord(float x, float y, float z) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -33,13 +33,13 @@ public class Coord implements Serializable {
             return false;
         }
         Coord other = (Coord) obj;
-        if (Double.doubleToLongBits(this.x) != Double.doubleToLongBits(other.x)) {
+        if (Float.floatToIntBits(this.x) != Float.floatToIntBits(other.x)) {
             return false;
         }
-        if (Double.doubleToLongBits(this.y) != Double.doubleToLongBits(other.y)) {
+        if (Float.floatToIntBits(this.y) != Float.floatToIntBits(other.y)) {
             return false;
         }
-        if (Double.doubleToLongBits(this.z) != Double.doubleToLongBits(other.z)) {
+        if (Float.floatToIntBits(this.z) != Float.floatToIntBits(other.z)) {
             return false;
         }
         return true;
@@ -49,13 +49,9 @@ public class Coord implements Serializable {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        long temp;
-        temp = Double.doubleToLongBits(this.x);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(this.y);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(this.z);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
+        result = prime * result + Float.floatToIntBits(this.x);
+        result = prime * result + Float.floatToIntBits(this.y);
+        result = prime * result + Float.floatToIntBits(this.z);
         return result;
     }
 
@@ -64,31 +60,31 @@ public class Coord implements Serializable {
         return String.format("%.0f:%.0f:%.0f", x, y, z);
     }
 
-    public double distanceTo(Coord other) {
-        double dx = this.x - other.x;
-        double dy = this.y - other.y;
-        double dz = this.z - other.z;
+    public float distanceTo(Coord other) {
+        float dx = this.x - other.x;
+        float dy = this.y - other.y;
+        float dz = this.z - other.z;
 
-        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+        return (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
-    public double distanceManhattanTo(Coord other) {
-        double dx = this.x - other.x;
-        double dy = this.y - other.y;
-        double dz = this.z - other.z;
+    //    public float distanceManhattanTo(Coord other) {
+    //        float dx = this.x - other.x;
+    //        float dy = this.y - other.y;
+    //        float dz = this.z - other.z;
+    //
+    //        return Math.abs(dx) + Math.abs(dy) + Math.abs(dz);
+    //    }
 
-        return Math.abs(dx) + Math.abs(dy) + Math.abs(dz);
-    }
-
-    public double getX() {
+    public float getX() {
         return this.x;
     }
 
-    public double getY() {
+    public float getY() {
         return this.y;
     }
 
-    public double getZ() {
+    public float getZ() {
         return this.z;
     }
 

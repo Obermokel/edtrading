@@ -42,8 +42,8 @@ public class LeastJumpsComparator implements Comparator<Path> {
         //        BigDecimal totalJumps2 = new BigDecimal(p2.getTotalJumps()).add(jumpsRemaining2);
         //        BigDecimal rating1 = totalJumps1.add(percentRemaining1);
         //        BigDecimal rating2 = totalJumps2.add(percentRemaining2);
-        float lyRemaining1 = (float) p1.getStarSystem().distanceTo(this.goal);
-        float lyRemaining2 = (float) p2.getStarSystem().distanceTo(this.goal);
+        float lyRemaining1 = p1.getStarSystem().distanceTo(this.goal);
+        float lyRemaining2 = p2.getStarSystem().distanceTo(this.goal);
         float percentRemaining1 = lyRemaining1 / this.directDistance;
         float percentRemaining2 = lyRemaining2 / this.directDistance;
         int jumpsRemaining1 = (int) (lyRemaining1 / this.maxJumpRange);
