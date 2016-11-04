@@ -40,16 +40,15 @@ public class AyStar {
         if (!starSystemsWithNeutronStars.contains(goal) && !starSystemsWithScoopableStars.contains(goal)) {
             throw new IllegalArgumentException("goal not in useable star systems");
         } else {
-            //this.open = new PriorityQueue<>(new ProfitComparator());
-            this.open = new PriorityQueue<>(new LeastJumpsComparator(goal, this.ladenAndFueledBaseJumpRange));
+            this.ladenAndFueledBaseJumpRange = ladenAndFueledBaseJumpRange;
+            this.maxJumpsWithoutScooping = maxJumpsWithoutScooping;
+            this.open = new PriorityQueue<>(new LeastJumpsComparator(goal, source.distanceTo(goal), this.ladenAndFueledBaseJumpRange));
             this.closed = new HashSet<>();
             this.source = source;
             this.goal = goal;
             this.starSystemsWithNeutronStars = starSystemsWithNeutronStars;
             this.starSystemsWithScoopableStars = starSystemsWithScoopableStars;
             this.starSystemsWithScoopableStarsBySector = mapBySector(starSystemsWithScoopableStars);
-            this.ladenAndFueledBaseJumpRange = ladenAndFueledBaseJumpRange;
-            this.maxJumpsWithoutScooping = maxJumpsWithoutScooping;
 
             this.open.add(new Path(source));
         }
@@ -87,14 +86,14 @@ public class AyStar {
                 //}
             }
 
-            if (this.open.size() > 2 * 5000000) {
-                List<Path> temp = new ArrayList<>(5000000);
-                for (int i = 0; i < 5000000; i++) {
-                    temp.add(this.open.poll());
-                }
-                this.open.clear();
-                this.open.addAll(temp);
-            }
+            //            if (this.open.size() > 2 * 5000000) {
+            //                List<Path> temp = new ArrayList<>(5000000);
+            //                for (int i = 0; i < 5000000; i++) {
+            //                    temp.add(this.open.poll());
+            //                }
+            //                this.open.clear();
+            //                this.open.addAll(temp);
+            //            }
         }
 
         return null;
@@ -130,7 +129,7 @@ public class AyStar {
             systemsInRange.addAll(neutronInRange);
         }
         List<StarSystem> scoopableSystemsInCloseSectors = findSystemsBySector(this.starSystemsWithScoopableStarsBySector, currentCoord, currentJumpRange);
-        systemsInRange.addAll(scoopableSystemsInCloseSectors.stream().filter(st -> st.distanceTo(currentStarSystem) <= currentJumpRange /*&& st.distanceTo(goal) < currentDistanceToGoal*/).collect(Collectors.toSet()));
+        systemsInRange.addAll(scoopableSystemsInCloseSectors.stream().filter(st -> st.distanceTo(currentStarSystem) <= currentJumpRange && st.distanceTo(goal) < currentDistanceToGoal).collect(Collectors.toSet()));
 
         // Keep only those which bring us closer to the goal, i.e. the new system is closer to the goal than our current distance to the goal
         //Set<StarSystem> systemsInTravelDirection = systemsInRange.stream().filter(st -> st.distanceTo(goal) < currentDistanceToGoal).collect(Collectors.toSet());
