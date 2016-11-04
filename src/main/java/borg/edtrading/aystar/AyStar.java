@@ -76,14 +76,16 @@ public class AyStar {
                 return path;
             }
 
-            Set<StarSystem> neighbours = this.findNeighbours(path);
+            List<StarSystem> neighbours = this.findNeighbours(path);
 
             for (StarSystem neighbour : neighbours) {
-                double extraDistanceLy = path.getStarSystem().distanceTo(neighbour);
-                Path newPath = new Path(path, neighbour, extraDistanceLy);
-                //if (newPath.getTotalDistanceLy() <= this.maxTotalDistanceLy) {
-                this.open.offer(newPath);
-                //}
+                if (!this.closed.contains(neighbour)) {
+                    double extraDistanceLy = path.getStarSystem().distanceTo(neighbour);
+                    Path newPath = new Path(path, neighbour, extraDistanceLy);
+                    //if (newPath.getTotalDistanceLy() <= this.maxTotalDistanceLy) {
+                    this.open.offer(newPath);
+                    //}
+                }
             }
 
             //            if (this.open.size() > 2 * 5000000) {
@@ -99,7 +101,7 @@ public class AyStar {
         return null;
     }
 
-    private Set<StarSystem> findNeighbours(Path path) {
+    private List<StarSystem> findNeighbours(Path path) {
         final StarSystem currentStarSystem = path.getStarSystem();
         final Coord currentCoord = currentStarSystem.getCoord();
         final double currentDistanceToGoal = currentStarSystem.distanceTo(this.goal);
@@ -122,14 +124,14 @@ public class AyStar {
         boolean mustScoop = jumpsWithoutScooping >= this.maxJumpsWithoutScooping;
 
         // Find reachable systems
-        Set<StarSystem> systemsInRange = new HashSet<>();
+        List<StarSystem> systemsInRange = new ArrayList<>();
         if (!mustScoop) {
-            Set<StarSystem> neutronInRange = this.starSystemsWithNeutronStars.stream().filter(st -> st.distanceTo(currentStarSystem) <= currentJumpRange).collect(Collectors.toSet());
+            List<StarSystem> neutronInRange = this.starSystemsWithNeutronStars.stream().filter(st -> st.distanceTo(currentStarSystem) <= currentJumpRange).collect(Collectors.toList());
             //logger.debug("Considering " + neutronInRange.size() + " neutrons in range: " + neutronInRange);
             systemsInRange.addAll(neutronInRange);
         }
         List<StarSystem> scoopableSystemsInCloseSectors = findSystemsBySector(this.starSystemsWithScoopableStarsBySector, currentCoord, currentJumpRange);
-        systemsInRange.addAll(scoopableSystemsInCloseSectors.stream().filter(st -> st.distanceTo(currentStarSystem) <= currentJumpRange && st.distanceTo(goal) < currentDistanceToGoal).collect(Collectors.toSet()));
+        systemsInRange.addAll(scoopableSystemsInCloseSectors.stream().filter(st -> st.distanceTo(currentStarSystem) <= currentJumpRange && st.distanceTo(goal) < currentDistanceToGoal).collect(Collectors.toList()));
 
         // Keep only those which bring us closer to the goal, i.e. the new system is closer to the goal than our current distance to the goal
         //Set<StarSystem> systemsInTravelDirection = systemsInRange.stream().filter(st -> st.distanceTo(goal) < currentDistanceToGoal).collect(Collectors.toSet());
