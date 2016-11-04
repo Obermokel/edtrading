@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -33,15 +34,17 @@ public class AyStar {
     private Set<StarSystem> starSystemsWithScoopableStars = null;
     private Map<Coord, List<StarSystem>> starSystemsWithScoopableStarsBySector = null;
     private float ladenAndFueledBaseJumpRange = 0;
+    private float emptyTankBaseJumpRange = 0;
     private int maxJumpsWithoutScooping = 0;
     private float maxTotalDistanceLy = 0;
     private Path closestToGoalSoFar = null;
 
-    public void initialize(StarSystem source, StarSystem goal, Set<StarSystem> starSystemsWithNeutronStars, Set<StarSystem> starSystemsWithScoopableStars, float ladenAndFueledBaseJumpRange, int maxJumpsWithoutScooping) {
+    public void initialize(StarSystem source, StarSystem goal, Set<StarSystem> starSystemsWithNeutronStars, Set<StarSystem> starSystemsWithScoopableStars, float ladenAndFueledBaseJumpRange, float emptyTankBaseJumpRange, int maxJumpsWithoutScooping) {
         if (!starSystemsWithNeutronStars.contains(goal) && !starSystemsWithScoopableStars.contains(goal)) {
             throw new IllegalArgumentException("goal not in useable star systems");
         } else {
             this.ladenAndFueledBaseJumpRange = ladenAndFueledBaseJumpRange;
+            this.emptyTankBaseJumpRange = emptyTankBaseJumpRange;
             this.maxJumpsWithoutScooping = maxJumpsWithoutScooping;
             this.open = new PriorityQueue<>(new LeastJumpsComparator(source.distanceTo(goal), this.ladenAndFueledBaseJumpRange));
             this.closed = new HashSet<>();
@@ -73,8 +76,8 @@ public class AyStar {
                 this.closestToGoalSoFar = path;
             }
 
-            if (this.closed.size() % 10000 == 0 && logger.isDebugEnabled()) {
-                logger.debug(String.format("Open: %,15d / Closed: %,15d || Closest so far: %s with %d jump(s), %.0fly travelled, %.0fly remaining", this.open.size(), this.closed.size(), this.closestToGoalSoFar.getStarSystem().toString(),
+            if (this.closed.size() % 10000 == 0 && logger.isTraceEnabled()) {
+                logger.trace(String.format("Open: %,15d / Closed: %,15d || Closest so far: %s with %d jump(s), %.0fly travelled, %.0fly remaining", this.open.size(), this.closed.size(), this.closestToGoalSoFar.getStarSystem().toString(),
                         this.closestToGoalSoFar.getTotalJumps(), this.closestToGoalSoFar.getTravelledDistanceLy(), this.closestToGoalSoFar.getRemainingDistanceLy()));
             }
 
@@ -116,8 +119,8 @@ public class AyStar {
         final float currentDistanceToGoal = currentStarSystem.distanceTo(this.goal);
 
         // Do we have an overcharged FSD?
-        final float currentJumpRange = this.starSystemsWithNeutronStars.contains(currentStarSystem) ? 4f * ladenAndFueledBaseJumpRange : ladenAndFueledBaseJumpRange;
-        //final double currentJumpRangeManhattan = 1.5 * currentJumpRange;
+        //final float currentJumpRange = this.starSystemsWithNeutronStars.contains(currentStarSystem) ? 4f * ladenAndFueledBaseJumpRange : ladenAndFueledBaseJumpRange;
+        final boolean haveSuperchargedFsd = this.starSystemsWithNeutronStars.contains(currentStarSystem) ? true : false;
 
         // Do we need to scoop?
         int jumpsWithoutScooping = 0;
@@ -131,6 +134,13 @@ public class AyStar {
             p = p.getPrev();
         }
         boolean mustScoop = jumpsWithoutScooping >= this.maxJumpsWithoutScooping;
+
+        // Extra jump range because of empty tank?
+        float extraJumpRange = this.emptyTankBaseJumpRange - this.ladenAndFueledBaseJumpRange;
+        float fuelTankPercent = 1f - (jumpsWithoutScooping / (this.maxJumpsWithoutScooping + 1f));
+        extraJumpRange = extraJumpRange - (fuelTankPercent * extraJumpRange);
+        float currentBaseJumpRange = this.ladenAndFueledBaseJumpRange + extraJumpRange;
+        final float currentJumpRange = haveSuperchargedFsd ? 4 * currentBaseJumpRange : currentBaseJumpRange;
 
         // Find reachable systems
         List<StarSystem> systemsInRange = new ArrayList<>();
@@ -181,7 +191,7 @@ public class AyStar {
             }
             systemsInThisSector.add(starSystem);
         }
-        logger.debug("Mapped " + starSystems.size() + " systems into " + result.size() + " sectors");
+        logger.debug(String.format(Locale.US, "Mapped %,d systems into %,d sectors", starSystems.size(), result.size()));
         return result;
     }
 

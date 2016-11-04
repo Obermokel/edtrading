@@ -222,10 +222,11 @@ public class Galaxy {
     //        return this.marketEntriesByStationId;
     //    }
 
-    public StarSystem searchStarSystemByExactName(String name) {
+    public StarSystem searchStarSystemByName(String name) {
         if (StringUtils.isNotEmpty(name)) {
+            final String lcName = name.toLowerCase();
             for (StarSystem s : this.starSystemsById.values()) {
-                if (name.equals(s.getName())) {
+                if (lcName.equals(s.getName().toLowerCase())) {
                     return s;
                 }
             }

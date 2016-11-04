@@ -9,17 +9,25 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static org.apache.commons.lang3.StringEscapeUtils.*;
 
 /**
  * NeutronJumpApp
@@ -33,13 +41,17 @@ public class NeutronJumpApp {
     private static final Long TYPE_ID_NEUTRON_STAR = new Long(3);
 
     public static void main(String[] args) throws IOException {
+        float ladenAndFueledBaseJumpRange = 47.5f;
+        float emptyTankBaseJumpRange = 51.5f;
+        int maxJumpsWithoutScooping = 7;
+
         Galaxy galaxy = Galaxy.readDataFromFiles();
         logger.debug(galaxy.getStarSystemsById().size() + " star systems");
 
-        StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Altair"); // Altair, Boewnst KS-S c20-959
+        StarSystem sourceSystem = galaxy.searchStarSystemByName("Skaude AA-A h294"); // Altair, Shinrarta Dezhra, Boewnst KS-S c20-959
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByExactName("Colonia"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
+        StarSystem targetSystem = galaxy.searchStarSystemByName("Shinrarta Dezhra"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
         logger.debug("To: " + targetSystem);
 
         float directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
@@ -53,11 +65,11 @@ public class NeutronJumpApp {
         starSystemsWithScoopableStars.add(targetSystem);
         logger.debug("Total known neutron stars (EDDB + Mapping Project): " + starSystemsWithNeutronStars.size());
 
-        //mapBodiesByTypeId(galaxy.getBodiesById().values());
+        Map<String, Set<StarSystem>> systemsBySpectralClass = mapSystemsBySpectralClass(galaxy.getBodiesById().values());
 
         final long start = System.currentTimeMillis();
         AyStar ayStar = new AyStar();
-        ayStar.initialize(sourceSystem, targetSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, 47.5f, 7);
+        ayStar.initialize(sourceSystem, targetSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, ladenAndFueledBaseJumpRange, emptyTankBaseJumpRange, maxJumpsWithoutScooping);
         Path path = ayStar.findPath();
         if (path == null) {
             logger.warn("No path found");
@@ -76,6 +88,97 @@ public class NeutronJumpApp {
         final long end = System.currentTimeMillis();
         final long millis = end - start;
         logger.info("Took " + DurationFormatUtils.formatDuration(millis, "H:mm:ss"));
+
+        int traditionalJumps = Math.round(directDistanceSourceToTarget / ladenAndFueledBaseJumpRange);
+        int jumpsSaved = traditionalJumps - path.getTotalJumps();
+        float jumpsSavedPercent = 100f * jumpsSaved / traditionalJumps;
+        String h2 = String.format(Locale.US, "Direct distance: %.0f Ly | Jumps until empty: %d | Jump range min/max: %.1f Ly / %.1f Ly | Jumps saved: %d of %d (%.0f%%)", directDistanceSourceToTarget, maxJumpsWithoutScooping + 1,
+                ladenAndFueledBaseJumpRange, emptyTankBaseJumpRange, jumpsSaved, traditionalJumps, jumpsSavedPercent);
+        String html = pathToHtml(path, starSystemsWithNeutronStars, systemsBySpectralClass, h2);
+        String filename = "Route " + sourceSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " to " + targetSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ".html";
+        FileUtils.write(new File(Constants.TEMP_DIR, filename), html, "UTF-8");
+    }
+
+    private static String pathToHtml(Path path, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, String h2) {
+        StringBuilder html = new StringBuilder();
+
+        List<StarSystem> sortedSystems = new ArrayList<>();
+        Path p = path;
+        while (p != null) {
+            sortedSystems.add(p.getStarSystem());
+            p = p.getPrev();
+        }
+        Collections.reverse(sortedSystems);
+
+        String title = escapeHtml4(sortedSystems.get(0).getName()) + " → " + escapeHtml4(sortedSystems.get(sortedSystems.size() - 1).getName()) + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")";
+        html.append("<html>\n");
+        html.append("<head>\n");
+        html.append("<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n");
+        html.append("<link href=\"route.css\" rel=\"stylesheet\" type=\"text/css\" />\n");
+        html.append("<title>").append(title).append("</title>\n");
+        html.append("</head>\n");
+        html.append("<body>\n");
+        html.append("<h1>").append(title).append("</h1>\n");
+        if (StringUtils.isNotEmpty(h2)) {
+            html.append("<h2>").append(h2).append("</h2>\n");
+        }
+        html.append("<table id=\"jumpTable\">\n");
+        html.append("<tr>");
+        html.append("<th class=\"numeric jumpNo\">#</th>");
+        html.append("<th class=\"starName\">From</th>");
+        html.append("<th class=\"starClass\">Class</th>");
+        html.append("<th class=\"numeric jumpDistance\">Jump</th>");
+        html.append("<th class=\"starClass\">Class</th>");
+        html.append("<th class=\"starName\">To</th>");
+        html.append("<th class=\"notes\">Notes</th>");
+        html.append("<th class=\"numeric distance\">Dist</th>");
+        html.append("</tr>\n");
+        int jumpNo = 0;
+        float travelledLy = 0;
+        StarSystem prevSystem = null;
+        for (StarSystem currSystem : sortedSystems) {
+            if (prevSystem != null) {
+                String neutronJumpCss = starSystemsWithNeutronStars.contains(prevSystem) ? "neutronJump" : "normalJump";
+                jumpNo++;
+                travelledLy += currSystem.distanceTo(prevSystem);
+                String evenOddCss = jumpNo % 2 == 0 ? "even" : "odd";
+                String fromName = prevSystem.getName();
+                String fromClass = lookupSpectralClass(prevSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
+                float jumpDistance = currSystem.distanceTo(prevSystem);
+                String toName = currSystem.getName();
+                String toClass = lookupSpectralClass(currSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
+                //float routePercent = 100f * jumpNo / (sortedSystems.size() - 1);
+                html.append("<tr class=\"" + evenOddCss + " " + neutronJumpCss + "\">");
+                html.append("<td class=\"numeric jumpNo\">" + jumpNo + "</td>");
+                html.append("<td class=\"starName spectralClass-" + fromClass + "\">" + escapeHtml4(fromName) + "</td>");
+                html.append("<td class=\"starClass spectralClass-" + fromClass + "\">" + fromClass + "</td>");
+                html.append("<td class=\"numeric jumpDistance\">" + String.format(Locale.US, "%.1f Ly", jumpDistance) + "</td>");
+                html.append("<td class=\"starClass spectralClass-" + toClass + "\">" + toClass + "</td>");
+                html.append("<td class=\"starName spectralClass-" + toClass + "\">" + escapeHtml4(toName) + "</td>");
+                html.append("<td class=\"notes\">&nbsp;</td>");
+                html.append("<td class=\"numeric distance\">" + String.format(Locale.US, "%.0f Ly", travelledLy) + "</td>");
+                html.append("</tr>\n");
+            }
+            prevSystem = currSystem;
+        }
+        html.append("</table>\n");
+        html.append("</body>\n");
+        html.append("</html>");
+
+        return html.toString();
+    }
+
+    private static String lookupSpectralClass(StarSystem system, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass) {
+        if (starSystemsWithNeutronStars.contains(system)) {
+            return "NS";
+        } else {
+            for (String spectralClass : systemsBySpectralClass.keySet()) {
+                if (systemsBySpectralClass.get(spectralClass).contains(system)) {
+                    return spectralClass;
+                }
+            }
+            return "?";
+        }
     }
 
     private static Set<StarSystem> findMappingProjectNeutronStars(Galaxy galaxy) throws IOException {
@@ -102,7 +205,7 @@ public class NeutronJumpApp {
             }
         }
 
-        logger.debug("Found " + result.size() + " of all " + ids.size() + " IDs");
+        logger.trace("Found " + result.size() + " of all " + ids.size() + " IDs");
 
         return result;
     }
@@ -135,7 +238,7 @@ public class NeutronJumpApp {
             }
         }
 
-        logger.debug(result.size() + " of all " + bodies.size() + " bodies are arrival neutron stars");
+        logger.trace(result.size() + " of all " + bodies.size() + " bodies are arrival neutron stars");
 
         return result;
     }
@@ -149,31 +252,35 @@ public class NeutronJumpApp {
             }
         }
 
-        logger.debug(result.size() + " of all " + bodies.size() + " bodies have a known star system");
+        logger.trace(result.size() + " of all " + bodies.size() + " bodies have a known star system");
 
         return result;
     }
 
-    private static void mapBodiesByTypeId(Collection<Body> bodies) {
-        Map<Long, List<Body>> bodiesByTypeId = bodies.stream().filter(b -> b.getTypeId() != null).collect(Collectors.groupingBy(Body::getTypeId));
-        for (Long typeId : bodiesByTypeId.keySet()) {
-            Map<String, List<Body>> bodiesBySpectralClass = bodiesByTypeId.get(typeId).stream().filter(b -> b.getSpectral_class() != null).collect(Collectors.groupingBy(Body::getSpectral_class));
-            logger.debug(String.format("Type ID %4d has %d bodies with %d different spectral classes: %s", typeId, bodiesByTypeId.get(typeId).size(), bodiesBySpectralClass.size(), bodiesBySpectralClass.keySet().toString()));
-        }
+    private static Map<String, Set<StarSystem>> mapSystemsBySpectralClass(Collection<Body> bodies) {
+        final List<String> scoopableSpectralClasses = Arrays.asList("O", "B", "A", "F", "G", "K", "M");
 
-        List<String> scoopableSpectralClasses = Arrays.asList("O", "B", "A", "F", "G", "K", "M");
         List<Body> bodiesHavingSpectralClass = bodies.stream().filter(b -> b.getSpectral_class() != null).collect(Collectors.toList());
-        List<Body> bodiesHavingScoopableSpectralClass = new ArrayList<>(bodiesHavingSpectralClass.size() / 2);
-        Map<String, List<Body>> bodiesBySpectralClass = bodiesHavingSpectralClass.stream().collect(Collectors.groupingBy(Body::getSpectral_class));
+        List<Body> arrivalBodiesHavingSpectralClass = bodiesHavingSpectralClass.stream().filter(b -> Boolean.TRUE.equals(b.getIs_main_star())).collect(Collectors.toList());
+        List<Body> scoopableArrivalStars = new ArrayList<>(arrivalBodiesHavingSpectralClass.size() / 2);
+
+        Map<String, List<Body>> bodiesBySpectralClass = arrivalBodiesHavingSpectralClass.stream().collect(Collectors.groupingBy(Body::getSpectral_class));
         for (String spectralClass : bodiesBySpectralClass.keySet()) {
-            float percent = (100f * bodiesBySpectralClass.get(spectralClass).size()) / bodiesHavingSpectralClass.size();
-            logger.debug(String.format("Spectral class %-20s: %d bodies (%.1f%%)", spectralClass, bodiesBySpectralClass.get(spectralClass).size(), percent));
+            float spectralClassPercentOfAllArrivalStars = (100f * bodiesBySpectralClass.get(spectralClass).size()) / arrivalBodiesHavingSpectralClass.size();
+            logger.trace(String.format("Spectral class %-20s: %d bodies (%.1f%%)", spectralClass, bodiesBySpectralClass.get(spectralClass).size(), spectralClassPercentOfAllArrivalStars));
             if (scoopableSpectralClasses.contains(spectralClass)) {
-                bodiesHavingScoopableSpectralClass.addAll(bodiesBySpectralClass.get(spectralClass));
+                scoopableArrivalStars.addAll(bodiesBySpectralClass.get(spectralClass));
             }
         }
-        logger.debug(String.format("Bodies having a spectral class at all:    %d (%.1f%% of all bodies)", bodiesHavingSpectralClass.size(), (100f * bodiesHavingSpectralClass.size()) / bodies.size()));
-        logger.debug(String.format("Bodies having a scoopable spectral class: %d (%.1f%% of bodies having spectral class)", bodiesHavingScoopableSpectralClass.size(), (100f * bodiesHavingScoopableSpectralClass.size()) / bodiesHavingSpectralClass.size()));
+        logger.debug(String.format(Locale.US, "Having a spectral class:  %9d (%.1f%% of all bodies)", bodiesHavingSpectralClass.size(), (100f * bodiesHavingSpectralClass.size()) / bodies.size()));
+        logger.debug(String.format(Locale.US, "Being arrival star:       %9d (%.1f%% of having spectral class)", arrivalBodiesHavingSpectralClass.size(), (100f * arrivalBodiesHavingSpectralClass.size()) / bodiesHavingSpectralClass.size()));
+        logger.debug(String.format(Locale.US, "Scoopable:                %9d (%.1f%% of being arrival)", scoopableArrivalStars.size(), (100f * scoopableArrivalStars.size()) / arrivalBodiesHavingSpectralClass.size()));
+
+        Map<String, Set<StarSystem>> result = new LinkedHashMap<>();
+        for (String spectralClass : bodiesBySpectralClass.keySet()) {
+            result.put(spectralClass, bodiesBySpectralClass.get(spectralClass).stream().filter(b -> b.getStarSystem() != null).map(Body::getStarSystem).collect(Collectors.toSet()));
+        }
+        return result;
     }
 
 }
