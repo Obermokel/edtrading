@@ -39,7 +39,7 @@ public class NeutronJumpApp {
         StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Altair"); // Altair, Boewnst KS-S c20-959
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByExactName("Hen 2-23"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
+        StarSystem targetSystem = galaxy.searchStarSystemByExactName("Maridal"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
         logger.debug("To: " + targetSystem);
 
         double directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
@@ -53,7 +53,7 @@ public class NeutronJumpApp {
         starSystemsWithScoopableStars.add(targetSystem);
         logger.debug("Total known neutron stars (EDDB + Mapping Project): " + starSystemsWithNeutronStars.size());
 
-        mapBodiesByTypeId(galaxy.getBodiesById().values());
+        //mapBodiesByTypeId(galaxy.getBodiesById().values());
 
         final long start = System.currentTimeMillis();
         AyStar ayStar = new AyStar();
