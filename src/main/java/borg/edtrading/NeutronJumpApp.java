@@ -35,10 +35,10 @@ public class NeutronJumpApp {
         Galaxy galaxy = Galaxy.readDataFromFiles();
         logger.debug(galaxy.getStarSystemsById().size() + " star systems");
 
-        StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Altair");
+        StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Boewnst KS-S c20-959"); // Altair, Boewnst KS-S c20-959
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByExactName("VY Canis Majoris"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
+        StarSystem targetSystem = galaxy.searchStarSystemByExactName("Colonia"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
         logger.debug("To: " + targetSystem);
 
         double directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
