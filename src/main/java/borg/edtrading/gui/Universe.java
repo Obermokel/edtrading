@@ -44,6 +44,8 @@ public class Universe extends Applet implements KeyListener, ActionListener {
     private final Galaxy galaxy;
     private float xloc = 0.0f;
     private float yloc = 0.0f;
+    private TransformGroup objTrans;
+    private Transform3D trans = new Transform3D();
 
     public Universe(Galaxy galaxy) {
         this.galaxy = galaxy;
@@ -79,7 +81,10 @@ public class Universe extends Applet implements KeyListener, ActionListener {
     }
 
     public BranchGroup createSceneGraph() {
-        BranchGroup branchGroup = new BranchGroup();
+        BranchGroup objRoot = new BranchGroup();
+        objTrans = new TransformGroup();
+        objTrans.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+        objRoot.addChild(objTrans);
 
         List<Body> bodiesHavingSpectralClass = galaxy.getBodiesById().values().stream().filter(b -> b.getSpectral_class() != null).collect(Collectors.toList());
         for (Body star : bodiesHavingSpectralClass) {
@@ -100,10 +105,10 @@ public class Universe extends Applet implements KeyListener, ActionListener {
             sphere.setAppearance(ap);
             tg.addChild(sphere);
 
-            branchGroup.addChild(tg);
+            objRoot.addChild(tg);
         }
 
-        return branchGroup;
+        return objRoot;
     }
 
     @Override
@@ -114,16 +119,20 @@ public class Universe extends Applet implements KeyListener, ActionListener {
     @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyChar() == 'a') {
-            xloc = xloc - .1f;
+            System.out.println("left");
+            xloc = xloc - 1.1f;
         }
         if (e.getKeyChar() == 'd') {
-            xloc = xloc + .1f;
+            System.out.println("right");
+            xloc = xloc + 1.1f;
         }
         if (e.getKeyChar() == 'w') {
-            yloc = yloc + .1f;
+            System.out.println("up");
+            yloc = yloc + 1.1f;
         }
         if (e.getKeyChar() == 's') {
-            yloc = yloc - .1f;
+            System.out.println("down");
+            yloc = yloc - 1.1f;
         }
 
     }
@@ -135,7 +144,9 @@ public class Universe extends Applet implements KeyListener, ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // TODO Auto-generated method stub
+        System.out.println("action!");
+        trans.setTranslation(new Vector3f(xloc, yloc, 0.0f));
+        objTrans.setTransform(trans);
     }
 
     private static Color3f spectralClassToEmissiveColor(String spectral_class) {

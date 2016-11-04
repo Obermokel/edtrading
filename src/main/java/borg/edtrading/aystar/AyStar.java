@@ -67,7 +67,7 @@ public class AyStar {
                 this.closed.add(path.getStarSystem());
             }
 
-            if (this.closed.size() % 1000 == 0 && logger.isDebugEnabled()) {
+            if (this.closed.size() % 10000 == 0 && logger.isDebugEnabled()) {
                 logger.debug(String.format("Open: %,15d / Closed: %,15d || %d jump(s), %.0f Ly", this.open.size(), this.closed.size(), path.getTotalJumps(), path.getTotalDistanceLy()));
             }
 
@@ -131,7 +131,7 @@ public class AyStar {
             systemsInRange.addAll(neutronInRange);
         }
         List<StarSystem> scoopableSystemsInCloseSectors = findSystemsBySector(this.starSystemsWithScoopableStarsBySector, currentCoord, currentJumpRange);
-        systemsInRange.addAll(scoopableSystemsInCloseSectors.stream().filter(st -> st.distanceTo(currentStarSystem) <= currentJumpRange && st.distanceTo(goal) < currentDistanceToGoal).collect(Collectors.toList()));
+        systemsInRange.addAll(scoopableSystemsInCloseSectors.stream().filter(st -> st.distanceTo(currentStarSystem) <= currentJumpRange /*&& st.distanceTo(goal) < currentDistanceToGoal*/).collect(Collectors.toList()));
 
         // Keep only those which bring us closer to the goal, i.e. the new system is closer to the goal than our current distance to the goal
         //Set<StarSystem> systemsInTravelDirection = systemsInRange.stream().filter(st -> st.distanceTo(goal) < currentDistanceToGoal).collect(Collectors.toSet());

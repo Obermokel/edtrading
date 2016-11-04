@@ -6,6 +6,7 @@ import borg.edtrading.data.Body;
 import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.StarSystem;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,10 +36,10 @@ public class NeutronJumpApp {
         Galaxy galaxy = Galaxy.readDataFromFiles();
         logger.debug(galaxy.getStarSystemsById().size() + " star systems");
 
-        StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Boewnst KS-S c20-959"); // Altair, Boewnst KS-S c20-959
+        StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Altair"); // Altair, Boewnst KS-S c20-959
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByExactName("Colonia"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
+        StarSystem targetSystem = galaxy.searchStarSystemByExactName("Hen 2-23"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
         logger.debug("To: " + targetSystem);
 
         double directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
@@ -54,6 +55,7 @@ public class NeutronJumpApp {
 
         mapBodiesByTypeId(galaxy.getBodiesById().values());
 
+        final long start = System.currentTimeMillis();
         AyStar ayStar = new AyStar();
         ayStar.initialize(sourceSystem, targetSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, 47.5, 7);
         Path path = ayStar.findPath();
@@ -71,6 +73,9 @@ public class NeutronJumpApp {
                 p = p.getPrev();
             }
         }
+        final long end = System.currentTimeMillis();
+        final long millis = end - start;
+        logger.info("Took " + DurationFormatUtils.formatDuration(millis, "m:s"));
     }
 
     private static Set<StarSystem> findMappingProjectNeutronStars(Galaxy galaxy) throws IOException {
