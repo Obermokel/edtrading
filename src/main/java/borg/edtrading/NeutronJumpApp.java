@@ -38,7 +38,7 @@ public class NeutronJumpApp {
         StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Altair");
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByExactName("VY Canis Majoris"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
+        StarSystem targetSystem = galaxy.searchStarSystemByExactName("Sol"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
         logger.debug("To: " + targetSystem);
 
         double directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
@@ -56,7 +56,7 @@ public class NeutronJumpApp {
 
         AyStar ayStar = new AyStar();
         ayStar.initialize(sourceSystem, targetSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, 47.5, 7);
-        Path path = ayStar.findPath();
+        Path path = null;//ayStar.findPath();
         if (path == null) {
             logger.warn("No path found");
         } else {
