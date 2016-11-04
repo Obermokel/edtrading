@@ -39,7 +39,7 @@ public class NeutronJumpApp {
         StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Altair"); // Altair, Boewnst KS-S c20-959
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByExactName("VY Canis Majoris"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
+        StarSystem targetSystem = galaxy.searchStarSystemByExactName("Colonia"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
         logger.debug("To: " + targetSystem);
 
         float directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
@@ -69,13 +69,13 @@ public class NeutronJumpApp {
                 if (p.getPrev() != null) {
                     extraDistanceLy = " (+" + String.format("%.0fly", p.getStarSystem().distanceTo(p.getPrev().getStarSystem())) + ")";
                 }
-                logger.info(String.format("Jump #%-3d\t%-30s\tDistance: %5.0fly", p.getTotalJumps(), p.getStarSystem().getName(), p.getTotalDistanceLy()) + extraDistanceLy);
+                logger.info(String.format("Jump #%-3d\t%-30s\tDistance: %5.0fly", p.getTotalJumps(), p.getStarSystem().getName(), p.getTravelledDistanceLy()) + extraDistanceLy);
                 p = p.getPrev();
             }
         }
         final long end = System.currentTimeMillis();
         final long millis = end - start;
-        logger.info("Took " + DurationFormatUtils.formatDuration(millis, "m:s"));
+        logger.info("Took " + DurationFormatUtils.formatDuration(millis, "H:mm:ss"));
     }
 
     private static Set<StarSystem> findMappingProjectNeutronStars(Galaxy galaxy) throws IOException {

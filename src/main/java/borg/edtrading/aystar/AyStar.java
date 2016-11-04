@@ -28,7 +28,6 @@ public class AyStar {
 
     private PriorityQueue<Path> open = null;
     private Set<StarSystem> closed = null;
-    private StarSystem source = null;
     private StarSystem goal = null;
     private Set<StarSystem> starSystemsWithNeutronStars = null;
     private Set<StarSystem> starSystemsWithScoopableStars = null;
@@ -44,9 +43,8 @@ public class AyStar {
         } else {
             this.ladenAndFueledBaseJumpRange = ladenAndFueledBaseJumpRange;
             this.maxJumpsWithoutScooping = maxJumpsWithoutScooping;
-            this.open = new PriorityQueue<>(new LeastJumpsComparator(goal, source.distanceTo(goal), this.ladenAndFueledBaseJumpRange));
+            this.open = new PriorityQueue<>(new LeastJumpsComparator(source.distanceTo(goal), this.ladenAndFueledBaseJumpRange));
             this.closed = new HashSet<>();
-            this.source = source;
             this.goal = goal;
             this.starSystemsWithNeutronStars = starSystemsWithNeutronStars;
             this.starSystemsWithScoopableStars = starSystemsWithScoopableStars;
@@ -54,7 +52,7 @@ public class AyStar {
             this.maxTotalDistanceLy = 1.5f * source.distanceTo(goal);
             this.closestToGoalSoFar = null;
 
-            this.open.add(new Path(source));
+            this.open.add(new Path(source, source.distanceTo(goal)));
         }
     }
 
@@ -71,13 +69,13 @@ public class AyStar {
                 this.closed.add(path.getStarSystem());
             }
 
-            if (this.closestToGoalSoFar == null || path.getStarSystem().distanceTo(this.goal) < this.closestToGoalSoFar.getStarSystem().distanceTo(this.goal)) {
+            if (this.closestToGoalSoFar == null || path.getRemainingDistanceLy() < this.closestToGoalSoFar.getRemainingDistanceLy()) {
                 this.closestToGoalSoFar = path;
             }
 
             if (this.closed.size() % 10000 == 0 && logger.isDebugEnabled()) {
                 logger.debug(String.format("Open: %,15d / Closed: %,15d || Closest so far: %s with %d jump(s), %.0fly travelled, %.0fly remaining", this.open.size(), this.closed.size(), this.closestToGoalSoFar.getStarSystem().toString(),
-                        this.closestToGoalSoFar.getTotalJumps(), this.closestToGoalSoFar.getTotalDistanceLy(), this.closestToGoalSoFar.getStarSystem().distanceTo(this.goal)));
+                        this.closestToGoalSoFar.getTotalJumps(), this.closestToGoalSoFar.getTravelledDistanceLy(), this.closestToGoalSoFar.getRemainingDistanceLy()));
             }
 
             if (path.getStarSystem().equals(this.goal)) {
@@ -89,9 +87,10 @@ public class AyStar {
 
             for (StarSystem neighbour : neighbours) {
                 if (!this.closed.contains(neighbour)) {
-                    float extraDistanceLy = path.getStarSystem().distanceTo(neighbour);
-                    Path newPath = new Path(path, neighbour, extraDistanceLy);
-                    if (newPath.getTotalDistanceLy() + newPath.getStarSystem().distanceTo(this.goal) <= this.maxTotalDistanceLy) {
+                    float remainingDistanceLy = neighbour.distanceTo(this.goal);
+                    float extraTravelledDistanceLy = path.getStarSystem().distanceTo(neighbour);
+                    Path newPath = new Path(path, neighbour, remainingDistanceLy, extraTravelledDistanceLy);
+                    if (newPath.getTravelledDistanceLy() + newPath.getRemainingDistanceLy() <= this.maxTotalDistanceLy) {
                         this.open.offer(newPath);
                     }
                 }

@@ -12,21 +12,24 @@ public class Path implements Comparable<Path> {
     private Path prev = null;
     private StarSystem starSystem = null;
     private int totalJumps = 0;
-    private float totalDistanceLy = 0;
+    private float travelledDistanceLy = 0;
+    private float remainingDistanceLy = 0;
 
-    public Path(StarSystem starSystem) {
+    public Path(StarSystem starSystem, float remainingDistanceLy) {
         this.setStarSystem(starSystem);
+        this.setRemainingDistanceLy(remainingDistanceLy);
     }
 
     /**
-     * @param extraDistanceLy
+     * @param extraTravelledDistanceLy
      *            From prev to starSystem, NOT in total
      */
-    public Path(Path prev, StarSystem starSystem, float extraDistanceLy) {
+    public Path(Path prev, StarSystem starSystem, float remainingDistanceLy, float extraTravelledDistanceLy) {
         this.setPrev(prev);
         this.setStarSystem(starSystem);
+        this.setRemainingDistanceLy(remainingDistanceLy);
         this.setTotalJumps(prev.getTotalJumps() + 1);
-        this.setTotalDistanceLy(prev.getTotalDistanceLy() + extraDistanceLy);
+        this.setTravelledDistanceLy(prev.getTravelledDistanceLy() + extraTravelledDistanceLy);
     }
 
     @Override
@@ -41,10 +44,13 @@ public class Path implements Comparable<Path> {
             return false;
         }
         Path other = (Path) obj;
-        if (Float.floatToIntBits(this.totalDistanceLy) != Float.floatToIntBits(other.totalDistanceLy)) {
+        if (this.starSystem.getId().longValue() != other.starSystem.getId().longValue()) {
             return false;
         }
         if (this.totalJumps != other.totalJumps) {
+            return false;
+        }
+        if (Float.floatToIntBits(this.travelledDistanceLy) != Float.floatToIntBits(other.travelledDistanceLy)) {
             return false;
         }
         return true;
@@ -54,14 +60,15 @@ public class Path implements Comparable<Path> {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + Float.floatToIntBits(this.totalDistanceLy);
+        result = prime * result + (int) (this.starSystem.getId().longValue() ^ (this.starSystem.getId().longValue() >>> 32));
         result = prime * result + this.totalJumps;
+        result = prime * result + Float.floatToIntBits(this.travelledDistanceLy);
         return result;
     }
 
     @Override
     public int compareTo(Path other) {
-        int byDistance = new Float(this.getTotalDistanceLy()).compareTo(other.getTotalDistanceLy());
+        int byDistance = new Float(this.getTravelledDistanceLy()).compareTo(other.getTravelledDistanceLy());
         if (byDistance != 0) {
             return byDistance;
         } else {
@@ -94,12 +101,20 @@ public class Path implements Comparable<Path> {
         this.totalJumps = totalJumps;
     }
 
-    public float getTotalDistanceLy() {
-        return this.totalDistanceLy;
+    public float getTravelledDistanceLy() {
+        return this.travelledDistanceLy;
     }
 
-    public void setTotalDistanceLy(float ly) {
-        this.totalDistanceLy = ly;
+    public void setTravelledDistanceLy(float travelledDistanceLy) {
+        this.travelledDistanceLy = travelledDistanceLy;
+    }
+
+    public float getRemainingDistanceLy() {
+        return this.remainingDistanceLy;
+    }
+
+    public void setRemainingDistanceLy(float remainingDistanceLy) {
+        this.remainingDistanceLy = remainingDistanceLy;
     }
 
 }
