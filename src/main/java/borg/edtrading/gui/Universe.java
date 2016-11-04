@@ -5,12 +5,14 @@ import borg.edtrading.data.Coord;
 import borg.edtrading.data.Galaxy;
 import com.sun.j3d.utils.applet.MainFrame;
 import com.sun.j3d.utils.geometry.Sphere;
+import com.sun.j3d.utils.geometry.Text2D;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.applet.Applet;
 import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -104,6 +106,7 @@ public class Universe extends Applet implements KeyListener, ActionListener {
             Sphere sphere = new Sphere(radius);
             sphere.setAppearance(ap);
             tg.addChild(sphere);
+            tg.addChild(new Text2D(star.getName(), color, "Arial", 12, Font.PLAIN));
 
             objRoot.addChild(tg);
         }
