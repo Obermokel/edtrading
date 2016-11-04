@@ -155,8 +155,16 @@ public class Galaxy {
                     }
                     line = reader.readLine();
                 }
+                for (Body body : bodies) {
+                    if (starSystems.get(body.getStarSystemId()) == null) {
+                        logger.warn("Star system not found: " + body + " (star system id: " + body.getStarSystemId() + ")");
+                    }
+                }
                 bodies.forEach(b -> b.setStarSystem(starSystems.get(b.getStarSystemId())));
                 bodiesById = bodies.stream().collect(Collectors.toMap(Body::getId, Function.identity()));
+                if (bodiesById.size() != bodies.size()) {
+                    logger.warn("Mapped " + bodies.size() + " by " + bodiesById.size() + " IDs");
+                }
             }
             try (BufferedOutputStream inputStream = new BufferedOutputStream(new FileOutputStream(serFile))) {
                 SerializationUtils.serialize((Serializable) bodiesById, inputStream);

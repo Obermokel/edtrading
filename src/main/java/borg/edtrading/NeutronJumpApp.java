@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -34,10 +35,10 @@ public class NeutronJumpApp {
         Galaxy galaxy = Galaxy.readDataFromFiles();
         logger.debug(galaxy.getStarSystemsById().size() + " star systems");
 
-        StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Boewnst KS-S c20-959");
+        StarSystem sourceSystem = galaxy.searchStarSystemByExactName("Altair");
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByExactName("Colonia"); // Eol Prou RS-T d3-94
+        StarSystem targetSystem = galaxy.searchStarSystemByExactName("VY Canis Majoris"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
         logger.debug("To: " + targetSystem);
 
         double directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
@@ -49,12 +50,9 @@ public class NeutronJumpApp {
         Set<StarSystem> starSystemsWithScoopableStars = new HashSet<>(galaxy.getStarSystemsById().values());
         starSystemsWithScoopableStars.removeAll(starSystemsWithNeutronStars);
         starSystemsWithScoopableStars.add(targetSystem);
+        logger.debug("Total known neutron stars (EDDB + Mapping Project): " + starSystemsWithNeutronStars.size());
 
-        for (StarSystem ss : starSystemsWithNeutronStars) {
-            if (ss.distanceTo(sourceSystem) < 4 * 47.5) {
-                logger.debug(ss + ": " + ss.distanceTo(sourceSystem));
-            }
-        }
+        mapBodiesByTypeId(galaxy.getBodiesById().values());
 
         AyStar ayStar = new AyStar();
         ayStar.initialize(sourceSystem, targetSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, 47.5, 7);
@@ -69,7 +67,7 @@ public class NeutronJumpApp {
                 if (p.getPrev() != null) {
                     extraDistanceLy = " (+" + String.format("%.0fly", p.getStarSystem().distanceTo(p.getPrev().getStarSystem())) + ")";
                 }
-                logger.info(String.format("Jump #%-3d\t%-24s\tDistance: %5.0fly", p.getTotalJumps(), p.getStarSystem().getName(), p.getTotalDistanceLy()) + extraDistanceLy);
+                logger.info(String.format("Jump #%-3d\t%-30s\tDistance: %5.0fly", p.getTotalJumps(), p.getStarSystem().getName(), p.getTotalDistanceLy()) + extraDistanceLy);
                 p = p.getPrev();
             }
         }
@@ -149,6 +147,28 @@ public class NeutronJumpApp {
         logger.debug(result.size() + " of all " + bodies.size() + " bodies have a known star system");
 
         return result;
+    }
+
+    private static void mapBodiesByTypeId(Collection<Body> bodies) {
+        Map<Long, List<Body>> bodiesByTypeId = bodies.stream().filter(b -> b.getTypeId() != null).collect(Collectors.groupingBy(Body::getTypeId));
+        for (Long typeId : bodiesByTypeId.keySet()) {
+            Map<String, List<Body>> bodiesBySpectralClass = bodiesByTypeId.get(typeId).stream().filter(b -> b.getSpectral_class() != null).collect(Collectors.groupingBy(Body::getSpectral_class));
+            logger.debug(String.format("Type ID %4d has %d bodies with %d different spectral classes: %s", typeId, bodiesByTypeId.get(typeId).size(), bodiesBySpectralClass.size(), bodiesBySpectralClass.keySet().toString()));
+        }
+
+        List<String> scoopableSpectralClasses = Arrays.asList("O", "B", "A", "F", "G", "K", "M");
+        List<Body> bodiesHavingSpectralClass = bodies.stream().filter(b -> b.getSpectral_class() != null).collect(Collectors.toList());
+        List<Body> bodiesHavingScoopableSpectralClass = new ArrayList<>(bodiesHavingSpectralClass.size() / 2);
+        Map<String, List<Body>> bodiesBySpectralClass = bodiesHavingSpectralClass.stream().collect(Collectors.groupingBy(Body::getSpectral_class));
+        for (String spectralClass : bodiesBySpectralClass.keySet()) {
+            float percent = (100f * bodiesBySpectralClass.get(spectralClass).size()) / bodiesHavingSpectralClass.size();
+            logger.debug(String.format("Spectral class %-20s: %d bodies (%.1f%%)", spectralClass, bodiesBySpectralClass.get(spectralClass).size(), percent));
+            if (scoopableSpectralClasses.contains(spectralClass)) {
+                bodiesHavingScoopableSpectralClass.addAll(bodiesBySpectralClass.get(spectralClass));
+            }
+        }
+        logger.debug(String.format("Bodies having a spectral class at all:    %d (%.1f%% of all bodies)", bodiesHavingSpectralClass.size(), (100f * bodiesHavingSpectralClass.size()) / bodies.size()));
+        logger.debug(String.format("Bodies having a scoopable spectral class: %d (%.1f%% of bodies having spectral class)", bodiesHavingScoopableSpectralClass.size(), (100f * bodiesHavingScoopableSpectralClass.size()) / bodiesHavingSpectralClass.size()));
     }
 
 }
