@@ -2,6 +2,7 @@ package borg.edtrading.aystar;
 
 import borg.edtrading.data.Coord;
 import borg.edtrading.data.StarSystem;
+import borg.edtrading.util.FuelAndJumpRangeLookup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,20 +34,16 @@ public class AyStar {
     private Set<StarSystem> starSystemsWithNeutronStars = null;
     private Set<StarSystem> starSystemsWithScoopableStars = null;
     private Map<Coord, List<StarSystem>> starSystemsWithScoopableStarsBySector = null;
-    private float ladenAndFueledBaseJumpRange = 0;
-    private float emptyTankBaseJumpRange = 0;
-    private int maxJumpsWithoutScooping = 0;
+    private FuelAndJumpRangeLookup fuelJumpLUT = null;
     private float maxTotalDistanceLy = 0;
     private Path closestToGoalSoFar = null;
 
-    public void initialize(StarSystem source, StarSystem goal, Set<StarSystem> starSystemsWithNeutronStars, Set<StarSystem> starSystemsWithScoopableStars, float ladenAndFueledBaseJumpRange, float emptyTankBaseJumpRange, int maxJumpsWithoutScooping) {
+    public void initialize(StarSystem source, StarSystem goal, Set<StarSystem> starSystemsWithNeutronStars, Set<StarSystem> starSystemsWithScoopableStars, FuelAndJumpRangeLookup fuelJumpLUT) {
         if (!starSystemsWithNeutronStars.contains(goal) && !starSystemsWithScoopableStars.contains(goal)) {
             throw new IllegalArgumentException("goal not in useable star systems");
         } else {
-            this.ladenAndFueledBaseJumpRange = ladenAndFueledBaseJumpRange;
-            this.emptyTankBaseJumpRange = emptyTankBaseJumpRange;
-            this.maxJumpsWithoutScooping = maxJumpsWithoutScooping;
-            this.open = new PriorityQueue<>(new LeastJumpsComparator(source.distanceTo(goal), this.ladenAndFueledBaseJumpRange));
+            this.fuelJumpLUT = fuelJumpLUT;
+            this.open = new PriorityQueue<>(new LeastJumpsComparator(source.distanceTo(goal), fuelJumpLUT.getAbsoluteMaxJumpRange()));
             this.closed = new HashSet<>();
             this.goal = goal;
             this.starSystemsWithNeutronStars = starSystemsWithNeutronStars;
@@ -55,7 +52,7 @@ public class AyStar {
             this.maxTotalDistanceLy = 1.5f * source.distanceTo(goal);
             this.closestToGoalSoFar = null;
 
-            this.open.add(new Path(source, source.distanceTo(goal)));
+            this.open.add(new Path(source, source.distanceTo(goal), fuelJumpLUT.getMaxFuelTons()));
         }
     }
 
@@ -92,7 +89,11 @@ public class AyStar {
                 if (!this.closed.contains(neighbour)) {
                     float remainingDistanceLy = neighbour.distanceTo(this.goal);
                     float extraTravelledDistanceLy = path.getStarSystem().distanceTo(neighbour);
-                    Path newPath = new Path(path, neighbour, remainingDistanceLy, extraTravelledDistanceLy);
+                    float fuelLevel = this.fuelJumpLUT.getMaxFuelTons(); // Scoop until full by default
+                    if (this.starSystemsWithNeutronStars.contains(neighbour)) {
+                        fuelLevel = path.getFuelLevel() - this.fuelJumpLUT.lookupFuelUsage(extraTravelledDistanceLy, path.getFuelLevel()); // Subtract from prev
+                    }
+                    Path newPath = new Path(path, neighbour, remainingDistanceLy, extraTravelledDistanceLy, fuelLevel);
                     if (newPath.getTravelledDistanceLy() + newPath.getRemainingDistanceLy() <= this.maxTotalDistanceLy) {
                         this.open.offer(newPath);
                     }
@@ -116,31 +117,24 @@ public class AyStar {
     private List<StarSystem> findNeighbours(Path path) {
         final StarSystem currentStarSystem = path.getStarSystem();
         final Coord currentCoord = currentStarSystem.getCoord();
-        final float currentDistanceToGoal = currentStarSystem.distanceTo(this.goal);
+        //final float currentDistanceToGoal = currentStarSystem.distanceTo(this.goal);
+        float safeFuelLevel = path.getFuelLevel(); // This is what the calculation says, but as we don't know the formula we should add some safety
+        if (safeFuelLevel > this.fuelJumpLUT.getMaxFuelPerJump()) {
+            safeFuelLevel = Math.min(this.fuelJumpLUT.getMaxFuelTons(), safeFuelLevel + 2.0f); // Add 2 extra tons to reduce the calculated jump distance
+        } else {
+            safeFuelLevel = Math.max(0.1f, safeFuelLevel - 2.0f); // Subtract 2 tons to reduce the calculated jump distance
+        }
+        final float currentUnboostedJumpRange = this.fuelJumpLUT.lookupMaxJumpRange(safeFuelLevel);
 
         // Do we have an overcharged FSD?
         //final float currentJumpRange = this.starSystemsWithNeutronStars.contains(currentStarSystem) ? 4f * ladenAndFueledBaseJumpRange : ladenAndFueledBaseJumpRange;
         final boolean haveSuperchargedFsd = this.starSystemsWithNeutronStars.contains(currentStarSystem) ? true : false;
 
         // Do we need to scoop?
-        int jumpsWithoutScooping = 0;
-        Path p = path;
-        while (p.getPrev() != null) {
-            if (this.starSystemsWithScoopableStars.contains(p.getStarSystem())) {
-                break; // Found the last scoopable system
-            } else {
-                jumpsWithoutScooping++; // Current system is not scoopable and we have jumped here, so +1 jump w/o scooping
-            }
-            p = p.getPrev();
-        }
-        boolean mustScoop = jumpsWithoutScooping >= this.maxJumpsWithoutScooping;
+        boolean mustScoop = path.getFuelLevel() <= fuelJumpLUT.getMaxFuelPerJump();
 
         // Extra jump range because of empty tank?
-        float extraJumpRange = this.emptyTankBaseJumpRange - this.ladenAndFueledBaseJumpRange;
-        float fuelTankPercent = 1f - (jumpsWithoutScooping / (this.maxJumpsWithoutScooping + 1f));
-        extraJumpRange = extraJumpRange - (fuelTankPercent * extraJumpRange);
-        float currentBaseJumpRange = this.ladenAndFueledBaseJumpRange + extraJumpRange;
-        final float currentJumpRange = haveSuperchargedFsd ? 4 * currentBaseJumpRange : currentBaseJumpRange;
+        final float currentJumpRange = haveSuperchargedFsd ? 4 * currentUnboostedJumpRange : currentUnboostedJumpRange;
 
         // Find reachable systems
         List<StarSystem> systemsInRange = new ArrayList<>();

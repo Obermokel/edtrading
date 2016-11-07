@@ -14,22 +14,25 @@ public class Path implements Comparable<Path> {
     private int totalJumps = 0;
     private float travelledDistanceLy = 0;
     private float remainingDistanceLy = 0;
+    private float fuelLevel = 0;
 
-    public Path(StarSystem starSystem, float remainingDistanceLy) {
+    public Path(StarSystem starSystem, float remainingDistanceLy, float fuelLevel) {
         this.setStarSystem(starSystem);
         this.setRemainingDistanceLy(remainingDistanceLy);
+        this.setFuelLevel(fuelLevel);
     }
 
     /**
      * @param extraTravelledDistanceLy
      *            From prev to starSystem, NOT in total
      */
-    public Path(Path prev, StarSystem starSystem, float remainingDistanceLy, float extraTravelledDistanceLy) {
+    public Path(Path prev, StarSystem starSystem, float remainingDistanceLy, float extraTravelledDistanceLy, float fuelLevel) {
         this.setPrev(prev);
         this.setStarSystem(starSystem);
         this.setRemainingDistanceLy(remainingDistanceLy);
         this.setTotalJumps(prev.getTotalJumps() + 1);
         this.setTravelledDistanceLy(prev.getTravelledDistanceLy() + extraTravelledDistanceLy);
+        this.setFuelLevel(fuelLevel);
     }
 
     @Override
@@ -115,6 +118,14 @@ public class Path implements Comparable<Path> {
 
     public void setRemainingDistanceLy(float remainingDistanceLy) {
         this.remainingDistanceLy = remainingDistanceLy;
+    }
+
+    public float getFuelLevel() {
+        return this.fuelLevel;
+    }
+
+    public void setFuelLevel(float fuelLevel) {
+        this.fuelLevel = fuelLevel;
     }
 
 }

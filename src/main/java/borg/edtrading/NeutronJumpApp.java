@@ -5,6 +5,7 @@ import borg.edtrading.aystar.Path;
 import borg.edtrading.data.Body;
 import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.StarSystem;
+import borg.edtrading.util.FuelAndJumpRangeLookup;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
@@ -25,6 +26,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringEscapeUtils.*;
@@ -41,9 +44,20 @@ public class NeutronJumpApp {
     private static final Long TYPE_ID_NEUTRON_STAR = new Long(3);
 
     public static void main(String[] args) throws IOException {
-        float ladenAndFueledBaseJumpRange = 47.3f;
-        float emptyTankBaseJumpRange = 50.5f;
-        int maxJumpsWithoutScooping = 7;
+        final int maxFuelTons = 64;
+        final float maxFuelPerJump = 8.32f;
+        final SortedMap<Float, Float> jumpRanges = new TreeMap<>();
+        jumpRanges.put(0f, 0.00f);
+        jumpRanges.put(8f, 51.31f);
+        jumpRanges.put(8.32f, 52.0f);
+        jumpRanges.put(16f, 51.45f);
+        jumpRanges.put(24f, 50.83f);
+        jumpRanges.put(32f, 50.22f);
+        jumpRanges.put(40f, 49.63f);
+        jumpRanges.put(48f, 49.05f);
+        jumpRanges.put(56f, 48.49f);
+        jumpRanges.put(64f, 47.93f);
+        final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRanges);
 
         Galaxy galaxy = Galaxy.readDataFromFiles();
         logger.debug(galaxy.getStarSystemsById().size() + " star systems");
@@ -76,7 +90,7 @@ public class NeutronJumpApp {
 
         final long start = System.currentTimeMillis();
         AyStar ayStar = new AyStar();
-        ayStar.initialize(sourceSystem, targetSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, ladenAndFueledBaseJumpRange, emptyTankBaseJumpRange, maxJumpsWithoutScooping);
+        ayStar.initialize(sourceSystem, targetSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, fuelJumpLUT);
         Path path = ayStar.findPath();
         if (path == null) {
             logger.warn("No path found");
@@ -96,20 +110,20 @@ public class NeutronJumpApp {
         final long millis = end - start;
         logger.info("Took " + DurationFormatUtils.formatDuration(millis, "H:mm:ss"));
 
-        int traditionalJumps = Math.round(directDistanceSourceToTarget / ladenAndFueledBaseJumpRange);
+        int traditionalJumps = Math.round(directDistanceSourceToTarget / fuelJumpLUT.getAbsoluteMinJumpRange());
         int jumpsSaved = traditionalJumps - path.getTotalJumps();
         float jumpsSavedPercent = 100f * jumpsSaved / traditionalJumps;
-        String h2 = String.format(Locale.US, "Direct distance: %.0f Ly | Jumps until empty: %d | Jump range min/max: %.1f Ly / %.1f Ly | Jumps saved: %d of %d (%.0f%%)", directDistanceSourceToTarget, maxJumpsWithoutScooping + 1,
-                ladenAndFueledBaseJumpRange, emptyTankBaseJumpRange, jumpsSaved, traditionalJumps, jumpsSavedPercent);
+        String h2 = String.format(Locale.US, "Direct distance: %.0f Ly | Jump range: %.1f to %.1f Ly | Fuel usage: Max %.2f of %d tons | Jumps saved: %d of %d (%.0f%%)", directDistanceSourceToTarget, fuelJumpLUT.getAbsoluteMinJumpRange(),
+                fuelJumpLUT.getAbsoluteMaxJumpRange(), maxFuelPerJump, maxFuelTons, jumpsSaved, traditionalJumps, jumpsSavedPercent);
         String html = pathToHtml(path, starSystemsWithNeutronStars, systemsBySpectralClass, h2);
         String filename = "Route " + sourceSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " to " + targetSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ".html";
         FileUtils.write(new File(Constants.TEMP_DIR, filename), html, "UTF-8");
 
-        String route = pathToRoute(path, starSystemsWithNeutronStars, systemsBySpectralClass, maxJumpsWithoutScooping, galaxy);
+        String route = pathToRoute(path, starSystemsWithNeutronStars, systemsBySpectralClass, galaxy);
         FileUtils.write(new File(Constants.TEMP_DIR, filename.replace(".html", ".txt")), route, "UTF-8");
     }
 
-    private static String pathToRoute(Path path, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, int maxJumpsWithoutScooping, Galaxy galaxy) {
+    private static String pathToRoute(Path path, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, Galaxy galaxy) {
         StringBuilder route = new StringBuilder();
 
         List<StarSystem> sortedSystems = new ArrayList<>();
@@ -147,9 +161,7 @@ public class NeutronJumpApp {
             if (hasValuableBodies(currSystem, galaxy)) {
                 flags += "P"; // Planets
             }
-            if (jumpsWithoutScooping >= maxJumpsWithoutScooping) {
-                flags += "F"; // Fuel
-            }
+            // TODO F
             // TODO S
             route.append(String.format(Locale.US, "%-50s%5.0f%10s%10s", name.replace("'", " "), distance, spectralClass, flags));
             prevSystem = currSystem;
