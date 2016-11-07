@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public class Body implements Serializable {
 
-    private static final long serialVersionUID = -8919832272745731972L;
+    private static final long serialVersionUID = -3042831980225243954L;
 
     static final Logger logger = LogManager.getLogger(Body.class);
 
@@ -55,6 +55,7 @@ public class Body implements Serializable {
     private Double arg_of_periapsis = null; // °
     private Double rotational_period = null; // D
     private Double axis_tilt = null; // °
+    private String terraforming_state_name = null;
 
     @Override
     public boolean equals(Object obj) {
@@ -297,6 +298,14 @@ public class Body implements Serializable {
 
     public void setAxis_tilt(Double axis_tilt) {
         this.axis_tilt = axis_tilt;
+    }
+
+    public String getTerraforming_state_name() {
+        return this.terraforming_state_name;
+    }
+
+    public void setTerraforming_state_name(String terraforming_state_name) {
+        this.terraforming_state_name = terraforming_state_name;
     }
 
     // ==== ELASTIC SEARCH ====

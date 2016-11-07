@@ -41,21 +41,28 @@ public class NeutronJumpApp {
     private static final Long TYPE_ID_NEUTRON_STAR = new Long(3);
 
     public static void main(String[] args) throws IOException {
-        float ladenAndFueledBaseJumpRange = 47.5f;
-        float emptyTankBaseJumpRange = 51.5f;
+        float ladenAndFueledBaseJumpRange = 47.3f;
+        float emptyTankBaseJumpRange = 50.5f;
         int maxJumpsWithoutScooping = 7;
 
         Galaxy galaxy = Galaxy.readDataFromFiles();
         logger.debug(galaxy.getStarSystemsById().size() + " star systems");
 
-        StarSystem sourceSystem = galaxy.searchStarSystemByName("Skaude AA-A h294"); // Altair, Shinrarta Dezhra, Boewnst KS-S c20-959
+        StarSystem sourceSystem = galaxy.searchStarSystemByName("Sol"); // Altair, Shinrarta Dezhra, Boewnst KS-S c20-959
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByName("Shinrarta Dezhra"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294
+        StarSystem targetSystem = galaxy.searchStarSystemByName("Colonia"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*
         logger.debug("To: " + targetSystem);
 
         float directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
         logger.debug("Direct distance: " + String.format("%.0fly", directDistanceSourceToTarget));
+
+        StarSystem ftemp = galaxy.searchStarSystemByName("Sol");
+        StarSystem ttemp = galaxy.searchStarSystemByName("Nova Aquila No 3");
+        logger.debug(ftemp + " -> " + ttemp + " = " + ftemp.distanceTo(ttemp));
+        ftemp = galaxy.searchStarSystemByName("Swoiwns SG-C b46-4");
+        ttemp = galaxy.searchStarSystemByName("Swoiwns RF-D d13-7");
+        logger.debug(ftemp + " -> " + ttemp + " = " + ftemp.distanceTo(ttemp));
 
         List<Body> arrivalNeutronStars = findArrivalNeutronStars(galaxy.getBodiesById().values());
         Set<StarSystem> starSystemsWithNeutronStars = bodiesToSystems(arrivalNeutronStars);
@@ -97,6 +104,70 @@ public class NeutronJumpApp {
         String html = pathToHtml(path, starSystemsWithNeutronStars, systemsBySpectralClass, h2);
         String filename = "Route " + sourceSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " to " + targetSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ".html";
         FileUtils.write(new File(Constants.TEMP_DIR, filename), html, "UTF-8");
+
+        String route = pathToRoute(path, starSystemsWithNeutronStars, systemsBySpectralClass, maxJumpsWithoutScooping, galaxy);
+        FileUtils.write(new File(Constants.TEMP_DIR, filename.replace(".html", ".txt")), route, "UTF-8");
+    }
+
+    private static String pathToRoute(Path path, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, int maxJumpsWithoutScooping, Galaxy galaxy) {
+        StringBuilder route = new StringBuilder();
+
+        List<StarSystem> sortedSystems = new ArrayList<>();
+        Path p = path;
+        while (p != null) {
+            sortedSystems.add(p.getStarSystem());
+            p = p.getPrev();
+        }
+        Collections.reverse(sortedSystems);
+
+        final List<String> scoopableSpectralClasses = Arrays.asList("O", "B", "A", "F", "G", "K", "M");
+        int jumpNo = 0;
+        int jumpsWithoutScooping = 1;
+        StarSystem prevSystem = null;
+        for (StarSystem currSystem : sortedSystems) {
+            jumpNo++;
+            if (prevSystem != null) {
+                route.append("\n");
+            }
+            String name = currSystem.getName();
+            float distance = prevSystem != null ? currSystem.distanceTo(prevSystem) : 0;
+            String spectralClass = lookupSpectralClass(currSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
+            if (!scoopableSpectralClasses.contains(spectralClass)) {
+                jumpsWithoutScooping = 1;
+            } else {
+                jumpsWithoutScooping++;
+            }
+            String flags = "";
+            if (name.replaceAll("[^\\-]", "").length() < 2) {
+                flags += "N"; // Pron name
+            }
+            if (jumpNo == sortedSystems.size() / 2) {
+                flags += "H"; // Halfway
+            }
+            if (hasValuableBodies(currSystem, galaxy)) {
+                flags += "P"; // Planets
+            }
+            if (jumpsWithoutScooping >= maxJumpsWithoutScooping) {
+                flags += "F"; // Fuel
+            }
+            // TODO S
+            route.append(String.format(Locale.US, "%-50s%5.0f%10s%10s", name.replace("'", " "), distance, spectralClass, flags));
+            prevSystem = currSystem;
+        }
+
+        return route.toString();
+    }
+
+    private static boolean hasValuableBodies(StarSystem system, Galaxy galaxy) {
+        List<Body> bodies = galaxy.searchBodiesOfStarSystem(system.getId());
+        for (Body body : bodies) {
+            if (StringUtils.isNotEmpty(body.getTerraforming_state_name()) && !"Not terraformable".equals(body.getTerraforming_state_name())) {
+                return true;
+            } else if (StringUtils.isNotEmpty(body.getTypeName()) && body.getTypeName().contains("life")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String pathToHtml(Path path, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, String h2) {
