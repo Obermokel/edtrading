@@ -62,21 +62,21 @@ public class NeutronJumpApp {
         Galaxy galaxy = Galaxy.readDataFromFiles();
         logger.debug(galaxy.getStarSystemsById().size() + " star systems");
 
-        StarSystem sourceSystem = galaxy.searchStarSystemByName("Sol"); // Altair, Shinrarta Dezhra, Boewnst KS-S c20-959
+        StarSystem sourceSystem = galaxy.searchStarSystemByName("Colonia"); // Altair, Shinrarta Dezhra, Boewnst KS-S c20-959
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByName("Colonia"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*
+        StarSystem targetSystem = galaxy.searchStarSystemByName("Sagittarius A*"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
         logger.debug("To: " + targetSystem);
 
         float directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
         logger.debug("Direct distance: " + String.format("%.0fly", directDistanceSourceToTarget));
 
-        StarSystem ftemp = galaxy.searchStarSystemByName("Sol");
-        StarSystem ttemp = galaxy.searchStarSystemByName("Nova Aquila No 3");
-        logger.debug(ftemp + " -> " + ttemp + " = " + ftemp.distanceTo(ttemp));
-        ftemp = galaxy.searchStarSystemByName("Swoiwns SG-C b46-4");
-        ttemp = galaxy.searchStarSystemByName("Swoiwns RF-D d13-7");
-        logger.debug(ftemp + " -> " + ttemp + " = " + ftemp.distanceTo(ttemp));
+        //        StarSystem ftemp = galaxy.searchStarSystemByName("Sol");
+        //        StarSystem ttemp = galaxy.searchStarSystemByName("Nova Aquila No 3");
+        //        logger.debug(ftemp + " -> " + ttemp + " = " + ftemp.distanceTo(ttemp));
+        //        ftemp = galaxy.searchStarSystemByName("Swoiwns SG-C b46-4");
+        //        ttemp = galaxy.searchStarSystemByName("Swoiwns RF-D d13-7");
+        //        logger.debug(ftemp + " -> " + ttemp + " = " + ftemp.distanceTo(ttemp));
 
         List<Body> arrivalNeutronStars = findArrivalNeutronStars(galaxy.getBodiesById().values());
         Set<StarSystem> starSystemsWithNeutronStars = bodiesToSystems(arrivalNeutronStars);
@@ -110,6 +110,7 @@ public class NeutronJumpApp {
         final long millis = end - start;
         logger.info("Took " + DurationFormatUtils.formatDuration(millis, "H:mm:ss"));
 
+        File routesDir = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Routes");
         int traditionalJumps = Math.round(directDistanceSourceToTarget / fuelJumpLUT.getAbsoluteMinJumpRange());
         int jumpsSaved = traditionalJumps - path.getTotalJumps();
         float jumpsSavedPercent = 100f * jumpsSaved / traditionalJumps;
@@ -117,54 +118,51 @@ public class NeutronJumpApp {
                 fuelJumpLUT.getAbsoluteMaxJumpRange(), maxFuelPerJump, maxFuelTons, jumpsSaved, traditionalJumps, jumpsSavedPercent);
         String html = pathToHtml(path, starSystemsWithNeutronStars, systemsBySpectralClass, h2);
         String filename = "Route " + sourceSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " to " + targetSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ".html";
-        FileUtils.write(new File(Constants.TEMP_DIR, filename), html, "UTF-8");
+        FileUtils.write(new File(routesDir, filename), html, "UTF-8");
 
-        String route = pathToRoute(path, starSystemsWithNeutronStars, systemsBySpectralClass, galaxy);
-        FileUtils.write(new File(Constants.TEMP_DIR, filename.replace(".html", ".txt")), route, "UTF-8");
+        String route = pathToRoute(path, starSystemsWithNeutronStars, systemsBySpectralClass, galaxy, fuelJumpLUT);
+        FileUtils.write(new File(routesDir, filename.replace(".html", ".txt")), route, "UTF-8");
     }
 
-    private static String pathToRoute(Path path, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, Galaxy galaxy) {
+    private static String pathToRoute(Path path, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, Galaxy galaxy, FuelAndJumpRangeLookup fuelJumpLUT) {
         StringBuilder route = new StringBuilder();
 
-        List<StarSystem> sortedSystems = new ArrayList<>();
+        List<Path> sortedPaths = new ArrayList<>();
         Path p = path;
         while (p != null) {
-            sortedSystems.add(p.getStarSystem());
+            sortedPaths.add(p);
             p = p.getPrev();
         }
-        Collections.reverse(sortedSystems);
+        Collections.reverse(sortedPaths);
 
-        final List<String> scoopableSpectralClasses = Arrays.asList("O", "B", "A", "F", "G", "K", "M");
         int jumpNo = 0;
-        int jumpsWithoutScooping = 1;
-        StarSystem prevSystem = null;
-        for (StarSystem currSystem : sortedSystems) {
+        Path prevPath = null;
+        for (Path currPath : sortedPaths) {
             jumpNo++;
-            if (prevSystem != null) {
+            StarSystem prevSystem = prevPath == null ? null : prevPath.getStarSystem();
+            StarSystem currSystem = currPath.getStarSystem();
+            if (prevPath != null) {
                 route.append("\n");
             }
             String name = currSystem.getName();
-            float distance = prevSystem != null ? currSystem.distanceTo(prevSystem) : 0;
+            float distance = prevPath != null ? currSystem.distanceTo(prevSystem) : 0;
             String spectralClass = lookupSpectralClass(currSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
-            if (!scoopableSpectralClasses.contains(spectralClass)) {
-                jumpsWithoutScooping = 1;
-            } else {
-                jumpsWithoutScooping++;
-            }
             String flags = "";
             if (name.replaceAll("[^\\-]", "").length() < 2) {
                 flags += "N"; // Pron name
             }
-            if (jumpNo == sortedSystems.size() / 2) {
+            if (jumpNo == sortedPaths.size() / 2) {
                 flags += "H"; // Halfway
             }
             if (hasValuableBodies(currSystem, galaxy)) {
                 flags += "P"; // Planets
             }
-            // TODO F
+            if (currPath.getFuelLevel() <= (fuelJumpLUT.getMaxFuelPerJump() + 2)) {
+                flags += "F"; // Fuel
+            }
             // TODO S
             route.append(String.format(Locale.US, "%-50s%5.0f%10s%10s", name.replace("'", " "), distance, spectralClass, flags));
-            prevSystem = currSystem;
+            prevPath = currPath;
         }
 
         return route.toString();
@@ -185,15 +183,15 @@ public class NeutronJumpApp {
     private static String pathToHtml(Path path, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, String h2) {
         StringBuilder html = new StringBuilder();
 
-        List<StarSystem> sortedSystems = new ArrayList<>();
+        List<Path> sortedPaths = new ArrayList<>();
         Path p = path;
         while (p != null) {
-            sortedSystems.add(p.getStarSystem());
+            sortedPaths.add(p);
             p = p.getPrev();
         }
-        Collections.reverse(sortedSystems);
+        Collections.reverse(sortedPaths);
 
-        String title = escapeHtml4(sortedSystems.get(0).getName()) + " → " + escapeHtml4(sortedSystems.get(sortedSystems.size() - 1).getName()) + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")";
+        String title = escapeHtml4(sortedPaths.get(0).getStarSystem().getName()) + " → " + escapeHtml4(sortedPaths.get(sortedPaths.size() - 1).getStarSystem().getName()) + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")";
         html.append("<html>\n");
         html.append("<head>\n");
         html.append("<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n");
@@ -218,18 +216,20 @@ public class NeutronJumpApp {
         html.append("</tr>\n");
         int jumpNo = 0;
         float travelledLy = 0;
-        StarSystem prevSystem = null;
-        for (StarSystem currSystem : sortedSystems) {
-            if (prevSystem != null) {
-                String neutronJumpCss = starSystemsWithNeutronStars.contains(prevSystem) ? "neutronJump" : "normalJump";
+        Path prevPath = null;
+        for (Path currPath : sortedPaths) {
+            if (prevPath != null) {
+                StarSystem prevStarSystem = prevPath.getStarSystem();
+                StarSystem currStarSystem = currPath.getStarSystem();
+                String neutronJumpCss = starSystemsWithNeutronStars.contains(prevStarSystem) ? "neutronJump" : "normalJump";
                 jumpNo++;
-                travelledLy += currSystem.distanceTo(prevSystem);
+                float jumpDistance = currStarSystem.distanceTo(prevStarSystem);
+                travelledLy += jumpDistance;
                 String evenOddCss = jumpNo % 2 == 0 ? "even" : "odd";
-                String fromName = prevSystem.getName();
-                String fromClass = lookupSpectralClass(prevSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
-                float jumpDistance = currSystem.distanceTo(prevSystem);
-                String toName = currSystem.getName();
-                String toClass = lookupSpectralClass(currSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
+                String fromName = prevStarSystem.getName();
+                String fromClass = lookupSpectralClass(prevStarSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
+                String toName = currStarSystem.getName();
+                String toClass = lookupSpectralClass(currStarSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
                 //float routePercent = 100f * jumpNo / (sortedSystems.size() - 1);
                 html.append("<tr class=\"" + evenOddCss + " " + neutronJumpCss + "\">");
                 html.append("<td class=\"numeric jumpNo\">" + jumpNo + "</td>");
@@ -238,11 +238,11 @@ public class NeutronJumpApp {
                 html.append("<td class=\"numeric jumpDistance\">" + String.format(Locale.US, "%.1f Ly", jumpDistance) + "</td>");
                 html.append("<td class=\"starClass spectralClass-" + toClass + "\">" + toClass + "</td>");
                 html.append("<td class=\"starName spectralClass-" + toClass + "\">" + escapeHtml4(toName) + "</td>");
-                html.append("<td class=\"notes\">&nbsp;</td>");
+                html.append("<td class=\"notes\">" + String.format(Locale.US, "%.1f → %.1f tons", prevPath.getFuelLevel(), currPath.getFuelLevel()) + "</td>");
                 html.append("<td class=\"numeric distance\">" + String.format(Locale.US, "%.0f Ly", travelledLy) + "</td>");
                 html.append("</tr>\n");
             }
-            prevSystem = currSystem;
+            prevPath = currPath;
         }
         html.append("</table>\n");
         html.append("</body>\n");

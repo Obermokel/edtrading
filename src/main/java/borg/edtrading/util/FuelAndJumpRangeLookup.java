@@ -20,8 +20,8 @@ public class FuelAndJumpRangeLookup {
     private final float maxFuelPerJump;
     private final SortedMap<Integer, Float> fuelUsageByJumpPercent;
     private final SortedMap<Integer, Float> jumpRangeByFuelKg;
-    private float absoluteMinJumpRange;
-    private float absoluteMaxJumpRange;
+    private final float absoluteMinJumpRange;
+    private final float absoluteMaxJumpRange;
 
     public FuelAndJumpRangeLookup(int maxFuelTons, float maxFuelPerJump, SortedMap<Float, Float> knownJumpRangesByFuelLevel) {
         this.maxFuelTons = maxFuelTons;
@@ -29,13 +29,14 @@ public class FuelAndJumpRangeLookup {
         this.maxFuelPerJump = maxFuelPerJump;
         this.fuelUsageByJumpPercent = buildFuelUsageLUT(maxFuelPerJump);
         this.jumpRangeByFuelKg = buildJumpRangeLUT(maxFuelTons, knownJumpRangesByFuelLevel);
-
-        for (float jumpRange : knownJumpRangesByFuelLevel.values()) {
-            if (jumpRange > 0) {
-                this.absoluteMinJumpRange = Math.min(this.absoluteMinJumpRange, jumpRange);
-                this.absoluteMaxJumpRange = Math.max(this.absoluteMaxJumpRange, jumpRange);
-            }
-        }
+        this.absoluteMinJumpRange = this.lookupMaxJumpRange(maxFuelTons);
+        this.absoluteMaxJumpRange = this.lookupMaxJumpRange(maxFuelPerJump);
+        //        for (float jumpRange : knownJumpRangesByFuelLevel.values()) {
+        //            if (jumpRange > 0) {
+        //                this.absoluteMinJumpRange = Math.min(this.absoluteMinJumpRange, jumpRange);
+        //                this.absoluteMaxJumpRange = Math.max(this.absoluteMaxJumpRange, jumpRange);
+        //            }
+        //        }
     }
 
     public float getMaxFuelTons() {
