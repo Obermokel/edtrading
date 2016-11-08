@@ -3,6 +3,7 @@ package borg.edtrading;
 import borg.edtrading.aystar.AyStar;
 import borg.edtrading.aystar.Path;
 import borg.edtrading.data.Body;
+import borg.edtrading.data.Coord;
 import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.StarSystem;
 import borg.edtrading.util.FuelAndJumpRangeLookup;
@@ -42,6 +43,7 @@ public class NeutronJumpApp {
     static final Logger logger = LogManager.getLogger(NeutronJumpApp.class);
 
     private static final Long TYPE_ID_NEUTRON_STAR = new Long(3);
+    private static final File ROUTES_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Routes");
 
     public static void main(String[] args) throws IOException {
         final int maxFuelTons = 64;
@@ -62,11 +64,13 @@ public class NeutronJumpApp {
         Galaxy galaxy = Galaxy.readDataFromFiles();
         logger.debug(galaxy.getStarSystemsById().size() + " star systems");
 
-        StarSystem sourceSystem = galaxy.searchStarSystemByName("Colonia"); // Altair, Shinrarta Dezhra, Boewnst KS-S c20-959
+        StarSystem sourceSystem = galaxy.searchStarSystemByName("Sol"); // Altair, Shinrarta Dezhra, Boewnst KS-S c20-959
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByName("Sagittarius A*"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
+        StarSystem targetSystem = galaxy.searchStarSystemByName("Colonia"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
         logger.debug("To: " + targetSystem);
+
+        writeWaypointsFile(sourceSystem, targetSystem, galaxy);
 
         float directDistanceSourceToTarget = sourceSystem.distanceTo(targetSystem);
         logger.debug("Direct distance: " + String.format("%.0fly", directDistanceSourceToTarget));
@@ -110,7 +114,6 @@ public class NeutronJumpApp {
         final long millis = end - start;
         logger.info("Took " + DurationFormatUtils.formatDuration(millis, "H:mm:ss"));
 
-        File routesDir = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Routes");
         int traditionalJumps = Math.round(directDistanceSourceToTarget / fuelJumpLUT.getAbsoluteMinJumpRange());
         int jumpsSaved = traditionalJumps - path.getTotalJumps();
         float jumpsSavedPercent = 100f * jumpsSaved / traditionalJumps;
@@ -118,10 +121,31 @@ public class NeutronJumpApp {
                 fuelJumpLUT.getAbsoluteMaxJumpRange(), maxFuelPerJump, maxFuelTons, jumpsSaved, traditionalJumps, jumpsSavedPercent);
         String html = pathToHtml(path, starSystemsWithNeutronStars, systemsBySpectralClass, h2);
         String filename = "Route " + sourceSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " to " + targetSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ".html";
-        FileUtils.write(new File(routesDir, filename), html, "UTF-8");
+        FileUtils.write(new File(ROUTES_DIR, filename), html, "UTF-8");
 
         String route = pathToRoute(path, starSystemsWithNeutronStars, systemsBySpectralClass, galaxy, fuelJumpLUT);
-        FileUtils.write(new File(routesDir, filename.replace(".html", ".txt")), route, "UTF-8");
+        FileUtils.write(new File(ROUTES_DIR, filename.replace(".html", ".txt")), route, "UTF-8");
+    }
+
+    private static void writeWaypointsFile(StarSystem fromSystem, StarSystem toSystem, Galaxy galaxy) throws IOException {
+        float directDistance = fromSystem.distanceTo(toSystem);
+        if (directDistance > 999) {
+            File waypointsFile = new File(ROUTES_DIR,
+                    "Waypoints " + fromSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " to " + toSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ".txt");
+            int waypointsNeeded = (int) (directDistance / 888) + 1;
+            float waypointSeparation = directDistance / waypointsNeeded;
+            FileUtils.write(waypointsFile, String.format(Locale.US, "Direct distance: %.0f Ly\nWaypoints needed: %d\nWaypoint separation: %.0f Ly\n\n", directDistance, waypointsNeeded, waypointSeparation), "UTF-8", false);
+            Coord fromCoord = fromSystem.getCoord();
+            Coord toCoord = toSystem.getCoord();
+            float stepX = (toCoord.getX() - fromCoord.getX()) / waypointsNeeded;
+            float stepY = (toCoord.getY() - fromCoord.getY()) / waypointsNeeded;
+            float stepZ = (toCoord.getZ() - fromCoord.getZ()) / waypointsNeeded;
+            for (int wp = 1; wp <= waypointsNeeded; wp++) {
+                Coord coord = new Coord(fromCoord.getX() + wp * stepX, fromCoord.getY() + wp * stepY, fromCoord.getZ() + wp * stepZ);
+                StarSystem closestSystem = galaxy.searchClosestStarSystemByName(coord);
+                FileUtils.write(waypointsFile, String.format(Locale.US, "Waypoint %2d: %s\n", wp, closestSystem.getName()), "UTF-8", true);
+            }
+        }
     }
 
     private static String pathToRoute(Path path, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, Galaxy galaxy, FuelAndJumpRangeLookup fuelJumpLUT) {

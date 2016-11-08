@@ -1,0 +1,83 @@
+* {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 8pt;
+}
+
+h1 {
+    font-size: 14pt;
+}
+
+h2 {
+    font-size: 10pt;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+th {
+    font-weight: bold;
+    color: #ffffff;
+    background-color: #444444;
+}
+
+tr.even td {
+    background-color: #aaaaaa;
+}
+
+tr.odd td {
+    background-color: #cccccc;
+}
+
+td.notes {
+    background-color: #ffffff !important;
+    width: 400px;
+}
+
+td.jumpNo, td.distance {
+    font-weight: bold;
+    color: #ffffff;
+    background-color: #444444 !important;
+}
+
+th.distance, td.distance {
+    text-align: left !important;
+}
+
+th, td {
+    padding: 1px 6px;
+    white-space: nowrap;
+    border: 1px solid black;
+}
+
+th.numeric, td.numeric {
+    text-align: right;
+}
+
+th.starClass, td.starClass, th.jumpDistance, td.jumpDistance {
+    text-align: center;
+}
+
+tr.neutronJump td.jumpDistance {
+    /*color: #ff0000;*/
+    font-weight: bold;
+}
+
+td.starClass {
+    background-color: #ff4040 !important;
+    text-align: center;
+}
+
+td.starClass.spectralClass-NS     { background-color: #ffffff !important; }
+td.starClass.spectralClass-DA     { background-color: #eeeeee !important; }
+td.starClass.spectralClass-O      { background-color: #CFDAEB !important; }
+td.starClass.spectralClass-B      { background-color: #C8DBE3 !important; }
+td.starClass.spectralClass-A      { background-color: #CAC9CD !important; }
+td.starClass.spectralClass-F      { background-color: #D2C490 !important; }
+td.starClass.spectralClass-G      { background-color: #E9C27D !important; }
+td.starClass.spectralClass-K      { background-color: #F2984F !important; }
+td.starClass.spectralClass-M      { background-color: #DD7D3D !important; }
+td.starClass.spectralClass-Y      { background-color: #3A1214 !important; }
+td.starClass.spectralClass-L      { background-color: #900E2D !important; }
+td.starClass.spectralClass-T      { background-color: #480829 !important; }
+td.starClass.spectralClass-TTS    { background-color: #560A31 !important; }

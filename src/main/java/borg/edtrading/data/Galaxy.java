@@ -235,6 +235,23 @@ public class Galaxy {
         return null;
     }
 
+    public StarSystem searchClosestStarSystemByName(Coord coord) {
+        StarSystem result = null;
+        float closest = 999999f;
+
+        if (coord != null) {
+            for (StarSystem s : this.starSystemsById.values()) {
+                float dist = s.getCoord().distanceTo(coord);
+                if (dist < closest) {
+                    closest = dist;
+                    result = s;
+                }
+            }
+        }
+
+        return result;
+    }
+
     public List<Body> searchBodiesOfStarSystem(Long starSystemId) {
         List<Body> result = new ArrayList<>();
 
