@@ -1,5 +1,6 @@
 package borg.edtrading;
 
+import borg.edtrading.journal.JournalReader;
 import borg.edtrading.util.FuelAndJumpRangeLookup;
 import com.google.gson.Gson;
 import org.apache.commons.io.FileUtils;
@@ -58,8 +59,10 @@ public class FuelUsageApp {
                 return new Long(f1.lastModified()).compareTo(new Long(f2.lastModified()));
             }
         });
-        File csvFile = new File(Constants.TEMP_DIR, "fuelByDist.csv");
-        FileUtils.write(csvFile, "distPercent;fuelPercent\r\n", "ISO-8859-1", false);
+        File fuelUsageCsvFile = new File(Constants.TEMP_DIR, "fuelByDist.csv");
+        FileUtils.write(fuelUsageCsvFile, "distPercent;fuelPercent\r\n", "ISO-8859-1", false);
+        File jumpTimeCsvFile = new File(Constants.TEMP_DIR, "jumpTimes.csv");
+        FileUtils.write(jumpTimeCsvFile, "n;seconds\r\n", "ISO-8859-1", false);
 
         Gson gson = new Gson();
         Date prevTimestamp = null;
@@ -86,10 +89,11 @@ public class FuelUsageApp {
                         float fuelPercent = 100f * fuelUsed / maxFuelPerJump;
 
                         logger.debug(String.format(Locale.US, "dist=%.2fly (%.1f%%), used=%.2ft (%.1f%%), left=%.2ft", jumpDist, jumpPercent, fuelUsed, fuelPercent, fuelAfter));
-                        FileUtils.write(csvFile, String.format(Locale.GERMANY, "%.1f;%.1f\r\n", jumpPercent, fuelPercent), "ISO-8859-1", true);
+                        FileUtils.write(fuelUsageCsvFile, String.format(Locale.GERMANY, "%.1f;%.1f\r\n", jumpPercent, fuelPercent), "ISO-8859-1", true);
 
                         if (prevTimestamp != null) {
                             jumpTimes.add(timestamp.getTime() - prevTimestamp.getTime());
+                            FileUtils.write(jumpTimeCsvFile, String.format(Locale.GERMANY, "%d;%d\r\n", jumpTimes.size(), (timestamp.getTime() - prevTimestamp.getTime()) / 1000L), "ISO-8859-1", true);
                         }
                         prevTimestamp = timestamp;
                     }
@@ -97,7 +101,9 @@ public class FuelUsageApp {
             }
         }
         Collections.sort(jumpTimes);
-        logger.debug(String.format(Locale.US, "%d jumps, median = %d seconds", jumpTimes.size(), jumpTimes.get(jumpTimes.size() / 2) / 1000L));
+        logger.debug(String.format(Locale.US, "%d jumps, median = %d seconds", jumpTimes.size(), jumpTimes.get((jumpTimes.size() * 5) / 10) / 1000L));
+
+        JournalReader.readEntireJournal(journalDir);
     }
 
 }
