@@ -46,28 +46,21 @@ public class NeutronJumpApp {
     private static final File ROUTES_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Routes");
 
     public static void main(String[] args) throws IOException {
-        final int maxFuelTons = 64;
+        final int maxFuelTons = 88;
         final float maxFuelPerJump = 8.32f;
         final SortedMap<Float, Float> jumpRanges = new TreeMap<>();
         jumpRanges.put(0f, 0.00f);
-        jumpRanges.put(8f, 51.31f);
-        jumpRanges.put(8.32f, 52.0f);
-        jumpRanges.put(16f, 51.45f);
-        jumpRanges.put(24f, 50.83f);
-        jumpRanges.put(32f, 50.22f);
-        jumpRanges.put(40f, 49.63f);
-        jumpRanges.put(48f, 49.05f);
-        jumpRanges.put(56f, 48.49f);
-        jumpRanges.put(64f, 47.93f);
+        jumpRanges.put(8.32f, 54.53f);
+        jumpRanges.put(88f, 48.30f);
         final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRanges);
 
         Galaxy galaxy = Galaxy.readDataFromFiles();
         logger.debug(galaxy.getStarSystemsById().size() + " star systems");
 
-        StarSystem sourceSystem = galaxy.searchStarSystemByName("Sol"); // Altair, Shinrarta Dezhra, Boewnst KS-S c20-959
+        StarSystem sourceSystem = galaxy.searchStarSystemByName("Colonia"); // Altair, Shinrarta Dezhra, Boewnst KS-S c20-959
         logger.debug("From: " + sourceSystem);
 
-        StarSystem targetSystem = galaxy.searchStarSystemByName("Colonia"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
+        StarSystem targetSystem = galaxy.searchStarSystemByName("Sol"); // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
         logger.debug("To: " + targetSystem);
 
         writeWaypointsFile(sourceSystem, targetSystem, galaxy);
@@ -117,10 +110,10 @@ public class NeutronJumpApp {
         int traditionalJumps = Math.round(directDistanceSourceToTarget / fuelJumpLUT.getAbsoluteMinJumpRange());
         int jumpsSaved = traditionalJumps - path.getTotalJumps();
         float jumpsSavedPercent = 100f * jumpsSaved / traditionalJumps;
-        String h2 = String.format(Locale.US, "Direct distance: %.0f Ly | Jump range: %.1f to %.1f Ly | Fuel usage: Max %.2f of %d tons | Jumps saved: %d of %d (%.0f%%)", directDistanceSourceToTarget, fuelJumpLUT.getAbsoluteMinJumpRange(),
-                fuelJumpLUT.getAbsoluteMaxJumpRange(), maxFuelPerJump, maxFuelTons, jumpsSaved, traditionalJumps, jumpsSavedPercent);
+        String h2 = String.format(Locale.US, "Jump range: %.1f to %.1f Ly | Fuel usage: Max %.2f of %d tons | Jumps saved: %d of %d (%.0f%%)", fuelJumpLUT.getAbsoluteMinJumpRange(), fuelJumpLUT.getAbsoluteMaxJumpRange(), maxFuelPerJump, maxFuelTons,
+                jumpsSaved, traditionalJumps, jumpsSavedPercent);
         String html = pathToHtml(path, starSystemsWithNeutronStars, systemsBySpectralClass, h2);
-        String filename = "Route " + sourceSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " to " + targetSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ".html";
+        String filename = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss").format(new Date()) + " Route " + sourceSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " to " + targetSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + ".html";
         FileUtils.write(new File(ROUTES_DIR, filename), html, "UTF-8");
 
         String route = pathToRoute(path, starSystemsWithNeutronStars, systemsBySpectralClass, galaxy, fuelJumpLUT);
@@ -131,7 +124,7 @@ public class NeutronJumpApp {
         float directDistance = fromSystem.distanceTo(toSystem);
         if (directDistance > 999) {
             File waypointsFile = new File(ROUTES_DIR,
-                    "Waypoints " + fromSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " to " + toSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ".txt");
+                    new SimpleDateFormat("yyyy-MM-dd HH-mm-ss").format(new Date()) + " Waypoints " + fromSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " to " + toSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + ".txt");
             int waypointsNeeded = (int) (directDistance / 888) + 1;
             float waypointSeparation = directDistance / waypointsNeeded;
             FileUtils.write(waypointsFile, String.format(Locale.US, "Direct distance: %.0f Ly\nWaypoints needed: %d\nWaypoint separation: %.0f Ly\n\n", directDistance, waypointsNeeded, waypointSeparation), "UTF-8", false);
@@ -204,7 +197,7 @@ public class NeutronJumpApp {
         return false;
     }
 
-    private static String pathToHtml(Path path, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, String h2) {
+    private static String pathToHtml(Path path, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, String h3) {
         StringBuilder html = new StringBuilder();
 
         List<Path> sortedPaths = new ArrayList<>();
@@ -215,7 +208,9 @@ public class NeutronJumpApp {
         }
         Collections.reverse(sortedPaths);
 
-        String title = escapeHtml4(sortedPaths.get(0).getStarSystem().getName()) + " → " + escapeHtml4(sortedPaths.get(sortedPaths.size() - 1).getStarSystem().getName()) + " (" + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + ")";
+        StarSystem fromSystem = sortedPaths.get(0).getStarSystem();
+        StarSystem toSystem = sortedPaths.get(sortedPaths.size() - 1).getStarSystem();
+        String title = escapeHtml4(String.format(Locale.US, "%s → %s (%.0f Ly, %d jumps)", fromSystem.getName(), toSystem.getName(), fromSystem.distanceTo(toSystem), sortedPaths.size()));
         html.append("<html>\n");
         html.append("<head>\n");
         html.append("<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n");
@@ -224,8 +219,10 @@ public class NeutronJumpApp {
         html.append("</head>\n");
         html.append("<body>\n");
         html.append("<h1>").append(title).append("</h1>\n");
-        if (StringUtils.isNotEmpty(h2)) {
-            html.append("<h2>").append(h2).append("</h2>\n");
+        html.append("<h2>").append("EDDB data from " + new SimpleDateFormat("dd-MMM-yyyy", Locale.US).format(new Date(Constants.BODIES_FILE.lastModified())) + ", " + starSystemsWithNeutronStars.size() + " known systems with neutron stars")
+                .append("</h2>\n");
+        if (StringUtils.isNotEmpty(h3)) {
+            html.append("<h3>").append(h3).append("</h3>\n");
         }
         html.append("<table id=\"jumpTable\">\n");
         html.append("<tr>");
@@ -324,7 +321,9 @@ public class NeutronJumpApp {
         for (StarSystem starSystem : starSystems) {
             for (String name : lowercaseNames) {
                 if (name.startsWith(starSystem.getName().toLowerCase())) {
-                    result.add(starSystem);
+                    if (StringUtils.getLevenshteinDistance(name, starSystem.getName().toLowerCase()) <= 4) {
+                        result.add(starSystem);
+                    }
                 }
             }
         }
