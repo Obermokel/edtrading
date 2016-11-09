@@ -1,6 +1,9 @@
 package borg.edtrading;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Constants
@@ -58,5 +61,11 @@ public interface Constants {
     File STATIONS_FILE = new File(System.getProperty("user.home"), "Downloads\\stations.jsonl");
     //File STATIONS_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\stations.json");
     File LISTINGS_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\listings.csv");
+
+    /*
+     * ==== OTHER ====
+     */
+
+    Set<String> SCOOPABLE_SPECTRAL_CLASSES = new HashSet<>(Arrays.asList("O", "B", "A", "F", "G", "K", "M"));
 
 }

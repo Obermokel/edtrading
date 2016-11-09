@@ -40,8 +40,8 @@ public class FuelUsageApp {
         //        final Date toDate = DF.parse("2016-11-08T22:58:12Z");
         final int maxFuelTons = 88;
         final float maxFuelPerJump = 8.32f;
-        final float minJumpRange = 48.30f;
-        final float maxJumpRange1 = 54.53f;
+        final float jumpRangeFuelFull = 48.30f;
+        final float jumpRangeFuelOpt = 54.53f;
 
         File journalDir = new File(System.getProperty("user.home"), "Google Drive/Elite Dangerous/Journal");
         File[] journalFiles = journalDir.listFiles(new FileFilter() {
@@ -81,7 +81,7 @@ public class FuelUsageApp {
                             jumpDist /= ((Number) obj.get("BoostUsed")).floatValue();
                         }
 
-                        float maxJumpRange = FuelAndJumpRangeLookup.estimateCurrentJumpRange(fuelBefore, maxFuelTons, maxFuelPerJump, minJumpRange, maxJumpRange1);
+                        float maxJumpRange = FuelAndJumpRangeLookup.estimateCurrentJumpRange(fuelBefore, maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
                         float jumpPercent = 100f * jumpDist / maxJumpRange;
                         float fuelPercent = 100f * fuelUsed / maxFuelPerJump;
 

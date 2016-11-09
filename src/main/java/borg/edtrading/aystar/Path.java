@@ -2,6 +2,10 @@ package borg.edtrading.aystar;
 
 import borg.edtrading.data.StarSystem;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Path
  *
@@ -78,6 +82,17 @@ public class Path implements Comparable<Path> {
             int byJumps = new Integer(this.getTotalJumps()).compareTo(other.getTotalJumps());
             return byJumps;
         }
+    }
+
+    public List<Path> toSortedList() {
+        List<Path> sortedPaths = new ArrayList<>();
+        Path p = this;
+        while (p != null) {
+            sortedPaths.add(p);
+            p = p.getPrev();
+        }
+        Collections.reverse(sortedPaths);
+        return sortedPaths;
     }
 
     public Path getPrev() {

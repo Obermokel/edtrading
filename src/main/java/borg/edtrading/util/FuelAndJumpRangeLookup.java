@@ -15,7 +15,7 @@ public class FuelAndJumpRangeLookup {
 
     static final Logger logger = LogManager.getLogger(FuelAndJumpRangeLookup.class);
 
-    private final float maxFuelTons;
+    private final int maxFuelTons;
     private final int maxFuelKg;
     private final float maxFuelPerJump;
     private final float jumpRangeFuelFull;
@@ -33,7 +33,7 @@ public class FuelAndJumpRangeLookup {
         this.jumpRangeByFuelKg = buildJumpRangeLUT(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
     }
 
-    public float getMaxFuelTons() {
+    public int getMaxFuelTons() {
         return this.maxFuelTons;
     }
 
