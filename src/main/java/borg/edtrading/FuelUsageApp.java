@@ -19,8 +19,6 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 /**
  * FuelUsageApp
@@ -40,11 +38,10 @@ public class FuelUsageApp {
         //        // Jaques to beacon and back:
         //        final Date fromDate = DF.parse("2016-11-08T05:48:47Z");
         //        final Date toDate = DF.parse("2016-11-08T22:58:12Z");
+        final int maxFuelTons = 88;
         final float maxFuelPerJump = 8.32f;
-        final SortedMap<Float, Float> jumpRanges = new TreeMap<>();
-        jumpRanges.put(0f, 0.00f);
-        jumpRanges.put(8.32f, 51.44f);
-        jumpRanges.put(64f, 47.41f);
+        final float minJumpRange = 48.30f;
+        final float maxJumpRange1 = 54.53f;
 
         File journalDir = new File(System.getProperty("user.home"), "Google Drive/Elite Dangerous/Journal");
         File[] journalFiles = journalDir.listFiles(new FileFilter() {
@@ -84,7 +81,7 @@ public class FuelUsageApp {
                             jumpDist /= ((Number) obj.get("BoostUsed")).floatValue();
                         }
 
-                        float maxJumpRange = FuelAndJumpRangeLookup.estimateCurrentJumpRange(fuelBefore, jumpRanges);
+                        float maxJumpRange = FuelAndJumpRangeLookup.estimateCurrentJumpRange(fuelBefore, maxFuelTons, maxFuelPerJump, minJumpRange, maxJumpRange1);
                         float jumpPercent = 100f * jumpDist / maxJumpRange;
                         float fuelPercent = 100f * fuelUsed / maxFuelPerJump;
 

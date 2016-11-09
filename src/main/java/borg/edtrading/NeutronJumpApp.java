@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringEscapeUtils.*;
@@ -48,11 +46,9 @@ public class NeutronJumpApp {
     public static void main(String[] args) throws IOException {
         final int maxFuelTons = 88;
         final float maxFuelPerJump = 8.32f;
-        final SortedMap<Float, Float> jumpRanges = new TreeMap<>();
-        jumpRanges.put(0f, 0.00f);
-        jumpRanges.put(8.32f, 54.53f);
-        jumpRanges.put(88f, 48.30f);
-        final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRanges);
+        final float minJumpRange = 48.30f;
+        final float maxJumpRange = 54.53f;
+        final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, minJumpRange, maxJumpRange);
 
         Galaxy galaxy = Galaxy.readDataFromFiles();
         logger.debug(galaxy.getStarSystemsById().size() + " star systems");
@@ -107,10 +103,10 @@ public class NeutronJumpApp {
         final long millis = end - start;
         logger.info("Took " + DurationFormatUtils.formatDuration(millis, "H:mm:ss"));
 
-        int traditionalJumps = Math.round(directDistanceSourceToTarget / fuelJumpLUT.getAbsoluteMinJumpRange());
+        int traditionalJumps = Math.round(directDistanceSourceToTarget / fuelJumpLUT.getJumpRangeFuelFull());
         int jumpsSaved = traditionalJumps - path.getTotalJumps();
         float jumpsSavedPercent = 100f * jumpsSaved / traditionalJumps;
-        String h2 = String.format(Locale.US, "Jump range: %.1f to %.1f Ly | Fuel usage: Max %.2f of %d tons | Jumps saved: %d of %d (%.0f%%)", fuelJumpLUT.getAbsoluteMinJumpRange(), fuelJumpLUT.getAbsoluteMaxJumpRange(), maxFuelPerJump, maxFuelTons,
+        String h2 = String.format(Locale.US, "Jump range: %.1f to %.1f Ly | Fuel usage: Max %.2f of %d tons | Jumps saved: %d of %d (%.0f%%)", fuelJumpLUT.getJumpRangeFuelFull(), fuelJumpLUT.getJumpRangeFuelOpt(), maxFuelPerJump, maxFuelTons,
                 jumpsSaved, traditionalJumps, jumpsSavedPercent);
         String html = pathToHtml(path, starSystemsWithNeutronStars, systemsBySpectralClass, h2);
         String filename = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss").format(new Date()) + " Route " + sourceSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " to " + targetSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + ".html";

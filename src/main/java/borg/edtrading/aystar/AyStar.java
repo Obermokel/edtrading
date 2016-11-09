@@ -43,7 +43,7 @@ public class AyStar {
             throw new IllegalArgumentException("goal not in useable star systems");
         } else {
             this.fuelJumpLUT = fuelJumpLUT;
-            this.open = new PriorityQueue<>(new LeastJumpsComparator(source.distanceTo(goal), fuelJumpLUT.getAbsoluteMaxJumpRange()));
+            this.open = new PriorityQueue<>(new LeastJumpsComparator(source.distanceTo(goal), fuelJumpLUT.getJumpRangeFuelOpt()));
             this.closed = new HashSet<>();
             this.goal = goal;
             this.starSystemsWithNeutronStars = starSystemsWithNeutronStars;

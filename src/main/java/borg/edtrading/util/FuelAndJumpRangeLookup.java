@@ -18,25 +18,19 @@ public class FuelAndJumpRangeLookup {
     private final float maxFuelTons;
     private final int maxFuelKg;
     private final float maxFuelPerJump;
+    private final float jumpRangeFuelFull;
+    private final float jumpRangeFuelOpt;
     private final SortedMap<Integer, Float> fuelUsageByJumpPercent;
     private final SortedMap<Integer, Float> jumpRangeByFuelKg;
-    private final float absoluteMinJumpRange;
-    private final float absoluteMaxJumpRange;
 
-    public FuelAndJumpRangeLookup(int maxFuelTons, float maxFuelPerJump, SortedMap<Float, Float> knownJumpRangesByFuelLevel) {
+    public FuelAndJumpRangeLookup(int maxFuelTons, float maxFuelPerJump, float jumpRangeFuelFull, float jumpRangeFuelOpt) {
         this.maxFuelTons = maxFuelTons;
         this.maxFuelKg = maxFuelTons * 1000;
         this.maxFuelPerJump = maxFuelPerJump;
+        this.jumpRangeFuelFull = jumpRangeFuelFull;
+        this.jumpRangeFuelOpt = jumpRangeFuelOpt;
         this.fuelUsageByJumpPercent = buildFuelUsageLUT(maxFuelPerJump);
-        this.jumpRangeByFuelKg = buildJumpRangeLUT(maxFuelTons, knownJumpRangesByFuelLevel);
-        this.absoluteMinJumpRange = this.lookupMaxJumpRange(maxFuelTons);
-        this.absoluteMaxJumpRange = this.lookupMaxJumpRange(maxFuelPerJump);
-        //        for (float jumpRange : knownJumpRangesByFuelLevel.values()) {
-        //            if (jumpRange > 0) {
-        //                this.absoluteMinJumpRange = Math.min(this.absoluteMinJumpRange, jumpRange);
-        //                this.absoluteMaxJumpRange = Math.max(this.absoluteMaxJumpRange, jumpRange);
-        //            }
-        //        }
+        this.jumpRangeByFuelKg = buildJumpRangeLUT(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
     }
 
     public float getMaxFuelTons() {
@@ -51,50 +45,12 @@ public class FuelAndJumpRangeLookup {
         return this.maxFuelPerJump;
     }
 
-    public float getAbsoluteMinJumpRange() {
-        return this.absoluteMinJumpRange;
+    public float getJumpRangeFuelFull() {
+        return this.jumpRangeFuelFull;
     }
 
-    public float getAbsoluteMaxJumpRange() {
-        return this.absoluteMaxJumpRange;
-    }
-
-    private static SortedMap<Integer, Float> buildFuelUsageLUT(float maxFuelPerJump) {
-        SortedMap<Integer, Float> result = new TreeMap<>();
-        for (int percent = 0; percent <= 1000; percent += 1) {
-            result.put(percent, maxFuelPerJump * (float) Math.pow(percent / 1000.0, 2.5));
-        }
-        return result;
-    }
-
-    private static SortedMap<Integer, Float> buildJumpRangeLUT(int maxFuelTons, SortedMap<Float, Float> knownJumpRangesByFuelLevel) {
-        SortedMap<Integer, Float> result = new TreeMap<>();
-        for (int kg = 0; kg <= (maxFuelTons * 1000); kg += 100) {
-            result.put(kg, estimateCurrentJumpRange(kg / 1000f, knownJumpRangesByFuelLevel));
-        }
-        return result;
-    }
-
-    public static float estimateCurrentJumpRange(float currentFuelLevel, SortedMap<Float, Float> jumpRanges) {
-        if (jumpRanges.containsKey(currentFuelLevel)) {
-            return jumpRanges.get(currentFuelLevel);
-        } else {
-            Float nextLevelLessThanCurrent = null;
-            Float nextLevelMoreThanCurrent = null;
-            for (float fuelLevel : jumpRanges.keySet()) {
-                if (fuelLevel <= currentFuelLevel && (nextLevelLessThanCurrent == null || fuelLevel > nextLevelLessThanCurrent)) {
-                    nextLevelLessThanCurrent = fuelLevel;
-                }
-                if (fuelLevel >= currentFuelLevel && (nextLevelMoreThanCurrent == null || fuelLevel < nextLevelMoreThanCurrent)) {
-                    nextLevelMoreThanCurrent = fuelLevel;
-                }
-            }
-            float heavyJumpRange = jumpRanges.get(nextLevelMoreThanCurrent);
-            float lightJumpRange = jumpRanges.get(nextLevelLessThanCurrent);
-            float possibleGain = lightJumpRange - heavyJumpRange;
-            float percent = 1f - ((currentFuelLevel - nextLevelLessThanCurrent) / (nextLevelMoreThanCurrent - nextLevelLessThanCurrent));
-            return heavyJumpRange + percent * possibleGain;
-        }
+    public float getJumpRangeFuelOpt() {
+        return this.jumpRangeFuelOpt;
     }
 
     public float lookupMaxJumpRange(float fuelLevel) {
@@ -133,6 +89,40 @@ public class FuelAndJumpRangeLookup {
             return this.fuelUsageByJumpPercent.get(1000);
         } else {
             return this.fuelUsageByJumpPercent.get(jumpPercent);
+        }
+    }
+
+    /**
+     * percent of max current jump range -&gt; fuel usage in tons
+     */
+    private static SortedMap<Integer, Float> buildFuelUsageLUT(float maxFuelPerJump) {
+        SortedMap<Integer, Float> result = new TreeMap<>();
+        for (int percent = 0; percent <= 1000; percent += 1) {
+            result.put(percent, maxFuelPerJump * (float) Math.pow(percent / 1000.0, 2.5));
+        }
+        return result;
+    }
+
+    /**
+     * current fuel level in kg -&gt; max current jump range
+     */
+    private static SortedMap<Integer, Float> buildJumpRangeLUT(int maxFuelTons, float maxFuelPerJump, float jumpRangeFuelFull, float jumpRangeFuelOpt) {
+        SortedMap<Integer, Float> result = new TreeMap<>();
+        for (int kg = 0; kg <= (maxFuelTons * 1000); kg += 100) {
+            result.put(kg, estimateCurrentJumpRange(kg / 1000f, maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt));
+        }
+        return result;
+    }
+
+    public static float estimateCurrentJumpRange(float currentFuelLevel, int maxFuelTons, float maxFuelPerJump, float jumpRangeFuelFull, float jumpRangeFuelOpt) {
+        if (currentFuelLevel >= maxFuelPerJump) {
+            float fuelPercentOfMax = (maxFuelTons - maxFuelPerJump) / (currentFuelLevel - maxFuelPerJump);
+            float extraJumpRange = jumpRangeFuelOpt - jumpRangeFuelFull;
+            return jumpRangeFuelFull + ((1 - fuelPercentOfMax) * extraJumpRange);
+        } else {
+            // TODO: Need formula for less than maxFuelPerJump in tank
+            float fuelPercentOfOpt = currentFuelLevel / maxFuelPerJump;
+            return fuelPercentOfOpt * jumpRangeFuelOpt;
         }
     }
 
