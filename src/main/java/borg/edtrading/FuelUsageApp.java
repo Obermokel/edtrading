@@ -10,6 +10,10 @@ import java.io.File;
 import java.io.FileFilter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,10 +33,12 @@ public class FuelUsageApp {
     private static final DateFormat DF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     public static void main(String[] args) throws Exception {
-        // Altair to Jaques: 2016-11-06T21:44:46Z to 2016-11-07T22:03:52Z
-        // Jaques to beacon and back: 2016-11-08T05:48:47Z to 2016-11-08T22:58:12Z
+        // Altair to Jaques:
         final Date fromDate = DF.parse("2016-11-06T21:44:46Z");
         final Date toDate = DF.parse("2016-11-07T22:03:52Z");
+        //        // Jaques to beacon and back:
+        //        final Date fromDate = DF.parse("2016-11-08T05:48:47Z");
+        //        final Date toDate = DF.parse("2016-11-08T22:58:12Z");
         final float maxFuelPerJump = 8.32f;
         final SortedMap<Float, Float> jumpRanges = new TreeMap<>();
         jumpRanges.put(0f, 0.00f);
@@ -46,10 +52,18 @@ public class FuelUsageApp {
                 return file.getName().endsWith(".log");
             }
         });
+        Arrays.sort(journalFiles, new Comparator<File>() {
+            @Override
+            public int compare(File f1, File f2) {
+                return new Long(f1.lastModified()).compareTo(new Long(f2.lastModified()));
+            }
+        });
         File csvFile = new File(Constants.TEMP_DIR, "fuelByDist.csv");
         FileUtils.write(csvFile, "distPercent;fuelPercent\r\n", "ISO-8859-1", false);
 
         Gson gson = new Gson();
+        Date prevTimestamp = null;
+        List<Long> jumpTimes = new ArrayList<>();
         for (File journalFile : journalFiles) {
             List<String> lines = FileUtils.readLines(journalFile, "UTF-8");
             for (String line : lines) {
@@ -73,10 +87,17 @@ public class FuelUsageApp {
 
                         logger.debug(String.format(Locale.US, "dist=%.2fly (%.1f%%), used=%.2ft (%.1f%%), left=%.2ft", jumpDist, jumpPercent, fuelUsed, fuelPercent, fuelAfter));
                         FileUtils.write(csvFile, String.format(Locale.GERMANY, "%.1f;%.1f\r\n", jumpPercent, fuelPercent), "ISO-8859-1", true);
+
+                        if (prevTimestamp != null) {
+                            jumpTimes.add(timestamp.getTime() - prevTimestamp.getTime());
+                        }
+                        prevTimestamp = timestamp;
                     }
                 }
             }
         }
+        Collections.sort(jumpTimes);
+        logger.debug(String.format(Locale.US, "%d jumps, median = %d seconds", jumpTimes.size(), jumpTimes.get(jumpTimes.size() / 2) / 1000L));
     }
 
 }
