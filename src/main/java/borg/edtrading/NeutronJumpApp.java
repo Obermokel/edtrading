@@ -6,6 +6,8 @@ import borg.edtrading.data.Body;
 import borg.edtrading.data.Coord;
 import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.StarSystem;
+import borg.edtrading.journal.Journal;
+import borg.edtrading.journal.JournalReader;
 import borg.edtrading.util.FuelAndJumpRangeLookup;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -89,12 +91,15 @@ public class NeutronJumpApp {
         }
         List<Path> sortedPaths = path.toSortedList();
 
+        // Read the journal to see which systems/bodies have already been discovered
+        Journal journal = new Journal(JournalReader.readEntireJournal(Constants.JOURNAL_DIR));
+
         // Write route as VoiceAttack TXT file
         String route = routeToVoiceAttackTxt(sortedPaths, starSystemsWithNeutronStars, systemsBySpectralClass, galaxy, fuelJumpLUT);
         FileUtils.write(new File(ROUTES_DIR, baseFilename + " Route.txt"), route, "UTF-8");
 
         // Write route as human readable HTML file
-        String html = routeToHumanReadableHtml(sortedPaths, starSystemsWithNeutronStars, systemsBySpectralClass, galaxy, fuelJumpLUT);
+        String html = routeToHumanReadableHtml(sortedPaths, starSystemsWithNeutronStars, systemsBySpectralClass, galaxy, fuelJumpLUT, journal);
         FileUtils.write(new File(ROUTES_DIR, baseFilename + " Route.html"), html, "UTF-8");
     }
 
@@ -141,7 +146,7 @@ public class NeutronJumpApp {
             if (jumpNo == sortedPaths.size() / 2) {
                 flags += "H"; // Halfway
             }
-            if (hasValuableBodies(currSystem, galaxy)) {
+            if (findValuableBodies(currSystem, galaxy).size() > 0) {
                 flags += "P"; // Planets
             }
             if (currPath.getFuelLevel() <= (fuelJumpLUT.getMaxFuelPerJump() + 2)) {
@@ -155,7 +160,7 @@ public class NeutronJumpApp {
         return route.toString();
     }
 
-    private static String routeToHumanReadableHtml(List<Path> sortedPaths, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, Galaxy galaxy, FuelAndJumpRangeLookup fuelJumpLUT) {
+    private static String routeToHumanReadableHtml(List<Path> sortedPaths, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, Galaxy galaxy, FuelAndJumpRangeLookup fuelJumpLUT, Journal journal) {
         StringBuilder html = new StringBuilder();
 
         Date eddbDumpDate = new Date(Constants.BODIES_FILE.lastModified());
@@ -197,7 +202,7 @@ public class NeutronJumpApp {
         html.append("</tr>\n");
         int jumpNo = 0;
         float travelledLy = 0;
-        boolean halfway = false;
+        boolean halfwayPassed = false;
         Path prevPath = null;
         for (Path currPath : sortedPaths) {
             if (prevPath != null) {
@@ -210,32 +215,41 @@ public class NeutronJumpApp {
                 String evenOddCss = jumpNo % 2 == 0 ? "even" : "odd";
                 String prevName = prevSystem.getName();
                 String prevClass = lookupSpectralClass(prevSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
+                String prevKnownCss = journal.getVisitedSystems().contains(prevName) ? " known" : "";
                 String currName = currSystem.getName();
                 String currClass = lookupSpectralClass(currSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
+                String currKnownCss = journal.getVisitedSystems().contains(currName) ? " known" : "";
                 String flags = "";
+                String notes = "";
                 if (currName.replaceAll("[^\\-]", "").length() < 2) {
                     flags += "N"; // Pron name
                 }
-                if (travelledLy >= routeDistance / 2 && !halfway) {
+                if (travelledLy >= routeDistance / 2 && !halfwayPassed) {
                     flags += "H"; // Halfway
-                    halfway = true;
-                }
-                if (hasValuableBodies(currSystem, galaxy)) {
-                    flags += "P"; // Planets
+                    halfwayPassed = true;
                 }
                 if (currPath.getFuelLevel() <= (fuelJumpLUT.getMaxFuelPerJump() + 2)) {
-                    flags += "F:" + currPath.getFuelLevel(); // Fuel
+                    flags += "F";
+                    notes += "<span class=\"fuelWarning\">" + String.format(Locale.US, "%.1ft", currPath.getFuelLevel()) + "</span>";
+                }
+                if (findValuableBodies(currSystem, galaxy).size() > 0) {
+                    flags += "P"; // Planets
+                    for (Body body : findValuableBodies(currSystem, galaxy)) {
+                        String knownCss = journal.getScannedBodies().contains(body.getName()) ? "known" : "";
+                        String typeCss = body.getTypeName().toLowerCase().replaceAll("\\W", "-");
+                        notes += "<span class=\"valuablePlanet " + typeCss + " " + knownCss + "\">" + escapeHtml4(body.getName()) + "</span>";
+                    }
                 }
                 // TODO S
                 //float routePercent = 100f * jumpNo / (sortedSystems.size() - 1);
                 html.append("<tr class=\"" + evenOddCss + " " + neutronJumpCss + "\">");
                 html.append("<td class=\"numeric jumpNo\">" + jumpNo + "</td>");
-                html.append("<td class=\"starName spectralClass-" + prevClass + "\">" + escapeHtml4(prevName) + "</td>");
+                html.append("<td class=\"starName spectralClass-" + prevClass + prevKnownCss + "\">" + escapeHtml4(prevName) + "</td>");
                 html.append("<td class=\"starClass spectralClass-" + prevClass + "\">" + prevClass + "</td>");
                 html.append("<td class=\"numeric jumpDistance\">" + String.format(Locale.US, "%.1f Ly", jumpDistance) + "</td>");
                 html.append("<td class=\"starClass spectralClass-" + currClass + "\">" + currClass + "</td>");
-                html.append("<td class=\"starName spectralClass-" + currClass + "\">" + escapeHtml4(currName) + "</td>");
-                html.append("<td class=\"notes\">" + flags + "</td>");
+                html.append("<td class=\"starName spectralClass-" + currClass + currKnownCss + "\">" + escapeHtml4(currName) + "</td>");
+                html.append("<td class=\"notes\">" + "[" + flags + "] " + notes + "</td>");
                 html.append("<td class=\"numeric distance\">" + String.format(Locale.US, "%.0f Ly", travelledLy) + "</td>");
                 html.append("</tr>\n");
             }
@@ -363,20 +377,20 @@ public class NeutronJumpApp {
         return result;
     }
 
-    static boolean hasValuableBodies(StarSystem system, Galaxy galaxy) {
-        List<Body> bodies = galaxy.searchBodiesOfStarSystem(system.getId());
-        for (Body body : bodies) {
+    static List<Body> findValuableBodies(StarSystem system, Galaxy galaxy) {
+        List<Body> result = new ArrayList<>(0);
+        for (Body body : galaxy.searchBodiesOfStarSystem(system.getId())) {
             if (StringUtils.isNotEmpty(body.getTerraforming_state_name()) && !"Not terraformable".equals(body.getTerraforming_state_name())) {
-                return true;
+                result.add(body);
             } else if (StringUtils.isNotEmpty(body.getTypeName())) {
                 if ("Ammonia world".equals(body.getTypeName()) || "Earth-like world".equals(body.getTypeName()) || "Water giant".equals(body.getTypeName()) || "Water world".equals(body.getTypeName())) {
-                    return true;
+                    result.add(body);
                 } else if (body.getTypeName().endsWith("life")) {
-                    return true;
+                    result.add(body);
                 }
             }
         }
-        return false;
+        return result;
     }
 
 }

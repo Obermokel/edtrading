@@ -43,8 +43,11 @@ public class FuelUsageApp {
         final float jumpRangeFuelFull = 48.30f;
         final float jumpRangeFuelOpt = 54.53f;
 
-        File journalDir = new File(System.getProperty("user.home"), "Google Drive/Elite Dangerous/Journal");
-        File[] journalFiles = journalDir.listFiles(new FileFilter() {
+        FuelAndJumpRangeLookup lut = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
+        lut.writeFuelUsageCsv(new File(Constants.TEMP_DIR, "fuelUsage.csv"));
+        lut.writeJumpRangeCsv(new File(Constants.TEMP_DIR, "jumpRange.csv"));
+
+        File[] journalFiles = Constants.JOURNAL_DIR.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {
                 return file.getName().endsWith(".log");
@@ -100,7 +103,7 @@ public class FuelUsageApp {
         Collections.sort(jumpTimes);
         logger.debug(String.format(Locale.US, "%d jumps, median = %d seconds", jumpTimes.size(), jumpTimes.get((jumpTimes.size() * 5) / 10) / 1000L));
 
-        JournalReader.readEntireJournal(journalDir);
+        JournalReader.readEntireJournal(Constants.JOURNAL_DIR);
     }
 
 }

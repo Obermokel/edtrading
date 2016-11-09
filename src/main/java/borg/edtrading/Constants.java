@@ -50,6 +50,7 @@ public interface Constants {
     File AUTO_LEARNED_DIR = new File(TEMP_DIR, "Auto-Learned");
     File UNKNOWN_DIR = new File(TEMP_DIR, "Unknown");
     File INVENTORY_SCREENSHOTS_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Inventory");
+    File JOURNAL_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Journal");
 
     File RARES_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\edrares.csv");
     File COMMODITIES_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\commodities.json");

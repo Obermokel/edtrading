@@ -1,8 +1,12 @@
 package borg.edtrading.util;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Locale;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -31,6 +35,20 @@ public class FuelAndJumpRangeLookup {
         this.jumpRangeFuelOpt = jumpRangeFuelOpt;
         this.fuelUsageByJumpPercent = buildFuelUsageLUT(maxFuelPerJump);
         this.jumpRangeByFuelKg = buildJumpRangeLUT(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
+    }
+
+    public void writeFuelUsageCsv(File csvFile) throws IOException {
+        FileUtils.write(csvFile, "jump percent;fuel tons\r\n", "ISO-8859-1", false);
+        for (Integer jumpPercent : this.fuelUsageByJumpPercent.keySet()) {
+            FileUtils.write(csvFile, String.format(Locale.GERMANY, "%.1f;%.1f\r\n", jumpPercent / 10.0f, this.fuelUsageByJumpPercent.get(jumpPercent)), "ISO-8859-1", true);
+        }
+    }
+
+    public void writeJumpRangeCsv(File csvFile) throws IOException {
+        FileUtils.write(csvFile, "fuel tons;jump range ly\r\n", "ISO-8859-1", false);
+        for (Integer fuelKg : this.jumpRangeByFuelKg.keySet()) {
+            FileUtils.write(csvFile, String.format(Locale.GERMANY, "%.1f;%.2f\r\n", fuelKg / 1000.0f, this.jumpRangeByFuelKg.get(fuelKg)), "ISO-8859-1", true);
+        }
     }
 
     public int getMaxFuelTons() {
@@ -116,13 +134,13 @@ public class FuelAndJumpRangeLookup {
 
     public static float estimateCurrentJumpRange(float currentFuelLevel, int maxFuelTons, float maxFuelPerJump, float jumpRangeFuelFull, float jumpRangeFuelOpt) {
         if (currentFuelLevel >= maxFuelPerJump) {
-            float fuelPercentOfMax = (maxFuelTons - maxFuelPerJump) / (currentFuelLevel - maxFuelPerJump);
+            float fuelPercentOfMax = (currentFuelLevel - maxFuelPerJump) / (maxFuelTons - maxFuelPerJump);
             float extraJumpRange = jumpRangeFuelOpt - jumpRangeFuelFull;
             return jumpRangeFuelFull + ((1 - fuelPercentOfMax) * extraJumpRange);
         } else {
             // TODO: Need formula for less than maxFuelPerJump in tank
             float fuelPercentOfOpt = currentFuelLevel / maxFuelPerJump;
-            return fuelPercentOfOpt * jumpRangeFuelOpt;
+            return (float) Math.pow(fuelPercentOfOpt, 2.5) * jumpRangeFuelOpt;
         }
     }
 
