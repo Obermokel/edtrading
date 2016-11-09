@@ -62,7 +62,7 @@ public class FuelAndJumpRangeLookup {
     private static SortedMap<Integer, Float> buildFuelUsageLUT(float maxFuelPerJump) {
         SortedMap<Integer, Float> result = new TreeMap<>();
         for (int percent = 0; percent <= 1000; percent += 1) {
-            result.put(percent, maxFuelPerJump * (float) Math.pow(percent / 1000.0, 2.3));
+            result.put(percent, maxFuelPerJump * (float) Math.pow(percent / 1000.0, 2.5));
         }
         return result;
     }

@@ -29,20 +29,15 @@ public class FuelUsageApp {
     private static final DateFormat DF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     public static void main(String[] args) throws Exception {
+        // Altair to Jaques: 2016-11-06T21:44:46Z to 2016-11-07T22:03:52Z
+        // Jaques to beacon and back: 2016-11-08T05:48:47Z to 2016-11-08T22:58:12Z
         final Date fromDate = DF.parse("2016-11-06T21:44:46Z");
-        final Date toDate = DF.parse("2016-11-07T13:25:30Z");
+        final Date toDate = DF.parse("2016-11-07T22:03:52Z");
         final float maxFuelPerJump = 8.32f;
         final SortedMap<Float, Float> jumpRanges = new TreeMap<>();
         jumpRanges.put(0f, 0.00f);
-        jumpRanges.put(8f, 51.31f);
-        jumpRanges.put(8.32f, 52.0f);
-        jumpRanges.put(16f, 51.45f);
-        jumpRanges.put(24f, 50.83f);
-        jumpRanges.put(32f, 50.22f);
-        jumpRanges.put(40f, 49.63f);
-        jumpRanges.put(48f, 49.05f);
-        jumpRanges.put(56f, 48.49f);
-        jumpRanges.put(64f, 47.93f);
+        jumpRanges.put(8.32f, 51.44f);
+        jumpRanges.put(64f, 47.41f);
 
         File journalDir = new File(System.getProperty("user.home"), "Google Drive/Elite Dangerous/Journal");
         File[] journalFiles = journalDir.listFiles(new FileFilter() {
