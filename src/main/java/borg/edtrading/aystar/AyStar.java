@@ -28,10 +28,11 @@ public class AyStar {
 
     private static final int SECTOR_SIZE = 50; // ly
 
-    private PriorityQueue<Path> open = null;
-    private Set<MinimizedStarSystem> closed = null;
     private MinimizedStarSystem goal = null;
-    private Set<MinimizedStarSystem> starSystemsWithNeutronStars = null;
+    private PriorityQueue<Path> open = null;
+    private Set<Long> closed = null;
+    private Set<Long> neutronStarIDs = null;
+    private List<MinimizedStarSystem> starSystemsWithNeutronStars = null;
     private Map<Coord, List<MinimizedStarSystem>> starSystemsWithScoopableStarsBySector = null;
     private FuelAndJumpRangeLookup fuelJumpLUT = null;
     private float maxTotalDistanceLy = 0;
@@ -41,12 +42,13 @@ public class AyStar {
         if (!starSystemsWithNeutronStars.contains(goal) && !starSystemsWithScoopableStars.contains(goal)) {
             throw new IllegalArgumentException("goal not in useable star systems");
         } else {
-            this.fuelJumpLUT = fuelJumpLUT;
+            this.goal = new MinimizedStarSystem(goal);
             this.open = new PriorityQueue<>(new LeastJumpsComparator(source.distanceTo(goal), fuelJumpLUT.getJumpRangeFuelOpt()));
             this.closed = new HashSet<>();
-            this.goal = new MinimizedStarSystem(goal);
-            this.starSystemsWithNeutronStars = starSystemsWithNeutronStars.stream().map(ss -> new MinimizedStarSystem(ss)).collect(Collectors.toSet());
-            this.starSystemsWithScoopableStarsBySector = mapBySector(starSystemsWithScoopableStars.stream().map(ss -> new MinimizedStarSystem(ss)).collect(Collectors.toSet()));
+            this.neutronStarIDs = starSystemsWithNeutronStars.stream().map(ss -> ss.getId()).collect(Collectors.toSet());
+            this.starSystemsWithNeutronStars = starSystemsWithNeutronStars.stream().map(ss -> new MinimizedStarSystem(ss)).collect(Collectors.toList());
+            this.starSystemsWithScoopableStarsBySector = mapBySector(starSystemsWithScoopableStars.stream().map(ss -> new MinimizedStarSystem(ss)).collect(Collectors.toList()));
+            this.fuelJumpLUT = fuelJumpLUT;
             this.maxTotalDistanceLy = 1.5f * source.distanceTo(goal);
             this.closestToGoalSoFar = null;
 
@@ -58,13 +60,13 @@ public class AyStar {
         while (this.open.size() > 0) {
             Path path = this.open.poll();
 
-            if (this.closed.contains(path.getMinimizedStarSystem())) {
+            if (this.closed.contains(path.getMinimizedStarSystem().getId())) {
                 // We already found a better path
                 continue;
             } else {
                 // Because we always poll the best path so far, the current path is
                 // the best path to this system
-                this.closed.add(path.getMinimizedStarSystem());
+                this.closed.add(path.getMinimizedStarSystem().getId());
             }
 
             if (this.closestToGoalSoFar == null || path.getRemainingDistanceLy() < this.closestToGoalSoFar.getRemainingDistanceLy()) {
@@ -83,13 +85,14 @@ public class AyStar {
 
             List<MinimizedStarSystem> neighbours = this.findNeighbours(path);
 
-            final float boostValue = this.starSystemsWithNeutronStars.contains(path.getMinimizedStarSystem()) ? 4.0f : 1.0f;
-            for (MinimizedStarSystem neighbour : neighbours) {
-                if (!this.closed.contains(neighbour)) {
+            final float boostValue = this.neutronStarIDs.contains(path.getMinimizedStarSystem().getId()) ? 4.0f : 1.0f;
+            for (int i = 0; i < neighbours.size(); i++) {
+                MinimizedStarSystem neighbour = neighbours.get(i);
+                if (!this.closed.contains(neighbour.getId())) {
                     float remainingDistanceLy = neighbour.distanceTo(this.goal);
                     float extraTravelledDistanceLy = path.getMinimizedStarSystem().distanceTo(neighbour);
                     float fuelLevel = this.fuelJumpLUT.getMaxFuelTons(); // Scoop until full by default
-                    if (this.starSystemsWithNeutronStars.contains(neighbour)) {
+                    if (this.neutronStarIDs.contains(neighbour.getId())) {
                         fuelLevel = path.getFuelLevel() - this.fuelJumpLUT.lookupFuelUsage(extraTravelledDistanceLy / boostValue, path.getFuelLevel()); // Subtract from prev
                     }
                     Path newPath = new Path(path, neighbour, remainingDistanceLy, extraTravelledDistanceLy, fuelLevel);
@@ -115,7 +118,7 @@ public class AyStar {
         final float currentUnboostedJumpRange = this.fuelJumpLUT.lookupMaxJumpRange(safeFuelLevel);
 
         // Do we have an overcharged FSD?
-        final boolean haveSuperchargedFsd = this.starSystemsWithNeutronStars.contains(currentStarSystem) ? true : false;
+        final boolean haveSuperchargedFsd = this.neutronStarIDs.contains(currentStarSystem.getId()) ? true : false;
 
         // Do we need to scoop?
         boolean mustScoop = path.getFuelLevel() <= fuelJumpLUT.getMaxFuelPerJump();
@@ -126,13 +129,15 @@ public class AyStar {
         // Find reachable systems
         List<MinimizedStarSystem> scoopableSystemsInCloseSectors = findSystemsBySector(this.starSystemsWithScoopableStarsBySector, currentCoord, currentJumpRange);
         List<MinimizedStarSystem> systemsInRange = new ArrayList<>(scoopableSystemsInCloseSectors.size());
-        for (MinimizedStarSystem s : scoopableSystemsInCloseSectors) {
+        for (int i = 0; i < scoopableSystemsInCloseSectors.size(); i++) {
+            MinimizedStarSystem s = scoopableSystemsInCloseSectors.get(i);
             if (s.distanceTo(currentStarSystem) <= currentJumpRange) {
                 systemsInRange.add(s);
             }
         }
         if (!mustScoop) {
-            for (MinimizedStarSystem s : this.starSystemsWithNeutronStars) {
+            for (int i = 0; i < this.starSystemsWithNeutronStars.size(); i++) {
+                MinimizedStarSystem s = this.starSystemsWithNeutronStars.get(i);
                 if (s.distanceTo(currentStarSystem) <= currentJumpRange) {
                     systemsInRange.add(s);
                 }
