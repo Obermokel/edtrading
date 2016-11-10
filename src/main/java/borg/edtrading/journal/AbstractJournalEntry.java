@@ -1,9 +1,11 @@
 package borg.edtrading.journal;
 
 import borg.edtrading.data.Coord;
+import borg.edtrading.util.MiscUtil;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -92,8 +94,30 @@ public class AbstractJournalEntry implements Serializable, Comparable<AbstractJo
         return data.containsKey(name) ? new BigDecimal(data.remove(name).toString()) : null;
     }
 
+    protected Date readDate(Map<String, Object> data, String name) {
+        try {
+            return data.containsKey(name) ? new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(data.remove(name).toString()) : null;
+        } catch (ParseException e) {
+            throw new RuntimeException("Failed to parse date", e);
+        }
+    }
+
     protected <T> List<T> readList(Map<String, Object> data, String name, Class<T> type) {
         return data.containsKey(name) ? (List<T>) data.remove(name) : null;
+    }
+
+    protected List<NameCount> readNameCountList(Map<String, Object> data, String name) {
+        List<Map> ncList = this.readList(data, name, Map.class);
+
+        if (ncList != null) {
+            List<NameCount> result = new ArrayList<>(ncList.size());
+            for (Map m : ncList) {
+                result.add(new NameCount(MiscUtil.getAsString(m.get("Name")), MiscUtil.getAsInt(m.get("Count"))));
+            }
+            return result;
+        } else {
+            return null;
+        }
     }
 
     protected <K, V> Map<K, V> readMap(Map<String, Object> data, String name, Class<K> typeKey, Class typeValue) {

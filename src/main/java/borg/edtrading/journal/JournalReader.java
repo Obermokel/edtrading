@@ -105,6 +105,9 @@ public class JournalReader {
                             case DockSRV:
                                 result.add(new DockSRVEntry(timestamp, event, data));
                                 break;
+                            case EngineerCraft:
+                                result.add(new EngineerCraftEntry(timestamp, event, data));
+                                break;
                             case Fileheader:
                                 result.add(new FileheaderEntry(timestamp, event, data));
                                 break;
@@ -137,6 +140,18 @@ public class JournalReader {
                                 break;
                             case MaterialCollected:
                                 result.add(new MaterialCollectedEntry(timestamp, event, data));
+                                break;
+                            case MaterialDiscarded:
+                                result.add(new MaterialDiscardedEntry(timestamp, event, data));
+                                break;
+                            case MaterialDiscovered:
+                                result.add(new MaterialDiscoveredEntry(timestamp, event, data));
+                                break;
+                            case MissionAccepted:
+                                result.add(new MissionAcceptedEntry(timestamp, event, data));
+                                break;
+                            case MissionCompleted:
+                                result.add(new MissionCompletedEntry(timestamp, event, data));
                                 break;
                             case ModuleBuy:
                                 result.add(new ModuleBuyEntry(timestamp, event, data));
