@@ -32,7 +32,6 @@ public class AyStar {
     private Set<StarSystem> closed = null;
     private StarSystem goal = null;
     private Set<StarSystem> starSystemsWithNeutronStars = null;
-    private Set<StarSystem> starSystemsWithScoopableStars = null;
     private Map<Coord, List<StarSystem>> starSystemsWithScoopableStarsBySector = null;
     private FuelAndJumpRangeLookup fuelJumpLUT = null;
     private float maxTotalDistanceLy = 0;
@@ -47,7 +46,6 @@ public class AyStar {
             this.closed = new HashSet<>();
             this.goal = goal;
             this.starSystemsWithNeutronStars = starSystemsWithNeutronStars;
-            this.starSystemsWithScoopableStars = starSystemsWithScoopableStars;
             this.starSystemsWithScoopableStarsBySector = mapBySector(starSystemsWithScoopableStars);
             this.maxTotalDistanceLy = 1.5f * source.distanceTo(goal);
             this.closestToGoalSoFar = null;
@@ -65,7 +63,7 @@ public class AyStar {
                 continue;
             } else {
                 // Because we always poll the best path so far, the current path is
-                // the best path to this station
+                // the best path to this system
                 this.closed.add(path.getStarSystem());
             }
 
@@ -100,25 +98,14 @@ public class AyStar {
                     }
                 }
             }
-
-            //            if (this.open.size() > 2 * 5000000) {
-            //                List<Path> temp = new ArrayList<>(5000000);
-            //                for (int i = 0; i < 5000000; i++) {
-            //                    temp.add(this.open.poll());
-            //                }
-            //                this.open.clear();
-            //                this.open.addAll(temp);
-            //            }
         }
 
-        return this.closestToGoalSoFar;
-        //return null;
+        return null;
     }
 
     private List<StarSystem> findNeighbours(Path path) {
         final StarSystem currentStarSystem = path.getStarSystem();
         final Coord currentCoord = currentStarSystem.getCoord();
-        //final float currentDistanceToGoal = currentStarSystem.distanceTo(this.goal);
         float safeFuelLevel = path.getFuelLevel(); // This is what the calculation says, but as we don't know the formula we should add some safety
         if (safeFuelLevel > this.fuelJumpLUT.getMaxFuelPerJump()) {
             safeFuelLevel = Math.min(this.fuelJumpLUT.getMaxFuelTons(), safeFuelLevel + 2.0f); // Add 2 extra tons to reduce the calculated jump distance
@@ -128,7 +115,6 @@ public class AyStar {
         final float currentUnboostedJumpRange = this.fuelJumpLUT.lookupMaxJumpRange(safeFuelLevel);
 
         // Do we have an overcharged FSD?
-        //final float currentJumpRange = this.starSystemsWithNeutronStars.contains(currentStarSystem) ? 4f * ladenAndFueledBaseJumpRange : ladenAndFueledBaseJumpRange;
         final boolean haveSuperchargedFsd = this.starSystemsWithNeutronStars.contains(currentStarSystem) ? true : false;
 
         // Do we need to scoop?
@@ -146,9 +132,6 @@ public class AyStar {
         }
         List<StarSystem> scoopableSystemsInCloseSectors = findSystemsBySector(this.starSystemsWithScoopableStarsBySector, currentCoord, currentJumpRange);
         systemsInRange.addAll(scoopableSystemsInCloseSectors.stream().filter(st -> st.distanceTo(currentStarSystem) <= currentJumpRange /*&& st.distanceTo(goal) < currentDistanceToGoal*/).collect(Collectors.toList()));
-
-        // Keep only those which bring us closer to the goal, i.e. the new system is closer to the goal than our current distance to the goal
-        //Set<StarSystem> systemsInTravelDirection = systemsInRange.stream().filter(st -> st.distanceTo(goal) < currentDistanceToGoal).collect(Collectors.toSet());
 
         // Finished
         return systemsInRange;
