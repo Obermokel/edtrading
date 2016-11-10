@@ -124,6 +124,20 @@ public class AbstractJournalEntry implements Serializable, Comparable<AbstractJo
         return data.containsKey(name) ? (Map<K, V>) data.remove(name) : null;
     }
 
+    protected Map<String, Integer> readNameCountMap(Map<String, Object> data, String name) {
+        Map<String, Number> ncMap = this.readMap(data, name, String.class, Number.class);
+
+        if (ncMap != null) {
+            Map<String, Integer> result = new LinkedHashMap<>(ncMap.size());
+            for (String n : ncMap.keySet()) {
+                result.put(n, ncMap.get(n).intValue());
+            }
+            return result;
+        } else {
+            return null;
+        }
+    }
+
     protected Coord readCoord(Map<String, Object> data, String name) {
         List<Number> xyz = this.readList(data, name, Number.class);
 

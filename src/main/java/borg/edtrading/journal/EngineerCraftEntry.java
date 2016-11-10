@@ -24,7 +24,7 @@ public class EngineerCraftEntry extends AbstractJournalEntry {
         this.engineer = this.readString(data, "Engineer");
         this.blueprint = this.readString(data, "Blueprint");
         this.level = this.readInt(data, "Level");
-        this.ingredients = this.readMap(data, "Ingredients", String.class, Integer.class);
+        this.ingredients = this.readNameCountMap(data, "Ingredients");
     }
 
     public String getEngineer() {

@@ -140,7 +140,7 @@ public enum Item {
         Item bestItem = null;
         float bestItemError = Float.MAX_VALUE;
         for (Item item : Item.values()) {
-            if (item.getType() == type) {
+            if (type == null || item.getType() == type) {
                 float dist = StringUtils.getLevenshteinDistance(name.toLowerCase(), item.getName().toLowerCase());
                 float len = item.getName().length();
                 float err = dist / len;
