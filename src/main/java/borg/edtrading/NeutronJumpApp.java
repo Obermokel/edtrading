@@ -143,8 +143,8 @@ public class NeutronJumpApp {
 
     private static String routeToVoiceAttackTxt(List<Path> sortedPaths, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, Galaxy galaxy, FuelAndJumpRangeLookup fuelJumpLUT, Journal journal) {
         Date eddbDumpDate = new Date(Constants.BODIES_FILE.lastModified());
-        StarSystem fromSystem = sortedPaths.get(0).getStarSystem();
-        StarSystem toSystem = sortedPaths.get(sortedPaths.size() - 1).getStarSystem();
+        StarSystem fromSystem = sortedPaths.get(0).getStarSystem(galaxy);
+        StarSystem toSystem = sortedPaths.get(sortedPaths.size() - 1).getStarSystem(galaxy);
         String fromName = fromSystem.getName();
         String toName = toSystem.getName();
         float directDistance = fromSystem.distanceTo(toSystem);
@@ -162,7 +162,7 @@ public class NeutronJumpApp {
         LinkedList<String> lines = new LinkedList<>();
         for (int i = 0; i < sortedPaths.size(); i++) {
             Path currPath = sortedPaths.get(i);
-            StarSystem currSystem = currPath.getStarSystem();
+            StarSystem currSystem = currPath.getStarSystem(galaxy);
             String currName = currSystem.getName();
             String currClass = lookupSpectralClass(currSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
             String currKnownCss = journal.getVisitedSystems().contains(currName) ? " known" : "";
@@ -170,7 +170,7 @@ public class NeutronJumpApp {
             String flags = "";
             if (prevPath != null) {
                 jumpNo++;
-                StarSystem prevSystem = prevPath.getStarSystem();
+                StarSystem prevSystem = prevPath.getStarSystem(galaxy);
                 jumpDistance = currSystem.distanceTo(prevSystem);
                 travelledLy += jumpDistance;
                 String neutronJumpCss = starSystemsWithNeutronStars.contains(prevSystem) ? "neutronJump" : "normalJump";
@@ -234,8 +234,8 @@ public class NeutronJumpApp {
         StringBuilder html = new StringBuilder();
 
         Date eddbDumpDate = new Date(Constants.BODIES_FILE.lastModified());
-        StarSystem fromSystem = sortedPaths.get(0).getStarSystem();
-        StarSystem toSystem = sortedPaths.get(sortedPaths.size() - 1).getStarSystem();
+        StarSystem fromSystem = sortedPaths.get(0).getStarSystem(galaxy);
+        StarSystem toSystem = sortedPaths.get(sortedPaths.size() - 1).getStarSystem(galaxy);
         String fromName = fromSystem.getName();
         String toName = toSystem.getName();
         float directDistance = fromSystem.distanceTo(toSystem);
@@ -278,8 +278,8 @@ public class NeutronJumpApp {
         for (Path currPath : sortedPaths) {
             if (prevPath != null) {
                 jumpNo++;
-                StarSystem prevSystem = prevPath.getStarSystem();
-                StarSystem currSystem = currPath.getStarSystem();
+                StarSystem prevSystem = prevPath.getStarSystem(galaxy);
+                StarSystem currSystem = currPath.getStarSystem(galaxy);
                 float jumpDistance = currSystem.distanceTo(prevSystem);
                 travelledLy += jumpDistance;
                 String neutronJumpCss = starSystemsWithNeutronStars.contains(prevSystem) ? "neutronJump" : "normalJump";

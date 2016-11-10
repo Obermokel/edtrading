@@ -1,5 +1,6 @@
 package borg.edtrading.aystar;
 
+import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.StarSystem;
 
 import java.util.ArrayList;
@@ -14,14 +15,14 @@ import java.util.List;
 public class Path implements Comparable<Path> {
 
     private Path prev = null;
-    private StarSystem starSystem = null;
+    private MinimizedStarSystem minimizedStarSystem = null;
     private int totalJumps = 0;
     private float travelledDistanceLy = 0;
     private float remainingDistanceLy = 0;
     private float fuelLevel = 0;
 
-    public Path(StarSystem starSystem, float remainingDistanceLy, float fuelLevel) {
-        this.setStarSystem(starSystem);
+    public Path(MinimizedStarSystem minimizedStarSystem, float remainingDistanceLy, float fuelLevel) {
+        this.setMinimizedStarSystem(minimizedStarSystem);
         this.setRemainingDistanceLy(remainingDistanceLy);
         this.setFuelLevel(fuelLevel);
     }
@@ -30,9 +31,9 @@ public class Path implements Comparable<Path> {
      * @param extraTravelledDistanceLy
      *            From prev to starSystem, NOT in total
      */
-    public Path(Path prev, StarSystem starSystem, float remainingDistanceLy, float extraTravelledDistanceLy, float fuelLevel) {
+    public Path(Path prev, MinimizedStarSystem minimizedStarSystem, float remainingDistanceLy, float extraTravelledDistanceLy, float fuelLevel) {
         this.setPrev(prev);
-        this.setStarSystem(starSystem);
+        this.setMinimizedStarSystem(minimizedStarSystem);
         this.setRemainingDistanceLy(remainingDistanceLy);
         this.setTotalJumps(prev.getTotalJumps() + 1);
         this.setTravelledDistanceLy(prev.getTravelledDistanceLy() + extraTravelledDistanceLy);
@@ -51,7 +52,7 @@ public class Path implements Comparable<Path> {
             return false;
         }
         Path other = (Path) obj;
-        if (this.starSystem.getId().longValue() != other.starSystem.getId().longValue()) {
+        if (this.minimizedStarSystem.getId().longValue() != other.minimizedStarSystem.getId().longValue()) {
             return false;
         }
         if (this.totalJumps != other.totalJumps) {
@@ -67,7 +68,7 @@ public class Path implements Comparable<Path> {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + (int) (this.starSystem.getId().longValue() ^ (this.starSystem.getId().longValue() >>> 32));
+        result = prime * result + (int) (this.minimizedStarSystem.getId().longValue() ^ (this.minimizedStarSystem.getId().longValue() >>> 32));
         result = prime * result + this.totalJumps;
         result = prime * result + Float.floatToIntBits(this.travelledDistanceLy);
         return result;
@@ -95,6 +96,10 @@ public class Path implements Comparable<Path> {
         return sortedPaths;
     }
 
+    public StarSystem getStarSystem(Galaxy galaxy) {
+        return galaxy.getStarSystemsById().get(this.getMinimizedStarSystem().getId());
+    }
+
     public Path getPrev() {
         return this.prev;
     }
@@ -103,12 +108,12 @@ public class Path implements Comparable<Path> {
         this.prev = prev;
     }
 
-    public StarSystem getStarSystem() {
-        return this.starSystem;
+    public MinimizedStarSystem getMinimizedStarSystem() {
+        return this.minimizedStarSystem;
     }
 
-    public void setStarSystem(StarSystem starSystem) {
-        this.starSystem = starSystem;
+    public void setMinimizedStarSystem(MinimizedStarSystem minimizedStarSystem) {
+        this.minimizedStarSystem = minimizedStarSystem;
     }
 
     public int getTotalJumps() {
