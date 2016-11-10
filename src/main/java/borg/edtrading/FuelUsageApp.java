@@ -1,22 +1,19 @@
 package borg.edtrading;
 
+import borg.edtrading.data.Coord;
+import borg.edtrading.journal.Event;
+import borg.edtrading.journal.FSDJumpEntry;
+import borg.edtrading.journal.Journal;
 import borg.edtrading.journal.JournalReader;
 import borg.edtrading.util.FuelAndJumpRangeLookup;
-import com.google.gson.Gson;
-import org.apache.commons.io.FileUtils;
+import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -32,12 +29,15 @@ public class FuelUsageApp {
     private static final DateFormat DF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     public static void main(String[] args) throws Exception {
-        // Altair to Jaques:
-        final Date fromDate = DF.parse("2016-11-06T21:44:46Z");
-        final Date toDate = DF.parse("2016-11-07T22:03:52Z");
+        //        // Altair to Jaques:
+        //        final Date fromDate = DF.parse("2016-11-06T21:44:46Z");
+        //        final Date toDate = DF.parse("2016-11-07T22:03:52Z");
         //        // Jaques to beacon and back:
         //        final Date fromDate = DF.parse("2016-11-08T05:48:47Z");
         //        final Date toDate = DF.parse("2016-11-08T22:58:12Z");
+        // Jaques to Game Crash:
+        final Date fromDate = DF.parse("2016-11-09T19:03:11Z");
+        final Date toDate = DF.parse("2016-11-09T23:36:14Z");
         final int maxFuelTons = 88;
         final float maxFuelPerJump = 8.32f;
         final float jumpRangeFuelFull = 48.30f;
@@ -47,63 +47,59 @@ public class FuelUsageApp {
         lut.writeFuelUsageCsv(new File(Constants.TEMP_DIR, "fuelUsage.csv"));
         lut.writeJumpRangeCsv(new File(Constants.TEMP_DIR, "jumpRange.csv"));
 
-        File[] journalFiles = Constants.JOURNAL_DIR.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return file.getName().endsWith(".log");
+        Journal journal = new Journal(JournalReader.readEntireJournal(Constants.JOURNAL_DIR));
+        List<FSDJumpEntry> fsdJumpEntries = MiscUtil.unsafeCast(journal.getEntries(fromDate, toDate, Event.FSDJump));
+
+        int jumpNo = 0;
+        String fromName = "Colonia";
+        Coord fromCoord = new Coord(-9530.500f, -910.281f, 19808.125f); // Colonia
+        float trackedFuelLevelBeforeJumping = maxFuelTons;
+        for (FSDJumpEntry entry : fsdJumpEntries) {
+            jumpNo++;
+            String jumpSymbol = MiscUtil.getAsFloat(entry.getBoostUsed(), 1f) > 1f ? "*→" : "→";
+            String toName = entry.getStarSystem();
+            Coord toCoord = entry.getStarPos();
+            logger.debug(String.format(Locale.US, "#%d %s %s %s (%.2f Ly)", jumpNo, fromName, jumpSymbol, toName, entry.getJumpDist()));
+
+            // Compute distance and check for error
+            float computedJumpDistance = fromCoord.distanceTo(toCoord);
+            float actualJumpDistance = entry.getJumpDist();
+            float errorJumpDistance = computedJumpDistance - actualJumpDistance;
+            if (Math.abs(errorJumpDistance) >= 0.01f) {
+                logger.warn(String.format(Locale.US, "Jump distance error of %.4f Ly: est: %.2f Ly; act: %.2f Ly", errorJumpDistance, computedJumpDistance, actualJumpDistance));
             }
-        });
-        Arrays.sort(journalFiles, new Comparator<File>() {
-            @Override
-            public int compare(File f1, File f2) {
-                return new Long(f1.lastModified()).compareTo(new Long(f2.lastModified()));
+
+            // Compute max jump range + normalize jump range + reset fuel when coming from non-neutron star
+            float computedCurrentMaxJumpRange = FuelAndJumpRangeLookup.estimateCurrentJumpRange(trackedFuelLevelBeforeJumping, maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
+            float boostUsed = MiscUtil.getAsFloat(entry.getBoostUsed(), 1f);
+            float computedNormalizedJumpRange = computedJumpDistance / boostUsed;
+            if (boostUsed == 1f) {
+                trackedFuelLevelBeforeJumping = maxFuelTons;
             }
-        });
-        File fuelUsageCsvFile = new File(Constants.TEMP_DIR, "fuelByDist.csv");
-        FileUtils.write(fuelUsageCsvFile, "distPercent;fuelPercent\r\n", "ISO-8859-1", false);
-        File jumpTimeCsvFile = new File(Constants.TEMP_DIR, "jumpTimes.csv");
-        FileUtils.write(jumpTimeCsvFile, "n;seconds\r\n", "ISO-8859-1", false);
 
-        Gson gson = new Gson();
-        Date prevTimestamp = null;
-        List<Long> jumpTimes = new ArrayList<>();
-        for (File journalFile : journalFiles) {
-            List<String> lines = FileUtils.readLines(journalFile, "UTF-8");
-            for (String line : lines) {
-                LinkedHashMap obj = gson.fromJson(line, LinkedHashMap.class);
-
-                Date timestamp = DF.parse((String) obj.get("timestamp"));
-                if (timestamp.compareTo(fromDate) >= 0 && timestamp.compareTo(toDate) <= 0) {
-                    String event = (String) obj.get("event");
-                    if ("FSDJump".equals(event)) {
-                        float jumpDist = ((Number) obj.get("JumpDist")).floatValue();
-                        float fuelUsed = ((Number) obj.get("FuelUsed")).floatValue(); // Used for this jump
-                        float fuelAfter = ((Number) obj.get("FuelLevel")).floatValue(); // Have after this jump
-                        float fuelBefore = fuelAfter + fuelUsed;
-                        if (obj.containsKey("BoostUsed")) {
-                            jumpDist /= ((Number) obj.get("BoostUsed")).floatValue();
-                        }
-
-                        float maxJumpRange = FuelAndJumpRangeLookup.estimateCurrentJumpRange(fuelBefore, maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
-                        float jumpPercent = 100f * jumpDist / maxJumpRange;
-                        float fuelPercent = 100f * fuelUsed / maxFuelPerJump;
-
-                        logger.debug(String.format(Locale.US, "dist=%.2fly (%.1f%%), used=%.2ft (%.1f%%), left=%.2ft", jumpDist, jumpPercent, fuelUsed, fuelPercent, fuelAfter));
-                        FileUtils.write(fuelUsageCsvFile, String.format(Locale.GERMANY, "%.1f;%.1f\r\n", jumpPercent, fuelPercent), "ISO-8859-1", true);
-
-                        if (prevTimestamp != null) {
-                            jumpTimes.add(timestamp.getTime() - prevTimestamp.getTime());
-                            FileUtils.write(jumpTimeCsvFile, String.format(Locale.GERMANY, "%d;%d\r\n", jumpTimes.size(), (timestamp.getTime() - prevTimestamp.getTime()) / 1000L), "ISO-8859-1", true);
-                        }
-                        prevTimestamp = timestamp;
-                    }
-                }
+            // Compute fuel usage and check for error
+            float computedFuelUsage = FuelAndJumpRangeLookup.estimateFuelUsage(computedNormalizedJumpRange, computedCurrentMaxJumpRange, maxFuelPerJump);
+            float actualFuelUsage = entry.getFuelUsed();
+            float errorFuelUsage = computedFuelUsage - actualFuelUsage;
+            if (Math.abs(errorFuelUsage) >= 0.1f) {
+                logger.warn(String.format(Locale.US, "Fuel usage error of %.2ft: est: %.2ft; act: %.2ft", errorFuelUsage, computedFuelUsage, actualFuelUsage));
             }
+
+            // Remove fuel and check for error
+            trackedFuelLevelBeforeJumping -= computedFuelUsage;
+            float actualFuelLevel = entry.getFuelLevel();
+            float errorFuelLevel = trackedFuelLevelBeforeJumping - actualFuelLevel;
+            if (Math.abs(errorFuelLevel) >= 0.1f) {
+                logger.warn(String.format(Locale.US, "Fuel level error of %.2ft: est: %.2ft; act: %.2ft", errorFuelLevel, trackedFuelLevelBeforeJumping, actualFuelLevel));
+            }
+
+            logger.debug(String.format(Locale.US, "...now have %.2ft fuel and %.2f Ly base jump range", trackedFuelLevelBeforeJumping,
+                    FuelAndJumpRangeLookup.estimateCurrentJumpRange(trackedFuelLevelBeforeJumping, maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt)));
+
+            // Continue
+            fromName = toName;
+            fromCoord = toCoord;
         }
-        Collections.sort(jumpTimes);
-        logger.debug(String.format(Locale.US, "%d jumps, median = %d seconds", jumpTimes.size(), jumpTimes.get((jumpTimes.size() * 5) / 10) / 1000L));
-
-        JournalReader.readEntireJournal(Constants.JOURNAL_DIR);
     }
 
 }

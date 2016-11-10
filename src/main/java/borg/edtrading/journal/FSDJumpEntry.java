@@ -50,6 +50,9 @@ public class FSDJumpEntry extends AbstractJournalEntry {
         this.boostUsed = this.readFloat(data, "BoostUsed");
     }
 
+    /**
+     * Destination system to which we are jumping
+     */
     public String getStarSystem() {
         return this.starSystem;
     }

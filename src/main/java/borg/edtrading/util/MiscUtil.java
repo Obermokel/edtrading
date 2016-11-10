@@ -10,12 +10,17 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * MiscUtil
@@ -48,6 +53,58 @@ public abstract class MiscUtil {
         float err = dist / mostLikelyCorrectReferenceString.length();
 
         return err;
+    }
+
+    /*
+     * ==== ==== ==== ==== ==== ==== ==== ==== GENERICS ==== ==== ==== ==== ==== ==== ==== ====
+     */
+
+    /**
+     * Unsafe casting of an unknown <code>Collection</code> to a typed <code>Collection</code>.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Collection<T> unsafeCast(Collection<?> sourceCollection) {
+        return (Collection<T>) sourceCollection;
+    }
+
+    /**
+     * Unsafe casting of an unknown <code>List</code> to a typed <code>List</code>.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> List<T> unsafeCast(List<?> sourceList) {
+        return (List<T>) sourceList;
+    }
+
+    /**
+     * Unsafe casting of an unknown <code>Set</code> to a typed <code>Set</code>.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Set<T> unsafeCast(Set<?> sourceSet) {
+        return (Set<T>) sourceSet;
+    }
+
+    /**
+     * Unsafe casting of an unknown <code>Map</code> to a typed <code>Map</code>.
+     */
+    @SuppressWarnings("unchecked")
+    public static <K, V> Map<K, V> unsafeCast(Map<?, ?> sourceMap) {
+        return (Map<K, V>) sourceMap;
+    }
+
+    /**
+     * Unsafe casting of an unknown <code>Iterator</code> to a typed <code>Iterator</code>.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Iterator<T> unsafeCast(Iterator<?> sourceIterator) {
+        return (Iterator<T>) sourceIterator;
+    }
+
+    /**
+     * Unsafe casting of an unknown <code>Enumeration</code> to a typed <code>Enumeration</code>.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Enumeration<T> unsafeCast(Enumeration<?> sourceEnum) {
+        return (Enumeration<T>) sourceEnum;
     }
 
     public static String getAsString(Object o) {

@@ -116,7 +116,7 @@ public class FuelAndJumpRangeLookup {
     private static SortedMap<Integer, Float> buildFuelUsageLUT(float maxFuelPerJump) {
         SortedMap<Integer, Float> result = new TreeMap<>();
         for (int percent = 0; percent <= 1000; percent += 1) {
-            result.put(percent, maxFuelPerJump * (float) Math.pow(percent / 1000.0, 2.5));
+            result.put(percent, estimateFuelUsage(percent / 1000f, maxFuelPerJump));
         }
         return result;
     }
@@ -130,6 +130,14 @@ public class FuelAndJumpRangeLookup {
             result.put(kg, estimateCurrentJumpRange(kg / 1000f, maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt));
         }
         return result;
+    }
+
+    public static float estimateFuelUsage(float jumpDistance, float currentMaxJumpRange, float maxFuelPerJump) {
+        return estimateFuelUsage(jumpDistance / currentMaxJumpRange, maxFuelPerJump);
+    }
+
+    private static float estimateFuelUsage(float jumpDistancePercentOfMax, float maxFuelPerJump) {
+        return maxFuelPerJump * (float) Math.pow(jumpDistancePercentOfMax, 2.5);
     }
 
     public static float estimateCurrentJumpRange(float currentFuelLevel, int maxFuelTons, float maxFuelPerJump, float jumpRangeFuelFull, float jumpRangeFuelOpt) {
