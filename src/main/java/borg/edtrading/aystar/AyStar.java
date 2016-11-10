@@ -85,13 +85,14 @@ public class AyStar {
 
             List<StarSystem> neighbours = this.findNeighbours(path);
 
+            final float boostValue = this.starSystemsWithNeutronStars.contains(path.getStarSystem()) ? 4.0f : 1.0f;
             for (StarSystem neighbour : neighbours) {
                 if (!this.closed.contains(neighbour)) {
                     float remainingDistanceLy = neighbour.distanceTo(this.goal);
                     float extraTravelledDistanceLy = path.getStarSystem().distanceTo(neighbour);
                     float fuelLevel = this.fuelJumpLUT.getMaxFuelTons(); // Scoop until full by default
                     if (this.starSystemsWithNeutronStars.contains(neighbour)) {
-                        fuelLevel = path.getFuelLevel() - this.fuelJumpLUT.lookupFuelUsage(extraTravelledDistanceLy, path.getFuelLevel()); // Subtract from prev
+                        fuelLevel = path.getFuelLevel() - this.fuelJumpLUT.lookupFuelUsage(extraTravelledDistanceLy / boostValue, path.getFuelLevel()); // Subtract from prev
                     }
                     Path newPath = new Path(path, neighbour, remainingDistanceLy, extraTravelledDistanceLy, fuelLevel);
                     if (newPath.getTravelledDistanceLy() + newPath.getRemainingDistanceLy() <= this.maxTotalDistanceLy) {
