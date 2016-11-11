@@ -140,6 +140,10 @@ public class AyStar {
             //                    this.open.addAll(tempSize);
             //                }
             //            }
+
+            if (this.closed.size() % 1000 == 0) {
+                return path;
+            }
         }
 
         return null;

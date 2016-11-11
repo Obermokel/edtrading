@@ -6,6 +6,7 @@ import borg.edtrading.data.Body;
 import borg.edtrading.data.Coord;
 import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.StarSystem;
+import borg.edtrading.gui.PathViewPanel;
 import borg.edtrading.journal.Journal;
 import borg.edtrading.journal.JournalReader;
 import borg.edtrading.util.FuelAndJumpRangeLookup;
@@ -15,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.lang3.StringUtils;
 
+import java.awt.GridLayout;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -29,6 +31,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import static org.apache.commons.lang3.StringEscapeUtils.*;
 
@@ -48,8 +54,10 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        final String fromName = "Colonia";
-        final String toName = "Sol";
+        //        final String fromName = "Colonia";
+        //        final String toName = "Sol";
+        final String fromName = "Sol";
+        final String toName = "Choomuia UI-K d8-4692";
 
         final int maxFuelTons = 88;
         final float maxFuelPerJump = 8.32f;
@@ -94,16 +102,39 @@ public class NeutronJumpApp {
         Map<String, Set<StarSystem>> systemsBySpectralClass = mapSystemsBySpectralClass(galaxy.getBodiesById().values());
         logger.debug("Total known neutron stars (EDDB + Mapping Project): " + starSystemsWithNeutronStars.size());
 
+        JFrame frame = new JFrame("Route");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new GridLayout(2, 2));
+        JPanel routePanel = new JPanel();
+        routePanel.add(new JLabel("Route"));
+        frame.add(routePanel);
+        PathViewPanel topViewPanel = new PathViewPanel("Top view", galaxy, fromSystem, toSystem);
+        frame.add(topViewPanel);
+        PathViewPanel leftViewPanel = new PathViewPanel("Left view", galaxy, fromSystem, toSystem);
+        frame.add(leftViewPanel);
+        PathViewPanel frontViewPanel = new PathViewPanel("Front view", galaxy, fromSystem, toSystem);
+        frame.add(frontViewPanel);
+        frame.pack();
+        frame.setVisible(true);
+
         AyStar ayStar = new AyStar();
         ayStar.initialize(fromSystem, toSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, fuelJumpLUT);
         final long start = System.currentTimeMillis();
-        Path path = ayStar.findPath();
+        Path path = null;
+        while ((path = ayStar.findPath()) != null && !path.getMinimizedStarSystem().getId().equals(toSystem.getId())) {
+            topViewPanel.updatePath(path);
+            leftViewPanel.updatePath(path);
+            frontViewPanel.updatePath(path);
+        }
         final long end = System.currentTimeMillis();
         logger.info("Took " + DurationFormatUtils.formatDuration(end - start, "H:mm:ss"));
         if (path == null) {
             logger.warn("No path found");
             return;
         } else {
+            topViewPanel.updatePath(path);
+            leftViewPanel.updatePath(path);
+            frontViewPanel.updatePath(path);
             logger.info("Found path with " + path.getTotalJumps() + " jumps");
         }
         List<Path> sortedPaths = path.toSortedList();
