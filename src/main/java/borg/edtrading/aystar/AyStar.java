@@ -73,9 +73,21 @@ public class AyStar {
                 this.closestToGoalSoFar = path;
             }
 
-            if (this.closed.size() % 10000 == 0 && logger.isTraceEnabled()) {
-                logger.trace(String.format("Open: %,15d / Closed: %,15d || Closest so far: %s with %d jump(s), %.0fly travelled, %.0fly remaining", this.open.size(), this.closed.size(), this.closestToGoalSoFar.getMinimizedStarSystem().toString(),
-                        this.closestToGoalSoFar.getTotalJumps(), this.closestToGoalSoFar.getTravelledDistanceLy(), this.closestToGoalSoFar.getRemainingDistanceLy()));
+            if (this.closed.size() % 10000 == 0) {
+                // Periodic cleanup. Open queue may still contain systems which in the meantime have been reached. Remove those as they are now useless.
+                Path[] temp = this.open.toArray(new Path[this.open.size()]);
+                this.open.clear();
+                for (Path p : temp) {
+                    if (!this.closed.contains(p.getMinimizedStarSystem().getId())) {
+                        this.open.offer(p);
+                    }
+                }
+                logger.debug("Reduced open queue from " + temp.length + " to " + this.open.size() + " entries");
+
+                if (logger.isTraceEnabled()) {
+                    logger.trace(String.format("Open: %,15d / Closed: %,15d || Closest so far: %s with %d jump(s), %.0fly travelled, %.0fly remaining", this.open.size(), this.closed.size(), this.closestToGoalSoFar.getMinimizedStarSystem().toString(),
+                            this.closestToGoalSoFar.getTotalJumps(), this.closestToGoalSoFar.getTravelledDistanceLy(), this.closestToGoalSoFar.getRemainingDistanceLy()));
+                }
             }
 
             if (path.getMinimizedStarSystem().equals(this.goal)) {
@@ -101,6 +113,33 @@ public class AyStar {
                     }
                 }
             }
+
+            //            final int maxOpenSize = 1000000;
+            //            if (this.open.size() > maxOpenSize) {
+            //                int prevSize = this.open.size();
+            //                final float removeIfRemainingAbove = this.closestToGoalSoFar.getRemainingDistanceLy() + 10 * this.fuelJumpLUT.getJumpRangeFuelOpt();
+            //                List<Path> tempDist = new ArrayList<>(maxOpenSize / 2);
+            //                List<Path> tempSize = new ArrayList<>(maxOpenSize / 2);
+            //                while (this.open.size() > 0) {
+            //                    Path p = this.open.poll();
+            //                    if (p.getRemainingDistanceLy() < removeIfRemainingAbove) {
+            //                        tempDist.add(p);
+            //                    }
+            //                    if (tempSize.size() < maxOpenSize / 2) {
+            //                        tempSize.add(p);
+            //                    }
+            //                }
+            //                //this.open.clear();
+            //                if (tempDist.size() < tempSize.size()) {
+            //                    logger.info("Shrinked open queue from " + prevSize + " to " + tempDist.size() + " by using distance. Using count would have left " + tempSize.size() + " elements. Closest dist to goal = "
+            //                            + String.format(Locale.US, "%.0f Ly", this.closestToGoalSoFar.getRemainingDistanceLy()));
+            //                    this.open.addAll(tempDist);
+            //                } else {
+            //                    logger.info("Shrinked open queue from " + prevSize + " to " + tempSize.size() + " by using count. Using distance would have left " + tempDist.size() + " elements. Closest dist to goal = "
+            //                            + String.format(Locale.US, "%.0f Ly", this.closestToGoalSoFar.getRemainingDistanceLy()));
+            //                    this.open.addAll(tempSize);
+            //                }
+            //            }
         }
 
         return null;
