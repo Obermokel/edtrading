@@ -33,7 +33,7 @@ public class InventoryManagementApp {
         final String commander = "Mokel DeLorean";
         final ItemType cleanup = ItemType.ELEMENT;
 
-        Journal journal = new Journal(JournalReader.readEntireJournal(Constants.JOURNAL_DIR));
+        Journal journal = new Journal(new JournalReader().readEntireJournal(Constants.JOURNAL_DIR));
 
         Set<String> unknown = new TreeSet<>();
         SortedMap<Item, Integer> inventory = createDefaultInventory(commander);

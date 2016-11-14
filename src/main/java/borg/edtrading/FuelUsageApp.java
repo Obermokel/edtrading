@@ -47,7 +47,7 @@ public class FuelUsageApp {
         lut.writeFuelUsageCsv(new File(Constants.TEMP_DIR, "fuelUsage.csv"));
         lut.writeJumpRangeCsv(new File(Constants.TEMP_DIR, "jumpRange.csv"));
 
-        Journal journal = new Journal(JournalReader.readEntireJournal(Constants.JOURNAL_DIR));
+        Journal journal = new Journal(new JournalReader().readEntireJournal(Constants.JOURNAL_DIR));
         List<FSDJumpEntry> fsdJumpEntries = MiscUtil.unsafeCast(journal.getEntries(fromDate, toDate, Event.FSDJump));
 
         int jumpNo = 0;

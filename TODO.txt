@@ -1,4 +1,5 @@
 TODO:
+* EDDB Downloader
 * BodyUpdater: Stars, Rings, ...
 * Bei Namen keine UNKNOWN akzeptieren, vllt nichtmal GUESSED
 * Ring Names checken
@@ -23,11 +24,14 @@ TODO BodyUpdater:
 
 TODO Tablet:
 left perm: system/body -- est exp data
+left popup: scanned s.th.
 left 1: missions, claims/bonds, fines
 left 2: neutron highway map
 right perm: inv/mat/dat %
+right popup: collected s.th.
 right 1: inventory (commodities, elements, manufactured, data)
 right 2: engineer blueprints
+both popup: fuel warning
 
 SUSPICIOUS:
 * 2016-09-28 08-11-03 Ross 847.png: Viele Störungen...

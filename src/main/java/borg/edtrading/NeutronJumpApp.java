@@ -159,7 +159,7 @@ public class NeutronJumpApp {
         List<Path> sortedPaths = path.toSortedList();
 
         // Read the journal to see which systems/bodies have already been discovered
-        Journal journal = new Journal(JournalReader.readEntireJournal(Constants.JOURNAL_DIR));
+        Journal journal = new Journal(new JournalReader().readEntireJournal(Constants.JOURNAL_DIR));
 
         // Write route as VoiceAttack TXT file
         String route = routeToVoiceAttackTxt(sortedPaths, starSystemsWithNeutronStars, systemsBySpectralClass, galaxy, fuelJumpLUT, journal);
