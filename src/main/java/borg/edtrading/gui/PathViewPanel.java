@@ -31,6 +31,10 @@ public class PathViewPanel extends JPanel {
 
     static final Logger logger = LogManager.getLogger(PathViewPanel.class);
 
+    static final int PREFERRED_SIZE_TOP = 850;
+    static final int PREFERRED_HEIGHT_SIDE = 80;
+    static final int PREFERRED_FACTOR_SIDE = 16;
+
     // Constructor input
     private final String viewName;
     private final Galaxy galaxy;
@@ -44,14 +48,15 @@ public class PathViewPanel extends JPanel {
     private float ymax;
     private float zmin;
     private float zmax;
-    private float sizely;
+    private float sizeXZ;
+    private float sizeY;
     private List<StarSystem> referenceSystems;
 
     // Updated at runtime
     private Path path = null;
 
     public PathViewPanel(String viewName, Galaxy galaxy, StarSystem fromSystem, StarSystem toSystem) {
-        this.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        this.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
         this.viewName = viewName;
         this.galaxy = galaxy;
@@ -65,23 +70,29 @@ public class PathViewPanel extends JPanel {
             this.ymax = Math.max(this.ymax, system.getCoord().getY());
             this.zmin = Math.min(this.zmin, system.getCoord().getZ());
             this.zmax = Math.max(this.zmax, system.getCoord().getZ());
-            this.sizely = Math.max(this.sizely, this.xmax - this.xmin);
-            this.sizely = Math.max(this.sizely, this.ymax - this.ymin);
-            this.sizely = Math.max(this.sizely, this.zmax - this.zmin);
+            this.sizeXZ = Math.max(this.sizeXZ, this.xmax - this.xmin);
+            this.sizeY = Math.max(this.sizeY, this.ymax - this.ymin);
+            this.sizeXZ = Math.max(this.sizeXZ, this.zmax - this.zmin);
         }
-        this.sizely *= 1.25f;
-        if (this.xmax - this.xmin < this.sizely) {
-            float diff = this.sizely - (this.xmax - this.xmin);
+        this.sizeXZ *= 1.25f;
+        this.sizeY *= 1.25f;
+        if (this.sizeY < this.sizeXZ / PREFERRED_FACTOR_SIDE) {
+            this.sizeY = this.sizeXZ / PREFERRED_FACTOR_SIDE;
+        } else if (this.sizeXZ < PREFERRED_FACTOR_SIDE * this.sizeY) {
+            this.sizeXZ = PREFERRED_FACTOR_SIDE * this.sizeY;
+        }
+        if (this.xmax - this.xmin < this.sizeXZ) {
+            float diff = this.sizeXZ - (this.xmax - this.xmin);
             this.xmin -= (diff / 2);
             this.xmax += (diff / 2);
         }
-        if (this.ymax - this.ymin < this.sizely) {
-            float diff = this.sizely - (this.ymax - this.ymin);
+        if (this.ymax - this.ymin < this.sizeY) {
+            float diff = this.sizeY - (this.ymax - this.ymin);
             this.ymin -= (diff / 2);
             this.ymax += (diff / 2);
         }
-        if (this.zmax - this.zmin < this.sizely) {
-            float diff = this.sizely - (this.zmax - this.zmin);
+        if (this.zmax - this.zmin < this.sizeXZ) {
+            float diff = this.sizeXZ - (this.zmax - this.zmin);
             this.zmin -= (diff / 2);
             this.zmax += (diff / 2);
         }
@@ -110,19 +121,39 @@ public class PathViewPanel extends JPanel {
 
     @Override
     public Dimension getPreferredSize() {
-        return new Dimension(400, 400);
+        if ("Top view".equals(this.viewName)) {
+            return new Dimension(PREFERRED_SIZE_TOP, PREFERRED_SIZE_TOP);
+        } else {
+            return new Dimension(PREFERRED_HEIGHT_SIDE * PREFERRED_FACTOR_SIDE, PREFERRED_HEIGHT_SIDE);
+        }
     }
 
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+        // Black background
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, this.getWidth(), this.getHeight());
+
         // Draw label
-        g.setColor(Color.GRAY);
-        g.drawString(this.viewName, 10, 20);
+        g.setColor(Color.LIGHT_GRAY);
+        g.drawString(this.viewName, 20, 20);
+
+        // Draw -1000Ly line
+        g.setColor(Color.DARK_GRAY);
+        if ("Left view".equals(this.viewName)) {
+            Point fromPoint = this.coordToPoint(new Coord(0, -1000, -sizeXZ));
+            Point toPoint = this.coordToPoint(new Coord(0, -1000, sizeXZ));
+            g.drawLine(fromPoint.x, fromPoint.y, toPoint.x, toPoint.y);
+        } else if ("Front view".equals(this.viewName)) {
+            Point fromPoint = this.coordToPoint(new Coord(-sizeXZ, -1000, 0));
+            Point toPoint = this.coordToPoint(new Coord(sizeXZ, -1000, 0));
+            g.drawLine(fromPoint.x, fromPoint.y, toPoint.x, toPoint.y);
+        }
 
         // Draw reference systems
-        g.setColor(Color.YELLOW);
+        g.setColor(Color.GRAY);
         for (StarSystem refSystem : this.referenceSystems) {
             Coord coord = refSystem.getCoord();
             Point point = this.coordToPoint(coord);
@@ -132,19 +163,19 @@ public class PathViewPanel extends JPanel {
         }
 
         // Draw from-system
-        g.setColor(Color.BLUE);
+        g.setColor(Color.GRAY);
         Point pFrom = this.coordToPoint(this.fromSystem.getCoord());
         g.fillOval(pFrom.x, pFrom.y, 5, 5);
         g.drawString(this.fromSystem.getName(), pFrom.x, pFrom.y);
 
         // Draw to-system
-        g.setColor(Color.RED);
+        g.setColor(Color.GRAY);
         Point pTo = this.coordToPoint(this.toSystem.getCoord());
         g.fillOval(pTo.x, pTo.y, 5, 5);
         g.drawString(this.toSystem.getName(), pTo.x, pTo.y);
 
         // Draw path
-        g.setColor(Color.BLACK);
+        g.setColor(Color.ORANGE);
         if (this.path != null) {
             Path p = this.path;
             while (p.getPrev() != null) {
@@ -165,9 +196,9 @@ public class PathViewPanel extends JPanel {
     }
 
     private Point coordToPoint(Coord coord) {
-        float xPercent = (coord.getX() - this.xmin) / this.sizely;
-        float yPercent = 1.0f - ((coord.getZ() - this.zmin) / this.sizely);
-        float zPercent = 1.0f - ((coord.getY() - this.ymin) / this.sizely);
+        float xPercent = (coord.getX() - this.xmin) / this.sizeXZ;
+        float yPercent = 1.0f - ((coord.getZ() - this.zmin) / this.sizeXZ);
+        float zPercent = 1.0f - ((coord.getY() - this.ymin) / this.sizeY);
 
         if ("Top view".equals(this.viewName)) {
             return new Point(Math.round(xPercent * this.getWidth()), Math.round(yPercent * this.getHeight()));

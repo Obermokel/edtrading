@@ -7,6 +7,7 @@ import borg.edtrading.data.Coord;
 import borg.edtrading.data.Galaxy;
 import borg.edtrading.data.StarSystem;
 import borg.edtrading.gui.PathViewPanel;
+import borg.edtrading.gui.RouteViewPanel;
 import borg.edtrading.journal.Journal;
 import borg.edtrading.journal.JournalReader;
 import borg.edtrading.util.FuelAndJumpRangeLookup;
@@ -16,7 +17,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.common.lang3.StringUtils;
 
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -33,8 +35,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 import static org.apache.commons.lang3.StringEscapeUtils.*;
 
@@ -54,10 +54,10 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        //        final String fromName = "Colonia";
-        //        final String toName = "Sol";
-        final String fromName = "Sol";
-        final String toName = "Choomuia UI-K d8-4692";
+        final String fromName = "Colonia";
+        final String toName = "Sol";
+        //        final String fromName = "Sol";
+        //        final String toName = "Sagittarius A*";
 
         final int maxFuelTons = 88;
         final float maxFuelPerJump = 8.32f;
@@ -104,24 +104,42 @@ public class NeutronJumpApp {
 
         JFrame frame = new JFrame("Route");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new GridLayout(2, 2));
-        JPanel routePanel = new JPanel();
-        routePanel.add(new JLabel("Route"));
-        frame.add(routePanel);
+        frame.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        //routeAndTopPanel.setPreferredSize(new Dimension(500, 500));
+        RouteViewPanel routeViewPanel = new RouteViewPanel("Route", galaxy, fromSystem, toSystem);
+        c.gridx = 0;
+        c.gridy = 0;
+        c.gridwidth = 1;
+        c.gridheight = 1;
+        frame.add(routeViewPanel, c);
         PathViewPanel topViewPanel = new PathViewPanel("Top view", galaxy, fromSystem, toSystem);
-        frame.add(topViewPanel);
+        c.gridx = 1;
+        c.gridy = 0;
+        c.gridwidth = 1;
+        c.gridheight = 1;
+        frame.add(topViewPanel, c);
         PathViewPanel leftViewPanel = new PathViewPanel("Left view", galaxy, fromSystem, toSystem);
-        frame.add(leftViewPanel);
+        c.gridx = 0;
+        c.gridy = 1;
+        c.gridwidth = 2;
+        c.gridheight = 1;
+        frame.add(leftViewPanel, c);
         PathViewPanel frontViewPanel = new PathViewPanel("Front view", galaxy, fromSystem, toSystem);
-        frame.add(frontViewPanel);
-        frame.pack();
+        c.gridx = 0;
+        c.gridy = 2;
+        c.gridwidth = 2;
+        c.gridheight = 1;
+        frame.add(frontViewPanel, c);
         frame.setVisible(true);
+        frame.pack();
 
         AyStar ayStar = new AyStar();
         ayStar.initialize(fromSystem, toSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, fuelJumpLUT);
         final long start = System.currentTimeMillis();
         Path path = null;
         while ((path = ayStar.findPath()) != null && !path.getMinimizedStarSystem().getId().equals(toSystem.getId())) {
+            routeViewPanel.updatePath(path);
             topViewPanel.updatePath(path);
             leftViewPanel.updatePath(path);
             frontViewPanel.updatePath(path);
@@ -132,6 +150,7 @@ public class NeutronJumpApp {
             logger.warn("No path found");
             return;
         } else {
+            routeViewPanel.updatePath(path);
             topViewPanel.updatePath(path);
             leftViewPanel.updatePath(path);
             frontViewPanel.updatePath(path);

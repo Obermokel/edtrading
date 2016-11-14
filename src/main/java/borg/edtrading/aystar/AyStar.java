@@ -142,7 +142,7 @@ public class AyStar {
             //            }
 
             if (this.closed.size() % 1000 == 0) {
-                return path;
+                return this.closestToGoalSoFar;
             }
         }
 
