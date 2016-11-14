@@ -21,6 +21,14 @@ TODO BodyUpdater:
 * ringType
 * moonMasses
 
+TODO Tablet:
+left perm: system/body -- est exp data
+left 1: missions, claims/bonds, fines
+left 2: neutron highway map
+right perm: inv/mat/dat %
+right 1: inventory (commodities, elements, manufactured, data)
+right 2: engineer blueprints
+
 SUSPICIOUS:
 * 2016-09-28 08-11-03 Ross 847.png: Viele Störungen...
 * 2016-09-30 17-21-44 Deciat.png: Scanned text '...::2,040.62LS' does not look like a valid value for arrivalpoint -- java.lang.NumberFormatException: Fixed text ',,,::2,040.62LS' does not match the expected pattern
