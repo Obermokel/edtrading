@@ -17,6 +17,7 @@ public enum Item {
     //@formatter:off
     ABBERANT_SHIELD_PATTERN_ANALYSIS("ABBERANT SHIELD PATTERN ANALYSIS", ItemType.DATA, 0),
     ABNORMAL_COMPACT_EMISSIONS_DATA("ABNORMAL COMPACT EMISSIONS DATA", ItemType.DATA, 0),
+    ADAPTIVE_ENCRYPTIONS_CAPTURE("ADAPTIVE ENCRYPTIONS CAPTURE", ItemType.DATA, 0),
     ANOMALOUS_BULK_SCAN_DATA("ANOMALOUS BULK SCAN DATA", ItemType.DATA, 0),
     ANOMALOUS_FSD_TELEMETRY("ANOMALOUS FSD TELEMETRY", ItemType.DATA, 0),
     ANTIMONY("ANTIMONY", ItemType.ELEMENT, 0),
@@ -24,6 +25,7 @@ public enum Item {
     ATYPICAL_DISRUPTED_WAKE_ECHOES("ATYPICAL DISRUPTED WAKE ECHOES", ItemType.DATA, 0),
     ATYPICAL_ENCRYPTION_ARCHIVES("ATYPICAL ENCRYPTION ARCHIVES", ItemType.DATA, 0),
     BASIC_CONDUCTORS("BASIC CONDUCTORS", ItemType.MATERIAL, 0),
+    BIOTECH_CONDUCTORS("BIOTECH CONDUCTORS", ItemType.MATERIAL, 0),
     CADMIUM("CADMIUM", ItemType.ELEMENT, 0),
     CLASSIFIED_SCAN_FRAGMENT("CLASSIFIED SCAN FRAGMENT", ItemType.DATA, 0),
     CARBON("CARBON", ItemType.ELEMENT, 0),
@@ -40,7 +42,8 @@ public enum Item {
     CORE_DYNAMICS_COMPOSITES("CORE DYNAMICS COMPOSITES", ItemType.MATERIAL, 0),
     CRACKED_INDUSTRIAL_FIRMWARE("CRACKED INDUSTRIAL FIRMWARE", ItemType.DATA, 0),
     DATAMINED_WAKE_EXCEPTIONS("DATAMINED WAKE EXCEPTIONS", ItemType.DATA, 0),
-    DISTORED_SHIELD_CYCLE_RECORDINGS("DISTORED SHIELD CYCLE RECORDINGS", ItemType.DATA, 0),
+    DECODED_EMISSION_DATA("DECODED EMISSION DATA", ItemType.DATA, 0),
+    DISTORTED_SHIELD_CYCLE_RECORDINGS("DISTORTED SHIELD CYCLE RECORDINGS", ItemType.DATA, 0),
     DIVERGENT_SCAN_DATA("DIVERGENT SCAN DATA", ItemType.DATA, 0),
     ECCENTRIC_HYPERSPACE_TRAJECTORIES("ECCENTRIC HYPERSPACE TRAJECTORIES", ItemType.DATA, 0),
     ELECTROCHEMICAL_ARRAYS("ELECTROCHEMICAL ARRAYS", ItemType.MATERIAL, 0),
@@ -51,6 +54,7 @@ public enum Item {
     GALVANISING_ALLOYS("GALVANISING ALLOYS", ItemType.MATERIAL, 0),
     GERMANIUM("GERMANIUM", ItemType.ELEMENT, 0),
     GRID_RESISTORS("GRID RESISTORS", ItemType.MATERIAL, 0),
+    HEAT_CONDUCTION_WIRING("HEAT CONDUCTION WIRING", ItemType.MATERIAL, 0),
     HEAT_DISPERSION_PLATE("HEAT DISPERSION PLATE", ItemType.MATERIAL, 0),
     HEAT_EXCHANGERS("HEAT EXCHANGERS", ItemType.MATERIAL, 0),
     HEAT_VANES("HEAT VANES", ItemType.MATERIAL, 0),
@@ -66,12 +70,18 @@ public enum Item {
     MECHANICAL_SCRAP("MECHANICAL SCRAP", ItemType.MATERIAL, 0),
     MERCURY("MERCURY", ItemType.ELEMENT, 0),
     MILITARY_GRADE_ALLOYS("MILITARY GRADE ALLOYS", ItemType.MATERIAL, 0),
+    MILITARY_SUPERCAPACITORS("MILITARY SUPERCAPACITORS", ItemType.MATERIAL, 0),
     MODIFIED_CONSUMER_FIRMWARE("MODIFIED CONSUMER FIRMWARE", ItemType.DATA, 0),
     MODIFIED_EMBEDDED_FIRMWARE("MODIFIED EMBEDDED FIRMWARE", ItemType.DATA, 0),
     MOLYBDENUM("MOLYBDENUM", ItemType.ELEMENT, 0),
     NICKEL("NICKEL", ItemType.ELEMENT, 0),
-    NIOBIUM("NIOBIUM", ItemType.ELEMENT, 0),
+    NIOBIUM("NIOBIUM", ItemType.ELEMENT, 0),//pattern alpha obelisk data
     OPEN_SYMMETRIC_KEYS("OPEN SYMMETRIC KEYS", ItemType.DATA, 0),
+    PATTERN_ALPHA_OBELISK_DATA("PATTERN ALPHA OBELISK DATA", ItemType.DATA, 0),
+    PATTERN_BETA_OBELISK_DATA("PATTERN BETA OBELISK DATA", ItemType.DATA, 0),
+    PATTERN_GAMMA_OBELISK_DATA("PATTERN GAMMA OBELISK DATA", ItemType.DATA, 0),
+    PATTERN_DELTA_OBELISK_DATA("PATTERN DELTA OBELISK DATA", ItemType.DATA, 0),
+    PATTERN_EPSILON_OBELISK_DATA("PATTERN EPSILON OBELISK DATA", ItemType.DATA, 0),
     PECULIAR_SHIELD_FREQUENCY_DATA("PECULIAR SHIELD FREQUENCY DATA", ItemType.DATA, 0),
     PHARMACEUTICAL_ISOLATORS("PHARMACEUTICAL ISOLATORS", ItemType.MATERIAL, 0),
     PHASE_ALLOYS("PHASE ALLOYS", ItemType.MATERIAL, 0),
@@ -101,6 +111,7 @@ public enum Item {
     TUNGSTEN("TUNGSTEN", ItemType.ELEMENT, 0),
     UNEXPECTED_EMISSION_DATA("UNEXPECTED EMISSION DATA", ItemType.DATA, 0),
     UNIDENTIFIED_SCAN_ARCHIVES("UNIDENTIFIED SCAN ARCHIVES", ItemType.DATA, 0),
+    UNKNOWN_FRAGMENT("UNKNOWN FRAGMENT", ItemType.MATERIAL, 0),
     UNTYPICAL_SHIELD_SCANS("UNTYPICAL SHIELD SCANS", ItemType.DATA, 0),
     UNUSUAL_ENCRYPTED_FILES("UNUSUAL ENCRYPTED FILES", ItemType.DATA, 0),
     VANADIUM("VANADIUM", ItemType.ELEMENT, 0),
@@ -153,6 +164,132 @@ public enum Item {
             }
         }
         return bestItem;
+    }
+
+    public static Item byJournalName(String journalName) {
+        if ("arsenic".equals(journalName)) {
+            return Item.ARSENIC;
+        } else if ("biotechconductors".equals(journalName)) {
+            return Item.BIOTECH_CONDUCTORS;
+        } else if ("cadmium".equals(journalName)) {
+            return Item.CADMIUM;
+        } else if ("carbon".equals(journalName)) {
+            return Item.CARBON;
+        } else if ("chemicaldistillery".equals(journalName)) {
+            return Item.CHEMICAL_DISTILLERY;
+        } else if ("chemicalmanipulators".equals(journalName)) {
+            return Item.CHEMICAL_MANIPULATORS;
+        } else if ("chemicalprocessors".equals(journalName)) {
+            return Item.CHEMICAL_PROCESSORS;
+        } else if ("chromium".equals(journalName)) {
+            return Item.CHROMIUM;
+        } else if ("compoundshielding".equals(journalName)) {
+            return Item.COMPOUND_SHIELDING;
+        } else if ("conductiveceramics".equals(journalName)) {
+            return Item.CONDUCTIVE_CERAMICS;
+        } else if ("conductivecomponents".equals(journalName)) {
+            return Item.CONDUCTIVE_COMPONENTS;
+        } else if ("conductivepolymers".equals(journalName)) {
+            return Item.CONDUCTIVE_POLYMERS;
+        } else if ("configurablecomponents".equals(journalName)) {
+            return Item.CONFIGURABLE_COMPONENTS;
+        } else if ("electrochemicalarrays".equals(journalName)) {
+            return Item.ELECTROCHEMICAL_ARRAYS;
+        } else if ("exquisitefocuscrystals".equals(journalName)) {
+            return Item.EXQUISITE_FOCUS_CRYSTALS;
+        } else if ("focuscrystals".equals(journalName)) {
+            return Item.FOCUS_CRYSTALS;
+        } else if ("galvanisingalloys".equals(journalName)) {
+            return Item.GALVANISING_ALLOYS;
+        } else if ("germanium".equals(journalName)) {
+            return Item.GERMANIUM;
+        } else if ("heatconductionwiring".equals(journalName)) {
+            return Item.HEAT_CONDUCTION_WIRING;
+        } else if ("heatdispersionplate".equals(journalName)) {
+            return Item.HEAT_DISPERSION_PLATE;
+        } else if ("heatvanes".equals(journalName)) {
+            return Item.HEAT_VANES;
+        } else if ("imperialshielding".equals(journalName)) {
+            return Item.IMPERIAL_SHIELDING;
+        } else if ("iron".equals(journalName)) {
+            return Item.IRON;
+        } else if ("manganese".equals(journalName)) {
+            return Item.MANGANESE;
+        } else if ("mechanicalcomponents".equals(journalName)) {
+            return Item.MECHANICAL_COMPONENTS;
+        } else if ("mechanicalequipment".equals(journalName)) {
+            return Item.MECHANICAL_EQUIPMENT;
+        } else if ("mechanicalscrap".equals(journalName)) {
+            return Item.MECHANICAL_SCRAP;
+        } else if ("molybdenum".equals(journalName)) {
+            return Item.MOLYBDENUM;
+        } else if ("nickel".equals(journalName)) {
+            return Item.NICKEL;
+        } else if ("niobium".equals(journalName)) {
+            return Item.NIOBIUM;
+        } else if ("pharmaceuticalisolators".equals(journalName)) {
+            return Item.PHARMACEUTICAL_ISOLATORS;
+        } else if ("phasealloys".equals(journalName)) {
+            return Item.PHASE_ALLOYS;
+        } else if ("phosphorus".equals(journalName)) {
+            return Item.PHOSPHORUS;
+        } else if ("protolightalloys".equals(journalName)) {
+            return Item.PROTO_LIGHT_ALLOYS;
+        } else if ("refinedfocuscrystals".equals(journalName)) {
+            return Item.REFINED_FOCUS_CRYSTALS;
+        } else if ("salvagedalloys".equals(journalName)) {
+            return Item.SALVAGED_ALLOYS;
+        } else if ("selenium".equals(journalName)) {
+            return Item.SELENIUM;
+        } else if ("shieldemitters".equals(journalName)) {
+            return Item.SHIELD_EMITTERS;
+        } else if ("sulphur".equals(journalName)) {
+            return Item.SULPHUR;
+        } else if ("thermicalloys".equals(journalName)) {
+            return Item.THERMIC_ALLOYS;
+        } else if ("vanadium".equals(journalName)) {
+            return Item.VANADIUM;
+        } else if ("wornshieldemitters".equals(journalName)) {
+            return Item.WORN_SHIELD_EMITTERS;
+        } else if ("zinc".equals(journalName)) {
+            return Item.ZINC;
+        } else if ("zirconium".equals(journalName)) {
+            return Item.ZIRCONIUM;
+        }
+
+        if ("bulkscandata".equals(journalName)) {
+            return Item.ANOMALOUS_BULK_SCAN_DATA;
+        } else if ("consumerfirmware".equals(journalName)) {
+            return Item.MODIFIED_CONSUMER_FIRMWARE;
+        } else if ("dataminedwake".equals(journalName)) {
+            return Item.DATAMINED_WAKE_EXCEPTIONS;
+        } else if ("decodedemissiondata".equals(journalName)) {
+            return Item.DECODED_EMISSION_DATA;
+        } else if ("emissiondata".equals(journalName)) {
+            return null; // TODO
+        } else if ("encodedscandata".equals(journalName)) {
+            return null; // TODO
+        } else if ("fsdtelemetry".equals(journalName)) {
+            return Item.ANOMALOUS_FSD_TELEMETRY;
+        } else if ("industrialfirmware".equals(journalName)) {
+            return Item.CRACKED_INDUSTRIAL_FIRMWARE;
+        } else if ("legacyfirmware".equals(journalName)) {
+            return Item.SPECIALISED_LEGACY_FIRMWARE;
+        } else if ("scanarchives".equals(journalName)) {
+            return Item.UNIDENTIFIED_SCAN_ARCHIVES;
+        } else if ("scandatabanks".equals(journalName)) {
+            return Item.CLASSIFIED_SCAN_DATABANKS;
+        } else if ("shieldcyclerecordings".equals(journalName)) {
+            return Item.DISTORTED_SHIELD_CYCLE_RECORDINGS;
+        } else if ("shielddensityreports".equals(journalName)) {
+            return null; // TODO
+        } else if ("shieldpatternanalysis".equals(journalName)) {
+            return Item.ABBERANT_SHIELD_PATTERN_ANALYSIS;
+        } else if ("shieldsoakanalysis".equals(journalName)) {
+            return Item.INCONSISTENT_SHIELD_SOAK_ANALYSIS;
+        }
+
+        return null;
     }
 
     public String getName() {
