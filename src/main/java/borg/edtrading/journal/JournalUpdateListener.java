@@ -1,6 +1,4 @@
-package borg.edtrading.sidepanel;
-
-import borg.edtrading.journal.AbstractJournalEntry;
+package borg.edtrading.journal;
 
 /**
  * JournalUpdateListener

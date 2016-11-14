@@ -5,6 +5,7 @@ import borg.edtrading.journal.AbstractJournalEntry;
 import borg.edtrading.journal.EngineerCraftEntry;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.Journal;
+import borg.edtrading.journal.JournalUpdateListener;
 import borg.edtrading.journal.MaterialCollectedEntry;
 import borg.edtrading.journal.MaterialDiscardedEntry;
 import org.apache.logging.log4j.LogManager;

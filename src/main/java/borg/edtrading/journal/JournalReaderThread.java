@@ -1,9 +1,5 @@
-package borg.edtrading.sidepanel;
+package borg.edtrading.journal;
 
-import borg.edtrading.journal.AbstractJournalEntry;
-import borg.edtrading.journal.Journal;
-import borg.edtrading.journal.JournalReader;
-import borg.edtrading.journal.UnknownEventException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;

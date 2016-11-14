@@ -1,6 +1,6 @@
 package borg.edtrading;
 
-import borg.edtrading.sidepanel.JournalReaderThread;
+import borg.edtrading.journal.JournalReaderThread;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
