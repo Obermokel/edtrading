@@ -136,6 +136,11 @@ public class Inventory implements JournalUpdateListener, Serializable {
     }
 
     @Override
+    public void onNewJournalLine(String line) {
+        // Do nothing
+    }
+
+    @Override
     public void onNewJournalEntry(AbstractJournalEntry entry) {
         try {
             if (entry.getEvent() == Event.MaterialCollected) {

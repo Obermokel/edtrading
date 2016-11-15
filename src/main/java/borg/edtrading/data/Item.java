@@ -290,6 +290,10 @@ public enum Item {
             return Item.INCONSISTENT_SHIELD_SOAK_ANALYSIS;
         }
 
+        if ("Drones".equals(journalName)) {
+            return Item.DRONES;
+        }
+
         return null;
     }
 

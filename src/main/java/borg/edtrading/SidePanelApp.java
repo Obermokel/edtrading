@@ -1,12 +1,14 @@
 package borg.edtrading;
 
 import borg.edtrading.gui.InventoryPanel;
+import borg.edtrading.gui.RawJournalLogPanel;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.sidepanel.Inventory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,15 +39,24 @@ public class SidePanelApp {
         journalReaderThread.init();
         journalReaderThread.start();
 
-        // Create all panels and register them to their corresponding journal listener
+        // Create all panels and register them to their corresponding feed
         InventoryPanel inventoryPanel = new InventoryPanel(inventory);
         inventory.addListener(inventoryPanel);
+        RawJournalLogPanel rawJournalLogPanel = new RawJournalLogPanel();
+        journalReaderThread.addListener(rawJournalLogPanel);
 
         // Construct the window with all panels
         JFrame frame = new JFrame("SidePanel");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new FlowLayout());
-        frame.add(inventoryPanel);
+        frame.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        frame.add(inventoryPanel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        frame.add(rawJournalLogPanel, gbc);
         frame.pack();
         frame.setVisible(true);
     }

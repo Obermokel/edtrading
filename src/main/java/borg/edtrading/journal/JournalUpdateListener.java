@@ -7,6 +7,8 @@ package borg.edtrading.journal;
  */
 public interface JournalUpdateListener {
 
+    void onNewJournalLine(String line);
+
     void onNewJournalEntry(AbstractJournalEntry entry);
 
 }

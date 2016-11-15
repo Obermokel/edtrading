@@ -102,7 +102,15 @@ public class JournalReaderThread extends Thread {
                         this.lastProcessedLineNumber = lineNumber;
 
                         try {
-                            AbstractJournalEntry entry = this.reader.readJournalLine(lines.get(lineNumber - 1));
+                            String line = lines.get(lineNumber - 1);
+                            for (JournalUpdateListener listener : this.listeners) {
+                                try {
+                                    listener.onNewJournalLine(line);
+                                } catch (Exception e) {
+                                    logger.warn(listener + " failed: " + e);
+                                }
+                            }
+                            AbstractJournalEntry entry = this.reader.readJournalLine(line);
 
                             if (entry != null) {
                                 this.journal.add(entry);

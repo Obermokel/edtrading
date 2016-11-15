@@ -3,6 +3,7 @@ package borg.edtrading.gui;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.sidepanel.Inventory;
 import borg.edtrading.sidepanel.InventoryListener;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -12,13 +13,17 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
 
@@ -36,6 +41,9 @@ public class InventoryPanel extends JPanel implements InventoryListener {
     private final Inventory inventory;
     private Map<ItemType, InventoryTableModel> tableModelsByType = new HashMap<>();
 
+    private final LinkedList<String> lastLines = new LinkedList<>();
+    private final JTextArea log = new JTextArea();
+
     public InventoryPanel(Inventory inventory) {
         this.inventory = inventory;
 
@@ -46,56 +54,69 @@ public class InventoryPanel extends JPanel implements InventoryListener {
             InventoryTableModel tableModel = new InventoryTableModel(this.inventory, type);
             this.tableModelsByType.put(type, tableModel);
             JTable table = new JTable(tableModel);
-            table.setPreferredSize(new Dimension(450, 800));
+            table.setPreferredSize(new Dimension(360, 600));
             table.setPreferredScrollableViewportSize(table.getPreferredSize());
             table.setFillsViewportHeight(true);
             table.setAutoCreateRowSorter(true);
             for (int i = 0; i < 3; i++) {
                 if (i == 0) {
-                    table.getColumnModel().getColumn(i).setPreferredWidth(250);
+                    table.getColumnModel().getColumn(i).setPreferredWidth(220);
                 } else {
-                    table.getColumnModel().getColumn(i).setPreferredWidth(100);
+                    table.getColumnModel().getColumn(i).setPreferredWidth(70);
                 }
             }
             JScrollPane scrollPane = new JScrollPane(table);
             scrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), type.name(), TitledBorder.CENTER, TitledBorder.TOP));
             this.add(scrollPane);
         }
+
+        this.log.setPreferredSize(new Dimension(360, 600));
+        JScrollPane scrollPane = new JScrollPane(this.log);
+        scrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "HISTORY", TitledBorder.CENTER, TitledBorder.TOP));
+        this.add(scrollPane);
     }
 
     @Override
     public void onInventoryReset(ItemType type, String name, int count) {
         this.tableModelsByType.get(type).refresh();
+        this.addToLog(String.format(Locale.US, "Reset: %s (%s) to %d", name, type.name(), count));
         this.repaint();
     }
 
     @Override
     public void onInventoryCollected(ItemType type, String name, int count) {
         this.tableModelsByType.get(type).refresh();
+        this.addToLog(String.format(Locale.US, "Collected: %dx %s (%s)", count, name, type.name()));
         this.repaint();
     }
 
     @Override
     public void onInventoryDiscarded(ItemType type, String name, int count) {
         this.tableModelsByType.get(type).refresh();
+        this.addToLog(String.format(Locale.US, "Discarded: %dx %s (%s)", count, name, type.name()));
         this.repaint();
     }
 
     @Override
     public void onInventorySpent(ItemType type, String name, int count) {
         this.tableModelsByType.get(type).refresh();
+        this.addToLog(String.format(Locale.US, "Spent: %dx %s (%s)", count, name, type.name()));
         this.repaint();
+    }
+
+    private void addToLog(String line) {
+        if (StringUtils.isNotEmpty(line)) {
+            this.lastLines.addFirst(line);
+            if (this.lastLines.size() > 100) {
+                this.lastLines.removeLast();
+            }
+            this.log.setText(this.lastLines.stream().collect(Collectors.joining("\n")));
+        }
     }
 
     public static class InventoryTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = 6225525347374881663L;
-
-        //        private final List<InventoryTableRow> rows;
-        //
-        //        public InventoryTableModel(List<InventoryTableRow> rows) {
-        //            this.rows = rows;
-        //        }
 
         private final Inventory inventory;
         private final ItemType type;
