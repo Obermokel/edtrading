@@ -5,6 +5,7 @@ import borg.edtrading.journal.JournalReaderThread;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.FlowLayout;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,6 +35,7 @@ public class SidePanelApp {
         // Construct the window with all panels
         JFrame frame = new JFrame("SidePanel");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new FlowLayout());
         frame.add(inventoryPanel);
         frame.pack();
         frame.setVisible(true);

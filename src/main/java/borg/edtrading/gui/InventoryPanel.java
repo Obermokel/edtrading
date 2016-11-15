@@ -13,17 +13,23 @@ import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Arrays;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.Vector;
 
-import javax.swing.BoxLayout;
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.border.TitledBorder;
+import javax.swing.table.AbstractTableModel;
 
 /**
  * InventoryPanel
@@ -121,22 +127,33 @@ public class InventoryPanel extends JPanel implements JournalUpdateListener {
             this.recomputePrioritiesAndOverflow();
 
             this.removeAll();
-            this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-
-            Vector<?> headline = new Vector<>(Arrays.asList("Name", "Have", "Overflow"));
+            this.setLayout(new FlowLayout());
 
             for (ItemType type : this.inventory.keySet()) {
-                Vector<Vector<?>> data = new Vector<>();
+                List<InventoryTableRow> rows = new ArrayList<>();
                 SortedMap<Item, Integer> typeInventory = this.inventory.get(type);
                 for (Item item : typeInventory.keySet()) {
-                    String name = item.getName();
                     int have = typeInventory.getOrDefault(item, 0);
                     int discard = this.overflow.get(type).getOrDefault(item, 0);
-                    data.add(new Vector<>(Arrays.asList(name, have, String.valueOf(discard))));
+                    rows.add(new InventoryTableRow(item, have, discard));
                 }
 
                 // Add the table for this item type
-                this.add(new JTable(data, headline));
+                JTable table = new JTable(new InventoryTableModel(rows));
+                table.setPreferredSize(new Dimension(450, 800));
+                table.setPreferredScrollableViewportSize(table.getPreferredSize());
+                table.setFillsViewportHeight(true);
+                table.setAutoCreateRowSorter(true);
+                for (int i = 0; i < 3; i++) {
+                    if (i == 0) {
+                        table.getColumnModel().getColumn(i).setPreferredWidth(250);
+                    } else {
+                        table.getColumnModel().getColumn(i).setPreferredWidth(100);
+                    }
+                }
+                JScrollPane scrollPane = new JScrollPane(table);
+                scrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), type.name(), TitledBorder.CENTER, TitledBorder.TOP));
+                this.add(scrollPane);
             }
 
             this.repaint();
@@ -202,6 +219,109 @@ public class InventoryPanel extends JPanel implements JournalUpdateListener {
             }
             logger.trace("Will free up: " + totalOverflow);
         }
+    }
+
+    public static class InventoryTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 6225525347374881663L;
+
+        private final List<InventoryTableRow> rows;
+
+        public InventoryTableModel(List<InventoryTableRow> rows) {
+            this.rows = rows;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 3;
+        }
+
+        @Override
+        public String getColumnName(int columnIndex) {
+            if (columnIndex == 0) {
+                return "Name";
+            } else if (columnIndex == 1) {
+                return "Have";
+            } else if (columnIndex == 2) {
+                return "Overflow";
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public int getRowCount() {
+            return this.rows.size();
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            InventoryTableRow row = this.rows.get(rowIndex);
+
+            if (columnIndex == 0) {
+                return row.getItem().getName();
+            } else if (columnIndex == 1) {
+                return row.getHave();
+            } else if (columnIndex == 2) {
+                return row.getOverflow();
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public Class getColumnClass(int columnIndex) {
+            if (columnIndex == 0) {
+                return String.class;
+            } else if (columnIndex == 1) {
+                return Integer.class;
+            } else if (columnIndex == 2) {
+                return Integer.class;
+            } else {
+                return null;
+            }
+        }
+
+    }
+
+    public static class InventoryTableRow implements Serializable {
+
+        private static final long serialVersionUID = -2201846690768816471L;
+
+        private Item item = null;
+        private int have = 0;
+        private int overflow = 0;
+
+        public InventoryTableRow(Item item, int have, int overflow) {
+            this.setItem(item);
+            this.setHave(have);
+            this.setOverflow(overflow);
+        }
+
+        public Item getItem() {
+            return this.item;
+        }
+
+        public void setItem(Item item) {
+            this.item = item;
+        }
+
+        public int getHave() {
+            return this.have;
+        }
+
+        public void setHave(int have) {
+            this.have = have;
+        }
+
+        public int getOverflow() {
+            return this.overflow;
+        }
+
+        public void setOverflow(int overflow) {
+            this.overflow = overflow;
+        }
+
     }
 
     /**
