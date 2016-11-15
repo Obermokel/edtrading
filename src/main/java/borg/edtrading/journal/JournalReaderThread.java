@@ -14,12 +14,11 @@ import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
- * Reads the entire journal upon creation. Then watches the journal dir and
- * updates the journal as the files get updated.
+ * JournalReaderThread
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
@@ -41,7 +40,17 @@ public class JournalReaderThread extends Thread {
 
         this.journalDir = journalDir;
         this.reader = new JournalReader();
-        this.journal = this.init();
+        this.journal = new Journal(Collections.emptyList());
+    }
+
+    public void init() throws IOException {
+        logger.info(this.getName() + " initializing...");
+        //@formatter:off
+        Files.list(this.journalDir)
+                .filter(p -> p.getFileName().toString().startsWith("Journal.") && p.getFileName().toString().endsWith(".log"))
+                .sorted((p1, p2) -> new Long(p1.toFile().lastModified()).compareTo(new Long(p2.toFile().lastModified())))
+                .forEach(p -> this.updateJournal(p.getFileName().toString()));
+        //@formatter:on
     }
 
     @Override
@@ -79,39 +88,6 @@ public class JournalReaderThread extends Thread {
         logger.info(this.getName() + " stopped");
     }
 
-    private Journal init() throws IOException {
-        logger.info("Reading old journal files...");
-        //@formatter:off
-        Stream<Path> journals = Files.list(this.journalDir)
-                .filter(p -> p.getFileName().startsWith("Journal.") && p.getFileName().endsWith(".log"))
-                .sorted((p1, p2) -> new Long(p1.toFile().lastModified()).compareTo(new Long(p2.toFile().lastModified())));
-        //@formatter:on
-
-        List<AbstractJournalEntry> entries = new ArrayList<>();
-        journals.forEach(p -> {
-            try {
-                this.currentFilename = p.getFileName().toString();
-                List<String> lines = Files.readAllLines(p, StandardCharsets.UTF_8);
-                for (int lineNumber = 1; lineNumber <= lines.size(); lineNumber++) {
-                    this.lastProcessedLineNumber = lineNumber;
-                    try {
-                        AbstractJournalEntry entry = this.reader.readJournalLine(lines.get(lineNumber - 1));
-                        if (entry != null) {
-                            entries.add(entry);
-                        }
-                    } catch (UnknownEventException e) {
-                        // Ignore here (should have printed a warning)
-                    }
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to init journal", e);
-            }
-        });
-
-        logger.info("Constructing journal...");
-        return new Journal(entries);
-    }
-
     private void updateJournal(String filename) {
         if (StringUtils.isNotEmpty(filename) && filename.startsWith("Journal.") && filename.endsWith(".log")) {
             try {
@@ -124,9 +100,13 @@ public class JournalReaderThread extends Thread {
                 for (int lineNumber = 1; lineNumber <= lines.size(); lineNumber++) {
                     if (lineNumber > this.lastProcessedLineNumber) {
                         this.lastProcessedLineNumber = lineNumber;
+
                         try {
                             AbstractJournalEntry entry = this.reader.readJournalLine(lines.get(lineNumber - 1));
+
                             if (entry != null) {
+                                this.journal.add(entry);
+
                                 for (JournalUpdateListener listener : this.listeners) {
                                     try {
                                         listener.onNewJournalEntry(entry);

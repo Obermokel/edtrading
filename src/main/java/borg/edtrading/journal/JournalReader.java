@@ -128,8 +128,14 @@ public class JournalReader {
             }
 
             switch (event) {
+                case BuyDrones:
+                    return new BuyDronesEntry(timestamp, event, data);
+                case CollectCargo:
+                    return new CollectCargoEntry(timestamp, event, data);
                 case CrewAssign:
                     return new CrewAssignEntry(timestamp, event, data);
+                case Died:
+                    return new DiedEntry(timestamp, event, data);
                 case Docked:
                     return new DockedEntry(timestamp, event, data);
                 case DockingGranted:
@@ -140,6 +146,8 @@ public class JournalReader {
                     return new DockFighterEntry(timestamp, event, data);
                 case DockSRV:
                     return new DockSRVEntry(timestamp, event, data);
+                case EjectCargo:
+                    return new EjectCargoEntry(timestamp, event, data);
                 case EngineerCraft:
                     return new EngineerCraftEntry(timestamp, event, data);
                 case Fileheader:
@@ -162,12 +170,18 @@ public class JournalReader {
                     return new LoadGameEntry(timestamp, event, data);
                 case Location:
                     return new LocationEntry(timestamp, event, data);
+                case MarketBuy:
+                    return new MarketBuyEntry(timestamp, event, data);
+                case MarketSell:
+                    return new MarketSellEntry(timestamp, event, data);
                 case MaterialCollected:
                     return new MaterialCollectedEntry(timestamp, event, data);
                 case MaterialDiscarded:
                     return new MaterialDiscardedEntry(timestamp, event, data);
                 case MaterialDiscovered:
                     return new MaterialDiscoveredEntry(timestamp, event, data);
+                case MiningRefined:
+                    return new MiningRefinedEntry(timestamp, event, data);
                 case MissionAccepted:
                     return new MissionAcceptedEntry(timestamp, event, data);
                 case MissionCompleted:
@@ -186,14 +200,24 @@ public class JournalReader {
                     return new ReceiveTextEntry(timestamp, event, data);
                 case RefuelAll:
                     return new RefuelAllEntry(timestamp, event, data);
+                case Resurrect:
+                    return new ResurrectEntry(timestamp, event, data);
                 case Scan:
                     return new ScanEntry(timestamp, event, data);
                 case Screenshot:
                     return new ScreenshotEntry(timestamp, event, data);
+                case SellDrones:
+                    return new SellDronesEntry(timestamp, event, data);
                 case SellExplorationData:
                     return new SellExplorationDataEntry(timestamp, event, data);
                 case SendText:
                     return new SendTextEntry(timestamp, event, data);
+                case ShipyardBuy:
+                    return new ShipyardBuyEntry(timestamp, event, data);
+                case ShipyardNew:
+                    return new ShipyardNewEntry(timestamp, event, data);
+                case ShipyardSwap:
+                    return new ShipyardSwapEntry(timestamp, event, data);
                 case SupercruiseEntry:
                     return new SupercruiseEntryEntry(timestamp, event, data);
                 case SupercruiseExit:

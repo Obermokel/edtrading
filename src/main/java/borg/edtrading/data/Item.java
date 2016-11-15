@@ -118,7 +118,8 @@ public enum Item {
     WORN_SHIELD_EMITTERS("WORN SHIELD EMITTERS", ItemType.MANUFACTURED, 0),
     YTTRIUM("YTTRIUM", ItemType.ELEMENT, 0),
     ZINC("ZINC", ItemType.ELEMENT, 0),
-    ZIRCONIUM("ZIRCONIUM", ItemType.ELEMENT, 0);
+    ZIRCONIUM("ZIRCONIUM", ItemType.ELEMENT, 0),
+    DRONES("DRONES", ItemType.COMMODITY, 0);
     //@formatter:on
 
     private final String name;

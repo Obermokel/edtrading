@@ -2,6 +2,7 @@ package borg.edtrading;
 
 import borg.edtrading.gui.InventoryPanel;
 import borg.edtrading.journal.JournalReaderThread;
+import borg.edtrading.sidepanel.Inventory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,9 +29,17 @@ public class SidePanelApp {
         // Create the reader thread which will initially read the entire journal
         JournalReaderThread journalReaderThread = new JournalReaderThread(journalDir);
 
-        // Create all panels and register them to be notified by the reader thread
-        InventoryPanel inventoryPanel = new InventoryPanel(journalReaderThread.getJournal(), commander);
-        journalReaderThread.addListener(inventoryPanel);
+        // Create and register the journal listeners
+        Inventory inventory = Inventory.load(commander);
+        journalReaderThread.addListener(inventory);
+
+        // Init the reader from existing files, then start to watch for changes
+        journalReaderThread.init();
+        journalReaderThread.start();
+
+        // Create all panels and register them to their corresponding journal listener
+        InventoryPanel inventoryPanel = new InventoryPanel(inventory);
+        inventory.addListener(inventoryPanel);
 
         // Construct the window with all panels
         JFrame frame = new JFrame("SidePanel");
@@ -39,9 +48,6 @@ public class SidePanelApp {
         frame.add(inventoryPanel);
         frame.pack();
         frame.setVisible(true);
-
-        // Start the reader thread
-        journalReaderThread.start();
     }
 
 }
