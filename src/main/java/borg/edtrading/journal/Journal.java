@@ -37,7 +37,7 @@ public class Journal {
     /**
      * The caller has to take care that the entry timestamp is &gt;= the last timestamp!
      */
-    public void add(AbstractJournalEntry entry) {
+    void add(AbstractJournalEntry entry) {
         if (entry != null) {
             this.entries.add(entry);
         }
