@@ -325,7 +325,7 @@ public class InventoryPanel extends JPanel implements JournalUpdateListener {
 
             SortedMap<ItemType, SortedMap<Item, Integer>> result = new TreeMap<>();
             result.put(ItemType.ELEMENT, getInventoryOfType(inventory, ItemType.ELEMENT));
-            result.put(ItemType.MATERIAL, getInventoryOfType(inventory, ItemType.MATERIAL));
+            result.put(ItemType.MANUFACTURED, getInventoryOfType(inventory, ItemType.MANUFACTURED));
             result.put(ItemType.DATA, getInventoryOfType(inventory, ItemType.DATA));
             result.put(ItemType.COMMODITY, getInventoryOfType(inventory, ItemType.COMMODITY));
             return result;

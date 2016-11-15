@@ -147,7 +147,7 @@ public class InventoryManagementApp {
         if ("Raw".equals(category)) {
             return ItemType.ELEMENT;
         } else if ("Manufactured".equals(category)) {
-            return ItemType.MATERIAL;
+            return ItemType.MANUFACTURED;
         } else if ("Encoded".equals(category)) {
             return ItemType.DATA;
         } else if ("Commodity".equals(category)) {
