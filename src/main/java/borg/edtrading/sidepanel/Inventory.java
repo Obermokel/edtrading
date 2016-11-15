@@ -143,6 +143,7 @@ public class Inventory implements JournalUpdateListener, Serializable {
     @Override
     public void onNewJournalEntry(AbstractJournalEntry entry) {
         try {
+            // TODO Missions can give mats/cargo
             if (entry.getEvent() == Event.MaterialCollected) {
                 MaterialCollectedEntry e = (MaterialCollectedEntry) entry;
                 this.collected(e.getName(), e.getCount(), null);
