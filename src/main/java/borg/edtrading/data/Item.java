@@ -75,7 +75,7 @@ public enum Item {
     MODIFIED_EMBEDDED_FIRMWARE("MODIFIED EMBEDDED FIRMWARE", ItemType.DATA, 0),
     MOLYBDENUM("MOLYBDENUM", ItemType.ELEMENT, 0),
     NICKEL("NICKEL", ItemType.ELEMENT, 0),
-    NIOBIUM("NIOBIUM", ItemType.ELEMENT, 0),//pattern alpha obelisk data
+    NIOBIUM("NIOBIUM", ItemType.ELEMENT, 0),
     OPEN_SYMMETRIC_KEYS("OPEN SYMMETRIC KEYS", ItemType.DATA, 0),
     PATTERN_ALPHA_OBELISK_DATA("PATTERN ALPHA OBELISK DATA", ItemType.DATA, 0),
     PATTERN_BETA_OBELISK_DATA("PATTERN BETA OBELISK DATA", ItemType.DATA, 0),
@@ -134,7 +134,7 @@ public enum Item {
     public static List<Item> byType(ItemType type) {
         List<Item> result = new ArrayList<>();
         for (Item item : Item.values()) {
-            if (item.getType() == type) {
+            if (item.getType().matches(type)) {
                 result.add(item);
             }
         }
@@ -151,7 +151,7 @@ public enum Item {
         Item bestItem = null;
         float bestItemError = Float.MAX_VALUE;
         for (Item item : Item.values()) {
-            if (type == null || item.getType() == type) {
+            if (type == null || item.getType().matches(type)) {
                 float dist = StringUtils.getLevenshteinDistance(name.toLowerCase(), item.getName().toLowerCase());
                 float len = item.getName().length();
                 float err = dist / len;
@@ -305,7 +305,13 @@ public enum Item {
     }
 
     public static enum ItemType {
-        ELEMENT, MANUFACTURED, DATA, COMMODITY;
+
+        MATERIAL, ELEMENT, MANUFACTURED, DATA, COMMODITY;
+
+        public boolean matches(ItemType t) {
+            return this == t || (t == MATERIAL && (this == ELEMENT || this == ItemType.MANUFACTURED));
+        }
+
     }
 
 }

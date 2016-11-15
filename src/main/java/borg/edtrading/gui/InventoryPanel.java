@@ -204,16 +204,6 @@ public class InventoryPanel extends JPanel implements JournalUpdateListener {
         }
     }
 
-    private static SortedMap<Item, Integer> getInventoryOfType(Map<Item, Integer> inventory, ItemType type) {
-        SortedMap<Item, Integer> result = new TreeMap<>();
-        for (Item item : inventory.keySet()) {
-            if (item.getType() == type) {
-                result.put(item, inventory.get(item));
-            }
-        }
-        return result;
-    }
-
     /**
      * TODO Read from file
      */
@@ -332,6 +322,16 @@ public class InventoryPanel extends JPanel implements JournalUpdateListener {
         } else {
             throw new RuntimeException("Unknown commander '" + commander + "'");
         }
+    }
+
+    private static SortedMap<Item, Integer> getInventoryOfType(Map<Item, Integer> inventory, ItemType type) {
+        SortedMap<Item, Integer> result = new TreeMap<>();
+        for (Item item : inventory.keySet()) {
+            if (item.getType() == type) {
+                result.put(item, inventory.get(item));
+            }
+        }
+        return result;
     }
 
 }
