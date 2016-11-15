@@ -305,7 +305,7 @@ public enum Item {
     }
 
     public static enum ItemType {
-        COMMODITY, ELEMENT, MATERIAL, DATA;
+        ELEMENT, MATERIAL, DATA, COMMODITY;
     }
 
 }

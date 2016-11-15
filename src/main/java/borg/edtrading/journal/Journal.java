@@ -43,6 +43,10 @@ public class Journal {
         }
     }
 
+    public LinkedList<AbstractJournalEntry> getEntries() {
+        return this.getEntries(null, null);
+    }
+
     /**
      * @param fromDate inclusive (can be null)
      * @param toDate exclusive (can be null)

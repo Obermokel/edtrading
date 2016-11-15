@@ -1,6 +1,7 @@
-package borg.edtrading.sidepanel;
+package borg.edtrading.gui;
 
 import borg.edtrading.data.Item;
+import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.journal.AbstractJournalEntry;
 import borg.edtrading.journal.EngineerCraftEntry;
 import borg.edtrading.journal.Event;
@@ -8,32 +9,57 @@ import borg.edtrading.journal.Journal;
 import borg.edtrading.journal.JournalUpdateListener;
 import borg.edtrading.journal.MaterialCollectedEntry;
 import borg.edtrading.journal.MaterialDiscardedEntry;
+import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.Vector;
+
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
+import javax.swing.JTable;
 
 /**
- * InventoryUpdateListener
+ * InventoryPanel
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class InventoryUpdateListener implements JournalUpdateListener {
+public class InventoryPanel extends JPanel implements JournalUpdateListener {
 
-    static final Logger logger = LogManager.getLogger(InventoryUpdateListener.class);
+    private static final long serialVersionUID = 4657223926306497803L;
 
-    private final SortedMap<Item, Integer> inventory;
+    static final Logger logger = LogManager.getLogger(InventoryPanel.class);
+
+    private final SortedMap<ItemType, SortedMap<Item, Integer>> inventory;
     private final LinkedHashMap<Item, Integer> income;
     private final LinkedHashMap<Item, Integer> discarded;
     private final LinkedHashMap<Item, Integer> spent;
 
-    public InventoryUpdateListener(Journal journal, String commander) {
+    private boolean initialized = false;
+    private SortedMap<ItemType, LinkedHashMap<Item, Float>> priority = null;
+    private SortedMap<ItemType, LinkedHashMap<Item, Integer>> overflow = null;
+
+    public InventoryPanel(Journal journal, String commander) {
+        // Set initial state
         this.inventory = createDefaultInventory(commander);
         this.income = new LinkedHashMap<>();
         this.discarded = new LinkedHashMap<>();
         this.spent = new LinkedHashMap<>();
+
+        // Read journal until now
+        for (AbstractJournalEntry entry : journal.getEntries()) {
+            this.onNewJournalEntry(entry);
+        }
+
+        // Ready!
+        this.initialized = true;
+        this.onInventoryChanged();
     }
 
     @Override
@@ -56,8 +82,10 @@ public class InventoryUpdateListener implements JournalUpdateListener {
         if (item == null) {
             logger.warn("Unknown material: " + e.getName() + " (" + e.getCategory() + ")");
         } else {
-            inventory.put(item, inventory.getOrDefault(item, 0) + e.getCount());
+            SortedMap<Item, Integer> typeInventory = this.inventory.get(item.getType());
+            typeInventory.put(item, typeInventory.getOrDefault(item, 0) + e.getCount());
             income.put(item, income.getOrDefault(item, 0) + e.getCount());
+            this.onInventoryChanged();
         }
     }
 
@@ -66,8 +94,10 @@ public class InventoryUpdateListener implements JournalUpdateListener {
         if (item == null) {
             logger.warn("Unknown material: " + e.getName() + " (" + e.getCategory() + ")");
         } else {
-            inventory.put(item, inventory.getOrDefault(item, 0) - e.getCount());
+            SortedMap<Item, Integer> typeInventory = this.inventory.get(item.getType());
+            typeInventory.put(item, typeInventory.getOrDefault(item, 0) - e.getCount());
             discarded.put(item, discarded.getOrDefault(item, 0) + e.getCount());
+            this.onInventoryChanged();
         }
     }
 
@@ -78,16 +108,116 @@ public class InventoryUpdateListener implements JournalUpdateListener {
                 logger.warn("Unknown material: " + name + " (EngineerCraft)");
             } else {
                 Integer count = e.getIngredients().get(name);
-                inventory.put(item, inventory.getOrDefault(item, 0) - count);
+                SortedMap<Item, Integer> typeInventory = this.inventory.get(item.getType());
+                typeInventory.put(item, typeInventory.getOrDefault(item, 0) - count);
                 spent.put(item, spent.getOrDefault(item, 0) + count);
+                this.onInventoryChanged();
             }
         }
+    }
+
+    private void onInventoryChanged() {
+        if (this.initialized) {
+            this.recomputePrioritiesAndOverflow();
+
+            this.removeAll();
+            this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+
+            Vector<?> headline = new Vector<>(Arrays.asList("Name", "Have", "Overflow"));
+
+            for (ItemType type : this.inventory.keySet()) {
+                Vector<Vector<?>> data = new Vector<>();
+                SortedMap<Item, Integer> typeInventory = this.inventory.get(type);
+                for (Item item : typeInventory.keySet()) {
+                    String name = item.getName();
+                    int have = typeInventory.getOrDefault(item, 0);
+                    int discard = this.overflow.get(type).getOrDefault(item, 0);
+                    data.add(new Vector<>(Arrays.asList(name, have, String.valueOf(discard))));
+                }
+
+                // Add the table for this item type
+                this.add(new JTable(data, headline));
+            }
+
+            this.repaint();
+        }
+    }
+
+    private void recomputePrioritiesAndOverflow() {
+        this.priority = new TreeMap<>();
+        this.overflow = new TreeMap<>();
+
+        for (ItemType type : this.inventory.keySet()) {
+            SortedMap<Item, Integer> typeInventory = this.inventory.get(type);
+
+            // Identify priorities
+            LinkedHashMap<Item, Float> typePriority = new LinkedHashMap<>(); // 1%=want have, 0%=do not care, -1%=hate it
+            for (Item item : typeInventory.keySet()) {
+                if (item.getType() == type) {
+                    float nSpent = spent.getOrDefault(item, 0);
+                    float nDiscarded = discarded.getOrDefault(item, 0);
+                    float nIncome = income.getOrDefault(item, 0);
+                    float prio = 0;
+                    if (nSpent > 0) {
+                        prio += nSpent / Math.max(nIncome, nSpent); // spent of income
+                    }
+                    if (nDiscarded > 0) {
+                        prio -= nDiscarded / Math.max(nIncome, nDiscarded); // discarded of income
+                    }
+                    typePriority.put(item, prio);
+                }
+            }
+            MiscUtil.sortMapByValueReverse(typePriority);
+            this.priority.put(type, typePriority);
+            logger.trace("Prioritized: " + typePriority.size());
+            for (Item i : typePriority.keySet()) {
+                logger.trace(String.format(Locale.US, "%4.0f%%: %s", typePriority.get(i) * 100f, i.getName()));
+            }
+
+            // See what we can discard
+            int totalOverflow = 0;
+            LinkedHashMap<Item, Integer> typeOverflow = new LinkedHashMap<>();
+            for (Item item : typePriority.keySet()) {
+                int numHave = typeInventory.get(item);
+
+                float normalizedPrio = (typePriority.get(item) + 1f) / 2f; // -1% .. +1% -> 0% .. 1%
+                int numKeep = 5 + Math.round(20 * normalizedPrio); // 5 .. 25
+
+                float discardPercent = 1f - normalizedPrio; // 0% .. 1% -> 1% .. 0%
+                int numDiscard = Math.round(discardPercent * numHave);
+
+                int maxDiscard = numHave - numKeep;
+                int actualDiscard = Math.min(maxDiscard, numDiscard);
+
+                if (actualDiscard > 0) {
+                    totalOverflow += actualDiscard;
+                    typeOverflow.put(item, actualDiscard);
+                }
+            }
+            MiscUtil.sortMapByValueReverse(typeOverflow);
+            this.overflow.put(type, typeOverflow);
+            logger.trace("To discard: " + typeOverflow.size());
+            for (Item i : typeOverflow.keySet()) {
+                logger.trace(String.format(Locale.US, "%3dx %s", typeOverflow.get(i), i.getName()));
+            }
+            logger.trace("Will free up: " + totalOverflow);
+        }
+    }
+
+    private static SortedMap<Item, Integer> getInventoryOfType(Map<Item, Integer> inventory, ItemType type) {
+        SortedMap<Item, Integer> result = new TreeMap<>();
+        for (Item item : inventory.keySet()) {
+            if (item.getType() == type) {
+                result.put(item, inventory.get(item));
+            }
+        }
+        return result;
     }
 
     /**
      * TODO Read from file
      */
-    private static SortedMap<Item, Integer> createDefaultInventory(String commander) {
+    private static SortedMap<ItemType, SortedMap<Item, Integer>> createDefaultInventory(String commander) {
         if ("Mokel DeLorean".equals(commander)) {
             SortedMap<Item, Integer> inventory = new TreeMap<>();
             inventory.put(Item.ANTIMONY, 5);
@@ -192,7 +322,13 @@ public class InventoryUpdateListener implements JournalUpdateListener {
             inventory.put(Item.UNIDENTIFIED_SCAN_ARCHIVES, 17);
             inventory.put(Item.UNTYPICAL_SHIELD_SCANS, 25);
             inventory.put(Item.UNUSUAL_ENCRYPTED_FILES, 6);
-            return inventory;
+
+            SortedMap<ItemType, SortedMap<Item, Integer>> result = new TreeMap<>();
+            result.put(ItemType.ELEMENT, getInventoryOfType(inventory, ItemType.ELEMENT));
+            result.put(ItemType.MATERIAL, getInventoryOfType(inventory, ItemType.MATERIAL));
+            result.put(ItemType.DATA, getInventoryOfType(inventory, ItemType.DATA));
+            result.put(ItemType.COMMODITY, getInventoryOfType(inventory, ItemType.COMMODITY));
+            return result;
         } else {
             throw new RuntimeException("Unknown commander '" + commander + "'");
         }
