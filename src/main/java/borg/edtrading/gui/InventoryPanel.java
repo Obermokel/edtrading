@@ -11,7 +11,9 @@ import java.awt.FlowLayout;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -32,45 +34,18 @@ public class InventoryPanel extends JPanel implements InventoryListener {
     static final Logger logger = LogManager.getLogger(InventoryPanel.class);
 
     private final Inventory inventory;
+    private Map<ItemType, InventoryTableModel> tableModelsByType = new HashMap<>();
 
     public InventoryPanel(Inventory inventory) {
         this.inventory = inventory;
 
-        this.onInventoryChanged();
-    }
-
-    @Override
-    public void onInventoryReset(ItemType type, String name, int count) {
-        this.onInventoryChanged();
-    }
-
-    @Override
-    public void onInventoryCollected(ItemType type, String name, int count) {
-        this.onInventoryChanged();
-    }
-
-    @Override
-    public void onInventoryDiscarded(ItemType type, String name, int count) {
-        this.onInventoryChanged();
-    }
-
-    @Override
-    public void onInventorySpent(ItemType type, String name, int count) {
-        this.onInventoryChanged();
-    }
-
-    private void onInventoryChanged() {
-        this.removeAll();
         this.setLayout(new FlowLayout());
 
         for (ItemType type : Arrays.asList(ItemType.ELEMENT, ItemType.MANUFACTURED, ItemType.DATA, ItemType.COMMODITY)) {
-            List<InventoryTableRow> rows = new ArrayList<>();
-            for (String name : this.inventory.getNames(type)) {
-                rows.add(new InventoryTableRow(name, this.inventory.getHave(name), this.inventory.getSurplus(name)));
-            }
-
             // Add the table for this item type
-            JTable table = new JTable(new InventoryTableModel(rows));
+            InventoryTableModel tableModel = new InventoryTableModel(this.inventory, type);
+            this.tableModelsByType.put(type, tableModel);
+            JTable table = new JTable(tableModel);
             table.setPreferredSize(new Dimension(450, 800));
             table.setPreferredScrollableViewportSize(table.getPreferredSize());
             table.setFillsViewportHeight(true);
@@ -86,7 +61,29 @@ public class InventoryPanel extends JPanel implements InventoryListener {
             scrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), type.name(), TitledBorder.CENTER, TitledBorder.TOP));
             this.add(scrollPane);
         }
+    }
 
+    @Override
+    public void onInventoryReset(ItemType type, String name, int count) {
+        this.tableModelsByType.get(type).refresh();
+        this.repaint();
+    }
+
+    @Override
+    public void onInventoryCollected(ItemType type, String name, int count) {
+        this.tableModelsByType.get(type).refresh();
+        this.repaint();
+    }
+
+    @Override
+    public void onInventoryDiscarded(ItemType type, String name, int count) {
+        this.tableModelsByType.get(type).refresh();
+        this.repaint();
+    }
+
+    @Override
+    public void onInventorySpent(ItemType type, String name, int count) {
+        this.tableModelsByType.get(type).refresh();
         this.repaint();
     }
 
@@ -94,9 +91,32 @@ public class InventoryPanel extends JPanel implements InventoryListener {
 
         private static final long serialVersionUID = 6225525347374881663L;
 
-        private final List<InventoryTableRow> rows;
+        //        private final List<InventoryTableRow> rows;
+        //
+        //        public InventoryTableModel(List<InventoryTableRow> rows) {
+        //            this.rows = rows;
+        //        }
 
-        public InventoryTableModel(List<InventoryTableRow> rows) {
+        private final Inventory inventory;
+        private final ItemType type;
+
+        private List<InventoryTableRow> rows = null;
+
+        public InventoryTableModel(Inventory inventory, ItemType type) {
+            this.inventory = inventory;
+            this.type = type;
+            this.refresh();
+        }
+
+        public void refresh() {
+            List<InventoryTableRow> rows = new ArrayList<>();
+            for (String name : this.inventory.getNames(this.type)) {
+                int have = this.inventory.getHave(name);
+                int surplus = this.inventory.getSurplus(name);
+                if (have != 0) {
+                    rows.add(new InventoryTableRow(name, have, surplus));
+                }
+            }
             this.rows = rows;
         }
 

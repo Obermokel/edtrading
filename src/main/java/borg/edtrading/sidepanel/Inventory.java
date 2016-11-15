@@ -280,6 +280,12 @@ public class Inventory implements JournalUpdateListener, Serializable {
 
         if (item == null) {
             item = Item.findBestMatching(name, type);
+
+            if (item != null) {
+                logger.debug("Guessed '" + name + "' (" + type + ") to be " + item.getName());
+            } else {
+                logger.debug("Unknown: '" + name + "' (" + type + ")");
+            }
         }
 
         if (item != null) {
