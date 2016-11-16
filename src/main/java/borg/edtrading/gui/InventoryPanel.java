@@ -7,8 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.Font;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,13 +16,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
-import javax.swing.JPanel;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JList;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
 
@@ -32,31 +32,29 @@ import javax.swing.table.AbstractTableModel;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class InventoryPanel extends JPanel implements InventoryListener {
+public class InventoryPanel extends JSplitPane implements InventoryListener {
 
     private static final long serialVersionUID = 4657223926306497803L;
 
     static final Logger logger = LogManager.getLogger(InventoryPanel.class);
 
+    private static final int HISTORY_SIZE = 100;
+
     private final Inventory inventory;
     private Map<ItemType, InventoryTableModel> tableModelsByType = new HashMap<>();
 
-    private final LinkedList<String> lastLines = new LinkedList<>();
-    private final JTextArea log = new JTextArea();
+    private final LinkedList<String> history = new LinkedList<>();
+    private final JList<String> historyList = new JList<>();
 
     public InventoryPanel(Inventory inventory) {
         this.inventory = inventory;
 
-        this.setLayout(new FlowLayout());
-
+        Box inventoryBox = new Box(BoxLayout.X_AXIS);
         for (ItemType type : Arrays.asList(ItemType.ELEMENT, ItemType.MANUFACTURED, ItemType.DATA, ItemType.COMMODITY)) {
             // Add the table for this item type
             InventoryTableModel tableModel = new InventoryTableModel(this.inventory, type);
             this.tableModelsByType.put(type, tableModel);
             JTable table = new JTable(tableModel);
-            table.setPreferredSize(new Dimension(360, 600));
-            table.setPreferredScrollableViewportSize(table.getPreferredSize());
-            table.setFillsViewportHeight(true);
             table.setAutoCreateRowSorter(true);
             for (int i = 0; i < 3; i++) {
                 if (i == 0) {
@@ -67,50 +65,55 @@ public class InventoryPanel extends JPanel implements InventoryListener {
             }
             JScrollPane scrollPane = new JScrollPane(table);
             scrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), type.name(), TitledBorder.CENTER, TitledBorder.TOP));
-            this.add(scrollPane);
+            inventoryBox.add(scrollPane);
         }
+        this.setLeftComponent(inventoryBox);
 
-        this.log.setPreferredSize(new Dimension(360, 600));
-        JScrollPane scrollPane = new JScrollPane(this.log);
+        this.historyList.setFont(new Font("Consolas", Font.PLAIN, 10));
+        JScrollPane scrollPane = new JScrollPane(this.historyList);
         scrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "HISTORY", TitledBorder.CENTER, TitledBorder.TOP));
-        this.add(scrollPane);
+        this.setRightComponent(scrollPane);
+
+        this.setResizeWeight(1); // Resize left box, keep right history same size
+
+        inventory.addListener(this);
     }
 
     @Override
     public void onInventoryReset(ItemType type, String name, int count) {
         this.tableModelsByType.get(type).refresh();
-        this.addToLog(String.format(Locale.US, "Reset: %s (%s) to %d", name, type.name(), count));
+        this.addToHistory(String.format(Locale.US, "Reset: %s (%s) to %d", name, type.name(), count));
         this.repaint();
     }
 
     @Override
     public void onInventoryCollected(ItemType type, String name, int count) {
         this.tableModelsByType.get(type).refresh();
-        this.addToLog(String.format(Locale.US, "Collected: %dx %s (%s)", count, name, type.name()));
+        this.addToHistory(String.format(Locale.US, "Collected: %dx %s (%s)", count, name, type.name()));
         this.repaint();
     }
 
     @Override
     public void onInventoryDiscarded(ItemType type, String name, int count) {
         this.tableModelsByType.get(type).refresh();
-        this.addToLog(String.format(Locale.US, "Discarded: %dx %s (%s)", count, name, type.name()));
+        this.addToHistory(String.format(Locale.US, "Discarded: %dx %s (%s)", count, name, type.name()));
         this.repaint();
     }
 
     @Override
     public void onInventorySpent(ItemType type, String name, int count) {
         this.tableModelsByType.get(type).refresh();
-        this.addToLog(String.format(Locale.US, "Spent: %dx %s (%s)", count, name, type.name()));
+        this.addToHistory(String.format(Locale.US, "Spent: %dx %s (%s)", count, name, type.name()));
         this.repaint();
     }
 
-    private void addToLog(String line) {
+    private void addToHistory(String line) {
         if (StringUtils.isNotEmpty(line)) {
-            this.lastLines.addFirst(line);
-            if (this.lastLines.size() > 100) {
-                this.lastLines.removeLast();
+            this.history.addFirst(line);
+            while (this.history.size() > HISTORY_SIZE) {
+                this.history.removeLast();
             }
-            this.log.setText(this.lastLines.stream().collect(Collectors.joining("\n")));
+            this.historyList.setListData(this.history.toArray(new String[this.history.size()]));
         }
     }
 

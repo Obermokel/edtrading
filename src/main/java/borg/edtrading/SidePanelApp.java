@@ -8,14 +8,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 
 /**
  * SidePanelApp
@@ -49,22 +48,22 @@ public class SidePanelApp {
 
         // Create all panels
         InventoryPanel inventoryPanel = new InventoryPanel(inventory);
-        inventory.addListener(inventoryPanel);
+
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Inventory", inventoryPanel);
 
         // Construct the window with all panels
         JFrame frame = new JFrame("SidePanel");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
-        frame.add(inventoryPanel, BorderLayout.CENTER);
+        frame.add(tabbedPane, BorderLayout.CENTER);
         frame.add(new JScrollPane(journalLogPanel), BorderLayout.SOUTH);
         //frame.pack();
         frame.setSize(1280, 720);
         frame.setLocation(320, 180);
         frame.setVisible(true);
-    }
 
-    private static Component createNavigationTab() {
-        return new JPanel();
+        inventoryPanel.setDividerLocation(0.8);
     }
 
 }
