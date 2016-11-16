@@ -1,19 +1,21 @@
 package borg.edtrading;
 
 import borg.edtrading.gui.InventoryPanel;
-import borg.edtrading.gui.RawJournalLogPanel;
+import borg.edtrading.gui.JournalLogPanel;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.sidepanel.Inventory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 /**
  * SidePanelApp
@@ -26,39 +28,43 @@ public class SidePanelApp {
 
     public static void main(String[] args) throws IOException {
         String commander = "Mokel DeLorean";
-        Path journalDir = Paths.get(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Journal"); // TODO Use live dir
+        Path journalDir = Paths.get(System.getProperty("user.home"));
+        if ("boris".equalsIgnoreCase(journalDir.getFileName().toString())) {
+            journalDir = journalDir.resolve("Saved Games\\Frontier Developments\\Elite Dangerous");
+        } else {
+            journalDir = journalDir.resolve("Google Drive\\Elite Dangerous\\Journal");
+        }
 
-        // Create the reader thread which will initially read the entire journal
+        // Create the reader thread
         JournalReaderThread journalReaderThread = new JournalReaderThread(journalDir);
 
         // Create and register the journal listeners
         Inventory inventory = Inventory.load(commander);
         journalReaderThread.addListener(inventory);
+        JournalLogPanel journalLogPanel = new JournalLogPanel(journalReaderThread);
 
         // Init the reader from existing files, then start to watch for changes
         journalReaderThread.init();
         journalReaderThread.start();
 
-        // Create all panels and register them to their corresponding feed
+        // Create all panels
         InventoryPanel inventoryPanel = new InventoryPanel(inventory);
         inventory.addListener(inventoryPanel);
-        RawJournalLogPanel rawJournalLogPanel = new RawJournalLogPanel();
-        journalReaderThread.addListener(rawJournalLogPanel);
 
         // Construct the window with all panels
         JFrame frame = new JFrame("SidePanel");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        frame.add(inventoryPanel, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        frame.add(rawJournalLogPanel, gbc);
-        frame.pack();
+        frame.setLayout(new BorderLayout());
+        frame.add(inventoryPanel, BorderLayout.CENTER);
+        frame.add(new JScrollPane(journalLogPanel), BorderLayout.SOUTH);
+        //frame.pack();
+        frame.setSize(1280, 720);
+        frame.setLocation(320, 180);
         frame.setVisible(true);
+    }
+
+    private static Component createNavigationTab() {
+        return new JPanel();
     }
 
 }
