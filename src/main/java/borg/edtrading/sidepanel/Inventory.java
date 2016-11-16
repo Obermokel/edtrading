@@ -14,9 +14,13 @@ import borg.edtrading.journal.MarketSellEntry;
 import borg.edtrading.journal.MaterialCollectedEntry;
 import borg.edtrading.journal.MaterialDiscardedEntry;
 import borg.edtrading.journal.MiningRefinedEntry;
+import borg.edtrading.journal.MissionAcceptedEntry;
+import borg.edtrading.journal.MissionCompletedEntry;
+import borg.edtrading.journal.NameCount;
 import borg.edtrading.journal.SellDronesEntry;
 import com.google.gson.Gson;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -143,7 +147,6 @@ public class Inventory implements JournalUpdateListener, Serializable {
     @Override
     public void onNewJournalEntry(AbstractJournalEntry entry) {
         try {
-            // TODO Missions can give mats/cargo
             if (entry.getEvent() == Event.MaterialCollected) {
                 MaterialCollectedEntry e = (MaterialCollectedEntry) entry;
                 this.collected(e.getName(), e.getCount(), null);
@@ -168,14 +171,31 @@ public class Inventory implements JournalUpdateListener, Serializable {
             } else if (entry.getEvent() == Event.SellDrones) {
                 SellDronesEntry e = (SellDronesEntry) entry;
                 this.discarded(e.getType(), e.getCount(), ItemType.COMMODITY);
-            } else if (entry.getEvent() == Event.EngineerCraft) {
-                EngineerCraftEntry e = (EngineerCraftEntry) entry;
-                for (String name : e.getIngredients().keySet()) {
-                    this.spent(name, e.getIngredients().get(name), null);
-                }
             } else if (entry.getEvent() == Event.MiningRefined) {
                 MiningRefinedEntry e = (MiningRefinedEntry) entry;
                 this.collected(e.getTypeLocalized(), 1, ItemType.COMMODITY);
+            } else if (entry.getEvent() == Event.MissionAccepted) {
+                MissionAcceptedEntry e = (MissionAcceptedEntry) entry;
+                if (StringUtils.isNotEmpty(e.getCommodityLocalized()) && e.getCount() != null) {
+                    this.collected(e.getCommodityLocalized(), e.getCount(), ItemType.COMMODITY);
+                }
+            } else if (entry.getEvent() == Event.MissionCompleted) {
+                MissionCompletedEntry e = (MissionCompletedEntry) entry;
+                if (e.getCommodityReward() != null) {
+                    for (NameCount nc : e.getCommodityReward()) {
+                        this.collected(nc.getName(), nc.getCount(), null);
+                    }
+                }
+                if (StringUtils.isNotEmpty(e.getCommodityLocalized()) && e.getCount() != null) {
+                    this.discarded(e.getCommodityLocalized(), e.getCount(), ItemType.COMMODITY);
+                }
+            } else if (entry.getEvent() == Event.EngineerCraft) {
+                EngineerCraftEntry e = (EngineerCraftEntry) entry;
+                if (e.getIngredients() != null) {
+                    for (String name : e.getIngredients().keySet()) {
+                        this.spent(name, e.getIngredients().get(name), null);
+                    }
+                }
             } else if (entry.getEvent() == Event.ShipyardBuy || entry.getEvent() == Event.ShipyardNew || entry.getEvent() == Event.ShipyardSwap) {
                 this.reset(Item.DRONES.getName(), 0, ItemType.COMMODITY);
             } else if (entry.getEvent() == Event.Died) {
@@ -184,7 +204,7 @@ public class Inventory implements JournalUpdateListener, Serializable {
                 }
             }
         } catch (Exception e) {
-            logger.error("Failed to handle " + entry);
+            logger.error("Failed to handle " + entry, e);
         }
     }
 
@@ -297,7 +317,7 @@ public class Inventory implements JournalUpdateListener, Serializable {
         if (item != null) {
             return item.getName();
         } else {
-            return name.toUpperCase();
+            return name.toUpperCase().replaceAll("\\s", "");
         }
     }
 
