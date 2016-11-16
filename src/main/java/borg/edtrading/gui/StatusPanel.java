@@ -148,6 +148,8 @@ public class StatusPanel extends JPanel implements InventoryListener {
         }
 
         int totalCargo = this.inventory.getTotal(ItemType.COMMODITY);
+        //        int haveDrones = this.inventory.getHave(Item.DRONES.getName());
+        //        totalCargo = Math.max(0, totalCargo - haveDrones);
         int capacityCargo = this.inventory.getCapacity(ItemType.COMMODITY);
         float percentCargo = (float) totalCargo / (float) capacityCargo;
         this.cargoLabel.setText(String.format(Locale.US, "Cargo: %dt", totalCargo));
