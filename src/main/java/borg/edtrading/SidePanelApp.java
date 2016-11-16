@@ -16,6 +16,7 @@ import java.nio.file.Paths;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.UIManager;
 
 /**
  * SidePanelApp
@@ -33,6 +34,12 @@ public class SidePanelApp {
             journalDir = journalDir.resolve("Saved Games\\Frontier Developments\\Elite Dangerous");
         } else {
             journalDir = journalDir.resolve("Google Drive\\Elite Dangerous\\Journal");
+        }
+
+        try {
+            UIManager.setLookAndFeel("com.jtattoo.plaf.noire.NoireLookAndFeel");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         // Create the reader thread

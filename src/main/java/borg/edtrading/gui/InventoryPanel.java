@@ -142,6 +142,7 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
                 }
             }
             this.rows = rows;
+            this.fireTableDataChanged();
         }
 
         @Override

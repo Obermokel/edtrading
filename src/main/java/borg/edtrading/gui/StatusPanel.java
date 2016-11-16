@@ -9,10 +9,14 @@ import org.apache.logging.log4j.Logger;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Locale;
 
+import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
 /**
  * StatusPanel
@@ -32,15 +36,26 @@ public class StatusPanel extends JPanel implements InventoryListener {
     private JLabel economyAndStateLabel = new JLabel("Economy (State)");
     private JLabel governmentAndSecurityLabel = new JLabel("Government (Security)");
 
-    private JLabel fuelLabel = new JLabel("Fuel: 0.00t");
+    private AnimatedLabel fuelLabel = new AnimatedLabel("Fuel: 0.00t");
 
     private JLabel explLabel = new JLabel("Expl: 0 CR");
-    private JLabel dataLabel = new JLabel("Data: 0");
-    private JLabel matsLabel = new JLabel("Mats: 0");
+    private AnimatedLabel dataLabel = new AnimatedLabel("Data: 0");
+    private AnimatedLabel matsLabel = new AnimatedLabel("Mats: 0");
     private JLabel cargoLabel = new JLabel("Cargo: 0t");
+
+    private Timer fuelTimer = null;
+    private Timer dataTimer = null;
+    private Timer matsTimer = null;
 
     public StatusPanel(Inventory inventory) {
         this.inventory = inventory;
+
+        this.fuelTimer = new Timer(10, this.fuelLabel);
+        this.fuelTimer.setRepeats(true);
+        this.dataTimer = new Timer(10, this.dataLabel);
+        this.dataTimer.setRepeats(true);
+        this.matsTimer = new Timer(10, this.matsLabel);
+        this.matsTimer.setRepeats(true);
 
         this.setLayout(new BorderLayout());
 
@@ -64,6 +79,9 @@ public class StatusPanel extends JPanel implements InventoryListener {
 
         // Initial update
         this.updateInventory();
+
+        // Listen
+        inventory.addListener(this);
     }
 
     @Override
@@ -92,11 +110,20 @@ public class StatusPanel extends JPanel implements InventoryListener {
         float percentData = (float) totalData / (float) capacityData;
         this.dataLabel.setText(String.format(Locale.US, "Data: %d", totalData));
         if (percentData >= 0.9f) {
-            this.dataLabel.setForeground(Color.RED); // TODO Animation
+            this.dataLabel.setForeground(Color.RED);
+            if (!this.dataTimer.isRunning()) {
+                this.dataTimer.start();
+            }
         } else if (percentData >= 0.8f) {
+            if (this.dataTimer.isRunning()) {
+                this.dataTimer.stop();
+            }
             this.dataLabel.setForeground(Color.RED);
         } else {
-            this.dataLabel.setForeground(Color.LIGHT_GRAY); // TODO Look&Feel default
+            if (this.dataTimer.isRunning()) {
+                this.dataTimer.stop();
+            }
+            this.dataLabel.setForeground(Color.GRAY);
         }
 
         int totalMats = this.inventory.getTotal(ItemType.ELEMENT) + this.inventory.getTotal(ItemType.MANUFACTURED);
@@ -104,11 +131,20 @@ public class StatusPanel extends JPanel implements InventoryListener {
         float percentMats = (float) totalMats / (float) capacityMats;
         this.matsLabel.setText(String.format(Locale.US, "Mats: %d", totalMats));
         if (percentMats >= 0.9f) {
-            this.matsLabel.setForeground(Color.RED); // TODO Animation
+            this.matsLabel.setForeground(Color.RED);
+            if (!this.matsTimer.isRunning()) {
+                this.matsTimer.start();
+            }
         } else if (percentMats >= 0.8f) {
+            if (this.matsTimer.isRunning()) {
+                this.matsTimer.stop();
+            }
             this.matsLabel.setForeground(Color.RED);
         } else {
-            this.matsLabel.setForeground(Color.LIGHT_GRAY); // TODO Look&Feel default
+            if (this.matsTimer.isRunning()) {
+                this.matsTimer.stop();
+            }
+            this.matsLabel.setForeground(Color.GRAY);
         }
 
         int totalCargo = this.inventory.getTotal(ItemType.COMMODITY);
@@ -118,10 +154,64 @@ public class StatusPanel extends JPanel implements InventoryListener {
         if (percentCargo >= 1.0f) {
             this.cargoLabel.setForeground(Color.RED);
         } else if (percentCargo <= 0.0f) {
-            this.cargoLabel.setForeground(Color.LIGHT_GRAY); // TODO Look&Feel default
+            this.cargoLabel.setForeground(Color.GRAY);
         } else {
-            this.cargoLabel.setForeground(Color.BLACK);
+            this.cargoLabel.setForeground(Color.LIGHT_GRAY);
         }
+    }
+
+    public static class AnimatedLabel extends JLabel implements ActionListener {
+
+        private static final long serialVersionUID = -7475510223114721124L;
+
+        private int flashRed = 255;
+        private int flashInc = -5;
+
+        public AnimatedLabel() {
+            super();
+        }
+
+        public AnimatedLabel(Icon image, int horizontalAlignment) {
+            super(image, horizontalAlignment);
+        }
+
+        public AnimatedLabel(Icon image) {
+            super(image);
+        }
+
+        public AnimatedLabel(String text, Icon icon, int horizontalAlignment) {
+            super(text, icon, horizontalAlignment);
+        }
+
+        public AnimatedLabel(String text, int horizontalAlignment) {
+            super(text, horizontalAlignment);
+        }
+
+        public AnimatedLabel(String text) {
+            super(text);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            this.flashRed += this.flashInc;
+
+            if (this.flashRed <= 50) {
+                this.flashRed = 50;
+                this.flashInc *= -1;
+            } else if (this.flashRed >= 255) {
+                this.flashRed = 255;
+                this.flashInc *= -1;
+            } else if (this.flashRed == 200) {
+                if (this.flashInc == 10) {
+                    this.flashInc = 5;
+                } else if (this.flashInc == -5) {
+                    this.flashInc = -10;
+                }
+            }
+
+            this.setForeground(new Color(this.flashRed, 0, 0));
+        }
+
     }
 
 }
