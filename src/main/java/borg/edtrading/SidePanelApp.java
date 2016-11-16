@@ -2,6 +2,7 @@ package borg.edtrading;
 
 import borg.edtrading.gui.InventoryPanel;
 import borg.edtrading.gui.JournalLogPanel;
+import borg.edtrading.gui.StatusPanel;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.sidepanel.Inventory;
 import org.apache.logging.log4j.LogManager;
@@ -47,6 +48,7 @@ public class SidePanelApp {
         journalReaderThread.start();
 
         // Create all panels
+        StatusPanel statusPanel = new StatusPanel(inventory);
         InventoryPanel inventoryPanel = new InventoryPanel(inventory);
 
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -56,11 +58,12 @@ public class SidePanelApp {
         JFrame frame = new JFrame("SidePanel");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
+        frame.add(statusPanel, BorderLayout.NORTH);
         frame.add(tabbedPane, BorderLayout.CENTER);
         frame.add(new JScrollPane(journalLogPanel), BorderLayout.SOUTH);
         //frame.pack();
-        frame.setSize(1280, 720);
-        frame.setLocation(320, 180);
+        frame.setSize(1800, 900);
+        frame.setLocation(10, 10);
         frame.setVisible(true);
 
         inventoryPanel.setDividerLocation(0.8);

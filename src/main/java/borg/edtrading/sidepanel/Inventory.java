@@ -53,6 +53,7 @@ public class Inventory implements JournalUpdateListener, Serializable {
     private SortedMap<String, Integer> spentByName = new TreeMap<>();
     private SortedMap<String, Float> priorityByName = new TreeMap<>();
     private SortedMap<String, Integer> surplusByName = new TreeMap<>();
+    private int cargoCapacity = 192; // TODO Save/load
 
     private final List<InventoryListener> listeners = new ArrayList<>();
 
@@ -87,7 +88,19 @@ public class Inventory implements JournalUpdateListener, Serializable {
         return this.commander;
     }
 
-    public int getSize(ItemType type) {
+    public int getCapacity(ItemType type) {
+        if (type == ItemType.DATA) {
+            return 500;
+        } else if (type == ItemType.ELEMENT || type == ItemType.MANUFACTURED) {
+            return 1000;
+        } else if (type == ItemType.COMMODITY) {
+            return this.cargoCapacity;
+        } else {
+            return 0;
+        }
+    }
+
+    public int getTotal(ItemType type) {
         int size = 0;
         for (String name : this.getNames(type)) {
             size += this.getHave(name);
