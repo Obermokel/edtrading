@@ -99,7 +99,7 @@ public class Inventory implements JournalUpdateListener, Serializable {
         List<String> names = new ArrayList<>();
         for (String name : this.haveByName.keySet()) {
             ItemType guessedType = guessType(name);
-            if (guessedType.matches(type)) {
+            if (guessedType == type) {
                 names.add(name);
             }
         }
@@ -176,8 +176,8 @@ public class Inventory implements JournalUpdateListener, Serializable {
                 this.collected(e.getTypeLocalized(), 1, ItemType.COMMODITY);
             } else if (entry.getEvent() == Event.MissionAccepted) {
                 MissionAcceptedEntry e = (MissionAcceptedEntry) entry;
-                if (StringUtils.isNotEmpty(e.getCommodityLocalized()) && e.getCount() != null) {
-                    this.collected(e.getCommodityLocalized(), e.getCount(), ItemType.COMMODITY);
+                if (StringUtils.isNotEmpty(e.getCommodity()) && e.getCount() != null) {
+                    this.collected(e.getCommodity().replace("$", "").replace("_Name;", ""), e.getCount(), ItemType.COMMODITY);
                 }
             } else if (entry.getEvent() == Event.MissionCompleted) {
                 MissionCompletedEntry e = (MissionCompletedEntry) entry;
@@ -186,8 +186,8 @@ public class Inventory implements JournalUpdateListener, Serializable {
                         this.collected(nc.getName(), nc.getCount(), null);
                     }
                 }
-                if (StringUtils.isNotEmpty(e.getCommodityLocalized()) && e.getCount() != null) {
-                    this.discarded(e.getCommodityLocalized(), e.getCount(), ItemType.COMMODITY);
+                if (StringUtils.isNotEmpty(e.getCommodity()) && e.getCount() != null) {
+                    this.discarded(e.getCommodity().replace("$", "").replace("_Name;", ""), e.getCount(), ItemType.COMMODITY);
                 }
             } else if (entry.getEvent() == Event.EngineerCraft) {
                 EngineerCraftEntry e = (EngineerCraftEntry) entry;
@@ -302,7 +302,11 @@ public class Inventory implements JournalUpdateListener, Serializable {
     }
 
     private static String guessName(String name, ItemType type) {
-        Item item = Item.byJournalName(name);
+        Item item = Item.byName(name.toUpperCase());
+
+        if (item == null) {
+            item = Item.byJournalName(name.toLowerCase());
+        }
 
         if (item == null) {
             item = Item.findBestMatching(name, type);
@@ -317,12 +321,16 @@ public class Inventory implements JournalUpdateListener, Serializable {
         if (item != null) {
             return item.getName();
         } else {
-            return name.toUpperCase().replaceAll("\\s", "");
+            return name.toUpperCase();
         }
     }
 
     private static ItemType guessType(String name) {
-        Item item = Item.byJournalName(name);
+        Item item = Item.byName(name.toUpperCase());
+
+        if (item == null) {
+            item = Item.byJournalName(name.toLowerCase());
+        }
 
         if (item == null) {
             item = Item.findBestMatching(name, null);
