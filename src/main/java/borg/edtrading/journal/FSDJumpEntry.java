@@ -16,14 +16,14 @@ public class FSDJumpEntry extends AbstractJournalEntry {
 
     private final String starSystem;
     private final Coord starPos;
-    private final String allegiance;
-    private final String economy;
-    private final String economyLocalized;
-    private final String government;
-    private final String governmentLocalized;
-    private final String security;
-    private final String securityLocalized;
-    private final String faction;
+    private final String systemAllegiance;
+    private final String systemEconomy;
+    private final String systemEconomyLocalized;
+    private final String systemGovernment;
+    private final String systemGovernmentLocalized;
+    private final String systemSecurity;
+    private final String systemSecurityLocalized;
+    private final String systemFaction;
     private final String factionState;
     private final Float jumpDist;
     private final Float fuelUsed;
@@ -35,14 +35,14 @@ public class FSDJumpEntry extends AbstractJournalEntry {
 
         this.starSystem = this.readString(data, "StarSystem");
         this.starPos = this.readCoord(data, "StarPos");
-        this.allegiance = this.readString(data, "Allegiance");
-        this.economy = this.readString(data, "Economy");
-        this.economyLocalized = this.readString(data, "Economy_Localised");
-        this.government = this.readString(data, "Government");
-        this.governmentLocalized = this.readString(data, "Government_Localised");
-        this.security = this.readString(data, "Security");
-        this.securityLocalized = this.readString(data, "Security_Localised");
-        this.faction = this.readString(data, "Faction");
+        this.systemAllegiance = data.containsKey("Allegiance") ? this.readString(data, "Allegiance") : this.readString(data, "SystemAllegiance");
+        this.systemEconomy = data.containsKey("Economy") ? this.readString(data, "Economy") : this.readString(data, "SystemEconomy");
+        this.systemEconomyLocalized = data.containsKey("Economy_Localised") ? this.readString(data, "Economy_Localised") : this.readString(data, "SystemEconomy_Localised");
+        this.systemGovernment = data.containsKey("Government") ? this.readString(data, "Government") : this.readString(data, "SystemGovernment");
+        this.systemGovernmentLocalized = data.containsKey("Government_Localised") ? this.readString(data, "Government_Localised") : this.readString(data, "SystemGovernment_Localised");
+        this.systemSecurity = data.containsKey("Security") ? this.readString(data, "Security") : this.readString(data, "SystemSecurity");
+        this.systemSecurityLocalized = data.containsKey("Security_Localised") ? this.readString(data, "Security_Localised") : this.readString(data, "SystemSecurity_Localised");
+        this.systemFaction = data.containsKey("Faction") ? this.readString(data, "Faction") : this.readString(data, "SystemFaction");
         this.factionState = this.readString(data, "FactionState");
         this.jumpDist = this.readFloat(data, "JumpDist");
         this.fuelUsed = this.readFloat(data, "FuelUsed");
@@ -61,36 +61,36 @@ public class FSDJumpEntry extends AbstractJournalEntry {
         return this.starPos;
     }
 
-    public String getAllegiance() {
-        return this.allegiance;
+    public String getSystemAllegiance() {
+        return this.systemAllegiance;
     }
 
-    public String getEconomy() {
-        return this.economy;
+    public String getSystemEconomy() {
+        return this.systemEconomy;
     }
 
-    public String getEconomyLocalized() {
-        return this.economyLocalized;
+    public String getSystemEconomyLocalized() {
+        return this.systemEconomyLocalized;
     }
 
-    public String getGovernment() {
-        return this.government;
+    public String getSystemGovernment() {
+        return this.systemGovernment;
     }
 
-    public String getGovernmentLocalized() {
-        return this.governmentLocalized;
+    public String getSystemGovernmentLocalized() {
+        return this.systemGovernmentLocalized;
     }
 
-    public String getSecurity() {
-        return this.security;
+    public String getSystemSecurity() {
+        return this.systemSecurity;
     }
 
-    public String getSecurityLocalized() {
-        return this.securityLocalized;
+    public String getSystemSecurityLocalized() {
+        return this.systemSecurityLocalized;
     }
 
-    public String getFaction() {
-        return this.faction;
+    public String getSystemFaction() {
+        return this.systemFaction;
     }
 
     public String getFactionState() {

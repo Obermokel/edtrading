@@ -56,6 +56,7 @@ public enum Event {
     SupercruiseEntry,
     SupercruiseExit,
     Touchdown,
+    Undocked,
     // @formatter:on
 
 }

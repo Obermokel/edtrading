@@ -14,6 +14,7 @@ import borg.edtrading.journal.RefuelAllEntry;
 import borg.edtrading.journal.SupercruiseEntryEntry;
 import borg.edtrading.journal.SupercruiseExitEntry;
 import borg.edtrading.journal.TouchdownEntry;
+import borg.edtrading.journal.UndockedEntry;
 import borg.edtrading.util.MiscUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -214,7 +215,6 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
     @Override
     public void onNewJournalEntry(AbstractJournalEntry entry) {
         try {
-            //TODO Undocked???
             //TODO Scan
             //TODO SellExplorationData
             //TODO SRV/Fighter
@@ -227,33 +227,13 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 if (StringUtils.isNotEmpty(e.getStationType())) {
                     this.setBodyType(e.getStationType());
                 }
-                this.setFaction(e.getFaction());
-                this.setAllegiance(e.getAllegiance());
-                this.setEconomy(e.getEconomyLocalized());
+                this.setFaction(e.getSystemFaction());
+                this.setAllegiance(e.getSystemAllegiance());
+                this.setEconomy(e.getSystemEconomyLocalized());
                 this.setState(e.getFactionState());
-                this.setGovernment(e.getGovernmentLocalized());
-                this.setSecurity(e.getSecurityLocalized());
+                this.setGovernment(e.getSystemGovernmentLocalized());
+                this.setSecurity(e.getSystemSecurityLocalized());
                 this.setLanded(Boolean.TRUE.equals(e.getDocked()));
-                for (TravelHistoryListener listener : this.listeners) {
-                    try {
-                        listener.onLocationChanged();
-                    } catch (Exception ex) {
-                        logger.warn(listener + " failed: " + ex);
-                    }
-                }
-            } else if (entry.getEvent() == Event.Docked) {
-                DockedEntry e = (DockedEntry) entry;
-                this.setSystemName(e.getStarSystem());
-                this.setBodyName(e.getStationName());
-                this.setBodyType(e.getStationType());
-                this.setFaction(e.getFaction());
-                this.setAllegiance(e.getAllegiance());
-                this.setEconomy(e.getEconomyLocalized());
-                this.setState(e.getFactionState());
-                this.setGovernment(e.getGovernmentLocalized());
-                this.setSecurity(e.getSecurityLocalized());
-                this.setInSupercruise(false);
-                this.setLanded(true);
                 for (TravelHistoryListener listener : this.listeners) {
                     try {
                         listener.onLocationChanged();
@@ -267,12 +247,12 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 this.setSystemName(e.getStarSystem());
                 this.setBodyName(null);
                 this.setBodyType(null);
-                this.setFaction(e.getFaction());
-                this.setAllegiance(e.getAllegiance());
-                this.setEconomy(e.getEconomyLocalized());
+                this.setFaction(e.getSystemFaction());
+                this.setAllegiance(e.getSystemAllegiance());
+                this.setEconomy(e.getSystemEconomyLocalized());
                 this.setState(e.getFactionState());
-                this.setGovernment(e.getGovernmentLocalized());
-                this.setSecurity(e.getSecurityLocalized());
+                this.setGovernment(e.getSystemGovernmentLocalized());
+                this.setSecurity(e.getSystemSecurityLocalized());
                 this.setInSupercruise(true);
                 this.setLanded(false);
                 this.setFuelLevel(MiscUtil.getAsFloat(e.getFuelLevel(), 0f));
@@ -354,6 +334,37 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 LiftoffEntry e = (LiftoffEntry) entry;
                 this.setLatitude(e.getLatitude());
                 this.setLongitude(e.getLongitude());
+                this.setInSupercruise(false);
+                this.setLanded(false);
+                for (TravelHistoryListener listener : this.listeners) {
+                    try {
+                        listener.onLocationChanged();
+                    } catch (Exception ex) {
+                        logger.warn(listener + " failed: " + ex);
+                    }
+                }
+            } else if (entry.getEvent() == Event.Docked) {
+                DockedEntry e = (DockedEntry) entry;
+                this.setSystemName(e.getStarSystem());
+                this.setBodyName(e.getStationName());
+                this.setBodyType(e.getStationType());
+                this.setFaction(e.getStationFaction());
+                this.setAllegiance(e.getStationAllegiance());
+                this.setEconomy(e.getStationEconomyLocalized());
+                this.setGovernment(e.getStationGovernmentLocalized());
+                this.setInSupercruise(false);
+                this.setLanded(true);
+                for (TravelHistoryListener listener : this.listeners) {
+                    try {
+                        listener.onLocationChanged();
+                    } catch (Exception ex) {
+                        logger.warn(listener + " failed: " + ex);
+                    }
+                }
+            } else if (entry.getEvent() == Event.Undocked) {
+                UndockedEntry e = (UndockedEntry) entry;
+                this.setBodyName(e.getStationName());
+                this.setBodyType(e.getStationType());
                 this.setInSupercruise(false);
                 this.setLanded(false);
                 for (TravelHistoryListener listener : this.listeners) {

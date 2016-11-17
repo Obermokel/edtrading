@@ -124,7 +124,7 @@ public class JournalReaderThread extends Thread {
                                 }
                             }
                         } catch (UnknownEventException e) {
-                            // Ignore here (should have printed a warning)
+                            logger.trace("Unknown event type '" + e.getEvent() + "' in line " + lineNumber + " of " + filename);
                         }
                     }
                 }

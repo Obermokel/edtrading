@@ -224,6 +224,8 @@ public class JournalReader {
                     return new SupercruiseExitEntry(timestamp, event, data);
                 case Touchdown:
                     return new TouchdownEntry(timestamp, event, data);
+                case Undocked:
+                    return new UndockedEntry(timestamp, event, data);
                 default:
                     logger.error("Unhandled event in switch clause: " + event);
                     return null;
