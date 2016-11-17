@@ -220,7 +220,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
                 MissionAcceptedEntry e = (MissionAcceptedEntry) entry;
                 if (StringUtils.isNotEmpty(e.getCommodity()) && e.getCount() != null) {
                     String journalName = e.getCommodity().replace("$", "").replace("_Name;", "");
-                    this.reset(journalName, this.getHave(journalName) + e.getCount(), ItemType.COMMODITY);
+                    this.collected(journalName, e.getCount(), ItemType.COMMODITY);
                 }
             } else if (entry.getEvent() == Event.MissionCompleted) {
                 MissionCompletedEntry e = (MissionCompletedEntry) entry;
@@ -231,7 +231,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
                 }
                 if (StringUtils.isNotEmpty(e.getCommodity()) && e.getCount() != null) {
                     String journalName = e.getCommodity().replace("$", "").replace("_Name;", "");
-                    this.reset(journalName, this.getHave(journalName) - e.getCount(), ItemType.COMMODITY);
+                    this.discarded(journalName, e.getCount(), ItemType.COMMODITY);
                 }
             } else if (entry.getEvent() == Event.EngineerCraft) {
                 EngineerCraftEntry e = (EngineerCraftEntry) entry;
