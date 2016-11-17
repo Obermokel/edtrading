@@ -431,7 +431,7 @@ public class Inventory implements JournalUpdateListener, Serializable {
 
             inventory.put(Item.ABBERANT_SHIELD_PATTERN_ANALYSIS.getName(), 15);
             inventory.put(Item.ABNORMAL_COMPACT_EMISSIONS_DATA.getName(), 10);
-            inventory.put(Item.ADAPTIVE_ENCRYPTIONS_CAPTURE.getName(), 2);
+            inventory.put(Item.ADAPTIVE_ENCRYPTORS_CAPTURE.getName(), 2);
             inventory.put(Item.ANOMALOUS_BULK_SCAN_DATA.getName(), 20);
             inventory.put(Item.ANOMALOUS_FSD_TELEMETRY.getName(), 21);
             inventory.put(Item.ATYPICAL_DISRUPTED_WAKE_ECHOES.getName(), 11);

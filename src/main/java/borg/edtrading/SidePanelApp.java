@@ -16,7 +16,6 @@ import java.nio.file.Paths;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.UIManager;
 
 /**
  * SidePanelApp
@@ -36,11 +35,11 @@ public class SidePanelApp {
             journalDir = journalDir.resolve("Google Drive\\Elite Dangerous\\Journal");
         }
 
-        try {
-            UIManager.setLookAndFeel("com.jtattoo.plaf.noire.NoireLookAndFeel");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        //        try {
+        //            UIManager.setLookAndFeel("com.jtattoo.plaf.noire.NoireLookAndFeel");
+        //        } catch (Exception e) {
+        //            e.printStackTrace();
+        //        }
 
         // Create the reader thread
         JournalReaderThread journalReaderThread = new JournalReaderThread(journalDir);
@@ -69,8 +68,8 @@ public class SidePanelApp {
         frame.add(tabbedPane, BorderLayout.CENTER);
         frame.add(new JScrollPane(journalLogPanel), BorderLayout.SOUTH);
         //frame.pack();
-        frame.setSize(1800, 900);
-        frame.setLocation(10, 10);
+        frame.setSize(1280, 720);
+        frame.setLocation(400, 200);
         frame.setVisible(true);
 
         inventoryPanel.setDividerLocation(0.8);

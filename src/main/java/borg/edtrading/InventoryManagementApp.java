@@ -231,7 +231,7 @@ public class InventoryManagementApp {
 
             inventory.put(Item.ABBERANT_SHIELD_PATTERN_ANALYSIS, 15);
             inventory.put(Item.ABNORMAL_COMPACT_EMISSIONS_DATA, 10);
-            inventory.put(Item.ADAPTIVE_ENCRYPTIONS_CAPTURE, 2);
+            inventory.put(Item.ADAPTIVE_ENCRYPTORS_CAPTURE, 2);
             inventory.put(Item.ANOMALOUS_BULK_SCAN_DATA, 20);
             inventory.put(Item.ANOMALOUS_FSD_TELEMETRY, 21);
             inventory.put(Item.ATYPICAL_DISRUPTED_WAKE_ECHOES, 11);
