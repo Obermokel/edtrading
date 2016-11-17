@@ -93,7 +93,7 @@ public class Inventory implements JournalUpdateListener, Serializable {
             return 500;
         } else if (type == ItemType.ELEMENT || type == ItemType.MANUFACTURED) {
             return 1000;
-        } else if (type == ItemType.COMMODITY) {
+        } else if (type == ItemType.COMMODITY || type == ItemType.DRONES) {
             return this.cargoCapacity;
         } else {
             return 0;
@@ -180,10 +180,10 @@ public class Inventory implements JournalUpdateListener, Serializable {
                 this.discarded(e.getType(), e.getCount(), ItemType.COMMODITY);
             } else if (entry.getEvent() == Event.BuyDrones) {
                 BuyDronesEntry e = (BuyDronesEntry) entry;
-                this.collected(e.getType(), e.getCount(), ItemType.COMMODITY);
+                this.collected(e.getType(), e.getCount(), ItemType.DRONES);
             } else if (entry.getEvent() == Event.SellDrones) {
                 SellDronesEntry e = (SellDronesEntry) entry;
-                this.discarded(e.getType(), e.getCount(), ItemType.COMMODITY);
+                this.discarded(e.getType(), e.getCount(), ItemType.DRONES);
             } else if (entry.getEvent() == Event.MiningRefined) {
                 MiningRefinedEntry e = (MiningRefinedEntry) entry;
                 this.collected(e.getTypeLocalized(), 1, ItemType.COMMODITY);
@@ -210,8 +210,9 @@ public class Inventory implements JournalUpdateListener, Serializable {
                     }
                 }
             } else if (entry.getEvent() == Event.ShipyardBuy || entry.getEvent() == Event.ShipyardNew || entry.getEvent() == Event.ShipyardSwap) {
-                this.reset(Item.DRONES.getName(), 0, ItemType.COMMODITY);
+                this.reset(Item.DRONES.getName(), 0, ItemType.DRONES);
             } else if (entry.getEvent() == Event.Died) {
+                this.reset(Item.DRONES.getName(), 0, ItemType.DRONES);
                 for (String name : this.getNames(ItemType.COMMODITY)) {
                     this.reset(name, 0, ItemType.COMMODITY);
                 }
@@ -321,16 +322,6 @@ public class Inventory implements JournalUpdateListener, Serializable {
             item = Item.byJournalName(name.toLowerCase());
         }
 
-        if (item == null) {
-            item = Item.findBestMatching(name, type);
-
-            if (item != null) {
-                logger.debug("Guessed '" + name + "' (" + type + ") to be " + item.getName());
-            } else {
-                logger.debug("Unknown: '" + name + "' (" + type + ")");
-            }
-        }
-
         if (item != null) {
             return item.getName();
         } else {
@@ -343,10 +334,6 @@ public class Inventory implements JournalUpdateListener, Serializable {
 
         if (item == null) {
             item = Item.byJournalName(name.toLowerCase());
-        }
-
-        if (item == null) {
-            item = Item.findBestMatching(name, null);
         }
 
         if (item != null) {

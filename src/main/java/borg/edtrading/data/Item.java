@@ -177,7 +177,7 @@ public enum Item {
     TITANIUM("TITANIUM", "titanium", ItemType.COMMODITY, 0),
     WATER("WATER", "water", ItemType.COMMODITY, 0),
 
-    DRONES("DRONES", "drones", ItemType.COMMODITY, 0);
+    DRONES("DRONES", "drones", ItemType.DRONES, 0);
     //@formatter:on
 
     private static final SortedMap<ItemType, List<Item>> ITEMS_BY_TYPE = new TreeMap<>();
@@ -267,7 +267,7 @@ public enum Item {
     }
 
     public static enum ItemType {
-        ELEMENT, MANUFACTURED, DATA, COMMODITY;
+        ELEMENT, MANUFACTURED, DATA, COMMODITY, DRONES;
     }
 
 }

@@ -118,7 +118,7 @@ public class StatusPanel extends JPanel implements InventoryListener {
             if (this.dataTimer.isRunning()) {
                 this.dataTimer.stop();
             }
-            this.dataLabel.setForeground(Color.RED);
+            this.dataLabel.setForeground(Color.ORANGE);
         } else {
             if (this.dataTimer.isRunning()) {
                 this.dataTimer.stop();
@@ -139,7 +139,7 @@ public class StatusPanel extends JPanel implements InventoryListener {
             if (this.matsTimer.isRunning()) {
                 this.matsTimer.stop();
             }
-            this.matsLabel.setForeground(Color.RED);
+            this.matsLabel.setForeground(Color.ORANGE);
         } else {
             if (this.matsTimer.isRunning()) {
                 this.matsTimer.stop();
@@ -147,18 +147,18 @@ public class StatusPanel extends JPanel implements InventoryListener {
             this.matsLabel.setForeground(Color.GRAY);
         }
 
-        int totalCargo = this.inventory.getTotal(ItemType.COMMODITY);
-        //        int haveDrones = this.inventory.getHave(Item.DRONES.getName());
-        //        totalCargo = Math.max(0, totalCargo - haveDrones);
+        int totalCargo = this.inventory.getTotal(ItemType.COMMODITY); // This does not include drones
         int capacityCargo = this.inventory.getCapacity(ItemType.COMMODITY);
         float percentCargo = (float) totalCargo / (float) capacityCargo;
         this.cargoLabel.setText(String.format(Locale.US, "Cargo: %dt", totalCargo));
         if (percentCargo >= 1.0f) {
-            this.cargoLabel.setForeground(Color.RED);
+            this.cargoLabel.setForeground(Color.RED); // Full. Red, but do not flash as this is common business.
+        } else if (percentCargo >= 0.9f) {
+            this.cargoLabel.setForeground(Color.ORANGE);
         } else if (percentCargo <= 0.0f) {
-            this.cargoLabel.setForeground(Color.GRAY);
+            this.cargoLabel.setForeground(Color.GRAY); // Only be gray (barely visible) when completely empty.
         } else {
-            this.cargoLabel.setForeground(Color.LIGHT_GRAY);
+            this.cargoLabel.setForeground(Color.LIGHT_GRAY); // Use light gray (better visibility) if s.th. is loaded.
         }
     }
 
