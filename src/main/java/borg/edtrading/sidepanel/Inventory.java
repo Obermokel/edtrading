@@ -8,6 +8,7 @@ import borg.edtrading.journal.CollectCargoEntry;
 import borg.edtrading.journal.EjectCargoEntry;
 import borg.edtrading.journal.EngineerCraftEntry;
 import borg.edtrading.journal.Event;
+import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.journal.JournalUpdateListener;
 import borg.edtrading.journal.MarketBuyEntry;
 import borg.edtrading.journal.MarketSellEntry;
@@ -39,53 +40,90 @@ import java.util.TreeMap;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class Inventory implements JournalUpdateListener, Serializable {
+public class Inventory implements JournalUpdateListener, GameSessionListener, Serializable {
 
     private static final long serialVersionUID = 8541359755696166766L;
 
     static final Logger logger = LogManager.getLogger(Inventory.class);
 
-    private final String commander;
-
+    private String commander = null;
+    private int cargoCapacity = 0;
     private SortedMap<String, Integer> haveByName = new TreeMap<>();
     private SortedMap<String, Integer> collectedByName = new TreeMap<>();
     private SortedMap<String, Integer> discardedByName = new TreeMap<>();
     private SortedMap<String, Integer> spentByName = new TreeMap<>();
     private SortedMap<String, Float> priorityByName = new TreeMap<>();
     private SortedMap<String, Integer> surplusByName = new TreeMap<>();
-    private int cargoCapacity = 192; // TODO Save/load
 
     private final List<InventoryListener> listeners = new ArrayList<>();
 
-    private Inventory(String commander) {
-        this.commander = commander;
+    public Inventory(JournalReaderThread journalReaderThread, GameSession gameSession) {
+        if (journalReaderThread != null) {
+            journalReaderThread.addListener(this);
+        }
+        if (gameSession != null) {
+            gameSession.addListener(this);
+        }
     }
 
-    public static Inventory load(String commander) throws IOException {
-        Map<String, Number> map = null;
-        try {
-            File file = new File(System.getProperty("user.home"), ".Inventory." + commander + ".json");
+    private void load(String commander) throws IOException {
+        for (String name : this.haveByName.keySet()) {
+            this.reset(name, 0, guessType(name)); // Reset all existing to 0
+        }
+        this.collectedByName.clear();
+        this.discardedByName.clear();
+        this.spentByName.clear();
+        this.priorityByName.clear();
+        this.surplusByName.clear();
+
+        File file = new File(System.getProperty("user.home"), ".Inventory." + commander + ".json");
+        if (!file.exists() || file.length() == 0) {
+            // Do nothing
+        } else {
             String json = FileUtils.readFileToString(file, "UTF-8");
-            map = new Gson().fromJson(json, LinkedHashMap.class);
-        } catch (Exception e) {
-            map = createDefaultInventory(commander);
+            LinkedHashMap<String, Map<String, Number>> data = new Gson().fromJson(json, LinkedHashMap.class);
+            for (String name : data.get("collected").keySet()) {
+                this.collectedByName.put(name, data.get("collected").get(name).intValue());
+            }
+            for (String name : data.get("discarded").keySet()) {
+                this.discardedByName.put(name, data.get("discarded").get(name).intValue());
+            }
+            for (String name : data.get("spent").keySet()) {
+                this.spentByName.put(name, data.get("spent").get(name).intValue());
+            }
+            for (String name : data.get("have").keySet()) {
+                this.reset(name, data.get("have").get(name).intValue(), guessType(name)); // Reset to loaded value
+            }
         }
-
-        Inventory inventory = new Inventory(commander);
-        for (String name : map.keySet()) {
-            inventory.reset(name, map.get(name).intValue(), null);
-        }
-        return inventory;
     }
 
-    public void save() throws IOException {
-        File file = new File(System.getProperty("user.home"), ".Inventory." + this.getCommander() + ".json");
-        String json = new Gson().toJson(this.haveByName);
-        FileUtils.write(file, json, "UTF-8", false);
+    private void save(String commander) throws IOException {
+        if (StringUtils.isNotEmpty(commander)) {
+            File file = new File(System.getProperty("user.home"), ".Inventory." + commander + ".json");
+            LinkedHashMap<String, SortedMap> data = new LinkedHashMap<>(4);
+            data.put("have", this.haveByName);
+            data.put("collected", this.collectedByName);
+            data.put("discarded", this.discardedByName);
+            data.put("spent", this.spentByName);
+            String json = new Gson().toJson(data);
+            FileUtils.write(file, json, "UTF-8", false);
+        }
     }
 
     public String getCommander() {
         return this.commander;
+    }
+
+    public void setCommander(String commander) {
+        this.commander = commander;
+    }
+
+    public int getCargoCapacity() {
+        return this.cargoCapacity;
+    }
+
+    public void setCargoCapacity(int cargoCapacity) {
+        this.cargoCapacity = cargoCapacity;
     }
 
     public int getCapacity(ItemType type) {
@@ -94,7 +132,7 @@ public class Inventory implements JournalUpdateListener, Serializable {
         } else if (type == ItemType.ELEMENT || type == ItemType.MANUFACTURED) {
             return 1000;
         } else if (type == ItemType.COMMODITY || type == ItemType.DRONES) {
-            return this.cargoCapacity;
+            return this.getCargoCapacity();
         } else {
             return 0;
         }
@@ -224,6 +262,37 @@ public class Inventory implements JournalUpdateListener, Serializable {
         }
     }
 
+    @Override
+    public void onGameLoaded(String commander, String gameMode, String group, ShipLoadout ship) {
+        try {
+            this.save(this.getCommander());
+        } catch (Exception e) {
+            logger.error("Failed to save old inventory for CMDR " + this.getCommander(), e);
+        }
+        this.setCommander(commander);
+        this.setCargoCapacity(ship == null ? 0 : ship.getCargoCapacity());
+        try {
+            this.load(this.getCommander());
+        } catch (Exception e) {
+            logger.error("Failed to load new inventory for CMDR " + this.getCommander(), e);
+        }
+    }
+
+    @Override
+    public void onShipModuleChanged(ShipModule oldModule, ShipModule newModule) {
+        if (oldModule != null && oldModule.getCargoCapacity() != null) {
+            this.setCargoCapacity(this.getCargoCapacity() - oldModule.getCargoCapacity());
+        }
+        if (newModule != null && newModule.getCargoCapacity() != null) {
+            this.setCargoCapacity(this.getCargoCapacity() + newModule.getCargoCapacity());
+        }
+    }
+
+    @Override
+    public void onShipChanged(ShipLoadout oldShip, ShipLoadout newShip) {
+        this.setCargoCapacity(newShip == null ? 0 : newShip.getCargoCapacity());
+    }
+
     synchronized void reset(String name, int count, ItemType type) {
         String guessedName = guessName(name, type);
 
@@ -343,117 +412,6 @@ public class Inventory implements JournalUpdateListener, Serializable {
         } else {
             return ItemType.COMMODITY;
         }
-    }
-
-    private static Map<String, Number> createDefaultInventory(String commander) {
-        Map<String, Number> inventory = new TreeMap<>();
-
-        if ("Mokel DeLorean".equals(commander)) {
-            inventory.put(Item.ANTIMONY.getName(), 5);
-            inventory.put(Item.ARSENIC.getName(), 3);
-            inventory.put(Item.BASIC_CONDUCTORS.getName(), 10);
-            inventory.put(Item.BIOTECH_CONDUCTORS.getName(), 8);
-            inventory.put(Item.CADMIUM.getName(), 20);
-            inventory.put(Item.CARBON.getName(), 23);
-            inventory.put(Item.CHEMICAL_DISTILLERY.getName(), 24);
-            inventory.put(Item.CHEMICAL_MANIPULATORS.getName(), 9);
-            inventory.put(Item.CHEMICAL_PROCESSORS.getName(), 13);
-            inventory.put(Item.CHROMIUM.getName(), 4);
-            inventory.put(Item.COMPOUND_SHIELDING.getName(), 19);
-            inventory.put(Item.CONDUCTIVE_CERAMICS.getName(), 11);
-            inventory.put(Item.CONDUCTIVE_COMPONENTS.getName(), 14);
-            inventory.put(Item.CONDUCTIVE_POLYMERS.getName(), 22);
-            inventory.put(Item.CONFIGURABLE_COMPONENTS.getName(), 20);
-            inventory.put(Item.ELECTROCHEMICAL_ARRAYS.getName(), 11);
-            inventory.put(Item.EXQUISITE_FOCUS_CRYSTALS.getName(), 6);
-            inventory.put(Item.FLAWED_FOCUS_CRYSTALS.getName(), 4);
-            inventory.put(Item.FOCUS_CRYSTALS.getName(), 23);
-            inventory.put(Item.GALVANISING_ALLOYS.getName(), 23);
-            inventory.put(Item.GERMANIUM.getName(), 20);
-            inventory.put(Item.GRID_RESISTORS.getName(), 11);
-            inventory.put(Item.HEAT_CONDUCTION_WIRING.getName(), 14);
-            inventory.put(Item.HEAT_DISPERSION_PLATE.getName(), 12);
-            inventory.put(Item.HEAT_EXCHANGERS.getName(), 13);
-            inventory.put(Item.HEAT_VANES.getName(), 20);
-            inventory.put(Item.HIGH_DENSITY_COMPOSITES.getName(), 12);
-            inventory.put(Item.HYBRID_CAPACITORS.getName(), 10);
-            inventory.put(Item.IMPERIAL_SHIELDING.getName(), 3);
-            inventory.put(Item.IRON.getName(), 24);
-            inventory.put(Item.MANGANESE.getName(), 11);
-            inventory.put(Item.MECHANICAL_COMPONENTS.getName(), 12);
-            inventory.put(Item.MECHANICAL_EQUIPMENT.getName(), 14);
-            inventory.put(Item.MECHANICAL_SCRAP.getName(), 12);
-            inventory.put(Item.MERCURY.getName(), 11);
-            inventory.put(Item.MILITARY_GRADE_ALLOYS.getName(), 6);
-            inventory.put(Item.MILITARY_SUPERCAPACITORS.getName(), 7);
-            inventory.put(Item.MOLYBDENUM.getName(), 20);
-            inventory.put(Item.NICKEL.getName(), 22);
-            inventory.put(Item.NIOBIUM.getName(), 22);
-            inventory.put(Item.PHARMACEUTICAL_ISOLATORS.getName(), 4);
-            inventory.put(Item.PHASE_ALLOYS.getName(), 11);
-            inventory.put(Item.PHOSPHORUS.getName(), 36);
-            inventory.put(Item.POLONIUM.getName(), 5);
-            inventory.put(Item.POLYMER_CAPACITORS.getName(), 21);
-            inventory.put(Item.PRECIPITATED_ALLOYS.getName(), 22);
-            inventory.put(Item.PROPRIETARY_COMPOSITES.getName(), 21);
-            inventory.put(Item.PROTO_HEAT_RADIATORS.getName(), 3);
-            inventory.put(Item.PROTO_LIGHT_ALLOYS.getName(), 28);
-            inventory.put(Item.PROTO_RADIOLIC_ALLOYS.getName(), 14);
-            inventory.put(Item.REFINED_FOCUS_CRYSTALS.getName(), 27);
-            inventory.put(Item.RUTHENIUM.getName(), 6);
-            inventory.put(Item.SALVAGED_ALLOYS.getName(), 20);
-            inventory.put(Item.SELENIUM.getName(), 21);
-            inventory.put(Item.SHIELD_EMITTERS.getName(), 38);
-            inventory.put(Item.SHIELDING_SENSORS.getName(), 16);
-            inventory.put(Item.SULPHUR.getName(), 32);
-            inventory.put(Item.TECHNETIUM.getName(), 1);
-            inventory.put(Item.TELLURIUM.getName(), 2);
-            inventory.put(Item.THERMIC_ALLOYS.getName(), 18);
-            inventory.put(Item.TIN.getName(), 13);
-            inventory.put(Item.TUNGSTEN.getName(), 7);
-            inventory.put(Item.UNKNOWN_FRAGMENT.getName(), 2);
-            inventory.put(Item.VANADIUM.getName(), 21);
-            inventory.put(Item.WORN_SHIELD_EMITTERS.getName(), 17);
-            inventory.put(Item.YTTRIUM.getName(), 3);
-            inventory.put(Item.ZINC.getName(), 21);
-            inventory.put(Item.ZIRCONIUM.getName(), 20);
-
-            inventory.put(Item.ABBERANT_SHIELD_PATTERN_ANALYSIS.getName(), 15);
-            inventory.put(Item.ABNORMAL_COMPACT_EMISSIONS_DATA.getName(), 10);
-            inventory.put(Item.ADAPTIVE_ENCRYPTORS_CAPTURE.getName(), 2);
-            inventory.put(Item.ANOMALOUS_BULK_SCAN_DATA.getName(), 20);
-            inventory.put(Item.ANOMALOUS_FSD_TELEMETRY.getName(), 21);
-            inventory.put(Item.ATYPICAL_DISRUPTED_WAKE_ECHOES.getName(), 11);
-            inventory.put(Item.ATYPICAL_ENCRYPTION_ARCHIVES.getName(), 6);
-            inventory.put(Item.CLASSIFIED_SCAN_DATABANKS.getName(), 2);
-            inventory.put(Item.CLASSIFIED_SCAN_FRAGMENT.getName(), 8);
-            inventory.put(Item.CRACKED_INDUSTRIAL_FIRMWARE.getName(), 5);
-            inventory.put(Item.DATAMINED_WAKE_EXCEPTIONS.getName(), 4);
-            inventory.put(Item.DECODED_EMISSION_DATA.getName(), 13);
-            inventory.put(Item.DISTORTED_SHIELD_CYCLE_RECORDINGS.getName(), 29);
-            inventory.put(Item.DIVERGENT_SCAN_DATA.getName(), 20);
-            inventory.put(Item.ECCENTRIC_HYPERSPACE_TRAJECTORIES.getName(), 18);
-            inventory.put(Item.EXCEPTIONAL_SCRAMBLED_EMISSION_DATA.getName(), 12);
-            inventory.put(Item.INCONSISTENT_SHIELD_SOAK_ANALYSIS.getName(), 23);
-            inventory.put(Item.IRREGULAR_EMISSION_DATA.getName(), 2);
-            inventory.put(Item.MODIFIED_CONSUMER_FIRMWARE.getName(), 4);
-            inventory.put(Item.OPEN_SYMMETRIC_KEYS.getName(), 5);
-            inventory.put(Item.PATTERN_ALPHA_OBELISK_DATA.getName(), 3); // TODO
-            inventory.put(Item.PATTERN_BETA_OBELISK_DATA.getName(), 3); // TODO
-            inventory.put(Item.PATTERN_GAMMA_OBELISK_DATA.getName(), 3); // TODO
-            inventory.put(Item.PATTERN_EPSILON_OBELISK_DATA.getName(), 3); // TODO
-            inventory.put(Item.PECULIAR_SHIELD_FREQUENCY_DATA.getName(), 7);
-            inventory.put(Item.SECURITY_FIRMWARE_PATCH.getName(), 7);
-            inventory.put(Item.SPECIALISED_LEGACY_FIRMWARE.getName(), 11);
-            inventory.put(Item.STRANGE_WAKE_SOLUTIONS.getName(), 16);
-            inventory.put(Item.TAGGED_ENCRYPTION_CODES.getName(), 8);
-            inventory.put(Item.UNEXPECTED_EMISSION_DATA.getName(), 36);
-            inventory.put(Item.UNIDENTIFIED_SCAN_ARCHIVES.getName(), 17);
-            inventory.put(Item.UNTYPICAL_SHIELD_SCANS.getName(), 25);
-            inventory.put(Item.UNUSUAL_ENCRYPTED_FILES.getName(), 6);
-        }
-
-        return inventory;
     }
 
 }

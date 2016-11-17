@@ -1,8 +1,16 @@
 package borg.edtrading.gui;
 
+import borg.edtrading.data.Coord;
 import borg.edtrading.data.Item.ItemType;
+import borg.edtrading.sidepanel.GameSession;
+import borg.edtrading.sidepanel.GameSessionListener;
 import borg.edtrading.sidepanel.Inventory;
 import borg.edtrading.sidepanel.InventoryListener;
+import borg.edtrading.sidepanel.ShipLoadout;
+import borg.edtrading.sidepanel.ShipModule;
+import borg.edtrading.sidepanel.TravelHistory;
+import borg.edtrading.sidepanel.TravelHistoryListener;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -23,31 +31,38 @@ import javax.swing.Timer;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class StatusPanel extends JPanel implements InventoryListener {
+public class StatusPanel extends JPanel implements GameSessionListener, TravelHistoryListener, InventoryListener {
 
     private static final long serialVersionUID = -712826465072375525L;
 
     static final Logger logger = LogManager.getLogger(StatusPanel.class);
 
+    private final GameSession gameSession;
+    private final TravelHistory travelHistory;
     private final Inventory inventory;
 
     private JLabel locationLabel = new JLabel("System / Body");
     private JLabel factionAndAllegianceLabel = new JLabel("Faction (Allegiance)");
     private JLabel economyAndStateLabel = new JLabel("Economy (State)");
     private JLabel governmentAndSecurityLabel = new JLabel("Government (Security)");
+    private JLabel distanceFromSolLabel = new JLabel("Sol: 0 Ly");
 
-    private AnimatedLabel fuelLabel = new AnimatedLabel("Fuel: 0.00t");
+    private JLabel gameLabel = new JLabel("CMDR Name (Game Mode: Group)");
 
     private JLabel explLabel = new JLabel("Expl: 0 CR");
     private AnimatedLabel dataLabel = new AnimatedLabel("Data: 0");
     private AnimatedLabel matsLabel = new AnimatedLabel("Mats: 0");
-    private JLabel cargoLabel = new JLabel("Cargo: 0t");
+    private JLabel cargoLabel = new JLabel("Cargo: 0t (0t)");
+    private AnimatedLabel fuelLabel = new AnimatedLabel("Fuel: 0.00t (0t)");
+    private JLabel jumpLabel = new JLabel("Jump: 0.00 Ly (0.00 Ly)");
 
-    private Timer fuelTimer = null;
     private Timer dataTimer = null;
     private Timer matsTimer = null;
+    private Timer fuelTimer = null;
 
-    public StatusPanel(Inventory inventory) {
+    public StatusPanel(GameSession gameSession, TravelHistory travelHistory, Inventory inventory) {
+        this.gameSession = gameSession;
+        this.travelHistory = travelHistory;
         this.inventory = inventory;
 
         this.fuelTimer = new Timer(10, this.fuelLabel);
@@ -64,10 +79,11 @@ public class StatusPanel extends JPanel implements InventoryListener {
         leftPanel.add(this.factionAndAllegianceLabel);
         leftPanel.add(this.economyAndStateLabel);
         leftPanel.add(this.governmentAndSecurityLabel);
+        leftPanel.add(this.distanceFromSolLabel);
         this.add(leftPanel, BorderLayout.WEST);
 
         JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 25, 5));
-        centerPanel.add(this.fuelLabel);
+        centerPanel.add(this.gameLabel);
         this.add(centerPanel, BorderLayout.CENTER);
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 25, 5));
@@ -75,36 +91,77 @@ public class StatusPanel extends JPanel implements InventoryListener {
         rightPanel.add(this.dataLabel);
         rightPanel.add(this.matsLabel);
         rightPanel.add(this.cargoLabel);
+        rightPanel.add(this.fuelLabel);
+        rightPanel.add(this.jumpLabel);
         this.add(rightPanel, BorderLayout.EAST);
 
         // Initial update
-        this.updateInventory();
+        this.updatePanel();
 
         // Listen
+        gameSession.addListener(this);
+        travelHistory.addListener(this);
         inventory.addListener(this);
     }
 
     @Override
+    public void onGameLoaded(String commander, String gameMode, String group, ShipLoadout ship) {
+        if (StringUtils.isNotEmpty(this.gameSession.getGroup())) {
+            this.gameLabel.setText(String.format(Locale.US, "CMDR %s (%s: %s)", this.gameSession.getCommander(), this.gameSession.getGameMode(), this.gameSession.getGroup()));
+        } else {
+            this.gameLabel.setText(String.format(Locale.US, "CMDR %s (%s)", this.gameSession.getCommander(), this.gameSession.getGameMode()));
+        }
+
+        this.updatePanel();
+    }
+
+    @Override
+    public void onShipModuleChanged(ShipModule oldModule, ShipModule newModule) {
+        this.updatePanel();
+    }
+
+    @Override
+    public void onShipChanged(ShipLoadout oldShip, ShipLoadout newShip) {
+        this.updatePanel();
+    }
+
+    @Override
+    public void onLocationChanged() {
+        this.locationLabel.setText(String.format(Locale.US, "%s / %s", this.travelHistory.getSystemName(), this.travelHistory.getBodyName()));
+        this.factionAndAllegianceLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getFaction(), this.travelHistory.getAllegiance()));
+        this.economyAndStateLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getEconomy(), this.travelHistory.getState()));
+        this.governmentAndSecurityLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getGovernment(), this.travelHistory.getSecurity()));
+        this.distanceFromSolLabel.setText(String.format(Locale.US, "Sol: %.0f Ly", new Coord(0, 0, 0).distanceTo(this.travelHistory.getCoord())));
+
+        this.updatePanel();
+    }
+
+    @Override
+    public void onFuelLevelChanged(float newFuelLevel) {
+        this.updatePanel();
+    }
+
+    @Override
     public void onInventoryReset(ItemType type, String name, int count) {
-        this.updateInventory();
+        this.updatePanel();
     }
 
     @Override
     public void onInventoryCollected(ItemType type, String name, int count) {
-        this.updateInventory();
+        this.updatePanel();
     }
 
     @Override
     public void onInventoryDiscarded(ItemType type, String name, int count) {
-        this.updateInventory();
+        this.updatePanel();
     }
 
     @Override
     public void onInventorySpent(ItemType type, String name, int count) {
-        this.updateInventory();
+        this.updatePanel();
     }
 
-    private void updateInventory() {
+    private void updatePanel() {
         int totalData = this.inventory.getTotal(ItemType.DATA);
         int capacityData = this.inventory.getCapacity(ItemType.DATA);
         float percentData = (float) totalData / (float) capacityData;
@@ -148,9 +205,9 @@ public class StatusPanel extends JPanel implements InventoryListener {
         }
 
         int totalCargo = this.inventory.getTotal(ItemType.COMMODITY); // This does not include drones
-        int capacityCargo = this.inventory.getCapacity(ItemType.COMMODITY);
+        int capacityCargo = Math.max(totalCargo, this.inventory.getCapacity(ItemType.COMMODITY));
         float percentCargo = (float) totalCargo / (float) capacityCargo;
-        this.cargoLabel.setText(String.format(Locale.US, "Cargo: %dt", totalCargo));
+        this.cargoLabel.setText(String.format(Locale.US, "Cargo: %dt (%dt)", totalCargo, capacityCargo));
         if (percentCargo >= 1.0f) {
             this.cargoLabel.setForeground(Color.RED); // Full. Red, but do not flash as this is common business.
         } else if (percentCargo >= 0.9f) {
@@ -159,6 +216,32 @@ public class StatusPanel extends JPanel implements InventoryListener {
             this.cargoLabel.setForeground(Color.GRAY); // Only be gray (barely visible) when completely empty.
         } else {
             this.cargoLabel.setForeground(Color.LIGHT_GRAY); // Use light gray (better visibility) if s.th. is loaded.
+        }
+
+        float totalFuel = this.travelHistory.getFuelLevel();
+        float capacityFuel = Math.max(totalFuel, this.travelHistory.getFuelCapacity());
+        float percentFuel = totalFuel / capacityFuel;
+        float maxFuelPerJump = 1f;
+        if (this.gameSession.getCurrentShipLoadout() != null && this.gameSession.getCurrentShipLoadout().getMaxFuelPerJump() != null) {
+            maxFuelPerJump = this.gameSession.getCurrentShipLoadout().getMaxFuelPerJump();
+        }
+        float percentMaxFuelPerJump = totalFuel / maxFuelPerJump;
+        this.fuelLabel.setText(String.format(Locale.US, "Fuel: %.2ft (%.0ft)", totalFuel, capacityFuel));
+        if (percentFuel <= 0.125f || percentMaxFuelPerJump <= 1.5f) {
+            this.fuelLabel.setForeground(Color.RED);
+            if (!this.fuelTimer.isRunning()) {
+                this.fuelTimer.start();
+            }
+        } else if (percentFuel <= 0.2f || percentMaxFuelPerJump <= 2.0f) {
+            if (this.fuelTimer.isRunning()) {
+                this.fuelTimer.stop();
+            }
+            this.fuelLabel.setForeground(Color.ORANGE);
+        } else {
+            if (this.fuelTimer.isRunning()) {
+                this.fuelTimer.stop();
+            }
+            this.fuelLabel.setForeground(Color.GRAY);
         }
     }
 

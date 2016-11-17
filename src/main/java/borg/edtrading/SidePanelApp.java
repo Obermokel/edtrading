@@ -4,7 +4,9 @@ import borg.edtrading.gui.InventoryPanel;
 import borg.edtrading.gui.JournalLogPanel;
 import borg.edtrading.gui.StatusPanel;
 import borg.edtrading.journal.JournalReaderThread;
+import borg.edtrading.sidepanel.GameSession;
 import borg.edtrading.sidepanel.Inventory;
+import borg.edtrading.sidepanel.TravelHistory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,6 +18,7 @@ import java.nio.file.Paths;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.UIManager;
 
 /**
  * SidePanelApp
@@ -27,35 +30,36 @@ public class SidePanelApp {
     static final Logger logger = LogManager.getLogger(SidePanelApp.class);
 
     public static void main(String[] args) throws IOException {
-        String commander = "Mokel DeLorean";
         Path journalDir = Paths.get(System.getProperty("user.home"));
-        if ("boris".equalsIgnoreCase(journalDir.getFileName().toString())) {
+        if (!"Guenther".equalsIgnoreCase(journalDir.getFileName().toString())) {
             journalDir = journalDir.resolve("Saved Games\\Frontier Developments\\Elite Dangerous");
         } else {
             journalDir = journalDir.resolve("Google Drive\\Elite Dangerous\\Journal");
         }
 
-        //        try {
-        //            UIManager.setLookAndFeel("com.jtattoo.plaf.noire.NoireLookAndFeel");
-        //        } catch (Exception e) {
-        //            e.printStackTrace();
-        //        }
+        try {
+            UIManager.setLookAndFeel("com.jtattoo.plaf.noire.NoireLookAndFeel");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Create the reader thread
         JournalReaderThread journalReaderThread = new JournalReaderThread(journalDir);
 
         // Create and register the journal listeners
-        Inventory inventory = Inventory.load(commander);
-        journalReaderThread.addListener(inventory);
+        GameSession gameSession = new GameSession(journalReaderThread);
+        TravelHistory travelHistory = new TravelHistory(journalReaderThread, gameSession);
+        Inventory inventory = new Inventory(journalReaderThread, gameSession);
+
         JournalLogPanel journalLogPanel = new JournalLogPanel(journalReaderThread);
+        StatusPanel statusPanel = new StatusPanel(gameSession, travelHistory, inventory);
+        InventoryPanel inventoryPanel = new InventoryPanel(inventory);
 
         // Init the reader from existing files, then start to watch for changes
         journalReaderThread.init();
         journalReaderThread.start();
 
         // Create all panels
-        StatusPanel statusPanel = new StatusPanel(inventory);
-        InventoryPanel inventoryPanel = new InventoryPanel(inventory);
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Inventory", inventoryPanel);
