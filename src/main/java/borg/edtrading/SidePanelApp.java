@@ -6,6 +6,7 @@ import borg.edtrading.gui.StatusPanel;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.sidepanel.GameSession;
 import borg.edtrading.sidepanel.Inventory;
+import borg.edtrading.sidepanel.ShipModuleList;
 import borg.edtrading.sidepanel.TravelHistory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,6 +62,7 @@ public class SidePanelApp implements WindowListener {
         gameSession = new GameSession(journalReaderThread);
         travelHistory = new TravelHistory(journalReaderThread, gameSession);
         inventory = new Inventory(journalReaderThread, gameSession);
+        new ShipModuleList(gameSession);
 
         // Init the reader from existing files, then start to watch for changes
         journalReaderThread.init();

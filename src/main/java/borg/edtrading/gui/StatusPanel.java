@@ -10,6 +10,8 @@ import borg.edtrading.sidepanel.ShipLoadout;
 import borg.edtrading.sidepanel.ShipModule;
 import borg.edtrading.sidepanel.TravelHistory;
 import borg.edtrading.sidepanel.TravelHistoryListener;
+import borg.edtrading.util.FuelAndJumpRangeLookup;
+import borg.edtrading.util.MiscUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,9 +53,9 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
 
     private AnimatedLabel dataLabel = new AnimatedLabel("Data: 0");
     private AnimatedLabel matsLabel = new AnimatedLabel("Mats: 0");
-    private JLabel cargoLabel = new JLabel("Cargo: 0t (0t)");
-    private AnimatedLabel fuelLabel = new AnimatedLabel("Fuel: 0.00t (0t)");
-    private JLabel jumpLabel = new JLabel("Jump: 0.00 Ly (0.00 Ly)");
+    private JLabel cargoLabel = new JLabel("Cargo: 0 (0)");
+    private AnimatedLabel fuelLabel = new AnimatedLabel("Fuel: 0 (0)");
+    private JLabel jumpLabel = new JLabel("Jump: 0.00 (0.00) Ly");
     private JLabel explLabel = new JLabel("Expl: 0 CR");
 
     private Timer dataTimer = null;
@@ -207,7 +209,7 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         int totalCargo = this.inventory.getTotal(ItemType.COMMODITY); // This does not include drones
         int capacityCargo = Math.max(totalCargo, this.inventory.getCapacity(ItemType.COMMODITY));
         float percentCargo = (float) totalCargo / (float) capacityCargo;
-        this.cargoLabel.setText(String.format(Locale.US, "Cargo: %dt (%dt)", totalCargo, capacityCargo));
+        this.cargoLabel.setText(String.format(Locale.US, "Cargo: %d (%d)", totalCargo, capacityCargo));
         if (percentCargo >= 1.0f) {
             this.cargoLabel.setForeground(Color.RED); // Full. Red, but do not flash as this is common business.
         } else if (percentCargo >= 0.9f) {
@@ -226,7 +228,7 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
             maxFuelPerJump = this.gameSession.getCurrentShipLoadout().getMaxFuelPerJump();
         }
         float percentMaxFuelPerJump = totalFuel / maxFuelPerJump;
-        this.fuelLabel.setText(String.format(Locale.US, "Fuel: %.2ft (%.0ft)", totalFuel, capacityFuel));
+        this.fuelLabel.setText(String.format(Locale.US, "Fuel: %.0f (%.0f)", totalFuel, capacityFuel));
         if (percentFuel <= 0.125f || percentMaxFuelPerJump <= 1.5f) {
             this.fuelLabel.setForeground(Color.RED);
             if (!this.fuelTimer.isRunning()) {
@@ -243,6 +245,11 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
             }
             this.fuelLabel.setForeground(Color.GRAY);
         }
+
+        float minJumpRange = MiscUtil.getAsFloat(this.gameSession.getCurrentShipLoadout().getFullTankJumpRange(), 1.0f);
+        float maxJumpRange = MiscUtil.getAsFloat(this.gameSession.getCurrentShipLoadout().getOptTankJumpRange(), 1.0f);
+        float currentJumpRange = FuelAndJumpRangeLookup.estimateCurrentJumpRange(totalFuel, (int) capacityFuel, maxFuelPerJump, minJumpRange, maxJumpRange);
+        this.jumpLabel.setText(String.format(Locale.US, "Jump: %.2f (%.2f) Ly", currentJumpRange, maxJumpRange));
     }
 
     public static class AnimatedLabel extends JLabel implements ActionListener {

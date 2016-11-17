@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class ShipModule implements Serializable {
+public class ShipModule implements Serializable, Comparable<ShipModule> {
 
     private static final long serialVersionUID = -5120871377221693884L;
 
@@ -77,6 +77,72 @@ public class ShipModule implements Serializable {
         }
 
         return "";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        ShipModule other = (ShipModule) obj;
+        if (this.buyPrice == null) {
+            if (other.buyPrice != null) {
+                return false;
+            }
+        } else if (!this.buyPrice.equals(other.buyPrice)) {
+            return false;
+        }
+        if (this.key == null) {
+            if (other.key != null) {
+                return false;
+            }
+        } else if (!this.key.equals(other.key)) {
+            return false;
+        }
+        if (this.name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!this.name.equals(other.name)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((this.buyPrice == null) ? 0 : this.buyPrice.hashCode());
+        result = prime * result + ((this.key == null) ? 0 : this.key.hashCode());
+        result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return this.getName();
+    }
+
+    @Override
+    public int compareTo(ShipModule other) {
+        int byKey = MiscUtil.getAsString(this.getKey(), "").toLowerCase().compareTo(MiscUtil.getAsString(other.getKey(), "").toLowerCase());
+        if (byKey != 0) {
+            return byKey;
+        } else {
+            int byName = MiscUtil.getAsString(this.getName(), "").toLowerCase().compareTo(MiscUtil.getAsString(other.getName(), "").toLowerCase());
+            if (byName != 0) {
+                return byName;
+            } else {
+                return MiscUtil.getAsInt(this.getBuyPrice(), 0).compareTo(MiscUtil.getAsInt(other.getBuyPrice(), 0));
+            }
+        }
     }
 
     public String getKey() {
