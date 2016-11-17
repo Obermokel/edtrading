@@ -97,17 +97,26 @@ public class SidePanelApp implements WindowListener {
 
     @Override
     public void windowClosing(WindowEvent e) {
-        try {
-            inventory.save(gameSession.getCommander());
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
         journalReaderThread.interrupt();
+
+        try {
+            inventory.save();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     @Override
     public void windowClosed(WindowEvent e) {
-        // Do nothing
+        while (journalReaderThread.isAlive()) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException ex) {
+                break;
+            }
+        }
+
+        System.exit(0);
     }
 
     @Override

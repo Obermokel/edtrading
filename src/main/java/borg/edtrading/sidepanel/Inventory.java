@@ -29,9 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -48,12 +46,13 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
 
     private String commander = null;
     private int cargoCapacity = 0;
-    private SortedMap<String, Integer> haveByName = new TreeMap<>();
-    private SortedMap<String, Integer> collectedByName = new TreeMap<>();
-    private SortedMap<String, Integer> discardedByName = new TreeMap<>();
-    private SortedMap<String, Integer> spentByName = new TreeMap<>();
-    private SortedMap<String, Float> priorityByName = new TreeMap<>();
-    private SortedMap<String, Integer> surplusByName = new TreeMap<>();
+    private SortedMap<String, SortedMap<String, Integer>> offsetByName = new TreeMap<>();
+    private SortedMap<String, SortedMap<String, Integer>> haveByName = new TreeMap<>();
+    private SortedMap<String, SortedMap<String, Integer>> collectedByName = new TreeMap<>();
+    private SortedMap<String, SortedMap<String, Integer>> discardedByName = new TreeMap<>();
+    private SortedMap<String, SortedMap<String, Integer>> spentByName = new TreeMap<>();
+    private SortedMap<String, SortedMap<String, Float>> priorityByName = new TreeMap<>();
+    private SortedMap<String, SortedMap<String, Integer>> surplusByName = new TreeMap<>();
 
     private final List<InventoryListener> listeners = new ArrayList<>();
 
@@ -66,48 +65,39 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         }
     }
 
-    public void load(String commander) throws IOException {
-        for (String name : this.haveByName.keySet()) {
-            this.reset(name, 0, guessType(name)); // Reset all existing to 0
-        }
-        this.collectedByName.clear();
-        this.discardedByName.clear();
-        this.spentByName.clear();
-        this.priorityByName.clear();
-        this.surplusByName.clear();
-
-        File file = new File(System.getProperty("user.home"), ".Inventory." + commander + ".json");
+    private void loadOffsets(String commander) throws IOException {
+        File file = new File(System.getProperty("user.home"), ".InventoryOffsets." + commander + ".json");
         if (!file.exists() || file.length() == 0) {
             // Do nothing
         } else {
             String json = FileUtils.readFileToString(file, "UTF-8");
-            LinkedHashMap<String, Map<String, Number>> data = new Gson().fromJson(json, LinkedHashMap.class);
-            for (String name : data.get("collected").keySet()) {
-                this.collectedByName.put(name, data.get("collected").get(name).intValue());
-            }
-            for (String name : data.get("discarded").keySet()) {
-                this.discardedByName.put(name, data.get("discarded").get(name).intValue());
-            }
-            for (String name : data.get("spent").keySet()) {
-                this.spentByName.put(name, data.get("spent").get(name).intValue());
-            }
-            for (String name : data.get("have").keySet()) {
-                this.reset(name, data.get("have").get(name).intValue(), guessType(name)); // Reset to loaded value
+            TreeMap<String, Number> offsets = new Gson().fromJson(json, TreeMap.class);
+            for (String name : offsets.keySet()) {
+                this.offsetByName.get(commander).put(name, offsets.get(name).intValue());
+                this.haveByName.get(commander).put(name, offsets.get(name).intValue());
             }
         }
     }
 
-    public void save(String commander) throws IOException {
+    private void saveOffsets(String commander) throws IOException {
         if (StringUtils.isNotEmpty(commander)) {
-            logger.debug("Saving for " + commander);
-            File file = new File(System.getProperty("user.home"), ".Inventory." + commander + ".json");
-            LinkedHashMap<String, SortedMap> data = new LinkedHashMap<>(4);
-            data.put("have", this.haveByName);
-            data.put("collected", this.collectedByName);
-            data.put("discarded", this.discardedByName);
-            data.put("spent", this.spentByName);
-            String json = new Gson().toJson(data);
+            File file = new File(System.getProperty("user.home"), ".InventoryOffsets." + commander + ".json");
+            SortedMap<String, Integer> offsets = new TreeMap<>();
+            for (String name : this.haveByName.get(commander).keySet()) {
+                offsets.put(name, this.offsetByName.get(commander).getOrDefault(name, 0));
+            }
+            String json = new Gson().toJson(offsets);
             FileUtils.write(file, json, "UTF-8", false);
+        }
+    }
+
+    public void save() throws IOException {
+        if (StringUtils.isNotEmpty(this.getCommander())) {
+            File file = new File(System.getProperty("user.home"), ".Inventory." + this.getCommander() + ".json");
+            String json = new Gson().toJson(this.haveByName.get(this.getCommander()));
+            FileUtils.write(file, json, "UTF-8", false);
+
+            this.saveOffsets(this.getCommander());
         }
     }
 
@@ -149,7 +139,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
 
     public synchronized List<String> getNames(ItemType type) {
         List<String> names = new ArrayList<>();
-        for (String name : this.haveByName.keySet()) {
+        for (String name : this.haveByName.get(this.getCommander()).keySet()) {
             ItemType guessedType = guessType(name);
             if (guessedType == type) {
                 names.add(name);
@@ -159,7 +149,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     }
 
     public int getHave(String name) {
-        return this.haveByName.getOrDefault(name, 0);
+        return this.haveByName.get(this.getCommander()).getOrDefault(name, 0);
     }
 
     /**
@@ -168,11 +158,11 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
      * +1% = WANT IT!!!
      */
     public float getPriority(String name) {
-        return this.priorityByName.getOrDefault(name, 0f);
+        return this.priorityByName.get(this.getCommander()).getOrDefault(name, 0f);
     }
 
     public int getSurplus(String name) {
-        return this.surplusByName.getOrDefault(name, 0);
+        return this.surplusByName.get(this.getCommander()).getOrDefault(name, 0);
     }
 
     public boolean addListener(InventoryListener listener) {
@@ -266,16 +256,25 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     @Override
     public void onGameLoaded(String commander, String gameMode, String group, ShipLoadout ship) {
         try {
-            this.save(this.getCommander());
+            this.save();
         } catch (Exception e) {
             logger.error("Failed to save old inventory for CMDR " + this.getCommander(), e);
         }
         this.setCommander(commander);
         this.setCargoCapacity(ship == null ? 0 : ship.getCargoCapacity());
         try {
-            this.load(this.getCommander());
+            if (this.offsetByName.get(this.getCommander()) == null) {
+                this.offsetByName.put(this.getCommander(), new TreeMap<>());
+                this.haveByName.put(this.getCommander(), new TreeMap<>());
+                this.collectedByName.put(this.getCommander(), new TreeMap<>());
+                this.discardedByName.put(this.getCommander(), new TreeMap<>());
+                this.spentByName.put(this.getCommander(), new TreeMap<>());
+                this.priorityByName.put(this.getCommander(), new TreeMap<>());
+                this.surplusByName.put(this.getCommander(), new TreeMap<>());
+                this.loadOffsets(this.getCommander());
+            }
         } catch (Exception e) {
-            logger.error("Failed to load new inventory for CMDR " + this.getCommander(), e);
+            logger.error("Failed to load offsets for CMDR " + this.getCommander(), e);
         }
     }
 
@@ -297,7 +296,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     synchronized void reset(String name, int count, ItemType type) {
         String guessedName = guessName(name, type);
 
-        this.haveByName.put(guessedName, count);
+        this.haveByName.get(this.getCommander()).put(guessedName, count);
 
         this.recompute(guessedName);
 
@@ -313,8 +312,8 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     synchronized void collected(String name, int count, ItemType type) {
         String guessedName = guessName(name, type);
 
-        this.haveByName.put(guessedName, this.haveByName.getOrDefault(guessedName, 0) + count);
-        this.collectedByName.put(guessedName, this.collectedByName.getOrDefault(guessedName, 0) + count);
+        this.haveByName.get(this.getCommander()).put(guessedName, this.haveByName.get(this.getCommander()).getOrDefault(guessedName, 0) + count);
+        this.collectedByName.get(this.getCommander()).put(guessedName, this.collectedByName.get(this.getCommander()).getOrDefault(guessedName, 0) + count);
 
         this.recompute(guessedName);
 
@@ -330,8 +329,8 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     synchronized void discarded(String name, int count, ItemType type) {
         String guessedName = guessName(name, type);
 
-        this.haveByName.put(guessedName, this.haveByName.getOrDefault(guessedName, 0) - count);
-        this.discardedByName.put(guessedName, this.discardedByName.getOrDefault(guessedName, 0) + count);
+        this.haveByName.get(this.getCommander()).put(guessedName, this.haveByName.get(this.getCommander()).getOrDefault(guessedName, 0) - count);
+        this.discardedByName.get(this.getCommander()).put(guessedName, this.discardedByName.get(this.getCommander()).getOrDefault(guessedName, 0) + count);
 
         this.recompute(guessedName);
 
@@ -347,8 +346,8 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     synchronized void spent(String name, int count, ItemType type) {
         String guessedName = guessName(name, type);
 
-        this.haveByName.put(guessedName, this.haveByName.getOrDefault(guessedName, 0) - count);
-        this.spentByName.put(guessedName, this.spentByName.getOrDefault(guessedName, 0) + count);
+        this.haveByName.get(this.getCommander()).put(guessedName, this.haveByName.get(this.getCommander()).getOrDefault(guessedName, 0) - count);
+        this.spentByName.get(this.getCommander()).put(guessedName, this.spentByName.get(this.getCommander()).getOrDefault(guessedName, 0) + count);
 
         this.recompute(guessedName);
 
@@ -363,9 +362,9 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
 
     private synchronized void recompute(String name) {
         // Compute priority
-        float nSpent = this.spentByName.getOrDefault(name, 0);
-        float nDiscarded = this.discardedByName.getOrDefault(name, 0);
-        float nCollected = this.collectedByName.getOrDefault(name, 0);
+        float nSpent = this.spentByName.get(this.getCommander()).getOrDefault(name, 0);
+        float nDiscarded = this.discardedByName.get(this.getCommander()).getOrDefault(name, 0);
+        float nCollected = this.collectedByName.get(this.getCommander()).getOrDefault(name, 0);
         float prio = 0;
         if (nSpent > 0) {
             prio += nSpent / Math.max(nCollected, nSpent); // spent of collected
@@ -373,10 +372,10 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         if (nDiscarded > 0) {
             prio -= nDiscarded / Math.max(nCollected, nDiscarded); // discarded of collected
         }
-        this.priorityByName.put(name, prio);
+        this.priorityByName.get(this.getCommander()).put(name, prio);
 
         // Compute surplus
-        int numHave = this.haveByName.getOrDefault(name, 0);
+        int numHave = this.haveByName.get(this.getCommander()).getOrDefault(name, 0);
         float normalizedPrio = (prio + 1f) / 2f; // -1% .. +1% -> 0% .. 1%
         int numKeep = 5 + Math.round(20 * normalizedPrio); // 5 .. 25
         float discardPercent = 1f - normalizedPrio; // 0% .. 1% -> 1% .. 0%
@@ -384,7 +383,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         int maxDiscard = numHave - numKeep;
         int actualDiscard = Math.min(maxDiscard, idealDiscard);
         int surplus = Math.max(0, actualDiscard);
-        this.surplusByName.put(name, surplus);
+        this.surplusByName.get(this.getCommander()).put(name, surplus);
     }
 
     private static String guessName(String name, ItemType type) {
