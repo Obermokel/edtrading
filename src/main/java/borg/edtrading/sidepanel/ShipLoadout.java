@@ -23,9 +23,9 @@ public class ShipLoadout implements Serializable {
     private String shipType = null;
     private String shipName = null;
     private Integer buyPrice = null;
-    private Float maxFuelPerJump = null;
-    private Float optTankJumpRange = null;
-    private Float fullTankJumpRange = null;
+    private Float maxFuelPerJump = 1.0f;
+    private Float optTankJumpRange = 4.0f;
+    private Float fullTankJumpRange = 3.0f;
     private SortedMap<String, ShipModule> modulesBySlot = new TreeMap<>();
 
     public ShipLoadout() {

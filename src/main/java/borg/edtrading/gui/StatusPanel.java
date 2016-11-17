@@ -49,12 +49,12 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
 
     private JLabel gameLabel = new JLabel("CMDR Name (Game Mode: Group)");
 
-    private JLabel explLabel = new JLabel("Expl: 0 CR");
     private AnimatedLabel dataLabel = new AnimatedLabel("Data: 0");
     private AnimatedLabel matsLabel = new AnimatedLabel("Mats: 0");
     private JLabel cargoLabel = new JLabel("Cargo: 0t (0t)");
     private AnimatedLabel fuelLabel = new AnimatedLabel("Fuel: 0.00t (0t)");
     private JLabel jumpLabel = new JLabel("Jump: 0.00 Ly (0.00 Ly)");
+    private JLabel explLabel = new JLabel("Expl: 0 CR");
 
     private Timer dataTimer = null;
     private Timer matsTimer = null;
@@ -87,12 +87,12 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         this.add(centerPanel, BorderLayout.CENTER);
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 25, 5));
-        rightPanel.add(this.explLabel);
         rightPanel.add(this.dataLabel);
         rightPanel.add(this.matsLabel);
         rightPanel.add(this.cargoLabel);
         rightPanel.add(this.fuelLabel);
         rightPanel.add(this.jumpLabel);
+        rightPanel.add(this.explLabel);
         this.add(rightPanel, BorderLayout.EAST);
 
         // Initial update
