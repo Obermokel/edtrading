@@ -51,15 +51,14 @@ public class SidePanelApp {
         TravelHistory travelHistory = new TravelHistory(journalReaderThread, gameSession);
         Inventory inventory = new Inventory(journalReaderThread, gameSession);
 
-        JournalLogPanel journalLogPanel = new JournalLogPanel(journalReaderThread);
-        StatusPanel statusPanel = new StatusPanel(gameSession, travelHistory, inventory);
-        InventoryPanel inventoryPanel = new InventoryPanel(inventory);
-
         // Init the reader from existing files, then start to watch for changes
         journalReaderThread.init();
         journalReaderThread.start();
 
         // Create all panels
+        JournalLogPanel journalLogPanel = new JournalLogPanel(journalReaderThread);
+        StatusPanel statusPanel = new StatusPanel(gameSession, travelHistory, inventory);
+        InventoryPanel inventoryPanel = new InventoryPanel(inventory);
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Inventory", inventoryPanel);

@@ -106,12 +106,6 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
 
     @Override
     public void onGameLoaded(String commander, String gameMode, String group, ShipLoadout ship) {
-        if (StringUtils.isNotEmpty(this.gameSession.getGroup())) {
-            this.gameLabel.setText(String.format(Locale.US, "CMDR %s (%s: %s)", this.gameSession.getCommander(), this.gameSession.getGameMode(), this.gameSession.getGroup()));
-        } else {
-            this.gameLabel.setText(String.format(Locale.US, "CMDR %s (%s)", this.gameSession.getCommander(), this.gameSession.getGameMode()));
-        }
-
         this.updatePanel();
     }
 
@@ -127,12 +121,6 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
 
     @Override
     public void onLocationChanged() {
-        this.locationLabel.setText(String.format(Locale.US, "%s / %s", this.travelHistory.getSystemName(), this.travelHistory.getBodyName()));
-        this.factionAndAllegianceLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getFaction(), this.travelHistory.getAllegiance()));
-        this.economyAndStateLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getEconomy(), this.travelHistory.getState()));
-        this.governmentAndSecurityLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getGovernment(), this.travelHistory.getSecurity()));
-        this.distanceFromSolLabel.setText(String.format(Locale.US, "Sol: %.0f Ly", new Coord(0, 0, 0).distanceTo(this.travelHistory.getCoord())));
-
         this.updatePanel();
     }
 
@@ -162,6 +150,18 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
     }
 
     private void updatePanel() {
+        this.locationLabel.setText(String.format(Locale.US, "%s / %s", this.travelHistory.getSystemName(), this.travelHistory.getBodyName()));
+        this.factionAndAllegianceLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getFaction(), this.travelHistory.getAllegiance()));
+        this.economyAndStateLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getEconomy(), this.travelHistory.getState()));
+        this.governmentAndSecurityLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getGovernment(), this.travelHistory.getSecurity()));
+        this.distanceFromSolLabel.setText(String.format(Locale.US, "Sol: %.0f Ly", new Coord(0, 0, 0).distanceTo(this.travelHistory.getCoord())));
+
+        if (StringUtils.isNotEmpty(this.gameSession.getGroup())) {
+            this.gameLabel.setText(String.format(Locale.US, "CMDR %s (%s: %s)", this.gameSession.getCommander(), this.gameSession.getGameMode(), this.gameSession.getGroup()));
+        } else {
+            this.gameLabel.setText(String.format(Locale.US, "CMDR %s (%s)", this.gameSession.getCommander(), this.gameSession.getGameMode()));
+        }
+
         int totalData = this.inventory.getTotal(ItemType.DATA);
         int capacityData = this.inventory.getCapacity(ItemType.DATA);
         float percentData = (float) totalData / (float) capacityData;
