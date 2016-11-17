@@ -66,7 +66,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         }
     }
 
-    private void load(String commander) throws IOException {
+    public void load(String commander) throws IOException {
         for (String name : this.haveByName.keySet()) {
             this.reset(name, 0, guessType(name)); // Reset all existing to 0
         }
@@ -97,8 +97,9 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         }
     }
 
-    private void save(String commander) throws IOException {
+    public void save(String commander) throws IOException {
         if (StringUtils.isNotEmpty(commander)) {
+            logger.debug("Saving for " + commander);
             File file = new File(System.getProperty("user.home"), ".Inventory." + commander + ".json");
             LinkedHashMap<String, SortedMap> data = new LinkedHashMap<>(4);
             data.put("have", this.haveByName);

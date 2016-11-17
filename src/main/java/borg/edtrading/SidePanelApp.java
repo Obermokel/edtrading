@@ -11,6 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.awt.BorderLayout;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,11 +27,20 @@ import javax.swing.UIManager;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class SidePanelApp {
+public class SidePanelApp implements WindowListener {
 
     static final Logger logger = LogManager.getLogger(SidePanelApp.class);
 
+    private JournalReaderThread journalReaderThread = null;
+    private GameSession gameSession = null;
+    private TravelHistory travelHistory = null;
+    private Inventory inventory = null;
+
     public static void main(String[] args) throws IOException {
+        new SidePanelApp().start();
+    }
+
+    private void start() throws IOException {
         Path journalDir = Paths.get(System.getProperty("user.home"));
         if (!"Guenther".equalsIgnoreCase(journalDir.getFileName().toString())) {
             journalDir = journalDir.resolve("Saved Games\\Frontier Developments\\Elite Dangerous");
@@ -44,12 +55,12 @@ public class SidePanelApp {
         }
 
         // Create the reader thread
-        JournalReaderThread journalReaderThread = new JournalReaderThread(journalDir);
+        journalReaderThread = new JournalReaderThread(journalDir);
 
         // Create and register the journal listeners
-        GameSession gameSession = new GameSession(journalReaderThread);
-        TravelHistory travelHistory = new TravelHistory(journalReaderThread, gameSession);
-        Inventory inventory = new Inventory(journalReaderThread, gameSession);
+        gameSession = new GameSession(journalReaderThread);
+        travelHistory = new TravelHistory(journalReaderThread, gameSession);
+        inventory = new Inventory(journalReaderThread, gameSession);
 
         // Init the reader from existing files, then start to watch for changes
         journalReaderThread.init();
@@ -65,17 +76,58 @@ public class SidePanelApp {
 
         // Construct the window with all panels
         JFrame frame = new JFrame("SidePanel");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.addWindowListener(this);
         frame.setLayout(new BorderLayout());
         frame.add(statusPanel, BorderLayout.NORTH);
         frame.add(tabbedPane, BorderLayout.CENTER);
         frame.add(new JScrollPane(journalLogPanel), BorderLayout.SOUTH);
         //frame.pack();
-        frame.setSize(1280, 720);
-        frame.setLocation(400, 200);
+        frame.setSize(1800, 900);
+        frame.setLocation(10, 10);
         frame.setVisible(true);
 
         inventoryPanel.setDividerLocation(0.8);
+    }
+
+    @Override
+    public void windowOpened(WindowEvent e) {
+        // Do nothing
+    }
+
+    @Override
+    public void windowClosing(WindowEvent e) {
+        try {
+            inventory.save(gameSession.getCommander());
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        journalReaderThread.interrupt();
+    }
+
+    @Override
+    public void windowClosed(WindowEvent e) {
+        // Do nothing
+    }
+
+    @Override
+    public void windowIconified(WindowEvent e) {
+        // Do nothing
+    }
+
+    @Override
+    public void windowDeiconified(WindowEvent e) {
+        // Do nothing
+    }
+
+    @Override
+    public void windowActivated(WindowEvent e) {
+        // Do nothing
+    }
+
+    @Override
+    public void windowDeactivated(WindowEvent e) {
+        // Do nothing
     }
 
 }

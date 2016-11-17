@@ -36,7 +36,7 @@ public class JournalReaderThread extends Thread {
 
     public JournalReaderThread(Path journalDir) throws IOException {
         this.setName("JournalReaderThread");
-        this.setDaemon(true);
+        this.setDaemon(false);
 
         this.journalDir = journalDir;
         this.reader = new JournalReader();
