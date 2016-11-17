@@ -172,7 +172,7 @@ public enum Item {
     METHANE_CLATHRATE("METHANE CLATHRATE", "methaneclathrate", ItemType.COMMODITY, 0),
     METHANOL_MONOHYDRATE_CRYSTALS("METHANOL MONOHYDRATE CRYSTALS", "methanolmonohydratecrystals", ItemType.COMMODITY, 0),
     PESTICIDES("PESTICIDES", "pesticides", ItemType.COMMODITY, 0),
-    SYNTHETIC_MEAT("SYNTHETIC MEAT", "SyntheticMeat", ItemType.COMMODITY, 0),
+    SYNTHETIC_MEAT("SYNTHETIC MEAT", "syntheticmeat", ItemType.COMMODITY, 0),
     TANTALUM("TANTALUM", "tantalum", ItemType.COMMODITY, 0),
     TITANIUM("TITANIUM", "titanium", ItemType.COMMODITY, 0),
     WATER("WATER", "water", ItemType.COMMODITY, 0),
