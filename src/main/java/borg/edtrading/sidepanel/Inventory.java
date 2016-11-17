@@ -177,7 +177,7 @@ public class Inventory implements JournalUpdateListener, Serializable {
                 this.collected(e.getType(), e.getCount(), ItemType.COMMODITY);
             } else if (entry.getEvent() == Event.MarketSell) {
                 MarketSellEntry e = (MarketSellEntry) entry;
-                this.discarded(e.getType(), e.getCount(), ItemType.COMMODITY);
+                this.spent(e.getType(), e.getCount(), ItemType.COMMODITY);
             } else if (entry.getEvent() == Event.BuyDrones) {
                 BuyDronesEntry e = (BuyDronesEntry) entry;
                 this.collected(e.getType(), e.getCount(), ItemType.DRONES);
