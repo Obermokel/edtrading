@@ -46,6 +46,7 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
 
     static final Logger logger = LogManager.getLogger(InventoryPanel.class);
 
+    private static final boolean SHOW_BUTTONS = false;
     private static final int HISTORY_SIZE = 100;
 
     private final Inventory inventory;
@@ -63,18 +64,30 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
             InventoryTableModel tableModel = new InventoryTableModel(this.inventory, type);
             this.tableModelsByType.put(type, tableModel);
             JTable table = new JTable(tableModel);
-            table.getColumn("+").setCellRenderer(new ButtonRenderer());
-            table.getColumn("+").setCellEditor(new ButtonEditor(new JCheckBox(), inventory, tableModel));
-            table.getColumn("-").setCellRenderer(new ButtonRenderer());
-            table.getColumn("-").setCellEditor(new ButtonEditor(new JCheckBox(), inventory, tableModel));
+            if (SHOW_BUTTONS) {
+                table.getColumn("+").setCellRenderer(new ButtonRenderer());
+                table.getColumn("+").setCellEditor(new ButtonEditor(new JCheckBox(), inventory, tableModel));
+                table.getColumn("-").setCellRenderer(new ButtonRenderer());
+                table.getColumn("-").setCellEditor(new ButtonEditor(new JCheckBox(), inventory, tableModel));
+            }
             table.setAutoCreateRowSorter(true);
-            for (int i = 0; i < 3; i++) {
-                if (i == 0) {
-                    table.getColumnModel().getColumn(i).setPreferredWidth(200);
-                } else if (i == 1 || i == 2) {
-                    table.getColumnModel().getColumn(i).setPreferredWidth(20);
-                } else {
-                    table.getColumnModel().getColumn(i).setPreferredWidth(30);
+            if (SHOW_BUTTONS) {
+                for (int i = 0; i < 5; i++) {
+                    if (i == 0) {
+                        table.getColumnModel().getColumn(i).setPreferredWidth(200);
+                    } else if (i == 1 || i == 2) {
+                        table.getColumnModel().getColumn(i).setPreferredWidth(10);
+                    } else {
+                        table.getColumnModel().getColumn(i).setPreferredWidth(50);
+                    }
+                }
+            } else {
+                for (int i = 0; i < 3; i++) {
+                    if (i == 0) {
+                        table.getColumnModel().getColumn(i).setPreferredWidth(220);
+                    } else {
+                        table.getColumnModel().getColumn(i).setPreferredWidth(50);
+                    }
                 }
             }
             JScrollPane scrollPane = new JScrollPane(table);
@@ -151,9 +164,9 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
             for (String name : this.inventory.getNames(this.type)) {
                 int have = this.inventory.getHave(name);
                 int surplus = this.inventory.getSurplus(name);
-                //if (have != 0) {
-                rows.add(new InventoryTableRow(name, have, surplus));
-                //}
+                if (have != 0 || SHOW_BUTTONS) {
+                    rows.add(new InventoryTableRow(name, have, surplus));
+                }
             }
             this.rows = rows;
             this.fireTableDataChanged();
@@ -161,23 +174,35 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
 
         @Override
         public int getColumnCount() {
-            return 5;
+            return SHOW_BUTTONS ? 5 : 3;
         }
 
         @Override
         public String getColumnName(int columnIndex) {
-            if (columnIndex == 0) {
-                return "Name";
-            } else if (columnIndex == 1) {
-                return "+";
-            } else if (columnIndex == 2) {
-                return "-";
-            } else if (columnIndex == 3) {
-                return "Have";
-            } else if (columnIndex == 4) {
-                return "Surplus";
+            if (SHOW_BUTTONS) {
+                if (columnIndex == 0) {
+                    return "Name";
+                } else if (columnIndex == 1) {
+                    return "+";
+                } else if (columnIndex == 2) {
+                    return "-";
+                } else if (columnIndex == 3) {
+                    return "Have";
+                } else if (columnIndex == 4) {
+                    return "Surplus";
+                } else {
+                    return null;
+                }
             } else {
-                return null;
+                if (columnIndex == 0) {
+                    return "Name";
+                } else if (columnIndex == 1) {
+                    return "Have";
+                } else if (columnIndex == 2) {
+                    return "Surplus";
+                } else {
+                    return null;
+                }
             }
         }
 
@@ -190,44 +215,72 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
         public Object getValueAt(int rowIndex, int columnIndex) {
             InventoryTableRow row = this.rows.get(rowIndex);
 
-            if (columnIndex == 0) {
-                return row.getName();
-            } else if (columnIndex == 1) {
-                return "+" + this.getValueAt(rowIndex, 0);
-            } else if (columnIndex == 2) {
-                return "-" + this.getValueAt(rowIndex, 0);
-            } else if (columnIndex == 3) {
-                return row.getHave();
-            } else if (columnIndex == 4) {
-                return row.getSurplus();
+            if (SHOW_BUTTONS) {
+                if (columnIndex == 0) {
+                    return row.getName();
+                } else if (columnIndex == 1) {
+                    return "+" + this.getValueAt(rowIndex, 0);
+                } else if (columnIndex == 2) {
+                    return "-" + this.getValueAt(rowIndex, 0);
+                } else if (columnIndex == 3) {
+                    return row.getHave();
+                } else if (columnIndex == 4) {
+                    return row.getSurplus();
+                } else {
+                    return null;
+                }
             } else {
-                return null;
+                if (columnIndex == 0) {
+                    return row.getName();
+                } else if (columnIndex == 1) {
+                    return row.getHave();
+                } else if (columnIndex == 2) {
+                    return row.getSurplus();
+                } else {
+                    return null;
+                }
             }
         }
 
         @Override
         public Class getColumnClass(int columnIndex) {
-            if (columnIndex == 0) {
-                return String.class;
-            } else if (columnIndex == 1) {
-                return String.class;
-            } else if (columnIndex == 2) {
-                return String.class;
-            } else if (columnIndex == 3) {
-                return Integer.class;
-            } else if (columnIndex == 4) {
-                return Integer.class;
+            if (SHOW_BUTTONS) {
+                if (columnIndex == 0) {
+                    return String.class;
+                } else if (columnIndex == 1) {
+                    return String.class;
+                } else if (columnIndex == 2) {
+                    return String.class;
+                } else if (columnIndex == 3) {
+                    return Integer.class;
+                } else if (columnIndex == 4) {
+                    return Integer.class;
+                } else {
+                    return null;
+                }
             } else {
-                return null;
+                if (columnIndex == 0) {
+                    return String.class;
+                } else if (columnIndex == 1) {
+                    return Integer.class;
+                } else if (columnIndex == 2) {
+                    return Integer.class;
+                } else {
+                    return null;
+                }
             }
         }
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            if (columnIndex == 1) {
-                return true;
-            } else if (columnIndex == 2) {
-                return true;
+            if (SHOW_BUTTONS) {
+                if (columnIndex == 1) {
+                    return true;
+                } else if (columnIndex == 2) {
+                    return true;
+                } else {
+                    return false;
+                }
             } else {
                 return false;
             }
@@ -342,8 +395,6 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
         @Override
         public Object getCellEditorValue() {
             if (isPushed) {
-                //JOptionPane.showMessageDialog(button, label + ": Ouch!");
-                System.out.println(label);
                 if (label.startsWith("+")) {
                     inventory.incOffset(label.substring(1));
                 } else if (label.startsWith("-")) {
