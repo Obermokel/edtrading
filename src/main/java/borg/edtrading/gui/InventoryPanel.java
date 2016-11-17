@@ -7,7 +7,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.Component;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,12 +23,17 @@ import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 
 /**
  * InventoryPanel
@@ -55,12 +63,18 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
             InventoryTableModel tableModel = new InventoryTableModel(this.inventory, type);
             this.tableModelsByType.put(type, tableModel);
             JTable table = new JTable(tableModel);
+            table.getColumn("+").setCellRenderer(new ButtonRenderer());
+            table.getColumn("+").setCellEditor(new ButtonEditor(new JCheckBox(), inventory, tableModel));
+            table.getColumn("-").setCellRenderer(new ButtonRenderer());
+            table.getColumn("-").setCellEditor(new ButtonEditor(new JCheckBox(), inventory, tableModel));
             table.setAutoCreateRowSorter(true);
             for (int i = 0; i < 3; i++) {
                 if (i == 0) {
-                    table.getColumnModel().getColumn(i).setPreferredWidth(220);
+                    table.getColumnModel().getColumn(i).setPreferredWidth(200);
+                } else if (i == 1 || i == 2) {
+                    table.getColumnModel().getColumn(i).setPreferredWidth(20);
                 } else {
-                    table.getColumnModel().getColumn(i).setPreferredWidth(70);
+                    table.getColumnModel().getColumn(i).setPreferredWidth(30);
                 }
             }
             JScrollPane scrollPane = new JScrollPane(table);
@@ -137,9 +151,9 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
             for (String name : this.inventory.getNames(this.type)) {
                 int have = this.inventory.getHave(name);
                 int surplus = this.inventory.getSurplus(name);
-                if (have != 0) {
-                    rows.add(new InventoryTableRow(name, have, surplus));
-                }
+                //if (have != 0) {
+                rows.add(new InventoryTableRow(name, have, surplus));
+                //}
             }
             this.rows = rows;
             this.fireTableDataChanged();
@@ -147,7 +161,7 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
 
         @Override
         public int getColumnCount() {
-            return 3;
+            return 5;
         }
 
         @Override
@@ -155,8 +169,12 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
             if (columnIndex == 0) {
                 return "Name";
             } else if (columnIndex == 1) {
-                return "Have";
+                return "+";
             } else if (columnIndex == 2) {
+                return "-";
+            } else if (columnIndex == 3) {
+                return "Have";
+            } else if (columnIndex == 4) {
                 return "Surplus";
             } else {
                 return null;
@@ -175,8 +193,12 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
             if (columnIndex == 0) {
                 return row.getName();
             } else if (columnIndex == 1) {
-                return row.getHave();
+                return "+" + this.getValueAt(rowIndex, 0);
             } else if (columnIndex == 2) {
+                return "-" + this.getValueAt(rowIndex, 0);
+            } else if (columnIndex == 3) {
+                return row.getHave();
+            } else if (columnIndex == 4) {
                 return row.getSurplus();
             } else {
                 return null;
@@ -188,11 +210,26 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
             if (columnIndex == 0) {
                 return String.class;
             } else if (columnIndex == 1) {
-                return Integer.class;
+                return String.class;
             } else if (columnIndex == 2) {
+                return String.class;
+            } else if (columnIndex == 3) {
+                return Integer.class;
+            } else if (columnIndex == 4) {
                 return Integer.class;
             } else {
                 return null;
+            }
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            if (columnIndex == 1) {
+                return true;
+            } else if (columnIndex == 2) {
+                return true;
+            } else {
+                return false;
             }
         }
 
@@ -234,6 +271,99 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
 
         public void setSurplus(int surplus) {
             this.surplus = surplus;
+        }
+
+    }
+
+    public static class ButtonRenderer extends JButton implements TableCellRenderer {
+
+        private static final long serialVersionUID = -2294184162405104261L;
+
+        public ButtonRenderer() {
+            setOpaque(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            if (isSelected) {
+                setForeground(table.getSelectionForeground());
+                setBackground(table.getSelectionBackground());
+            } else {
+                setForeground(table.getForeground());
+                setBackground(UIManager.getColor("Button.background"));
+            }
+            setText((value == null) ? "" : value.toString());
+            return this;
+        }
+    }
+
+    public static class ButtonEditor extends DefaultCellEditor {
+
+        private static final long serialVersionUID = -7551303461614498752L;
+
+        protected JButton button;
+
+        private Inventory inventory;
+        private InventoryTableModel tableModel;
+
+        private String label;
+
+        private boolean isPushed;
+
+        public ButtonEditor(JCheckBox checkBox, Inventory inventory, InventoryTableModel tableModel) {
+            super(checkBox);
+            this.inventory = inventory;
+            this.tableModel = tableModel;
+            button = new JButton();
+            button.setOpaque(true);
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    fireEditingStopped();
+                }
+            });
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            if (isSelected) {
+                button.setForeground(table.getSelectionForeground());
+                button.setBackground(table.getSelectionBackground());
+            } else {
+                button.setForeground(table.getForeground());
+                button.setBackground(table.getBackground());
+            }
+            label = (value == null) ? "" : value.toString();
+            button.setText(label);
+            isPushed = true;
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            if (isPushed) {
+                //JOptionPane.showMessageDialog(button, label + ": Ouch!");
+                System.out.println(label);
+                if (label.startsWith("+")) {
+                    inventory.incOffset(label.substring(1));
+                } else if (label.startsWith("-")) {
+                    inventory.decOffset(label.substring(1));
+                }
+                this.tableModel.refresh();
+            }
+            isPushed = false;
+            return new String(label);
+        }
+
+        @Override
+        public boolean stopCellEditing() {
+            isPushed = false;
+            return super.stopCellEditing();
+        }
+
+        @Override
+        protected void fireEditingStopped() {
+            super.fireEditingStopped();
         }
 
     }
