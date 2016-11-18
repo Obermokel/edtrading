@@ -1,24 +1,23 @@
 package borg.edtrading;
 
-import borg.edtrading.data.Item;
-import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.Journal;
 import borg.edtrading.journal.JournalReader;
-import borg.edtrading.journal.entries.engineer.EngineerCraftEntry;
-import borg.edtrading.journal.entries.inventory.MaterialCollectedEntry;
-import borg.edtrading.journal.entries.inventory.MaterialDiscardedEntry;
+import borg.edtrading.journal.entries.exploration.ScanEntry;
+import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.util.MiscUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * InventoryManagementApp
@@ -30,242 +29,227 @@ public class InventoryManagementApp {
     static final Logger logger = LogManager.getLogger(InventoryManagementApp.class);
 
     public static void main(String[] args) throws Exception {
-        final String commander = "Mokel DeLorean";
-        final ItemType cleanup = ItemType.ELEMENT;
-
         Journal journal = new Journal(new JournalReader().readEntireJournal(Constants.JOURNAL_DIR));
 
-        Set<String> unknown = new TreeSet<>();
-        SortedMap<Item, Integer> inventory = createDefaultInventory(commander);
-        LinkedHashMap<Item, Integer> income = new LinkedHashMap<>();
-        LinkedHashMap<Item, Integer> discarded = new LinkedHashMap<>();
-        LinkedHashMap<Item, Integer> spent = new LinkedHashMap<>();
+        SortedMap<String, String> scannedBodies = new TreeMap<>();
+        List<ScanEntry> scanEntries = MiscUtil.unsafeCast(journal.getEntries(null, null, Event.Scan));
+        for (ScanEntry entry : scanEntries) {
+            scannedBodies.put(entry.getBodyName(), toBodyClass(entry));
+        }
 
-        List<MaterialCollectedEntry> collectedEntries = MiscUtil.unsafeCast(journal.getEntries(null, null, Event.MaterialCollected));
-        for (MaterialCollectedEntry e : collectedEntries) {
-            ItemType type = categoryToItemType(e.getCategory());
-            Item item = Item.byJournalName(e.getName());
-            if (item == null) {
-                unknown.add(e.getName() + " (" + e.getCategory() + ")");
-            } else {
-                if (cleanup == null || cleanup == type) {
-                    inventory.put(item, inventory.getOrDefault(item, 0) + e.getCount());
-                    income.put(item, income.getOrDefault(item, 0) + e.getCount());
+        LinkedHashMap<String, List<Integer>> payouts = new LinkedHashMap<>();
+        List<SellExplorationDataEntry> sellEntries = MiscUtil.unsafeCast(journal.getEntries(null, null, Event.SellExplorationData));
+        for (SellExplorationDataEntry entry : sellEntries) {
+            if (entry.getSystems().size() == 1) {
+                String date = new SimpleDateFormat("dd. MMM HH:mm").format(entry.getTimestamp());
+                System.out.println(String.format(Locale.US, "[%s] %s: %,d + %,d %s", date, entry.getSystems().get(0), entry.getBaseValue(), entry.getBonus(), entry.getDiscovered().toString()));
+
+                if (entry.getDiscovered().size() == 1) {
+                    // 1 systems w/ 1 discovery
+                    String bodyName = entry.getDiscovered().get(0);
+                    String bodyClass = scannedBodies.get(bodyName);
+                    int bonus = entry.getBonus();
+                    int base = 4 * bonus;
+                    int jump = entry.getBaseValue() - base;
+
+                    List<Integer> payoutsBody = payouts.getOrDefault(bodyClass, new ArrayList<>());
+                    payoutsBody.add(base);
+                    payouts.put(bodyClass, payoutsBody);
+
+                    List<Integer> payoutsJump = payouts.getOrDefault("JUMP", new ArrayList<>());
+                    payoutsJump.add(jump);
+                    payouts.put("JUMP", payoutsJump);
+                } else if (entry.getDiscovered().size() == 0) {
+                    // 1 systems w/o discovery
+                    int jump = entry.getBaseValue();
+
+                    List<Integer> payoutsJump = payouts.getOrDefault("JUMP", new ArrayList<>());
+                    payoutsJump.add(jump);
+                    payouts.put("JUMP", payoutsJump);
                 }
             }
         }
 
-        List<MaterialDiscardedEntry> discardedEntries = MiscUtil.unsafeCast(journal.getEntries(null, null, Event.MaterialDiscarded));
-        for (MaterialDiscardedEntry e : discardedEntries) {
-            ItemType type = categoryToItemType(e.getCategory());
-            Item item = Item.byJournalName(e.getName());
-            if (item == null) {
-                unknown.add(e.getName() + " (" + e.getCategory() + ")");
-            } else {
-                if (cleanup == null || cleanup == type) {
-                    inventory.put(item, inventory.getOrDefault(item, 0) - e.getCount());
-                    discarded.put(item, discarded.getOrDefault(item, 0) + e.getCount());
-                }
-            }
+        MiscUtil.sortMapByValue(payouts);
+        for (String bodyClass : payouts.keySet()) {
+            List<Integer> classPayouts = payouts.get(bodyClass);
+            Collections.sort(classPayouts);
+            int medianPayout = classPayouts.get(classPayouts.size() / 2);
+
+            System.out.println(String.format(Locale.US, "%50s = %-6d %s", bodyClass, medianPayout, classPayouts.toString()));
         }
-
-        List<EngineerCraftEntry> craftEntries = MiscUtil.unsafeCast(journal.getEntries(null, null, Event.EngineerCraft));
-        for (EngineerCraftEntry e : craftEntries) {
-            for (String name : e.getIngredients().keySet()) {
-                Item item = Item.byJournalName(name);
-                if (item == null) {
-                    unknown.add(name + " (Engineer)");
-                } else {
-                    if (cleanup == null || cleanup == item.getType()) {
-                        inventory.put(item, inventory.getOrDefault(item, 0) - e.getIngredients().get(name));
-                        spent.put(item, spent.getOrDefault(item, 0) + e.getIngredients().get(name));
-                    }
-                }
-            }
-        }
-
-        logger.info("Unknown: " + unknown.size());
-        for (String name : unknown) {
-            logger.debug(name);
-        }
-
-        logger.info("Known: " + inventory.size());
-        for (Item i : inventory.keySet()) {
-            logger.debug(String.format(Locale.US, "%3dx %s", inventory.get(i), i.getName()));
-        }
-
-        // Identify priorities
-        LinkedHashMap<Item, Float> priority = new LinkedHashMap<>(); // 1%=want have, 0%=do not care, -1%=hate it
-        for (Item item : inventory.keySet()) {
-            float nSpent = spent.getOrDefault(item, 0);
-            float nDiscarded = discarded.getOrDefault(item, 0);
-            float nIncome = income.getOrDefault(item, 0);
-            float prio = 0;
-            if (nSpent > 0) {
-                prio += nSpent / Math.max(nIncome, nSpent); // spent of income
-            }
-            if (nDiscarded > 0) {
-                prio -= nDiscarded / Math.max(nIncome, nDiscarded); // discarded of income
-            }
-            priority.put(item, prio);
-        }
-        MiscUtil.sortMapByValueReverse(priority);
-        logger.info("Prioritized: " + priority.size());
-        for (Item i : priority.keySet()) {
-            logger.debug(String.format(Locale.US, "%4.0f%%: %s", priority.get(i) * 100f, i.getName()));
-        }
-
-        // See what we can discard
-        int discardTotal = 0;
-        LinkedHashMap<Item, Integer> toDiscard = new LinkedHashMap<>();
-        for (Item i : priority.keySet()) {
-            int numHave = inventory.get(i);
-
-            float normalizedPrio = (priority.get(i) + 1f) / 2f; // -1% .. +1% -> 0% .. 1%
-            int numKeep = 5 + Math.round(20 * normalizedPrio); // 5 .. 25
-
-            float discardPercent = 1f - normalizedPrio; // 0% .. 1% -> 1% .. 0%
-            int numDiscard = Math.round(discardPercent * numHave);
-
-            int maxDiscard = numHave - numKeep;
-            int actualDiscard = Math.min(maxDiscard, numDiscard);
-
-            if (actualDiscard > 0) {
-                discardTotal += actualDiscard;
-                toDiscard.put(i, actualDiscard);
-            }
-        }
-        MiscUtil.sortMapByValueReverse(toDiscard);
-        logger.info("To discard: " + toDiscard.size());
-        for (Item i : toDiscard.keySet()) {
-            logger.debug(String.format(Locale.US, "%3dx %s", toDiscard.get(i), i.getName()));
-        }
-        logger.info("Will free up: " + discardTotal);
     }
 
-    private static ItemType categoryToItemType(String category) {
-        if ("Raw".equals(category)) {
-            return ItemType.ELEMENT;
-        } else if ("Manufactured".equals(category)) {
-            return ItemType.MANUFACTURED;
-        } else if ("Encoded".equals(category)) {
-            return ItemType.DATA;
-        } else if ("Commodity".equals(category)) {
-            return ItemType.COMMODITY;
+    private static String toBodyClass(ScanEntry e) {
+        if (StringUtils.isNotEmpty(e.getPlanetClass())) {
+            String planetClass = e.getPlanetClass();
+            if (StringUtils.isNotEmpty(e.getTerraformState())) {
+                planetClass += (" (" + e.getTerraformState() + ")");
+            }
+            return planetClass;
+        } else if (StringUtils.isNotEmpty(e.getStarType())) {
+            return "Class " + e.getStarType();
         } else {
-            throw new RuntimeException("Unknown category '" + category + "'");
+            return e.getBodyName();
         }
     }
 
-    private static SortedMap<Item, Integer> createDefaultInventory(String commander) {
-        if ("Mokel DeLorean".equals(commander)) {
-            SortedMap<Item, Integer> inventory = new TreeMap<>();
-            inventory.put(Item.ANTIMONY, 5);
-            inventory.put(Item.ARSENIC, 3);
-            inventory.put(Item.BASIC_CONDUCTORS, 10);
-            inventory.put(Item.BIOTECH_CONDUCTORS, 8);
-            inventory.put(Item.CADMIUM, 20);
-            inventory.put(Item.CARBON, 23);
-            inventory.put(Item.CHEMICAL_DISTILLERY, 24);
-            inventory.put(Item.CHEMICAL_MANIPULATORS, 9);
-            inventory.put(Item.CHEMICAL_PROCESSORS, 13);
-            inventory.put(Item.CHROMIUM, 4);
-            inventory.put(Item.COMPOUND_SHIELDING, 19);
-            inventory.put(Item.CONDUCTIVE_CERAMICS, 11);
-            inventory.put(Item.CONDUCTIVE_COMPONENTS, 14);
-            inventory.put(Item.CONDUCTIVE_POLYMERS, 22);
-            inventory.put(Item.CONFIGURABLE_COMPONENTS, 20);
-            inventory.put(Item.ELECTROCHEMICAL_ARRAYS, 11);
-            inventory.put(Item.EXQUISITE_FOCUS_CRYSTALS, 6);
-            inventory.put(Item.FLAWED_FOCUS_CRYSTALS, 4);
-            inventory.put(Item.FOCUS_CRYSTALS, 23);
-            inventory.put(Item.GALVANISING_ALLOYS, 23);
-            inventory.put(Item.GERMANIUM, 20);
-            inventory.put(Item.GRID_RESISTORS, 11);
-            inventory.put(Item.HEAT_CONDUCTION_WIRING, 14);
-            inventory.put(Item.HEAT_DISPERSION_PLATE, 12);
-            inventory.put(Item.HEAT_EXCHANGERS, 13);
-            inventory.put(Item.HEAT_VANES, 20);
-            inventory.put(Item.HIGH_DENSITY_COMPOSITES, 12);
-            inventory.put(Item.HYBRID_CAPACITORS, 10);
-            inventory.put(Item.IMPERIAL_SHIELDING, 3);
-            inventory.put(Item.IRON, 24);
-            inventory.put(Item.MANGANESE, 11);
-            inventory.put(Item.MECHANICAL_COMPONENTS, 12);
-            inventory.put(Item.MECHANICAL_EQUIPMENT, 14);
-            inventory.put(Item.MECHANICAL_SCRAP, 12);
-            inventory.put(Item.MERCURY, 11);
-            inventory.put(Item.MILITARY_GRADE_ALLOYS, 6);
-            inventory.put(Item.MILITARY_SUPERCAPACITORS, 7);
-            inventory.put(Item.MOLYBDENUM, 20);
-            inventory.put(Item.NICKEL, 22);
-            inventory.put(Item.NIOBIUM, 22);
-            inventory.put(Item.PHARMACEUTICAL_ISOLATORS, 4);
-            inventory.put(Item.PHASE_ALLOYS, 11);
-            inventory.put(Item.PHOSPHORUS, 36);
-            inventory.put(Item.POLONIUM, 5);
-            inventory.put(Item.POLYMER_CAPACITORS, 21);
-            inventory.put(Item.PRECIPITATED_ALLOYS, 22);
-            inventory.put(Item.PROPRIETARY_COMPOSITES, 21);
-            inventory.put(Item.PROTO_HEAT_RADIATORS, 3);
-            inventory.put(Item.PROTO_LIGHT_ALLOYS, 28);
-            inventory.put(Item.PROTO_RADIOLIC_ALLOYS, 14);
-            inventory.put(Item.REFINED_FOCUS_CRYSTALS, 27);
-            inventory.put(Item.RUTHENIUM, 6);
-            inventory.put(Item.SALVAGED_ALLOYS, 20);
-            inventory.put(Item.SELENIUM, 21);
-            inventory.put(Item.SHIELD_EMITTERS, 38);
-            inventory.put(Item.SHIELDING_SENSORS, 16);
-            inventory.put(Item.SULPHUR, 32);
-            inventory.put(Item.TECHNETIUM, 1);
-            inventory.put(Item.TELLURIUM, 2);
-            inventory.put(Item.THERMIC_ALLOYS, 18);
-            inventory.put(Item.TIN, 13);
-            inventory.put(Item.TUNGSTEN, 7);
-            inventory.put(Item.UNKNOWN_FRAGMENT, 2);
-            inventory.put(Item.VANADIUM, 21);
-            inventory.put(Item.WORN_SHIELD_EMITTERS, 17);
-            inventory.put(Item.YTTRIUM, 3);
-            inventory.put(Item.ZINC, 21);
-            inventory.put(Item.ZIRCONIUM, 20);
-
-            inventory.put(Item.ABBERANT_SHIELD_PATTERN_ANALYSIS, 15);
-            inventory.put(Item.ABNORMAL_COMPACT_EMISSIONS_DATA, 10);
-            inventory.put(Item.ADAPTIVE_ENCRYPTORS_CAPTURE, 2);
-            inventory.put(Item.ANOMALOUS_BULK_SCAN_DATA, 20);
-            inventory.put(Item.ANOMALOUS_FSD_TELEMETRY, 21);
-            inventory.put(Item.ATYPICAL_DISRUPTED_WAKE_ECHOES, 11);
-            inventory.put(Item.ATYPICAL_ENCRYPTION_ARCHIVES, 6);
-            inventory.put(Item.CLASSIFIED_SCAN_DATABANKS, 2);
-            inventory.put(Item.CLASSIFIED_SCAN_FRAGMENT, 8);
-            inventory.put(Item.CRACKED_INDUSTRIAL_FIRMWARE, 5);
-            inventory.put(Item.DATAMINED_WAKE_EXCEPTIONS, 4);
-            inventory.put(Item.DECODED_EMISSION_DATA, 13);
-            inventory.put(Item.DISTORTED_SHIELD_CYCLE_RECORDINGS, 29);
-            inventory.put(Item.DIVERGENT_SCAN_DATA, 20);
-            inventory.put(Item.ECCENTRIC_HYPERSPACE_TRAJECTORIES, 18);
-            inventory.put(Item.EXCEPTIONAL_SCRAMBLED_EMISSION_DATA, 12);
-            inventory.put(Item.INCONSISTENT_SHIELD_SOAK_ANALYSIS, 23);
-            inventory.put(Item.IRREGULAR_EMISSION_DATA, 2);
-            inventory.put(Item.MODIFIED_CONSUMER_FIRMWARE, 4);
-            inventory.put(Item.OPEN_SYMMETRIC_KEYS, 5);
-            inventory.put(Item.PATTERN_ALPHA_OBELISK_DATA, 3); // TODO
-            inventory.put(Item.PATTERN_BETA_OBELISK_DATA, 3); // TODO
-            inventory.put(Item.PATTERN_GAMMA_OBELISK_DATA, 3); // TODO
-            inventory.put(Item.PATTERN_EPSILON_OBELISK_DATA, 3); // TODO
-            inventory.put(Item.PECULIAR_SHIELD_FREQUENCY_DATA, 7);
-            inventory.put(Item.SECURITY_FIRMWARE_PATCH, 7);
-            inventory.put(Item.SPECIALISED_LEGACY_FIRMWARE, 11);
-            inventory.put(Item.STRANGE_WAKE_SOLUTIONS, 16);
-            inventory.put(Item.TAGGED_ENCRYPTION_CODES, 8);
-            inventory.put(Item.UNEXPECTED_EMISSION_DATA, 36);
-            inventory.put(Item.UNIDENTIFIED_SCAN_ARCHIVES, 17);
-            inventory.put(Item.UNTYPICAL_SHIELD_SCANS, 25);
-            inventory.put(Item.UNUSUAL_ENCRYPTED_FILES, 6);
-            return inventory;
-        } else {
-            throw new RuntimeException("Unknown commander '" + commander + "'");
-        }
-    }
+    //    public static void main(String[] args) throws Exception {
+    //        Journal journal = new Journal(new JournalReader().readEntireJournal(Constants.JOURNAL_DIR));
+    //
+    //        final SortedSet<String> types = new TreeSet<>();
+    //        final SortedMap<String, Integer> payouts = new TreeMap<>();
+//      //@formatter:off
+//        payouts.put(                                  "JUMP", 9000);
+//
+//        payouts.put(                                     "B", 5000);
+//        payouts.put(                                     "A", 4000);
+//        payouts.put(                                     "F", 4000);
+//        payouts.put(                                     "G", 4000);
+//        payouts.put(                                     "K", 3000);
+//        payouts.put(                                     "M", 3000);
+//        payouts.put(                                     "L", 2500);
+//        payouts.put(                                     "Y", 2500);
+//
+//        payouts.put(                                     "N", 38000);
+//        payouts.put(                                    "DA", 20000);
+//        payouts.put(                                    "DB", 20000);
+//
+//        payouts.put(                         "Ammonia world", 50000); // ?
+//        payouts.put(                        "Earthlike body", 58000);
+//        payouts.put(                           "Water world", 60000);
+//        payouts.put( "High metal content body Terraformable", 52000);
+//        payouts.put(             "Water world Terraformable", 52000);
+//
+//        payouts.put(     "Gas giant with ammonia based life", 25000); // ?
+//        payouts.put(       "Gas giant with water based life", 25000); // ?
+//        payouts.put(            "Sudarsky class I gas giant", 10000); // ?
+//        payouts.put(           "Sudarsky class II gas giant", 10000); // ?
+//        payouts.put(          "Sudarsky class III gas giant", 10000); // ?
+//        payouts.put(           "Sudarsky class IV gas giant", 10000); // ?
+//        payouts.put(            "Sudarsky class V gas giant", 10000); // ?
+//
+//        payouts.put(               "High metal content body", 6000);
+//        payouts.put(                              "Icy body", 1100);
+//        payouts.put(                       "Metal rich body", 10000);
+//        payouts.put(                            "Rocky body", 700);
+//        payouts.put(                        "Rocky ice body", 900);
+//      //@formatter:on
+    //
+    //        int nJumpsToUninhabitedSystemsSinceLastSell = 0;
+    //        List<String> scannedBodyTypesSinceLastSell = new ArrayList<>();
+    //        Integer lastSellAmount = null;
+    //        Integer lastSellAmountBonus = null;
+    //        Integer estSellAmount = null;
+    //        Integer estSellAmountBonus = null;
+    //        ListIterator<AbstractJournalEntry> it = journal.getEntries().listIterator();
+    //        while (it.hasNext()) {
+    //            AbstractJournalEntry entry = it.next();
+    //            if (lastSellAmount == null) {
+    //                // Search for initial sell
+    //                if (entry.getEvent() == Event.SellExplorationData) {
+    //                    lastSellAmount = 0;
+    //                    lastSellAmountBonus = 0;
+    //                    estSellAmount = 0;
+    //                    estSellAmountBonus = 0;
+    //                }
+    //            } else {
+    //                if (entry.getEvent() == Event.SellExplorationData) {
+    //                    SellExplorationDataEntry e = (SellExplorationDataEntry) entry;
+    //                    lastSellAmount = e.getBaseValue();
+    //                    lastSellAmountBonus = e.getBonus();
+    //                    while (it.hasNext()) {
+    //                        entry = it.next();
+    //                        if (entry.getEvent() == Event.SellExplorationData) {
+    //                            e = (SellExplorationDataEntry) entry;
+    //                            lastSellAmount += e.getBaseValue();
+    //                            lastSellAmountBonus += e.getBonus();
+    //                        } else {
+    //                            break;
+    //                        }
+    //                    }
+    //                    if (lastSellAmount >= 1000000) {
+    //                        logger.info(new SimpleDateFormat("dd. MMM HH:mm").format(e.getTimestamp()) + ": Sold exploration data for " + String.format(Locale.US, "%,d + %,d = %,d", lastSellAmount, lastSellAmountBonus, lastSellAmount + lastSellAmountBonus)
+    //                                + " CR");
+    //                        logger.info("Jumps: " + nJumpsToUninhabitedSystemsSinceLastSell);
+    //                        logger.info("Scans: " + scannedBodyTypesSinceLastSell.size());
+    //                        logger.info(String.format(Locale.US, "%,d est - %,d act = %,d diff", estSellAmount, lastSellAmount, estSellAmount - lastSellAmount));
+    //                        logger.debug(new TreeSet<>(scannedBodyTypesSinceLastSell));
+    //                        //                    if (lastSellAmount >= 1000000) {
+    //                        //                        SortedMap<String, Integer> bestPayouts = new TreeMap<>(payouts);
+    //                        //                        for (int i = 0; i < 100; i++) {
+    //                        //                            System.out.println("" + i + "...");
+    //                        //                            bestPayouts = findBestPayouts(lastSellAmount, nJumpsToUninhabitedSystemsSinceLastSell, scannedBodyTypesSinceLastSell, bestPayouts);
+    //                        //                        }
+    //                        //                        printPayouts(bestPayouts);
+    //                        //                    }
+    //                    }
+    //                    estSellAmount = 0;
+    //                    estSellAmountBonus = 0;
+    //                    nJumpsToUninhabitedSystemsSinceLastSell = 0;
+    //                    scannedBodyTypesSinceLastSell = new ArrayList<>();
+    //                } else if (entry.getEvent() == Event.FSDJump) {
+    //                    FSDJumpEntry e = (FSDJumpEntry) entry;
+    //                    if ("$government_None;".equals(e.getSystemGovernment())) {
+    //                        nJumpsToUninhabitedSystemsSinceLastSell++;
+    //                        estSellAmount += payouts.get("JUMP");
+    //                    }
+    //                } else if (entry.getEvent() == Event.Scan) {
+    //                    ScanEntry e = (ScanEntry) entry;
+    //                    if (StringUtils.isNotEmpty(e.getPlanetClass())) {
+    //                        String planetClass = e.getPlanetClass();
+    //                        if (StringUtils.isNotEmpty(e.getTerraformState())) {
+    //                            planetClass = planetClass + " " + e.getTerraformState();
+    //                        }
+    //                        scannedBodyTypesSinceLastSell.add(planetClass);
+    //                        estSellAmount += payouts.getOrDefault(planetClass, 0);
+    //                        types.add(planetClass);
+    //                    } else if (StringUtils.isNotEmpty(e.getStarType())) {
+    //                        scannedBodyTypesSinceLastSell.add(e.getStarType());
+    //                        estSellAmount += payouts.getOrDefault(e.getStarType(), 0);
+    //                        types.add(e.getStarType());
+    //                    } else {
+    //                        scannedBodyTypesSinceLastSell.add(e.getBodyName());
+    //                        estSellAmount += payouts.getOrDefault(e.getBodyName(), 0);
+    //                        types.add(e.getBodyName());
+    //                    }
+    //                }
+    //            }
+    //        }
+    //    }
+    //
+    //    private static SortedMap<String, Integer> findBestPayouts(int targetAmount, int nJumps, List<String> scanned, SortedMap<String, Integer> startPayouts) {
+    //        SortedMap<String, Integer> bestPayouts = null;
+    //        int bestDiff = 999999999;
+    //
+    //        for (String type : startPayouts.keySet()) {
+    //            for (int amount = 100; amount <= 75000; amount += 100) {
+    //                SortedMap<String, Integer> payouts = new TreeMap<>(startPayouts);
+    //                payouts.put(type, amount);
+    //                int estimatedAmount = estimate(nJumps, scanned, payouts);
+    //                int diff = Math.abs(targetAmount - estimatedAmount);
+    //                if (bestPayouts == null || diff < bestDiff) {
+    //                    bestPayouts = payouts;
+    //                    bestDiff = diff;
+    //                }
+    //            }
+    //        }
+    //
+    //        return bestPayouts;
+    //    }
+    //
+    //    private static int estimate(int nJumps, List<String> scanned, SortedMap<String, Integer> payouts) {
+    //        int estimatedAmount = nJumps * payouts.get("JUMP");
+    //        for (String type : scanned) {
+    //            estimatedAmount += payouts.get(type);
+    //        }
+    //        return estimatedAmount;
+    //    }
+    //
+    //    private static void printPayouts(SortedMap<String, Integer> payouts) {
+    //        for (String type : payouts.keySet()) {
+    //            System.out.println(String.format(Locale.US, "payouts.put(%40s, %d);", "\"" + type + "\"", payouts.get(type)));
+    //        }
+    //    }
 
 }
