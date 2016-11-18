@@ -1,8 +1,8 @@
 package borg.edtrading.journal;
 
 import borg.edtrading.journal.entries.AbstractJournalEntry;
-import borg.edtrading.journal.entries.FSDJumpEntry;
-import borg.edtrading.journal.entries.ScanEntry;
+import borg.edtrading.journal.entries.exploration.ScanEntry;
+import borg.edtrading.journal.entries.location.FSDJumpEntry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
