@@ -263,7 +263,7 @@ public class GameSession implements JournalUpdateListener, Serializable {
         }
     }
 
-    private ShipLoadout loadShipLoadout(String commander, Integer shipID, String shipType) throws IOException {
+    public ShipLoadout loadShipLoadout(String commander, Integer shipID, String shipType) throws IOException {
         File file = new File(System.getProperty("user.home"), ".ShipLoadout." + commander + "." + shipID + "_" + shipType + ".json");
         if (!file.exists() || file.length() == 0) {
             return null;
@@ -273,7 +273,7 @@ public class GameSession implements JournalUpdateListener, Serializable {
         }
     }
 
-    private void saveShipLoadout(String commander, ShipLoadout shipLoadout) throws IOException {
+    public void saveShipLoadout(String commander, ShipLoadout shipLoadout) throws IOException {
         if (shipLoadout != null) {
             File file = new File(System.getProperty("user.home"), ".ShipLoadout." + commander + "." + shipLoadout.getShipID() + "_" + shipLoadout.getShipType() + ".json");
             String json = new Gson().toJson(shipLoadout);

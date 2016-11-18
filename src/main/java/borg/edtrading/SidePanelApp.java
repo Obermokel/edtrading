@@ -2,6 +2,7 @@ package borg.edtrading;
 
 import borg.edtrading.gui.InventoryPanel;
 import borg.edtrading.gui.JournalLogPanel;
+import borg.edtrading.gui.ShipyardPanel;
 import borg.edtrading.gui.StatusPanel;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.sidepanel.GameSession;
@@ -81,9 +82,11 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         JournalLogPanel journalLogPanel = new JournalLogPanel(journalReaderThread);
         StatusPanel statusPanel = new StatusPanel(gameSession, travelHistory, inventory);
         InventoryPanel inventoryPanel = new InventoryPanel(inventory);
+        ShipyardPanel shipyardPanel = new ShipyardPanel(gameSession);
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Inventory", inventoryPanel);
+        tabbedPane.addTab("Shipyard", shipyardPanel);
 
         // Construct the window with all panels
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
