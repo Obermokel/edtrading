@@ -2,6 +2,7 @@ package borg.edtrading.gui;
 
 import borg.edtrading.data.Coord;
 import borg.edtrading.data.Item.ItemType;
+import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.sidepanel.GameSession;
 import borg.edtrading.sidepanel.GameSessionListener;
 import borg.edtrading.sidepanel.Inventory;
@@ -132,6 +133,11 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
     }
 
     @Override
+    public void onExplorationDataSold(SellExplorationDataEntry journalEntry) {
+        this.updatePanel();
+    }
+
+    @Override
     public void onInventoryReset(ItemType type, String name, int count) {
         this.updatePanel();
     }
@@ -252,6 +258,17 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         float maxJumpRange = MiscUtil.getAsFloat(this.gameSession.getCurrentShipLoadout().getOptTankJumpRange(), 1.0f);
         float currentJumpRange = FuelAndJumpRangeLookup.estimateCurrentJumpRange(totalFuel, (int) capacityFuel, maxFuelPerJump, minJumpRange, maxJumpRange);
         this.jumpLabel.setText(String.format(Locale.US, "Jump: %.2f (%.2f) Ly", currentJumpRange, maxJumpRange));
+        int explPayout = this.travelHistory.estimateRemainingExplorationPayout();
+        this.explLabel.setText(String.format(Locale.US, "Expl: %,d CR", explPayout));
+        if (explPayout >= 1000000) {
+            this.explLabel.setForeground(Color.RED);
+        } else if (explPayout >= 250000) {
+            this.explLabel.setForeground(Color.ORANGE);
+        } else if (explPayout > 0) {
+            this.explLabel.setForeground(Color.LIGHT_GRAY);
+        } else {
+            this.explLabel.setForeground(Color.GRAY);
+        }
     }
 
     public static class AnimatedLabel extends JLabel implements ActionListener {

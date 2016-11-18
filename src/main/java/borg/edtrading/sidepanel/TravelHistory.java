@@ -5,6 +5,8 @@ import borg.edtrading.journal.Event;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.journal.JournalUpdateListener;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
+import borg.edtrading.journal.entries.exploration.ScanEntry;
+import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.journal.entries.location.DockedEntry;
 import borg.edtrading.journal.entries.location.FSDJumpEntry;
 import borg.edtrading.journal.entries.location.LiftoffEntry;
@@ -22,7 +24,12 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * TravelHistory
@@ -34,6 +41,47 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
     private static final long serialVersionUID = 3845858336099915390L;
 
     static final Logger logger = LogManager.getLogger(TravelHistory.class);
+
+    static final Map<String, Integer> PAYOUTS = new HashMap<>();
+    static {
+      //@formatter:off
+      PAYOUTS.put(                                   "JUMP", 9000);
+
+      PAYOUTS.put(                                "Class O", 5000);
+      PAYOUTS.put(                                "Class B", 5000);
+      PAYOUTS.put(                                "Class A", 4000);
+      PAYOUTS.put(                                "Class F", 4000);
+      PAYOUTS.put(                                "Class G", 4000);
+      PAYOUTS.put(                                "Class K", 3000);
+      PAYOUTS.put(                                "Class M", 3000);
+      PAYOUTS.put(                                "Class L", 2500);
+      PAYOUTS.put(                                "Class Y", 2500);
+
+      PAYOUTS.put(                                "Class N", 38000);
+      PAYOUTS.put(                               "Class DA", 20000);
+      PAYOUTS.put(                               "Class DB", 20000);
+
+      PAYOUTS.put(                          "Ammonia world", 50000);
+      PAYOUTS.put(                         "Earthlike body", 58000);
+      PAYOUTS.put(                            "Water world", 60000);
+      PAYOUTS.put("High metal content body (Terraformable)", 52000);
+      PAYOUTS.put(            "Water world (Terraformable)", 52000);
+
+      PAYOUTS.put(      "Gas giant with ammonia based life", 25000);
+      PAYOUTS.put(        "Gas giant with water based life", 25000);
+      PAYOUTS.put(             "Sudarsky class I gas giant", 10000);
+      PAYOUTS.put(            "Sudarsky class II gas giant", 10000);
+      PAYOUTS.put(           "Sudarsky class III gas giant", 10000);
+      PAYOUTS.put(            "Sudarsky class IV gas giant", 10000);
+      PAYOUTS.put(             "Sudarsky class V gas giant", 10000);
+
+      PAYOUTS.put(                "High metal content body", 6000);
+      PAYOUTS.put(                               "Icy body", 1100);
+      PAYOUTS.put(                        "Metal rich body", 10000);
+      PAYOUTS.put(                             "Rocky body", 700);
+      PAYOUTS.put(                         "Rocky ice body", 900);
+      //@formatter:on
+    }
 
     private Coord coord = null;
     private String systemName = null;
@@ -52,6 +100,9 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
     private float fuelLevel = 0;
     private int fuelCapacity = 0;
 
+    private final LinkedList<VisitedSystem> visitedSystems = new LinkedList<>();
+    private final Set<String> visitedSystemNames = new HashSet<>();
+
     private final List<TravelHistoryListener> listeners = new ArrayList<>();
 
     public TravelHistory(JournalReaderThread journalReaderThread, GameSession gameSession) {
@@ -61,6 +112,18 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
         if (gameSession != null) {
             gameSession.addListener(this);
         }
+    }
+
+    public int estimateRemainingExplorationPayout() {
+        int estimate = 0;
+        for (VisitedSystem visitedSystem : this.getVisitedSystems()) {
+            estimate += visitedSystem.getRemainingPayout();
+            for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
+                estimate += scannedBody.getRemainingBasePayout();
+                estimate += scannedBody.getRemainingBonusPayout();
+            }
+        }
+        return estimate;
     }
 
     public Coord getCoord() {
@@ -191,6 +254,10 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
         this.fuelCapacity = fuelCapacity;
     }
 
+    public LinkedList<VisitedSystem> getVisitedSystems() {
+        return this.visitedSystems;
+    }
+
     public boolean addListener(TravelHistoryListener listener) {
         if (listener == null || this.listeners.contains(listener)) {
             return false;
@@ -215,9 +282,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
     @Override
     public void onNewJournalEntry(AbstractJournalEntry entry) {
         try {
-            //TODO Scan
             //TODO SellExplorationData
-            //TODO SRV/Fighter
             if (entry.getEvent() == Event.Location) {
                 LocationEntry e = (LocationEntry) entry;
                 this.setCoord(e.getStarPos());
@@ -256,6 +321,12 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 this.setInSupercruise(true);
                 this.setLanded(false);
                 this.setFuelLevel(MiscUtil.getAsFloat(e.getFuelLevel(), 0f));
+                VisitedSystem visitedSystem = new VisitedSystem(e);
+                if (visitedSystem.isUninhabited() && !this.visitedSystemNames.contains(visitedSystem.getSystemName())) {
+                    visitedSystem.setRemainingPayout(PAYOUTS.getOrDefault("JUMP", 999999999));
+                }
+                this.visitedSystems.addLast(visitedSystem);
+                this.visitedSystemNames.add(visitedSystem.getSystemName());
                 for (TravelHistoryListener listener : this.listeners) {
                     try {
                         listener.onLocationChanged();
@@ -370,6 +441,48 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 for (TravelHistoryListener listener : this.listeners) {
                     try {
                         listener.onLocationChanged();
+                    } catch (Exception ex) {
+                        logger.warn(listener + " failed: " + ex);
+                    }
+                }
+            } else if (entry.getEvent() == Event.Scan) {
+                ScanEntry e = (ScanEntry) entry;
+                this.setBodyName(e.getBodyName());
+                this.setBodyType(ScanEntry.toBodyClass(e));
+                ScannedBody scannedBody = new ScannedBody(e);
+                scannedBody.setRemainingBasePayout(PAYOUTS.getOrDefault(scannedBody.getBodyClass(), 999999999));
+                this.visitedSystems.getLast().getScannedBodies().add(scannedBody);
+                for (TravelHistoryListener listener : this.listeners) {
+                    try {
+                        listener.onLocationChanged();
+                    } catch (Exception ex) {
+                        logger.warn(listener + " failed: " + ex);
+                    }
+                }
+            } else if (entry.getEvent() == Event.SellExplorationData) {
+                SellExplorationDataEntry e = (SellExplorationDataEntry) entry;
+                for (String systemName : e.getSystems()) {
+                    for (int i = this.visitedSystems.size() - 1; i >= 0; i--) {
+                        VisitedSystem visitedSystem = this.visitedSystems.get(i);
+                        if (visitedSystem.getSystemName().equals(systemName) && visitedSystem.getRemainingPayout() != 0) {
+                            visitedSystem.setRemainingPayout(0);
+                            break;
+                        }
+                    }
+                }
+                for (String bodyName : e.getDiscovered()) {
+                    for (int i = this.visitedSystems.size() - 1; i >= 0; i--) {
+                        ScannedBody scannedBody = this.visitedSystems.get(i).lookupScannedBody(bodyName);
+                        if (scannedBody != null) {
+                            scannedBody.setRemainingBasePayout(0);
+                            scannedBody.setRemainingBonusPayout(0);
+                            break;
+                        }
+                    }
+                }
+                for (TravelHistoryListener listener : this.listeners) {
+                    try {
+                        listener.onExplorationDataSold(e);
                     } catch (Exception ex) {
                         logger.warn(listener + " failed: " + ex);
                     }
