@@ -18,6 +18,7 @@ import java.util.TreeMap;
 public enum Item {
 
     //@formatter:off
+    // Elements
     ANTIMONY("ANTIMONY", "antimony", ItemType.ELEMENT, 0),
     ARSENIC("ARSENIC", "arsenic", ItemType.ELEMENT, 0),
     CADMIUM("CADMIUM", "cadmium", ItemType.ELEMENT, 0),
@@ -44,6 +45,7 @@ public enum Item {
     ZINC("ZINC", "zinc", ItemType.ELEMENT, 0),
     ZIRCONIUM("ZIRCONIUM", "zirconium", ItemType.ELEMENT, 0),
 
+    // Manufactured
     BASIC_CONDUCTORS("BASIC CONDUCTORS","basicconductors", ItemType.MANUFACTURED, 0),
     BIOTECH_CONDUCTORS("BIOTECH CONDUCTORS", "biotechconductors", ItemType.MANUFACTURED, 0),
     CHEMICAL_DISTILLERY("CHEMICAL DISTILLERY", "chemicaldistillery", ItemType.MANUFACTURED, 0),
@@ -89,6 +91,7 @@ public enum Item {
     UNKNOWN_FRAGMENT("UNKNOWN FRAGMENT","unknownenergysource", ItemType.MANUFACTURED, 0),
     WORN_SHIELD_EMITTERS("WORN SHIELD EMITTERS", "wornshieldemitters", ItemType.MANUFACTURED, 0),
 
+    // Data
     ABBERANT_SHIELD_PATTERN_ANALYSIS("ABBERANT SHIELD PATTERN ANALYSIS","shieldpatternanalysis", ItemType.DATA, 0),
     ABNORMAL_COMPACT_EMISSIONS_DATA("ABNORMAL COMPACT EMISSIONS DATA","compactemissionsdata", ItemType.DATA, 0),
     ADAPTIVE_ENCRYPTORS_CAPTURE("ADAPTIVE ENCRYPTORS CAPTURE","adaptiveencryptors", ItemType.DATA, 0),
@@ -133,7 +136,7 @@ public enum Item {
     ENERGY_GRID_ASSEMBLY("ENERGY GRID ASSEMBLY",null,ItemType.COMMODITY,0),
     EXHAUST_MANIFOLD("EXHAUST MANIFOLD","exhaustmanifold",ItemType.COMMODITY,0),
     HARDWARE_DIAGNOSTIC_SENSOR("HARDWARE DIAGNOSTIC SENSOR",null,ItemType.COMMODITY,0),
-    HEATSINK_INTERLINK("HEATSINK INTERLINK",null,ItemType.COMMODITY,0),
+    HEATSINK_INTERLINK("HEATSINK INTERLINK","heatsinkinterlink",ItemType.COMMODITY,0),
     HN_SHOCK_MOUNT("HN SHOCK MOUNT",null,ItemType.COMMODITY,0),
     INSULATING_MEMBRANE("INSULATING MEMBRANE",null,ItemType.COMMODITY,0),
     ION_DISTRIBUTOR("ION DISTRIBUTOR","iondistributor",ItemType.COMMODITY,0),
@@ -161,17 +164,24 @@ public enum Item {
     TOXANDJI_VIROCIDE("TOXANDJI VIROCIDE", "toxandjivirocide", ItemType.COMMODITY, 0),
 
     // Other commodities
+    BERTRANDITE("BERTRANDITE", "bertrandite", ItemType.COMMODITY, 0),
     BIOWASTE("BIOWASTE", "biowaste", ItemType.COMMODITY, 0),
     CLOTHING("CLOTHING", "clothing", ItemType.COMMODITY, 0),
     EXPLOSIVES("EXPLOSIVES", "explosives", ItemType.COMMODITY, 0),
     FISH("FISH", "fish", ItemType.COMMODITY, 0),
+    GALLITE("GALLITE", "gallite", ItemType.COMMODITY, 0),
+    GOLD("GOLD", "gold", ItemType.COMMODITY, 0),
     HYDROGEN_FUEL("HYDROGEN FUEL", "hydrogenfuel", ItemType.COMMODITY, 0),
     HYDROGEN_PEROXIDE("HYDROGEN PEROXIDE", "hydrogenperoxide", ItemType.COMMODITY, 0),
+    INDITE("INDITE", "indite", ItemType.COMMODITY, 0),
     LIQUID_OXYGEN("LIQUID OXYGEN", "liquidoxygen", ItemType.COMMODITY, 0),
     LITHIUM_HYDROXIDE("LITHIUM HYDROXIDE", "lithiumhydroxide", ItemType.COMMODITY, 0),
     METHANE_CLATHRATE("METHANE CLATHRATE", "methaneclathrate", ItemType.COMMODITY, 0),
     METHANOL_MONOHYDRATE_CRYSTALS("METHANOL MONOHYDRATE CRYSTALS", "methanolmonohydratecrystals", ItemType.COMMODITY, 0),
+    PALLADIUM("PALLADIUM", "palladium", ItemType.COMMODITY, 0),
+    PAINITE("PAINITE", "painite", ItemType.COMMODITY, 0),
     PESTICIDES("PESTICIDES", "pesticides", ItemType.COMMODITY, 0),
+    SILVER("SILVER", "silver", ItemType.COMMODITY, 0),
     SYNTHETIC_MEAT("SYNTHETIC MEAT", "syntheticmeat", ItemType.COMMODITY, 0),
     TANTALUM("TANTALUM", "tantalum", ItemType.COMMODITY, 0),
     TITANIUM("TITANIUM", "titanium", ItemType.COMMODITY, 0),

@@ -410,6 +410,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         if (item != null) {
             return item.getName();
         } else {
+            logger.warn("Unknown item name '" + name + "'");
             return name.toUpperCase();
         }
     }
