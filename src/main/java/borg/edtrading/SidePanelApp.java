@@ -5,9 +5,13 @@ import borg.edtrading.gui.JournalLogPanel;
 import borg.edtrading.gui.StatusPanel;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.sidepanel.GameSession;
+import borg.edtrading.sidepanel.GameSessionListener;
 import borg.edtrading.sidepanel.Inventory;
+import borg.edtrading.sidepanel.ShipLoadout;
+import borg.edtrading.sidepanel.ShipModule;
 import borg.edtrading.sidepanel.ShipModuleList;
 import borg.edtrading.sidepanel.TravelHistory;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,6 +21,7 @@ import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -28,10 +33,11 @@ import javax.swing.UIManager;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class SidePanelApp implements WindowListener {
+public class SidePanelApp implements WindowListener, GameSessionListener {
 
     static final Logger logger = LogManager.getLogger(SidePanelApp.class);
 
+    private JFrame frame = null;
     private JournalReaderThread journalReaderThread = null;
     private GameSession gameSession = null;
     private TravelHistory travelHistory = null;
@@ -55,11 +61,14 @@ public class SidePanelApp implements WindowListener {
             e.printStackTrace();
         }
 
+        frame = new JFrame("SidePanel");
+
         // Create the reader thread
         journalReaderThread = new JournalReaderThread(journalDir);
 
         // Create and register the journal listeners
         gameSession = new GameSession(journalReaderThread);
+        gameSession.addListener(this);
         travelHistory = new TravelHistory(journalReaderThread, gameSession);
         inventory = new Inventory(journalReaderThread, gameSession);
         new ShipModuleList(gameSession);
@@ -77,7 +86,6 @@ public class SidePanelApp implements WindowListener {
         tabbedPane.addTab("Inventory", inventoryPanel);
 
         // Construct the window with all panels
-        JFrame frame = new JFrame("SidePanel");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.addWindowListener(this);
         frame.setLayout(new BorderLayout());
@@ -91,6 +99,27 @@ public class SidePanelApp implements WindowListener {
         frame.setVisible(true);
 
         inventoryPanel.setDividerLocation(0.8);
+    }
+
+    @Override
+    public void onGameLoaded(String commander, String gameMode, String group, ShipLoadout ship) {
+        if (this.frame != null) {
+            if (StringUtils.isNotEmpty(group)) {
+                this.frame.setTitle(String.format(Locale.US, "CMDR %s (%s: %s)", commander, gameMode, group));
+            } else {
+                this.frame.setTitle(String.format(Locale.US, "CMDR %s (%s)", commander, gameMode));
+            }
+        }
+    }
+
+    @Override
+    public void onShipModuleChanged(ShipModule oldModule, ShipModule newModule) {
+        // Do nothing
+    }
+
+    @Override
+    public void onShipChanged(ShipLoadout oldShip, ShipLoadout newShip) {
+        // Do nothing
     }
 
     @Override

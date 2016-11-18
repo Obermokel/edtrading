@@ -1,7 +1,7 @@
 TODO SidePanel:
-* CMDR/mode/group into title
 * Remove history, flash entry instead
 * Increase font sizes
+- CMDR/mode/group into title
 
 TODO Tablet:
 left perm: system/body -- est exp data

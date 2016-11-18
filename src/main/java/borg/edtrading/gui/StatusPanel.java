@@ -49,7 +49,7 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
     private JLabel governmentAndSecurityLabel = new JLabel("Government (Security)");
     private JLabel distanceFromSolLabel = new JLabel("Sol: 0 Ly");
 
-    private JLabel gameLabel = new JLabel("CMDR Name (Game Mode: Group)");
+    private JLabel shipNameLabel = new JLabel("CMDR Name (Game Mode: Group)");
 
     private AnimatedLabel dataLabel = new AnimatedLabel("Data: 0");
     private AnimatedLabel matsLabel = new AnimatedLabel("Mats: 0");
@@ -85,7 +85,7 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         this.add(leftPanel, BorderLayout.WEST);
 
         JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 25, 5));
-        centerPanel.add(this.gameLabel);
+        centerPanel.add(this.shipNameLabel);
         this.add(centerPanel, BorderLayout.CENTER);
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 25, 5));
@@ -158,10 +158,12 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         this.governmentAndSecurityLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getGovernment(), this.travelHistory.getSecurity()));
         this.distanceFromSolLabel.setText(String.format(Locale.US, "Sol: %.0f Ly", new Coord(0, 0, 0).distanceTo(this.travelHistory.getCoord())));
 
-        if (StringUtils.isNotEmpty(this.gameSession.getGroup())) {
-            this.gameLabel.setText(String.format(Locale.US, "CMDR %s (%s: %s)", this.gameSession.getCommander(), this.gameSession.getGameMode(), this.gameSession.getGroup()));
-        } else {
-            this.gameLabel.setText(String.format(Locale.US, "CMDR %s (%s)", this.gameSession.getCommander(), this.gameSession.getGameMode()));
+        if (this.gameSession.getCurrentShipLoadout() != null) {
+            if (StringUtils.isNotEmpty(this.gameSession.getCurrentShipLoadout().getShipName())) {
+                this.shipNameLabel.setText(this.gameSession.getCurrentShipLoadout().getShipName());
+            } else {
+                this.shipNameLabel.setText(this.gameSession.getCurrentShipLoadout().getShipType());
+            }
         }
 
         int totalData = this.inventory.getTotal(ItemType.DATA);
