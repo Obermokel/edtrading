@@ -54,10 +54,10 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
 
     private AnimatedLabel dataLabel = new AnimatedLabel("Data: 0");
     private AnimatedLabel matsLabel = new AnimatedLabel("Mats: 0");
-    private JLabel cargoLabel = new JLabel("Cargo: 0 (0)");
-    private AnimatedLabel fuelLabel = new AnimatedLabel("Fuel: 0 (0)");
+    private JLabel cargoLabel = new JLabel("Cargo: 0t");
+    private AnimatedLabel fuelLabel = new AnimatedLabel("Fuel: 0t");
     private JLabel distanceFromSolLabel = new JLabel("Sol: 0 Ly");
-    private JLabel jumpLabel = new JLabel("Jump: 0.00 Ly (0.00 Ly)");
+    private JLabel jumpLabel = new JLabel("Jump: 0.00 Ly");
     private JLabel explLabel = new JLabel("Expl: 0 CR");
 
     private Timer dataTimer = null;
@@ -76,7 +76,10 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         this.matsTimer = new Timer(10, this.matsLabel);
         this.matsTimer.setRepeats(true);
 
-        Font font = new Font("Sans Serif", Font.BOLD, 20);
+        Font font = new Font("Sans Serif", Font.BOLD, 24);
+        int hgap = 40;
+        int vgap = 4;
+
         this.locationLabel.setFont(font);
         this.factionAndAllegianceLabel.setFont(font);
         this.economyAndStateLabel.setFont(font);
@@ -99,28 +102,28 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         JPanel bottomPanel = new JPanel(new BorderLayout());
         this.add(bottomPanel, BorderLayout.CENTER);
 
-        JPanel leftTopPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 5));
+        JPanel leftTopPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, hgap, vgap));
         leftTopPanel.add(this.locationLabel);
         leftTopPanel.add(this.factionAndAllegianceLabel);
         topPanel.add(leftTopPanel, BorderLayout.WEST);
 
-        JPanel leftBottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 5));
+        JPanel leftBottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, hgap, vgap));
         leftBottomPanel.add(this.economyAndStateLabel);
         leftBottomPanel.add(this.governmentAndSecurityLabel);
         bottomPanel.add(leftBottomPanel, BorderLayout.WEST);
 
-        JPanel centerTopPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 25, 5));
+        JPanel centerTopPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, hgap, vgap));
         centerTopPanel.add(this.shipNameLabel);
         topPanel.add(centerTopPanel, BorderLayout.CENTER);
 
-        JPanel rightTopPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 25, 5));
+        JPanel rightTopPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, hgap, vgap));
         rightTopPanel.add(this.dataLabel);
         rightTopPanel.add(this.matsLabel);
         rightTopPanel.add(this.cargoLabel);
         rightTopPanel.add(this.fuelLabel);
         topPanel.add(rightTopPanel, BorderLayout.EAST);
 
-        JPanel rightBottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 25, 5));
+        JPanel rightBottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, hgap, vgap));
         rightBottomPanel.add(this.distanceFromSolLabel);
         rightBottomPanel.add(this.jumpLabel);
         rightBottomPanel.add(this.explLabel);
@@ -244,7 +247,7 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         int totalCargo = this.inventory.getTotal(ItemType.COMMODITY); // This does not include drones
         int capacityCargo = Math.max(totalCargo, this.inventory.getCapacity(ItemType.COMMODITY));
         float percentCargo = (float) totalCargo / (float) capacityCargo;
-        this.cargoLabel.setText(String.format(Locale.US, "Cargo: %d (%d)", totalCargo, capacityCargo));
+        this.cargoLabel.setText(String.format(Locale.US, "Cargo: %dt", totalCargo));
         if (percentCargo >= 1.0f) {
             this.cargoLabel.setForeground(Color.RED); // Full. Red, but do not flash as this is common business.
         } else if (percentCargo >= 0.9f) {
@@ -255,7 +258,7 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
             this.cargoLabel.setForeground(Color.LIGHT_GRAY); // Use light gray (better visibility) if s.th. is loaded.
         }
 
-        this.distanceFromSolLabel.setText(String.format(Locale.US, "Sol: %.0fLy", new Coord(0, 0, 0).distanceTo(this.travelHistory.getCoord())));
+        this.distanceFromSolLabel.setText(String.format(Locale.US, "Sol: %.0f Ly", new Coord(0, 0, 0).distanceTo(this.travelHistory.getCoord())));
         float totalFuel = this.travelHistory.getFuelLevel();
         float capacityFuel = Math.max(totalFuel, this.travelHistory.getFuelCapacity());
         float percentFuel = totalFuel / capacityFuel;
@@ -264,7 +267,7 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
             maxFuelPerJump = this.gameSession.getCurrentShipLoadout().getMaxFuelPerJump();
         }
         float percentMaxFuelPerJump = totalFuel / maxFuelPerJump;
-        this.fuelLabel.setText(String.format(Locale.US, "Fuel: %.0f (%.0f)", totalFuel, capacityFuel));
+        this.fuelLabel.setText(String.format(Locale.US, "Fuel: %.0ft", totalFuel));
         if (percentFuel <= 0.125f || percentMaxFuelPerJump <= 1.5f) {
             this.fuelLabel.setForeground(Color.RED);
             if (!this.fuelTimer.isRunning()) {
@@ -285,9 +288,9 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         float minJumpRange = MiscUtil.getAsFloat(this.gameSession.getCurrentShipLoadout().getFullTankJumpRange(), 1.0f);
         float maxJumpRange = MiscUtil.getAsFloat(this.gameSession.getCurrentShipLoadout().getOptTankJumpRange(), 1.0f);
         float currentJumpRange = FuelAndJumpRangeLookup.estimateCurrentJumpRange(totalFuel, (int) capacityFuel, maxFuelPerJump, minJumpRange, maxJumpRange);
-        this.jumpLabel.setText(String.format(Locale.US, "Jump: %.2fLy (%.2fLy)", currentJumpRange, maxJumpRange));
+        this.jumpLabel.setText(String.format(Locale.US, "Jump: %.2f Ly", currentJumpRange));
         int explPayout = this.travelHistory.estimateRemainingExplorationPayout();
-        this.explLabel.setText(String.format(Locale.US, "Expl: %,dCR", explPayout));
+        this.explLabel.setText(String.format(Locale.US, "Expl: %,d CR", explPayout));
         if (explPayout >= 1000000) {
             this.explLabel.setForeground(Color.RED);
         } else if (explPayout >= 250000) {

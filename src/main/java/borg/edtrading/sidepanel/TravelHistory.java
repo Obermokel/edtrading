@@ -282,7 +282,6 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
     @Override
     public void onNewJournalEntry(AbstractJournalEntry entry) {
         try {
-            //TODO SellExplorationData
             if (entry.getEvent() == Event.Location) {
                 LocationEntry e = (LocationEntry) entry;
                 this.setCoord(e.getStarPos());
@@ -421,10 +420,18 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 this.setSystemName(e.getStarSystem());
                 this.setBodyName(e.getStationName());
                 this.setBodyType(e.getStationType());
-                this.setFaction(e.getStationFaction());
-                this.setAllegiance(e.getStationAllegiance());
-                this.setEconomy(e.getStationEconomyLocalized());
-                this.setGovernment(e.getStationGovernmentLocalized());
+                if (StringUtils.isNotEmpty(e.getStationFaction())) {
+                    this.setFaction(e.getStationFaction());
+                }
+                if (StringUtils.isNotEmpty(e.getStationAllegiance())) {
+                    this.setAllegiance(e.getStationAllegiance());
+                }
+                if (StringUtils.isNotEmpty(e.getStationEconomyLocalized())) {
+                    this.setEconomy(e.getStationEconomyLocalized());
+                }
+                if (StringUtils.isNotEmpty(e.getStationGovernmentLocalized())) {
+                    this.setGovernment(e.getStationGovernmentLocalized());
+                }
                 this.setInSupercruise(false);
                 this.setLanded(true);
                 for (TravelHistoryListener listener : this.listeners) {
