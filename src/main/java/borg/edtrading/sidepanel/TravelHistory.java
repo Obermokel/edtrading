@@ -323,7 +323,9 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 this.setFuelLevel(MiscUtil.getAsFloat(e.getFuelLevel(), 0f));
                 VisitedSystem visitedSystem = new VisitedSystem(e);
                 if (visitedSystem.isUninhabited() && !this.visitedSystemNames.contains(visitedSystem.getSystemName())) {
-                    visitedSystem.setRemainingPayout(PAYOUTS.getOrDefault("JUMP", 999999999));
+                    if (visitedSystem.getCoord().distanceTo(new Coord(0, 0, 0)) > 200) {
+                        visitedSystem.setRemainingPayout(PAYOUTS.getOrDefault("JUMP", 999999999));
+                    }
                 }
                 this.visitedSystems.addLast(visitedSystem);
                 this.visitedSystemNames.add(visitedSystem.getSystemName());
@@ -466,17 +468,21 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                         VisitedSystem visitedSystem = this.visitedSystems.get(i);
                         if (visitedSystem.getSystemName().equals(systemName) && visitedSystem.getRemainingPayout() != 0) {
                             visitedSystem.setRemainingPayout(0);
+                            for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
+                                scannedBody.setRemainingBasePayout(0);
+                                scannedBody.setRemainingBonusPayout(0);
+                            }
                             break;
                         }
                     }
                 }
-                for (String bodyName : e.getDiscovered()) {
-                    for (int i = this.visitedSystems.size() - 1; i >= 0; i--) {
-                        ScannedBody scannedBody = this.visitedSystems.get(i).lookupScannedBody(bodyName);
-                        if (scannedBody != null) {
+                if (this.estimateRemainingExplorationPayout() < 500000) {
+                    // Most likely we have sold everything
+                    for (VisitedSystem visitedSystem : this.visitedSystems) {
+                        visitedSystem.setRemainingPayout(0);
+                        for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
                             scannedBody.setRemainingBasePayout(0);
                             scannedBody.setRemainingBonusPayout(0);
-                            break;
                         }
                     }
                 }

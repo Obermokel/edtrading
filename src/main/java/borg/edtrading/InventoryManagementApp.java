@@ -3,10 +3,12 @@ package borg.edtrading;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.Journal;
 import borg.edtrading.journal.JournalReader;
+import borg.edtrading.journal.entries.AbstractJournalEntry;
 import borg.edtrading.journal.entries.exploration.ScanEntry;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
+import borg.edtrading.journal.entries.location.FSDJumpEntry;
+import borg.edtrading.journal.entries.location.LocationEntry;
 import borg.edtrading.util.MiscUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,23 +33,35 @@ public class InventoryManagementApp {
     public static void main(String[] args) throws Exception {
         Journal journal = new Journal(new JournalReader().readEntireJournal(Constants.JOURNAL_DIR));
 
-        SortedMap<String, String> scannedBodies = new TreeMap<>();
-        List<ScanEntry> scanEntries = MiscUtil.unsafeCast(journal.getEntries(null, null, Event.Scan));
-        for (ScanEntry entry : scanEntries) {
-            scannedBodies.put(entry.getBodyName(), toBodyClass(entry));
+        String systemName = "Sol";
+        SortedMap<String, String> scannedBodyClassesByBodyName = new TreeMap<>();
+        SortedMap<String, List<String>> scannedBodyNamesBySystemName = new TreeMap<>();
+        for (AbstractJournalEntry entry : journal.getEntries()) {
+            if (entry.getEvent() == Event.FSDJump) {
+                systemName = ((FSDJumpEntry) entry).getStarSystem();
+            } else if (entry.getEvent() == Event.Location) {
+                systemName = ((LocationEntry) entry).getStarSystem();
+            } else if (entry.getEvent() == Event.Scan) {
+                ScanEntry e = (ScanEntry) entry;
+                scannedBodyClassesByBodyName.put(e.getBodyName(), ScanEntry.toBodyClass(e));
+                List<String> list = scannedBodyNamesBySystemName.getOrDefault(systemName, new ArrayList<>());
+                list.add(e.getBodyName());
+                scannedBodyNamesBySystemName.put(systemName, list);
+            }
         }
 
         LinkedHashMap<String, List<Integer>> payouts = new LinkedHashMap<>();
         List<SellExplorationDataEntry> sellEntries = MiscUtil.unsafeCast(journal.getEntries(null, null, Event.SellExplorationData));
         for (SellExplorationDataEntry entry : sellEntries) {
             if (entry.getSystems().size() == 1) {
+                List<String> scannedBodies = scannedBodyNamesBySystemName.get(systemName);
                 String date = new SimpleDateFormat("dd. MMM HH:mm").format(entry.getTimestamp());
                 System.out.println(String.format(Locale.US, "[%s] %-25s %,7d + %,7d    %s", date, entry.getSystems().get(0) + ":", entry.getBaseValue(), entry.getBonus(), entry.getDiscovered().toString()));
 
                 if (entry.getDiscovered().size() == 1) {
                     // 1 systems w/ 1 discovery
                     String bodyName = entry.getDiscovered().get(0);
-                    String bodyClass = scannedBodies.get(bodyName);
+                    String bodyClass = scannedBodyClassesByBodyName.get(bodyName);
                     int bonus = entry.getBonus();
                     int base = 4 * bonus;
                     int jump = entry.getBaseValue() - base;
@@ -59,8 +73,26 @@ public class InventoryManagementApp {
                     List<Integer> payoutsJump = payouts.getOrDefault("JUMP", new ArrayList<>());
                     payoutsJump.add(jump);
                     payouts.put("JUMP", payoutsJump);
-                } else if (entry.getDiscovered().size() == 0) {
-                    // 1 systems w/o discovery
+                } else if (scannedBodies != null && scannedBodies.size() == 1) {
+                    // 1 systems w/ 1 scan
+                    List<Integer> payoutsJump = payouts.getOrDefault("JUMP", new ArrayList<>());
+                    if (payoutsJump.size() > 0) {
+                        Collections.sort(payoutsJump);
+                        int medianJumpPayout = payoutsJump.get(payoutsJump.size() / 2);
+
+                        String bodyName = scannedBodies.get(0);
+                        String bodyClass = scannedBodyClassesByBodyName.get(bodyName);
+                        int total = entry.getBaseValue();
+                        int base = total - medianJumpPayout;
+
+                        if (base > 0) {
+                            List<Integer> payoutsBody = payouts.getOrDefault(bodyClass, new ArrayList<>());
+                            payoutsBody.add(base);
+                            payouts.put(bodyClass, payoutsBody);
+                        }
+                    }
+                } else if (entry.getDiscovered().size() == 0 && (scannedBodies == null || scannedBodies.size() == 0)) {
+                    // 1 systems w/o discovery and scan
                     int jump = entry.getBaseValue();
 
                     List<Integer> payoutsJump = payouts.getOrDefault("JUMP", new ArrayList<>());
@@ -78,20 +110,6 @@ public class InventoryManagementApp {
             int medianPayout = classPayouts.get(classPayouts.size() / 2);
 
             System.out.println(String.format(Locale.US, "%50s = %-6d %s", bodyClass, medianPayout, classPayouts.toString()));
-        }
-    }
-
-    private static String toBodyClass(ScanEntry e) {
-        if (StringUtils.isNotEmpty(e.getPlanetClass())) {
-            String planetClass = e.getPlanetClass();
-            if (StringUtils.isNotEmpty(e.getTerraformState())) {
-                planetClass += (" (" + e.getTerraformState() + ")");
-            }
-            return planetClass;
-        } else if (StringUtils.isNotEmpty(e.getStarType())) {
-            return "Class " + e.getStarType();
-        } else {
-            return e.getBodyName();
         }
     }
 
