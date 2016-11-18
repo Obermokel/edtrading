@@ -42,7 +42,7 @@ public class InventoryManagementApp {
         for (SellExplorationDataEntry entry : sellEntries) {
             if (entry.getSystems().size() == 1) {
                 String date = new SimpleDateFormat("dd. MMM HH:mm").format(entry.getTimestamp());
-                System.out.println(String.format(Locale.US, "[%s] %s: %,d + %,d %s", date, entry.getSystems().get(0), entry.getBaseValue(), entry.getBonus(), entry.getDiscovered().toString()));
+                System.out.println(String.format(Locale.US, "[%s] %-25s %,7d + %,7d    %s", date, entry.getSystems().get(0) + ":", entry.getBaseValue(), entry.getBonus(), entry.getDiscovered().toString()));
 
                 if (entry.getDiscovered().size() == 1) {
                     // 1 systems w/ 1 discovery
@@ -70,6 +70,7 @@ public class InventoryManagementApp {
             }
         }
 
+        System.out.println();
         MiscUtil.sortMapByValue(payouts);
         for (String bodyClass : payouts.keySet()) {
             List<Integer> classPayouts = payouts.get(bodyClass);
