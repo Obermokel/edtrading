@@ -1,8 +1,8 @@
 package borg.edtrading.gui;
 
-import borg.edtrading.journal.AbstractJournalEntry;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.journal.JournalUpdateListener;
+import borg.edtrading.journal.entries.AbstractJournalEntry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -2,9 +2,9 @@ package borg.edtrading;
 
 import borg.edtrading.data.Coord;
 import borg.edtrading.journal.Event;
-import borg.edtrading.journal.FSDJumpEntry;
 import borg.edtrading.journal.Journal;
 import borg.edtrading.journal.JournalReader;
+import borg.edtrading.journal.entries.FSDJumpEntry;
 import borg.edtrading.util.FuelAndJumpRangeLookup;
 import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;

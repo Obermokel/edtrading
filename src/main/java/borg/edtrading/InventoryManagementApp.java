@@ -2,12 +2,12 @@ package borg.edtrading;
 
 import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;
-import borg.edtrading.journal.EngineerCraftEntry;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.Journal;
 import borg.edtrading.journal.JournalReader;
-import borg.edtrading.journal.MaterialCollectedEntry;
-import borg.edtrading.journal.MaterialDiscardedEntry;
+import borg.edtrading.journal.entries.EngineerCraftEntry;
+import borg.edtrading.journal.entries.MaterialCollectedEntry;
+import borg.edtrading.journal.entries.MaterialDiscardedEntry;
 import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

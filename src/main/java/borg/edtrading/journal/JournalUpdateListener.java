@@ -1,5 +1,7 @@
 package borg.edtrading.journal;
 
+import borg.edtrading.journal.entries.AbstractJournalEntry;
+
 /**
  * JournalUpdateListener
  *

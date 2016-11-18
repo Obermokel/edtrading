@@ -1,16 +1,16 @@
 package borg.edtrading.sidepanel;
 
-import borg.edtrading.journal.AbstractJournalEntry;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.journal.JournalUpdateListener;
-import borg.edtrading.journal.LoadGameEntry;
-import borg.edtrading.journal.ModuleBuyEntry;
-import borg.edtrading.journal.ModuleRetrieveEntry;
-import borg.edtrading.journal.ModuleStoreEntry;
-import borg.edtrading.journal.ShipyardBuyEntry;
-import borg.edtrading.journal.ShipyardNewEntry;
-import borg.edtrading.journal.ShipyardSwapEntry;
+import borg.edtrading.journal.entries.AbstractJournalEntry;
+import borg.edtrading.journal.entries.LoadGameEntry;
+import borg.edtrading.journal.entries.ModuleBuyEntry;
+import borg.edtrading.journal.entries.ModuleRetrieveEntry;
+import borg.edtrading.journal.entries.ModuleStoreEntry;
+import borg.edtrading.journal.entries.ShipyardBuyEntry;
+import borg.edtrading.journal.entries.ShipyardNewEntry;
+import borg.edtrading.journal.entries.ShipyardSwapEntry;
 import com.google.gson.Gson;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
