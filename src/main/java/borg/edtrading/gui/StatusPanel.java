@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Locale;
@@ -48,7 +49,6 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
     private JLabel factionAndAllegianceLabel = new JLabel("Faction (Allegiance)");
     private JLabel economyAndStateLabel = new JLabel("Economy (State)");
     private JLabel governmentAndSecurityLabel = new JLabel("Government (Security)");
-    private JLabel distanceFromSolLabel = new JLabel("Sol: 0 Ly");
 
     private JLabel shipNameLabel = new JLabel("CMDR Name (Game Mode: Group)");
 
@@ -56,7 +56,8 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
     private AnimatedLabel matsLabel = new AnimatedLabel("Mats: 0");
     private JLabel cargoLabel = new JLabel("Cargo: 0 (0)");
     private AnimatedLabel fuelLabel = new AnimatedLabel("Fuel: 0 (0)");
-    private JLabel jumpLabel = new JLabel("Jump: 0.00 (0.00) Ly");
+    private JLabel distanceFromSolLabel = new JLabel("Sol: 0 Ly");
+    private JLabel jumpLabel = new JLabel("Jump: 0.00 Ly (0.00 Ly)");
     private JLabel explLabel = new JLabel("Expl: 0 CR");
 
     private Timer dataTimer = null;
@@ -75,28 +76,55 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         this.matsTimer = new Timer(10, this.matsLabel);
         this.matsTimer.setRepeats(true);
 
+        Font font = new Font("Sans Serif", Font.BOLD, 20);
+        this.locationLabel.setFont(font);
+        this.factionAndAllegianceLabel.setFont(font);
+        this.economyAndStateLabel.setFont(font);
+        this.governmentAndSecurityLabel.setFont(font);
+        this.shipNameLabel.setFont(font);
+        this.dataLabel.setFont(font);
+        this.matsLabel.setFont(font);
+        this.cargoLabel.setFont(font);
+        this.fuelLabel.setFont(font);
+        this.distanceFromSolLabel.setFont(font);
+        this.jumpLabel.setFont(font);
+        this.explLabel.setFont(font);
+
+        this.distanceFromSolLabel.setForeground(Color.GRAY);
+        this.jumpLabel.setForeground(Color.GRAY);
+
         this.setLayout(new BorderLayout());
+        JPanel topPanel = new JPanel(new BorderLayout());
+        this.add(topPanel, BorderLayout.NORTH);
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        this.add(bottomPanel, BorderLayout.CENTER);
 
-        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 5));
-        leftPanel.add(this.locationLabel);
-        leftPanel.add(this.factionAndAllegianceLabel);
-        leftPanel.add(this.economyAndStateLabel);
-        leftPanel.add(this.governmentAndSecurityLabel);
-        leftPanel.add(this.distanceFromSolLabel);
-        this.add(leftPanel, BorderLayout.WEST);
+        JPanel leftTopPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 5));
+        leftTopPanel.add(this.locationLabel);
+        leftTopPanel.add(this.factionAndAllegianceLabel);
+        topPanel.add(leftTopPanel, BorderLayout.WEST);
 
-        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 25, 5));
-        centerPanel.add(this.shipNameLabel);
-        this.add(centerPanel, BorderLayout.CENTER);
+        JPanel leftBottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 5));
+        leftBottomPanel.add(this.economyAndStateLabel);
+        leftBottomPanel.add(this.governmentAndSecurityLabel);
+        bottomPanel.add(leftBottomPanel, BorderLayout.WEST);
 
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 25, 5));
-        rightPanel.add(this.dataLabel);
-        rightPanel.add(this.matsLabel);
-        rightPanel.add(this.cargoLabel);
-        rightPanel.add(this.fuelLabel);
-        rightPanel.add(this.jumpLabel);
-        rightPanel.add(this.explLabel);
-        this.add(rightPanel, BorderLayout.EAST);
+        JPanel centerTopPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 25, 5));
+        centerTopPanel.add(this.shipNameLabel);
+        topPanel.add(centerTopPanel, BorderLayout.CENTER);
+
+        JPanel rightTopPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 25, 5));
+        rightTopPanel.add(this.dataLabel);
+        rightTopPanel.add(this.matsLabel);
+        rightTopPanel.add(this.cargoLabel);
+        rightTopPanel.add(this.fuelLabel);
+        topPanel.add(rightTopPanel, BorderLayout.EAST);
+
+        JPanel rightBottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 25, 5));
+        rightBottomPanel.add(this.distanceFromSolLabel);
+        rightBottomPanel.add(this.jumpLabel);
+        rightBottomPanel.add(this.explLabel);
+        bottomPanel.add(rightBottomPanel, BorderLayout.EAST);
 
         // Initial update
         this.updatePanel();
@@ -162,7 +190,6 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         this.factionAndAllegianceLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getFaction(), this.travelHistory.getAllegiance()));
         this.economyAndStateLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getEconomy(), this.travelHistory.getState()));
         this.governmentAndSecurityLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getGovernment(), this.travelHistory.getSecurity()));
-        this.distanceFromSolLabel.setText(String.format(Locale.US, "Sol: %.0f Ly", new Coord(0, 0, 0).distanceTo(this.travelHistory.getCoord())));
 
         if (this.gameSession.getCurrentShipLoadout() != null) {
             if (StringUtils.isNotEmpty(this.gameSession.getCurrentShipLoadout().getShipName())) {
@@ -228,6 +255,7 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
             this.cargoLabel.setForeground(Color.LIGHT_GRAY); // Use light gray (better visibility) if s.th. is loaded.
         }
 
+        this.distanceFromSolLabel.setText(String.format(Locale.US, "Sol: %.0fLy", new Coord(0, 0, 0).distanceTo(this.travelHistory.getCoord())));
         float totalFuel = this.travelHistory.getFuelLevel();
         float capacityFuel = Math.max(totalFuel, this.travelHistory.getFuelCapacity());
         float percentFuel = totalFuel / capacityFuel;
@@ -257,9 +285,9 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         float minJumpRange = MiscUtil.getAsFloat(this.gameSession.getCurrentShipLoadout().getFullTankJumpRange(), 1.0f);
         float maxJumpRange = MiscUtil.getAsFloat(this.gameSession.getCurrentShipLoadout().getOptTankJumpRange(), 1.0f);
         float currentJumpRange = FuelAndJumpRangeLookup.estimateCurrentJumpRange(totalFuel, (int) capacityFuel, maxFuelPerJump, minJumpRange, maxJumpRange);
-        this.jumpLabel.setText(String.format(Locale.US, "Jump: %.2f (%.2f) Ly", currentJumpRange, maxJumpRange));
+        this.jumpLabel.setText(String.format(Locale.US, "Jump: %.2fLy (%.2fLy)", currentJumpRange, maxJumpRange));
         int explPayout = this.travelHistory.estimateRemainingExplorationPayout();
-        this.explLabel.setText(String.format(Locale.US, "Expl: %,d CR", explPayout));
+        this.explLabel.setText(String.format(Locale.US, "Expl: %,dCR", explPayout));
         if (explPayout >= 1000000) {
             this.explLabel.setForeground(Color.RED);
         } else if (explPayout >= 250000) {
