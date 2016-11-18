@@ -103,7 +103,7 @@ public class InventoryManagementApp {
         }
 
         System.out.println();
-        MiscUtil.sortMapByValue(payouts);
+        //MiscUtil.sortMapByValue(payouts);
         for (String bodyClass : payouts.keySet()) {
             List<Integer> classPayouts = payouts.get(bodyClass);
             Collections.sort(classPayouts);

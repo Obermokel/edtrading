@@ -45,37 +45,41 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
     static final Map<String, Integer> PAYOUTS = new HashMap<>();
     static {
       //@formatter:off
-      PAYOUTS.put(                                   "JUMP", 9000);
+      PAYOUTS.put(                                   "JUMP", 6392);
 
-      PAYOUTS.put(                                "Class O", 5000);
-      PAYOUTS.put(                                "Class B", 5000);
-      PAYOUTS.put(                                "Class A", 4000);
-      PAYOUTS.put(                                "Class F", 4000);
-      PAYOUTS.put(                                "Class G", 4000);
-      PAYOUTS.put(                                "Class K", 3000);
-      PAYOUTS.put(                                "Class M", 3000);
-      PAYOUTS.put(                                "Class L", 2500);
-      PAYOUTS.put(                                "Class Y", 2500);
+      PAYOUTS.put(                                "Class O", 5750);
+      PAYOUTS.put(                                "Class B", 5750);
+      PAYOUTS.put(                                "Class A", 5750);
+      PAYOUTS.put(                                "Class F", 5868);//+
+      PAYOUTS.put(                                "Class G", 5750);
+      PAYOUTS.put(                                "Class K", 5824);//++
+      PAYOUTS.put(                                "Class M", 5788);//++
+      PAYOUTS.put(                       "Class M_RedGiant", 5784);//+
+      PAYOUTS.put(                                "Class L", 5776);//+
+      PAYOUTS.put(                                "Class Y", 5750);
+      PAYOUTS.put(                                "Class T", 5750);
+      PAYOUTS.put(                              "Class TTS", 5780);//+
 
       PAYOUTS.put(                                "Class N", 38000);
       PAYOUTS.put(                               "Class DA", 20000);
       PAYOUTS.put(                               "Class DB", 20000);
 
-      PAYOUTS.put(                          "Ammonia world", 50000);
-      PAYOUTS.put(                         "Earthlike body", 58000);
+      PAYOUTS.put(                          "Ammonia world", 82504);//++
+      PAYOUTS.put(                         "Earthlike body", 71874);//*
       PAYOUTS.put(                            "Water world", 60000);
+      PAYOUTS.put(                            "Water giant", 1519);//*
       PAYOUTS.put("High metal content body (Terraformable)", 52000);
       PAYOUTS.put(            "Water world (Terraformable)", 52000);
 
-      PAYOUTS.put(      "Gas giant with ammonia based life", 25000);
+      PAYOUTS.put(      "Gas giant with ammonia based life", 3932);//+
       PAYOUTS.put(        "Gas giant with water based life", 25000);
-      PAYOUTS.put(             "Sudarsky class I gas giant", 10000);
-      PAYOUTS.put(            "Sudarsky class II gas giant", 10000);
-      PAYOUTS.put(           "Sudarsky class III gas giant", 10000);
-      PAYOUTS.put(            "Sudarsky class IV gas giant", 10000);
-      PAYOUTS.put(             "Sudarsky class V gas giant", 10000);
+      PAYOUTS.put(             "Sudarsky class I gas giant", 5360);
+      PAYOUTS.put(            "Sudarsky class II gas giant", 5360);
+      PAYOUTS.put(           "Sudarsky class III gas giant", 5360);//++
+      PAYOUTS.put(            "Sudarsky class IV gas giant", 5360);
+      PAYOUTS.put(             "Sudarsky class V gas giant", 5360);
 
-      PAYOUTS.put(                "High metal content body", 6000);
+      PAYOUTS.put(                "High metal content body", 10212);//++
       PAYOUTS.put(                               "Icy body", 1100);
       PAYOUTS.put(                        "Metal rich body", 10000);
       PAYOUTS.put(                             "Rocky body", 700);
