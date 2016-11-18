@@ -84,9 +84,10 @@ public class SidePanelApp implements WindowListener {
         frame.add(statusPanel, BorderLayout.NORTH);
         frame.add(tabbedPane, BorderLayout.CENTER);
         frame.add(new JScrollPane(journalLogPanel), BorderLayout.SOUTH);
-        //frame.pack();
-        frame.setSize(1800, 900);
-        frame.setLocation(10, 10);
+        //        frame.setSize(1800, 900);
+        //        frame.setLocation(10, 10);
+        frame.setSize(1280, 720);
+        frame.setLocation(300, 100);
         frame.setVisible(true);
 
         inventoryPanel.setDividerLocation(0.8);
