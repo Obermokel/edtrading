@@ -48,43 +48,44 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
       PAYOUTS.put(                                   "JUMP", 4204);
 
       PAYOUTS.put(                                "Class O", 5750);
-      PAYOUTS.put(                                "Class B", 5750);
-      PAYOUTS.put(                                "Class A", 5750);
-      PAYOUTS.put(                                "Class F", 5868);//+
-      PAYOUTS.put(                                "Class G", 5750);
-      PAYOUTS.put(                                "Class K", 5824);//++
-      PAYOUTS.put(                                "Class M", 5788);//++
-      PAYOUTS.put(                       "Class M_RedGiant", 5784);//+
-      PAYOUTS.put(                                "Class L", 5776);//+
+      PAYOUTS.put(                                "Class B", 3490);//3490
+      PAYOUTS.put(                                "Class A", 2985);//2985
+      PAYOUTS.put(                                "Class F", (2935+2933)/2);//2935+2933
+      PAYOUTS.put(                                "Class G", (2920+2920+2921+2917)/4);//2920+2920+2921+2917
+      PAYOUTS.put(                                "Class K", (2904+2912)/2);//2904+2912
+      PAYOUTS.put(                                "Class M", (2898+2897+2895+2893)/4);//2898+2897+2895+2893
+      PAYOUTS.put(                       "Class M_RedGiant", 5784);
+      PAYOUTS.put(                                "Class C", 2902);//2902
+      PAYOUTS.put(                                "Class L", 2889);//2889
       PAYOUTS.put(                                "Class Y", 5750);
       PAYOUTS.put(                                "Class T", 5750);
-      PAYOUTS.put(                              "Class TTS", 5780);//+
+      PAYOUTS.put(                              "Class TTS", 2900);//2900
 
       PAYOUTS.put(                                "Class N", 38000);
-      PAYOUTS.put(                                "Class H", 44721);//*Maia B
+      PAYOUTS.put(                                "Class H", 44721);//44721
       PAYOUTS.put(                               "Class DA", 20000);
       PAYOUTS.put(                               "Class DB", 20000);
 
-      PAYOUTS.put(                          "Ammonia world", 82504);//++
-      PAYOUTS.put(                         "Earthlike body", 71874);//*
+      PAYOUTS.put(                          "Ammonia world", 82504);
+      PAYOUTS.put(                         "Earthlike body", (71874+65997)/2);//71874+65997
       PAYOUTS.put(                            "Water world", 60000);
-      PAYOUTS.put(                            "Water giant", 1519);//*
-      PAYOUTS.put("High metal content body (Terraformable)", 52000);
-      PAYOUTS.put(            "Water world (Terraformable)", 52000);
+      PAYOUTS.put(                            "Water giant", 1519);//1519
+      PAYOUTS.put("High metal content body (Terraformable)", (50638+47257+41831+43757)/4);//50638+47257+41831+43757
+      PAYOUTS.put(            "Water world (Terraformable)", (65490+63184+65222)/3);//65490+63184+65222
 
-      PAYOUTS.put(      "Gas giant with ammonia based life", 3932);//+
+      PAYOUTS.put(      "Gas giant with ammonia based life", 3932);
       PAYOUTS.put(        "Gas giant with water based life", 25000);
-      PAYOUTS.put(             "Sudarsky class I gas giant", 2613);//*LTT 4487 3
-      PAYOUTS.put(            "Sudarsky class II gas giant", 5360);
-      PAYOUTS.put(           "Sudarsky class III gas giant", 5360);//++
+      PAYOUTS.put(             "Sudarsky class I gas giant", 2613);//2613
+      PAYOUTS.put(            "Sudarsky class II gas giant", 12888);//12888
+      PAYOUTS.put(           "Sudarsky class III gas giant", 5360);
       PAYOUTS.put(            "Sudarsky class IV gas giant", 5360);
       PAYOUTS.put(             "Sudarsky class V gas giant", 5360);
 
-      PAYOUTS.put(                "High metal content body", 10212);//++
-      PAYOUTS.put(                               "Icy body", 1100);
-      PAYOUTS.put(                        "Metal rich body", 10000);
-      PAYOUTS.put(                             "Rocky body", 700);
-      PAYOUTS.put(                         "Rocky ice body", 900);
+      PAYOUTS.put(                "High metal content body", (6532+7567+5222)/3);//6532+7567+5222
+      PAYOUTS.put(                               "Icy body", (925+1117+1155)/3);//925+1117+1155
+      PAYOUTS.put(                        "Metal rich body", (12981+9241)/2);//12981+9241
+      PAYOUTS.put(                             "Rocky body", (888+865)/2);//888+865
+      PAYOUTS.put(                         "Rocky ice body", 1072);//1072
       //@formatter:on
     }
 
