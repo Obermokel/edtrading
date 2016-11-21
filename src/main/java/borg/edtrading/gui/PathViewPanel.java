@@ -103,10 +103,13 @@ public class PathViewPanel extends JPanel {
     private List<StarSystem> generateReferenceSystems(Galaxy galaxy, StarSystem fromSystem, StarSystem toSystem) {
         Set<StarSystem> result = new HashSet<>();
         result.add(galaxy.searchStarSystemByName("Sol"));
+        result.add(galaxy.searchStarSystemByName("Maia"));
         result.add(galaxy.searchStarSystemByName("Sagittarius A*"));
+        result.add(galaxy.searchStarSystemByName("Beagle Point"));
         result.add(galaxy.searchStarSystemByName("Colonia"));
         result.add(galaxy.searchStarSystemByName("VY Canis Majoris"));
         result.add(galaxy.searchStarSystemByName("Crab Pulsar"));
+        result.add(galaxy.searchStarSystemByName("Rho Cassiopeiae"));
         result.remove(fromSystem);
         result.remove(toSystem);
 
