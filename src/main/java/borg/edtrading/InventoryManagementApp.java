@@ -54,6 +54,7 @@ public class InventoryManagementApp {
         List<SellExplorationDataEntry> sellEntries = MiscUtil.unsafeCast(journal.getEntries(null, null, Event.SellExplorationData));
         for (SellExplorationDataEntry entry : sellEntries) {
             if (entry.getSystems().size() == 1) {
+                systemName = entry.getSystems().get(0);
                 List<String> scannedBodies = scannedBodyNamesBySystemName.get(systemName);
                 String date = new SimpleDateFormat("dd. MMM HH:mm").format(entry.getTimestamp());
                 System.out.println(String.format(Locale.US, "[%s] %-25s %,7d + %,7d    %s", date, entry.getSystems().get(0) + ":", entry.getBaseValue(), entry.getBonus(), entry.getDiscovered().toString()));
@@ -63,7 +64,7 @@ public class InventoryManagementApp {
                     String bodyName = entry.getDiscovered().get(0);
                     String bodyClass = scannedBodyClassesByBodyName.get(bodyName);
                     int bonus = entry.getBonus();
-                    int base = 4 * bonus;
+                    int base = 2 * bonus;
                     int jump = entry.getBaseValue() - base;
 
                     List<Integer> payoutsBody = payouts.getOrDefault(bodyClass, new ArrayList<>());
@@ -75,21 +76,17 @@ public class InventoryManagementApp {
                     payouts.put("JUMP", payoutsJump);
                 } else if (scannedBodies != null && scannedBodies.size() == 1) {
                     // 1 systems w/ 1 scan
-                    List<Integer> payoutsJump = payouts.getOrDefault("JUMP", new ArrayList<>());
-                    if (payoutsJump.size() > 0) {
-                        Collections.sort(payoutsJump);
-                        int medianJumpPayout = payoutsJump.get(payoutsJump.size() / 2);
+                    int medianJumpPayout = 4204; // TODO Adjust
 
-                        String bodyName = scannedBodies.get(0);
-                        String bodyClass = scannedBodyClassesByBodyName.get(bodyName);
-                        int total = entry.getBaseValue();
-                        int base = total - medianJumpPayout;
+                    String bodyName = scannedBodies.get(0);
+                    String bodyClass = scannedBodyClassesByBodyName.get(bodyName);
+                    int total = entry.getBaseValue();
+                    int base = total - medianJumpPayout;
 
-                        if (base > 0) {
-                            List<Integer> payoutsBody = payouts.getOrDefault(bodyClass, new ArrayList<>());
-                            payoutsBody.add(base);
-                            payouts.put(bodyClass, payoutsBody);
-                        }
+                    if (base > 0) {
+                        List<Integer> payoutsBody = payouts.getOrDefault(bodyClass, new ArrayList<>());
+                        payoutsBody.add(base);
+                        payouts.put(bodyClass, payoutsBody);
                     }
                 } else if (entry.getDiscovered().size() == 0 && (scannedBodies == null || scannedBodies.size() == 0)) {
                     // 1 systems w/o discovery and scan

@@ -45,7 +45,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
     static final Map<String, Integer> PAYOUTS = new HashMap<>();
     static {
       //@formatter:off
-      PAYOUTS.put(                                   "JUMP", 6392);
+      PAYOUTS.put(                                   "JUMP", 4204);
 
       PAYOUTS.put(                                "Class O", 5750);
       PAYOUTS.put(                                "Class B", 5750);
@@ -61,6 +61,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
       PAYOUTS.put(                              "Class TTS", 5780);//+
 
       PAYOUTS.put(                                "Class N", 38000);
+      PAYOUTS.put(                                "Class H", 44721);//*Maia B
       PAYOUTS.put(                               "Class DA", 20000);
       PAYOUTS.put(                               "Class DB", 20000);
 
@@ -73,7 +74,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
 
       PAYOUTS.put(      "Gas giant with ammonia based life", 3932);//+
       PAYOUTS.put(        "Gas giant with water based life", 25000);
-      PAYOUTS.put(             "Sudarsky class I gas giant", 5360);
+      PAYOUTS.put(             "Sudarsky class I gas giant", 2613);//*LTT 4487 3
       PAYOUTS.put(            "Sudarsky class II gas giant", 5360);
       PAYOUTS.put(           "Sudarsky class III gas giant", 5360);//++
       PAYOUTS.put(            "Sudarsky class IV gas giant", 5360);

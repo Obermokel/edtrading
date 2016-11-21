@@ -189,10 +189,28 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
     }
 
     private void updatePanel() {
-        this.locationLabel.setText(String.format(Locale.US, "%s / %s", this.travelHistory.getSystemName(), this.travelHistory.getBodyName()));
-        this.factionAndAllegianceLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getFaction(), this.travelHistory.getAllegiance()));
-        this.economyAndStateLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getEconomy(), this.travelHistory.getState()));
-        this.governmentAndSecurityLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getGovernment(), this.travelHistory.getSecurity()));
+        if (StringUtils.isEmpty(this.travelHistory.getBodyName())) {
+            this.locationLabel.setText(String.format(Locale.US, "%s", this.travelHistory.getSystemName()));
+        } else {
+            this.locationLabel.setText(String.format(Locale.US, "%s / %s", this.travelHistory.getSystemName(), this.travelHistory.getBodyName()));
+        }
+        if (StringUtils.isEmpty(this.travelHistory.getFaction()) || "None".equals(this.travelHistory.getFaction())) {
+            this.factionAndAllegianceLabel.setText("No faction");
+        } else {
+            this.factionAndAllegianceLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getFaction(), this.travelHistory.getAllegiance()));
+        }
+        if (StringUtils.isEmpty(this.travelHistory.getEconomy()) || "None".equals(this.travelHistory.getEconomy())) {
+            this.economyAndStateLabel.setText("No economy");
+        } else if (StringUtils.isEmpty(this.travelHistory.getState()) || "None".equals(this.travelHistory.getState())) {
+            this.economyAndStateLabel.setText(String.format(Locale.US, "%s", this.travelHistory.getEconomy()));
+        } else {
+            this.economyAndStateLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getEconomy(), this.travelHistory.getState()));
+        }
+        if (StringUtils.isEmpty(this.travelHistory.getGovernment()) || "None".equals(this.travelHistory.getGovernment())) {
+            this.governmentAndSecurityLabel.setText("No government");
+        } else {
+            this.governmentAndSecurityLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getGovernment(), this.travelHistory.getSecurity()));
+        }
 
         if (this.gameSession.getCurrentShipLoadout() != null) {
             if (StringUtils.isNotEmpty(this.gameSession.getCurrentShipLoadout().getShipName())) {

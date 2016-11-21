@@ -108,9 +108,9 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
     public void onGameLoaded(String commander, String gameMode, String group, ShipLoadout ship) {
         if (this.frame != null) {
             if (StringUtils.isNotEmpty(group)) {
-                this.frame.setTitle(String.format(Locale.US, "CMDR %s (%s: %s)", commander, gameMode, group));
+                this.frame.setTitle(String.format(Locale.US, "CMDR %s - %s: %s", commander, gameMode, group));
             } else {
-                this.frame.setTitle(String.format(Locale.US, "CMDR %s (%s)", commander, gameMode));
+                this.frame.setTitle(String.format(Locale.US, "CMDR %s - %s", commander, gameMode));
             }
         }
     }
