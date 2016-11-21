@@ -8,10 +8,12 @@ import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.sidepanel.GameSession;
 import borg.edtrading.sidepanel.GameSessionListener;
 import borg.edtrading.sidepanel.Inventory;
+import borg.edtrading.sidepanel.ScannedBody;
 import borg.edtrading.sidepanel.ShipLoadout;
 import borg.edtrading.sidepanel.ShipModule;
 import borg.edtrading.sidepanel.ShipModuleList;
 import borg.edtrading.sidepanel.TravelHistory;
+import borg.edtrading.sidepanel.VisitedSystem;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,6 +24,8 @@ import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.LinkedList;
 import java.util.Locale;
 
 import javax.swing.JFrame;
@@ -77,6 +81,19 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         // Init the reader from existing files, then start to watch for changes
         journalReaderThread.init();
         journalReaderThread.start();
+
+        LinkedList<VisitedSystem> visitedSystems = this.travelHistory.getVisitedSystems();
+        for (int i = visitedSystems.size() - 1; i >= 0; i--) {
+            VisitedSystem vs = visitedSystems.get(i);
+            if (vs.getRemainingPayout() != 0) {
+                logger.debug(String.format(Locale.US, "[%s] SYSTEM %-40s %d", new SimpleDateFormat("dd. MMM HH:mm").format(vs.getTimestamp()), vs.getSystemName(), vs.getRemainingPayout()));
+            }
+            for (ScannedBody sb : vs.getScannedBodies()) {
+                if (sb.getRemainingBasePayout() != 0) {
+                    logger.debug(String.format(Locale.US, "[%s] %40s %-40s %d", new SimpleDateFormat("dd. MMM HH:mm").format(sb.getTimestamp()), sb.getBodyClass(), sb.getBodyName(), sb.getRemainingBasePayout()));
+                }
+            }
+        }
 
         // Create all panels
         JournalLogPanel journalLogPanel = new JournalLogPanel(journalReaderThread);

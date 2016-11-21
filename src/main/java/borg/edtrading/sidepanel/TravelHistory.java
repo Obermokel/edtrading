@@ -479,13 +479,20 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 for (String systemName : e.getSystems()) {
                     for (int i = this.visitedSystems.size() - 1; i >= 0; i--) {
                         VisitedSystem visitedSystem = this.visitedSystems.get(i);
-                        if (visitedSystem.getSystemName().equals(systemName) && visitedSystem.getRemainingPayout() != 0) {
-                            visitedSystem.setRemainingPayout(0);
+                        if (visitedSystem.getSystemName().equals(systemName)) {
+                            boolean payedOut = false;
+                            if (visitedSystem.getRemainingPayout() != 0) {
+                                visitedSystem.setRemainingPayout(0);
+                                payedOut = true;
+                            }
                             for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
                                 scannedBody.setRemainingBasePayout(0);
                                 scannedBody.setRemainingBonusPayout(0);
+                                payedOut = true;
                             }
-                            break;
+                            if (payedOut) {
+                                break;
+                            }
                         }
                     }
                 }
