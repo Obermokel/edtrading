@@ -76,7 +76,7 @@ public class InventoryManagementApp {
                     payouts.put("JUMP", payoutsJump);
                 } else if (scannedBodies != null && scannedBodies.size() == 1) {
                     // 1 systems w/ 1 scan
-                    int medianJumpPayout = 4204; // TODO Adjust
+                    int medianJumpPayout = 3302; // TODO Adjust
 
                     String bodyName = scannedBodies.get(0);
                     String bodyClass = scannedBodyClassesByBodyName.get(bodyName);
