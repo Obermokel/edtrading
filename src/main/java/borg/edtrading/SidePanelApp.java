@@ -18,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
@@ -100,6 +101,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         ShipyardPanel shipyardPanel = new ShipyardPanel(gameSession);
 
         JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(new Font("Sans Serif", Font.BOLD, 18));
         tabbedPane.addTab("Inventory", inventoryPanel);
         tabbedPane.addTab("Scans", scansPanel);
         tabbedPane.addTab("Shipyard", shipyardPanel);
@@ -116,8 +118,6 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         //        frame.setSize(1280, 720);
         //        frame.setLocation(300, 100);
         frame.setVisible(true);
-
-        inventoryPanel.setDividerLocation(0.8);
     }
 
     @Override

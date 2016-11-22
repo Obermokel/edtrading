@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
@@ -28,10 +27,8 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.UIManager;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
@@ -42,7 +39,7 @@ import javax.swing.table.TableCellRenderer;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class InventoryPanel extends JSplitPane implements InventoryListener {
+public class InventoryPanel extends Box implements InventoryListener {
 
     private static final long serialVersionUID = 4657223926306497803L;
 
@@ -58,16 +55,17 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
     private final JList<String> historyList = new JList<>();
 
     public InventoryPanel(Inventory inventory) {
+        super(BoxLayout.X_AXIS);
+
         this.inventory = inventory;
 
-        Box inventoryBox = new Box(BoxLayout.X_AXIS);
         for (ItemType type : Arrays.asList(ItemType.ELEMENT, ItemType.MANUFACTURED, ItemType.DATA, ItemType.COMMODITY)) {
             // Add the table for this item type
             InventoryTableModel tableModel = new InventoryTableModel(this.inventory, type);
             this.tableModelsByType.put(type, tableModel);
             JTable table = new JTable(tableModel);
             table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
-            table.setFont(new Font("Sans Serif", Font.PLAIN, 16));
+            table.setFont(new Font("Sans Serif", Font.BOLD, 18));
             if (SHOW_BUTTONS) {
                 table.getColumn("+").setCellRenderer(new ButtonRenderer());
                 table.getColumn("+").setCellEditor(new ButtonEditor(new JCheckBox(), inventory, tableModel));
@@ -95,17 +93,8 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
                 }
             }
             JScrollPane scrollPane = new JScrollPane(table);
-            scrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), type.name(), TitledBorder.CENTER, TitledBorder.TOP));
-            inventoryBox.add(scrollPane);
+            this.add(scrollPane);
         }
-        this.setLeftComponent(inventoryBox);
-
-        this.historyList.setFont(new Font("Consolas", Font.PLAIN, 10));
-        JScrollPane scrollPane = new JScrollPane(this.historyList);
-        scrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "HISTORY", TitledBorder.CENTER, TitledBorder.TOP));
-        this.setRightComponent(scrollPane);
-
-        this.setResizeWeight(1); // Resize left box, keep right history same size
 
         inventory.addListener(this);
     }
