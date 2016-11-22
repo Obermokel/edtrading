@@ -2,6 +2,7 @@ package borg.edtrading;
 
 import borg.edtrading.gui.InventoryPanel;
 import borg.edtrading.gui.JournalLogPanel;
+import borg.edtrading.gui.ScansPanel;
 import borg.edtrading.gui.ShipyardPanel;
 import borg.edtrading.gui.StatusPanel;
 import borg.edtrading.journal.JournalReaderThread;
@@ -95,10 +96,12 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         JournalLogPanel journalLogPanel = new JournalLogPanel(journalReaderThread);
         StatusPanel statusPanel = new StatusPanel(gameSession, travelHistory, inventory);
         InventoryPanel inventoryPanel = new InventoryPanel(inventory);
+        ScansPanel scansPanel = new ScansPanel(travelHistory);
         ShipyardPanel shipyardPanel = new ShipyardPanel(gameSession);
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Inventory", inventoryPanel);
+        tabbedPane.addTab("Scans", scansPanel);
         tabbedPane.addTab("Shipyard", shipyardPanel);
 
         // Construct the window with all panels
@@ -108,10 +111,10 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         frame.add(statusPanel, BorderLayout.NORTH);
         frame.add(tabbedPane, BorderLayout.CENTER);
         frame.add(new JScrollPane(journalLogPanel), BorderLayout.SOUTH);
-        //        frame.setSize(1800, 900);
-        //        frame.setLocation(10, 10);
-        frame.setSize(1280, 720);
-        frame.setLocation(300, 100);
+        frame.setSize(1800, 900);
+        frame.setLocation(10, 10);
+        //        frame.setSize(1280, 720);
+        //        frame.setLocation(300, 100);
         frame.setVisible(true);
 
         inventoryPanel.setDividerLocation(0.8);

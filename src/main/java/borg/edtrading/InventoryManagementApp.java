@@ -8,6 +8,7 @@ import borg.edtrading.journal.entries.exploration.ScanEntry;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.journal.entries.location.FSDJumpEntry;
 import borg.edtrading.journal.entries.location.LocationEntry;
+import borg.edtrading.sidepanel.ScannedBody;
 import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +44,7 @@ public class InventoryManagementApp {
                 systemName = ((LocationEntry) entry).getStarSystem();
             } else if (entry.getEvent() == Event.Scan) {
                 ScanEntry e = (ScanEntry) entry;
-                scannedBodyClassesByBodyName.put(e.getBodyName(), ScanEntry.toBodyClass(e));
+                scannedBodyClassesByBodyName.put(e.getBodyName(), new ScannedBody(e).getPayoutKey());
                 List<String> list = scannedBodyNamesBySystemName.getOrDefault(systemName, new ArrayList<>());
                 list.add(e.getBodyName());
                 scannedBodyNamesBySystemName.put(systemName, list);

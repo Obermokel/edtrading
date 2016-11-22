@@ -3,7 +3,6 @@ package borg.edtrading.journal.entries.exploration;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.RingData;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -73,20 +72,6 @@ public class ScanEntry extends AbstractJournalEntry {
         this.atmosphere = this.readString(data, "Atmosphere");
         this.volcanism = this.readString(data, "Volcanism");
         this.materials = this.readPercentages(data, "Materials");
-    }
-
-    public static String toBodyClass(ScanEntry e) {
-        if (StringUtils.isNotEmpty(e.getPlanetClass())) {
-            String planetClass = e.getPlanetClass();
-            if (StringUtils.isNotEmpty(e.getTerraformState())) {
-                planetClass += (" (" + e.getTerraformState() + ")");
-            }
-            return planetClass;
-        } else if (StringUtils.isNotEmpty(e.getStarType())) {
-            return "Class " + e.getStarType();
-        } else {
-            return e.getBodyName();
-        }
     }
 
     public String getBodyName() {

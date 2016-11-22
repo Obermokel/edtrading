@@ -24,11 +24,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -41,54 +39,6 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
     private static final long serialVersionUID = 3845858336099915390L;
 
     static final Logger logger = LogManager.getLogger(TravelHistory.class);
-
-    static final Map<String, Integer> PAYOUTS = new HashMap<>();
-    static {
-      //@formatter:off
-      PAYOUTS.put(                                   "JUMP", 3302);
-
-      PAYOUTS.put(                                "Class O", 3962);//3962
-      PAYOUTS.put(                                "Class B", (3490+3329+3307+3055)/4);//3490+3329+3307+3055
-      PAYOUTS.put(                                "Class A", (2985+2954)/2);//2985+2954
-      PAYOUTS.put(                                "Class F", (2935+2933+2953)/3);//2935+2933+2953
-      PAYOUTS.put(                                "Class G", (2920+2920+2921+2917)/4);//2920+2920+2921+2917
-      PAYOUTS.put(                                "Class K", (2904+2912+2917)/3);//2904+2912+2917
-      PAYOUTS.put(                       "Class K_RedGiant", 2900);
-      PAYOUTS.put(                                "Class M", (2898+2897+2895+2893)/4);//2898+2897+2895+2893
-      PAYOUTS.put(                       "Class M_RedGiant", 2900);
-      PAYOUTS.put(                                "Class C", 2902);//2902
-      PAYOUTS.put(                                "Class L", 2889);//2889
-      PAYOUTS.put(                                "Class Y", 2882);//2882
-      PAYOUTS.put(                                "Class T", (2883+2884)/2);//2883+2884
-      PAYOUTS.put(                              "Class TTS", (2900+2882)/2);//2900+2882
-
-      PAYOUTS.put(                                "Class N", (44087+44044+43765+43357)/4);//44087+44044+43765+43357
-      PAYOUTS.put(                                "Class H", (44721+45177+45367)/3);//44721+45177+45367
-      PAYOUTS.put(                               "Class DA", (27370+27020)/2);//27370+27020
-      PAYOUTS.put(                               "Class DB", 27000);
-
-      PAYOUTS.put(                          "Ammonia world", 48802);//48802
-      PAYOUTS.put(                         "Earthlike body", (71874+65997)/2);//71874+65997
-      PAYOUTS.put(                            "Water world", (32881+33112)/2);//32881+33112
-      PAYOUTS.put(                            "Water giant", 1519);//1519
-      PAYOUTS.put("High metal content body (Terraformable)", (50638+47257+41831+43757)/4);//50638+47257+41831+43757
-      PAYOUTS.put(            "Water world (Terraformable)", (65490+63184+65222)/3);//65490+63184+65222
-
-      PAYOUTS.put(      "Gas giant with ammonia based life", 1871);//1871
-      PAYOUTS.put(        "Gas giant with water based life", 2063);//2063
-      PAYOUTS.put(             "Sudarsky class I gas giant", (2613+4268)/2);//2613+4268
-      PAYOUTS.put(            "Sudarsky class II gas giant", 12888);//12888
-      PAYOUTS.put(           "Sudarsky class III gas giant", (1819+1393)/2);//1819+1393
-      PAYOUTS.put(            "Sudarsky class IV gas giant", (2831+2748)/2);//2831+2748
-      PAYOUTS.put(             "Sudarsky class V gas giant", 1865);//1865
-
-      PAYOUTS.put(                "High metal content body", (6532+7567+5222)/3);//6532+7567+5222
-      PAYOUTS.put(                               "Icy body", (925+1117+1155+902)/4);//925+1117+1155+902
-      PAYOUTS.put(                        "Metal rich body", (12981+9241)/2);//12981+9241
-      PAYOUTS.put(                             "Rocky body", (888+865)/2);//888+865
-      PAYOUTS.put(                         "Rocky ice body", 1072);//1072
-      //@formatter:on
-    }
 
     private Coord coord = null;
     private String systemName = null;
@@ -330,7 +280,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 VisitedSystem visitedSystem = new VisitedSystem(e);
                 if (visitedSystem.isUninhabited() && !this.visitedSystemNames.contains(visitedSystem.getSystemName())) {
                     if (visitedSystem.getCoord().distanceTo(new Coord(0, 0, 0)) > 200) {
-                        visitedSystem.setRemainingPayout(PAYOUTS.getOrDefault("JUMP", 999999999));
+                        visitedSystem.setAverageJumpPayout();
                     }
                 }
                 this.visitedSystems.addLast(visitedSystem);
@@ -463,11 +413,10 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 }
             } else if (entry.getEvent() == Event.Scan) {
                 ScanEntry e = (ScanEntry) entry;
-                this.setBodyName(e.getBodyName());
-                this.setBodyType(ScanEntry.toBodyClass(e));
                 ScannedBody scannedBody = new ScannedBody(e);
-                scannedBody.setRemainingBasePayout(PAYOUTS.getOrDefault(scannedBody.getBodyClass(), 999999999));
-                this.visitedSystems.getLast().getScannedBodies().add(scannedBody);
+                this.setBodyName(scannedBody.getBodyName());
+                this.setBodyType(scannedBody.getBodyType());
+                this.visitedSystems.getLast().getScannedBodies().addLast(scannedBody);
                 for (TravelHistoryListener listener : this.listeners) {
                     try {
                         listener.onLocationChanged();
@@ -483,12 +432,14 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                         if (visitedSystem.getSystemName().equals(systemName)) {
                             boolean payedOut = false;
                             if (visitedSystem.getRemainingPayout() != 0) {
-                                visitedSystem.setRemainingPayout(0);
+                                visitedSystem.setToPayedOut();
                                 payedOut = true;
                             }
                             for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
-                                scannedBody.setRemainingBasePayout(0);
-                                scannedBody.setRemainingBonusPayout(0);
+                                if (e.getDiscovered().contains(scannedBody.getBodyName())) {
+                                    scannedBody.setToFirstDiscovered();
+                                }
+                                scannedBody.setToPayedOut();
                                 payedOut = true;
                             }
                             if (payedOut) {
@@ -500,10 +451,9 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 if (this.estimateRemainingExplorationPayout() < 500000) {
                     // Most likely we have sold everything
                     for (VisitedSystem visitedSystem : this.visitedSystems) {
-                        visitedSystem.setRemainingPayout(0);
+                        visitedSystem.setToPayedOut();
                         for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
-                            scannedBody.setRemainingBasePayout(0);
-                            scannedBody.setRemainingBonusPayout(0);
+                            scannedBody.setToPayedOut();
                         }
                     }
                 }

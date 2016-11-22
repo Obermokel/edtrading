@@ -6,9 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.LinkedList;
 
 /**
  * VisitedSystem
@@ -21,12 +20,14 @@ public class VisitedSystem implements Serializable {
 
     static final Logger logger = LogManager.getLogger(VisitedSystem.class);
 
+    private static final int AVG_JUMP_PAYOUT = 3302;
+
     private Date timestamp = null;
     private Coord coord = null;
     private String systemName = null;
     private boolean uninhabited = false;
     private int remainingPayout = 0;
-    private List<ScannedBody> scannedBodies = new ArrayList<>(0);
+    private LinkedList<ScannedBody> scannedBodies = new LinkedList<>();
 
     public VisitedSystem() {
         // Default
@@ -80,20 +81,24 @@ public class VisitedSystem implements Serializable {
         this.uninhabited = uninhabited;
     }
 
+    public LinkedList<ScannedBody> getScannedBodies() {
+        return this.scannedBodies;
+    }
+
+    public void setScannedBodies(LinkedList<ScannedBody> scannedBodies) {
+        this.scannedBodies = scannedBodies;
+    }
+
     public int getRemainingPayout() {
         return this.remainingPayout;
     }
 
-    public void setRemainingPayout(int remainingPayout) {
-        this.remainingPayout = remainingPayout;
+    public void setAverageJumpPayout() {
+        this.remainingPayout = AVG_JUMP_PAYOUT;
     }
 
-    public List<ScannedBody> getScannedBodies() {
-        return this.scannedBodies;
-    }
-
-    public void setScannedBodies(List<ScannedBody> scannedBodies) {
-        this.scannedBodies = scannedBodies;
+    public void setToPayedOut() {
+        this.remainingPayout = 0;
     }
 
 }
