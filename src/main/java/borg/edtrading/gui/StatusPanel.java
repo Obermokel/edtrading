@@ -144,7 +144,7 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
     }
 
     @Override
-    public void onShipModuleChanged(ShipModule oldModule, ShipModule newModule) {
+    public void onShipModuleChanged(String slot, ShipModule oldModule, ShipModule newModule) {
         this.updatePanel();
     }
 

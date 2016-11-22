@@ -19,6 +19,7 @@ public class ShipModuleList implements GameSessionListener {
 
     static final Logger logger = LogManager.getLogger(ShipModuleList.class);
 
+    private SortedSet<String> knownShipSlots = new TreeSet<>();
     private SortedSet<ShipModule> knownShipModules = new TreeSet<>();
 
     public ShipModuleList(GameSession gameSession) {
@@ -31,14 +32,30 @@ public class ShipModuleList implements GameSessionListener {
     }
 
     @Override
-    public void onShipModuleChanged(ShipModule oldModule, ShipModule newModule) {
+    public void onShipModuleChanged(String slot, ShipModule oldModule, ShipModule newModule) {
+        if (slot != null) {
+            this.knownShipSlots.add(slot);
+        }
         if (oldModule != null) {
             this.knownShipModules.add(oldModule);
         }
         if (newModule != null) {
             this.knownShipModules.add(newModule);
         }
-        File knownShipModulesFile = new File(System.getProperty("user.home"), ".knownShipModules.txt");
+        File dir = new File(System.getProperty("user.home"), ".edsidepanel");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        File knownShipSlotsFile = new File(dir, "KnownShipSlots.txt");
+        try {
+            FileUtils.write(knownShipSlotsFile, String.format(Locale.US, "%s\n", "SLOT"), "UTF-8", false);
+            for (String s : this.knownShipSlots) {
+                FileUtils.write(knownShipSlotsFile, String.format(Locale.US, "%s\n", s), "UTF-8", true);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        File knownShipModulesFile = new File(dir, "KnownShipModules.txt");
         try {
             FileUtils.write(knownShipModulesFile, String.format(Locale.US, "%-75s%-35s%10s\n", "KEY", "NAME", "PRICE"), "UTF-8", false);
             for (ShipModule m : this.knownShipModules) {

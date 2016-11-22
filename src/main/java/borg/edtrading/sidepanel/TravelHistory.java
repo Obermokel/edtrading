@@ -532,7 +532,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
     }
 
     @Override
-    public void onShipModuleChanged(ShipModule oldModule, ShipModule newModule) {
+    public void onShipModuleChanged(String slot, ShipModule oldModule, ShipModule newModule) {
         if (oldModule != null && oldModule.getFuelCapacity() != null) {
             this.setFuelCapacity(this.getFuelCapacity() - oldModule.getFuelCapacity());
         }

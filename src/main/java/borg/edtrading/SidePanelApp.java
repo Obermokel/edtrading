@@ -129,7 +129,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
     }
 
     @Override
-    public void onShipModuleChanged(ShipModule oldModule, ShipModule newModule) {
+    public void onShipModuleChanged(String slot, ShipModule oldModule, ShipModule newModule) {
         // Do nothing
     }
 

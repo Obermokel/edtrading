@@ -11,9 +11,13 @@ import org.apache.logging.log4j.Logger;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -40,6 +44,36 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
     private JTextField txtMaxFuelPerJump = new JTextField(4);
     private JTextField txtOptFuelJumpRange = new JTextField(4);
     private JTextField txtMaxFuelJumpRange = new JTextField(4);
+    private JPanel shipLoadoutPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 5));
+
+    //    private JLabel coreArmourLabel = new JLabel();
+    //    private JLabel coreArmourValue = new JLabel();
+    //    private JLabel coreArmourPrice = new JLabel();
+    //    private JLabel corePowerPlantLabel = new JLabel();
+    //    private JLabel corePowerPlantValue = new JLabel();
+    //    private JLabel corePowerPlantPrice = new JLabel();
+    //
+    //    private JLabel optSlot0Label = new JLabel();
+    //    private JLabel optSlot0Value = new JLabel();
+    //    private JLabel optSlot0Price = new JLabel();
+    //    private JLabel optSlot1Label = new JLabel();
+    //    private JLabel optSlot1Value = new JLabel();
+    //    private JLabel optSlot1Price = new JLabel();
+    //
+    //    private JLabel hptSlot0Label = new JLabel();
+    //    private JLabel hptSlot0Value = new JLabel();
+    //    private JLabel hptSlot0Price = new JLabel();
+    //    private JLabel hptSlot1Label = new JLabel();
+    //    private JLabel hptSlot1Value = new JLabel();
+    //    private JLabel hptSlot1Price = new JLabel();
+    //
+    //    private JLabel utilSlot0Label = new JLabel();
+    //    private JLabel utilSlot0Value = new JLabel();
+    //    private JLabel utilSlot0Price = new JLabel();
+    //    private JLabel utilSlot1Label = new JLabel();
+    //    private JLabel utilSlot1Value = new JLabel();
+    //    private JLabel utilSlot1Price = new JLabel();
+
     private JButton btnSave = new JButton("Save");
 
     public ShipyardPanel(GameSession gameSession) {
@@ -58,9 +92,7 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
         topPanel.add(group(new JLabel("Optimum tank jump range [Ly]:"), this.txtOptFuelJumpRange));
         this.add(topPanel, BorderLayout.NORTH);
 
-        JPanel centerPanel = new JPanel();
-        centerPanel.add(new JLabel("TODO..."));
-        this.add(centerPanel, BorderLayout.CENTER);
+        this.add(this.shipLoadoutPanel, BorderLayout.CENTER);
 
         JPanel bottomPanel = new JPanel();
         bottomPanel.add(this.btnSave);
@@ -68,6 +100,110 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
 
         this.updatePanel();
         gameSession.addListener(this);
+    }
+
+    private JPanel createCoreInternalsPanel(ShipLoadout lo) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        int row = 0;
+        String slot = "Armour";
+        ShipModule module = lo.getModulesBySlot().get(slot);
+        if (module != null) {
+            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+            row++;
+        }
+        slot = "PowerPlant";
+        module = lo.getModulesBySlot().get(slot);
+        if (module != null) {
+            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+            row++;
+        }
+        slot = "MainEngines";
+        module = lo.getModulesBySlot().get(slot);
+        if (module != null) {
+            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+            row++;
+        }
+        slot = "FrameShiftDrive";
+        module = lo.getModulesBySlot().get(slot);
+        if (module != null) {
+            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+            row++;
+        }
+        slot = "Radar";
+        module = lo.getModulesBySlot().get(slot);
+        if (module != null) {
+            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+            row++;
+        }
+        slot = "PowerDistributor";
+        module = lo.getModulesBySlot().get(slot);
+        if (module != null) {
+            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+            row++;
+        }
+        slot = "LifeSupport";
+        module = lo.getModulesBySlot().get(slot);
+        if (module != null) {
+            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+            row++;
+        }
+        slot = "FuelTank";
+        module = lo.getModulesBySlot().get(slot);
+        if (module != null) {
+            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+            row++;
+        }
+        return panel;
+    }
+
+    private JPanel createOptionalInternalsPanel(ShipLoadout lo) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        int row = 0;
+        List<String> slotKeys = lo.getModulesBySlot().keySet().stream().filter(s -> s.matches("Slot\\d+_Size\\d")).collect(Collectors.toList());
+        for (String slotKey : slotKeys) {
+            String slot = "Size " + slotKey.substring(slotKey.length() - 1);
+            ShipModule module = lo.getModulesBySlot().get(slotKey);
+            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+            row++;
+        }
+        return panel;
+    }
+
+    private JPanel createHardpointsPanel(ShipLoadout lo) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        int row = 0;
+        List<String> slotKeys = lo.getModulesBySlot().keySet().stream().filter(s -> !s.startsWith("Tiny") && s.matches("\\w+Hardpoint\\d")).collect(Collectors.toList());
+        for (String slotKey : slotKeys) {
+            String slot = slotKey.substring(0, slotKey.indexOf("Hardpoint")) + " " + slotKey.substring(slotKey.length() - 1);
+            ShipModule module = lo.getModulesBySlot().get(slotKey);
+            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+            row++;
+        }
+        return panel;
+    }
+
+    private JPanel createUtilitiesPanel(ShipLoadout lo) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        int row = 0;
+        List<String> slotKeys = lo.getModulesBySlot().keySet().stream().filter(s -> s.startsWith("Tiny") && s.matches("\\w+Hardpoint\\d")).collect(Collectors.toList());
+        for (String slotKey : slotKeys) {
+            String slot = "Utility " + slotKey.substring(slotKey.length() - 1);
+            ShipModule module = lo.getModulesBySlot().get(slotKey);
+            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+            row++;
+        }
+        return panel;
+    }
+
+    private void addGridRow(JPanel panel, int row, Component... components) {
+        for (int col = 0; col < components.length; col++) {
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.gridx = col;
+            gbc.gridy = row;
+            gbc.ipadx = 5;
+            gbc.ipady = 2;
+            panel.add(components[col], gbc);
+        }
     }
 
     private static JPanel group(Component... components) {
@@ -84,7 +220,7 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
     }
 
     @Override
-    public void onShipModuleChanged(ShipModule oldModule, ShipModule newModule) {
+    public void onShipModuleChanged(String slot, ShipModule oldModule, ShipModule newModule) {
         this.updatePanel();
     }
 
@@ -103,6 +239,15 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
             this.txtMaxFuelPerJump.setText(String.format(Locale.US, "%.2f", MiscUtil.getAsFloat(lo.getMaxFuelPerJump(), 0.0f)));
             this.txtOptFuelJumpRange.setText(String.format(Locale.US, "%.2f", MiscUtil.getAsFloat(lo.getOptTankJumpRange(), 0.0f)));
             this.txtMaxFuelJumpRange.setText(String.format(Locale.US, "%.2f", MiscUtil.getAsFloat(lo.getFullTankJumpRange(), 0.0f)));
+
+            this.shipLoadoutPanel.removeAll();
+            this.shipLoadoutPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 25, 5));
+            this.shipLoadoutPanel.add(this.createCoreInternalsPanel(lo));
+            this.shipLoadoutPanel.add(this.createOptionalInternalsPanel(lo));
+            this.shipLoadoutPanel.add(this.createHardpointsPanel(lo));
+            this.shipLoadoutPanel.add(this.createUtilitiesPanel(lo));
+            this.shipLoadoutPanel.revalidate();
+            this.shipLoadoutPanel.repaint();
         }
     }
 

@@ -131,7 +131,7 @@ public class GameSession implements JournalUpdateListener, Serializable {
                 }
                 for (GameSessionListener listener : this.listeners) {
                     try {
-                        listener.onShipModuleChanged(oldModule, newModule);
+                        listener.onShipModuleChanged(e.getSlot(), oldModule, newModule);
                     } catch (Exception ex) {
                         logger.warn(listener + " failed: " + ex);
                     }
@@ -147,7 +147,7 @@ public class GameSession implements JournalUpdateListener, Serializable {
                 }
                 for (GameSessionListener listener : this.listeners) {
                     try {
-                        listener.onShipModuleChanged(oldModule, newModule);
+                        listener.onShipModuleChanged(e.getSlot(), oldModule, newModule);
                     } catch (Exception ex) {
                         logger.warn(listener + " failed: " + ex);
                     }
@@ -163,7 +163,7 @@ public class GameSession implements JournalUpdateListener, Serializable {
                 }
                 for (GameSessionListener listener : this.listeners) {
                     try {
-                        listener.onShipModuleChanged(oldModule, newModule);
+                        listener.onShipModuleChanged(e.getSlot(), oldModule, newModule);
                     } catch (Exception ex) {
                         logger.warn(listener + " failed: " + ex);
                     }
@@ -271,7 +271,11 @@ public class GameSession implements JournalUpdateListener, Serializable {
     }
 
     public ShipLoadout loadShipLoadout(String commander, Integer shipID, String shipType) throws IOException {
-        File file = new File(System.getProperty("user.home"), ".ShipLoadout." + commander + "." + shipID + "_" + shipType + ".json");
+        File dir = new File(System.getProperty("user.home"), ".edsidepanel");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        File file = new File(dir, "ShipLoadout." + commander + "." + shipID + "_" + shipType + ".json");
         if (!file.exists() || file.length() == 0) {
             return null;
         } else {
@@ -282,7 +286,11 @@ public class GameSession implements JournalUpdateListener, Serializable {
 
     public void saveShipLoadout(String commander, ShipLoadout shipLoadout) throws IOException {
         if (shipLoadout != null) {
-            File file = new File(System.getProperty("user.home"), ".ShipLoadout." + commander + "." + shipLoadout.getShipID() + "_" + shipLoadout.getShipType() + ".json");
+            File dir = new File(System.getProperty("user.home"), ".edsidepanel");
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            File file = new File(dir, "ShipLoadout." + commander + "." + shipLoadout.getShipID() + "_" + shipLoadout.getShipType() + ".json");
             String json = new Gson().toJson(shipLoadout);
             FileUtils.write(file, json, "UTF-8", false);
         }

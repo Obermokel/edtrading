@@ -66,7 +66,11 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     }
 
     private void loadOffsets(String commander) throws IOException {
-        File file = new File(System.getProperty("user.home"), ".InventoryOffsets." + commander + ".json");
+        File dir = new File(System.getProperty("user.home"), ".edsidepanel");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        File file = new File(dir, "InventoryOffsets." + commander + ".json");
         if (!file.exists() || file.length() == 0) {
             // Do nothing
         } else {
@@ -81,7 +85,11 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
 
     private void saveOffsets(String commander) throws IOException {
         if (StringUtils.isNotEmpty(commander)) {
-            File file = new File(System.getProperty("user.home"), ".InventoryOffsets." + commander + ".json");
+            File dir = new File(System.getProperty("user.home"), ".edsidepanel");
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            File file = new File(dir, "InventoryOffsets." + commander + ".json");
             SortedMap<String, Integer> offsets = new TreeMap<>();
             for (String name : this.haveByName.get(commander).keySet()) {
                 offsets.put(name, this.offsetByName.get(commander).getOrDefault(name, 0));
@@ -93,7 +101,11 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
 
     public void save() throws IOException {
         if (StringUtils.isNotEmpty(this.getCommander())) {
-            File file = new File(System.getProperty("user.home"), ".Inventory." + this.getCommander() + ".json");
+            File dir = new File(System.getProperty("user.home"), ".edsidepanel");
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            File file = new File(dir, "Inventory." + this.getCommander() + ".json");
             String json = new Gson().toJson(this.haveByName.get(this.getCommander()));
             FileUtils.write(file, json, "UTF-8", false);
 
@@ -300,7 +312,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     }
 
     @Override
-    public void onShipModuleChanged(ShipModule oldModule, ShipModule newModule) {
+    public void onShipModuleChanged(String slot, ShipModule oldModule, ShipModule newModule) {
         if (oldModule != null && oldModule.getCargoCapacity() != null) {
             this.setCargoCapacity(this.getCargoCapacity() - oldModule.getCargoCapacity());
         }
