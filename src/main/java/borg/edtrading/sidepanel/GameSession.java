@@ -239,16 +239,23 @@ public class GameSession implements JournalUpdateListener, Serializable {
                 this.setCommander(e.getCommander());
                 this.setGameMode(e.getGameMode());
                 this.setGroup(e.getGroup());
-                this.setCurrentShipID(e.getShipID());
-                this.setCurrentShipType(e.getShip());
-                try {
-                    this.setCurrentShipLoadout(this.loadShipLoadout(e.getCommander(), e.getShipID(), e.getShip()));
-                    if (this.getCurrentShipLoadout() == null) {
+                if ("TestBuggy".equalsIgnoreCase(e.getShip())) {
+                    // Do not change the current ship. The game has been quit in the SRV.
+                    // If we now dock the SRV back to the ship we will get a journal entry for that, but that
+                    // entry won't tell us what the ship is. It should however be the ship that has been used
+                    // before deploying the SRV, so simply do not change to TestBuggy on game load ;-)
+                } else {
+                    this.setCurrentShipID(e.getShipID());
+                    this.setCurrentShipType(e.getShip());
+                    try {
+                        this.setCurrentShipLoadout(this.loadShipLoadout(e.getCommander(), e.getShipID(), e.getShip()));
+                        if (this.getCurrentShipLoadout() == null) {
+                            this.setCurrentShipLoadout(new ShipLoadout(e.getShipID(), e.getShip()));
+                        }
+                    } catch (Exception ex) {
                         this.setCurrentShipLoadout(new ShipLoadout(e.getShipID(), e.getShip()));
+                        logger.warn("Failed to load ship loadout " + e.getCommander() + " #" + e.getShipID() + " (" + e.getShip() + ")", ex);
                     }
-                } catch (Exception ex) {
-                    this.setCurrentShipLoadout(new ShipLoadout(e.getShipID(), e.getShip()));
-                    logger.warn("Failed to load ship loadout " + e.getCommander() + " #" + e.getShipID() + " (" + e.getShip() + ")", ex);
                 }
                 for (GameSessionListener listener : this.listeners) {
                     try {
