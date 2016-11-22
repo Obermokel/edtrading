@@ -165,6 +165,13 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         return this.surplusByName.get(this.getCommander()).getOrDefault(name, 0);
     }
 
+    public void changeOffset(String name, int offsetChange) {
+        int prev = this.offsetByName.get(this.getCommander()).getOrDefault(name, 0);
+        this.offsetByName.get(this.getCommander()).put(name, prev + offsetChange);
+        prev = this.haveByName.get(this.getCommander()).getOrDefault(name, 0);
+        this.haveByName.get(this.getCommander()).put(name, prev + offsetChange);
+    }
+
     public void incOffset(String name) {
         int prev = this.offsetByName.get(this.getCommander()).getOrDefault(name, 0);
         this.offsetByName.get(this.getCommander()).put(name, prev + 1);

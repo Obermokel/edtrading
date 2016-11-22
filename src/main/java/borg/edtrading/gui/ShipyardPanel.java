@@ -54,8 +54,8 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
         topPanel.add(group(new JLabel("Name:"), this.txtShipName));
         topPanel.add(group(new JLabel("Buy price:"), this.txtBuyPrice));
         topPanel.add(group(new JLabel("Max fuel per jump [t]:"), this.txtMaxFuelPerJump));
-        topPanel.add(group(new JLabel("Opt fuel jump range [Ly]:"), this.txtOptFuelJumpRange));
-        topPanel.add(group(new JLabel("Max fuel jump range [Ly]:"), this.txtMaxFuelJumpRange));
+        topPanel.add(group(new JLabel("Full tank jump range [Ly]:"), this.txtMaxFuelJumpRange));
+        topPanel.add(group(new JLabel("Optimum tank jump range [Ly]:"), this.txtOptFuelJumpRange));
         this.add(topPanel, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel();

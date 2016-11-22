@@ -32,6 +32,8 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 
@@ -64,6 +66,8 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
             InventoryTableModel tableModel = new InventoryTableModel(this.inventory, type);
             this.tableModelsByType.put(type, tableModel);
             JTable table = new JTable(tableModel);
+            table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+            table.setFont(new Font("Sans Serif", Font.PLAIN, 16));
             if (SHOW_BUTTONS) {
                 table.getColumn("+").setCellRenderer(new ButtonRenderer());
                 table.getColumn("+").setCellEditor(new ButtonEditor(new JCheckBox(), inventory, tableModel));
@@ -144,7 +148,7 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
         }
     }
 
-    public static class InventoryTableModel extends AbstractTableModel {
+    public static class InventoryTableModel extends AbstractTableModel implements TableModelListener {
 
         private static final long serialVersionUID = 6225525347374881663L;
 
@@ -157,9 +161,10 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
             this.inventory = inventory;
             this.type = type;
             this.refresh();
+            this.addTableModelListener(this);
         }
 
-        public void refresh() {
+        void refresh() {
             List<InventoryTableRow> rows = new ArrayList<>();
             for (String name : this.inventory.getNames(this.type)) {
                 int have = this.inventory.getHave(name);
@@ -282,7 +287,32 @@ public class InventoryPanel extends JSplitPane implements InventoryListener {
                     return false;
                 }
             } else {
-                return false;
+                return columnIndex == 1; // 'Have' column is editable
+            }
+        }
+
+        @Override
+        public void tableChanged(TableModelEvent e) {
+            // TODO Auto-generated method stub
+            String changeType = "UNKNOWN";
+            if (e.getType() == TableModelEvent.INSERT) {
+                changeType = "INSERT";
+            } else if (e.getType() == TableModelEvent.UPDATE) {
+                changeType = "UPDATE";
+            } else if (e.getType() == TableModelEvent.DELETE) {
+                changeType = "DELETE";
+            }
+            logger.info(String.format(Locale.US, "%s col %d rows %d to %d on %s", changeType, e.getColumn(), e.getFirstRow(), e.getLastRow(), e.getSource()));
+
+            if (e.getColumn() == 1 && e.getFirstRow() != TableModelEvent.HEADER_ROW && e.getFirstRow() == e.getLastRow()) {
+                String name = (String) this.getValueAt(e.getFirstRow(), 0);
+                int haveAfter = (int) this.getValueAt(e.getFirstRow(), 1);
+                int haveBefore = this.inventory.getHave(name);
+                logger.info(String.format(Locale.US, "%s %d -> %d", name, haveBefore, haveAfter));
+                if (haveAfter != haveBefore) {
+                    this.inventory.changeOffset(name, haveAfter - haveBefore);
+                    this.refresh();
+                }
             }
         }
 
