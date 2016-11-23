@@ -253,11 +253,11 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
             } else if (entry.getEvent() == Event.MissionAccepted) {
                 MissionAcceptedEntry e = (MissionAcceptedEntry) entry;
                 if (StringUtils.isNotEmpty(e.getCommodity()) && e.getCount() != null) {
-                    if (e.getName().startsWith("Mission_Delivery_")) {
+                    if (e.getName().startsWith("Mission_Delivery")) {
                         // We have been provided with the commodity in order to deliver it somewhere.
                         String journalName = e.getCommodity().replace("$", "").replace("_Name;", "");
                         this.collected(journalName, e.getCount(), ItemType.COMMODITY);
-                    } else if (e.getName().startsWith("Mission_Collect_")) {
+                    } else if (e.getName().startsWith("Mission_Collect")) {
                         // Nothing has happened yet. We have to collect the commodity from somewhere.
                     } else {
                         logger.warn("Unknown mission accepted type '" + e.getName() + "' which seems to have given us " + e.getCount() + "x " + e.getCommodityLocalized());
@@ -271,11 +271,11 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
                     }
                 }
                 if (StringUtils.isNotEmpty(e.getCommodity()) && e.getCount() != null) {
-                    if (e.getName().startsWith("Mission_Delivery_")) {
+                    if (e.getName().startsWith("Mission_Delivery")) {
                         // We have successfully delivered the commodity which was provided to us.
                         String journalName = e.getCommodity().replace("$", "").replace("_Name;", "");
                         this.discarded(journalName, e.getCount(), ItemType.COMMODITY);
-                    } else if (e.getName().startsWith("Mission_Collect_")) {
+                    } else if (e.getName().startsWith("Mission_Collect")) {
                         // We have successfully collected and delivered the desired commodity.
                         String journalName = e.getCommodity().replace("$", "").replace("_Name;", "");
                         this.discarded(journalName, e.getCount(), ItemType.COMMODITY);

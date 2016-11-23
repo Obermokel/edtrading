@@ -1,9 +1,10 @@
 TODO SidePanel:
-* Increase font sizes
-* Shipyard tab
+* Transactions tab
 * Remove inventory history, flash entry instead
 - Estimate exploration data
 - CMDR/mode/group into title
+- Increase font sizes
+- Shipyard tab
 
 TODO Tablet:
 left perm: system/body -- est exp data
