@@ -65,6 +65,8 @@ public class InventoryPanel extends Box implements InventoryListener {
             table.getColumn("Have").setCellEditor(new PlusMinusCellEditor(new JTextField(3)));
             for (int i = 0; i < 3; i++) {
                 if (i == 0) {
+                    table.getColumnModel().getColumn(i).setMinWidth(100);
+                    table.getColumnModel().getColumn(i).setMaxWidth(1000);
                     if (type == ItemType.ELEMENT) {
                         table.getColumnModel().getColumn(i).setPreferredWidth(150);
                     } else if (type == ItemType.DATA) {
@@ -73,8 +75,11 @@ public class InventoryPanel extends Box implements InventoryListener {
                         table.getColumnModel().getColumn(i).setPreferredWidth(250);
                     }
                 } else {
-                    table.getColumnModel().getColumn(i).setPreferredWidth(25);
+                    table.getColumnModel().getColumn(i).setMinWidth(50);
+                    table.getColumnModel().getColumn(i).setMaxWidth(200);
+                    table.getColumnModel().getColumn(i).setPreferredWidth(50);
                 }
+                table.doLayout();
             }
             JScrollPane scrollPane = new JScrollPane(table);
             this.add(scrollPane);
