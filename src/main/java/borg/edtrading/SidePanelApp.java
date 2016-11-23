@@ -40,6 +40,8 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
 
     static final Logger logger = LogManager.getLogger(SidePanelApp.class);
 
+    public static final boolean BIG_AND_BLACK = false;
+
     private JFrame frame = null;
     private JournalReaderThread journalReaderThread = null;
     private GameSession gameSession = null;
@@ -58,10 +60,12 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
             journalDir = journalDir.resolve("Google Drive\\Elite Dangerous\\Journal");
         }
 
-        try {
-            UIManager.setLookAndFeel("com.jtattoo.plaf.noire.NoireLookAndFeel");
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (SidePanelApp.BIG_AND_BLACK) {
+            try {
+                UIManager.setLookAndFeel("com.jtattoo.plaf.noire.NoireLookAndFeel");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         frame = new JFrame("SidePanel");
@@ -101,7 +105,9 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         ShipyardPanel shipyardPanel = new ShipyardPanel(gameSession);
 
         JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(new Font("Sans Serif", Font.BOLD, 18));
+        if (SidePanelApp.BIG_AND_BLACK) {
+            tabbedPane.setFont(new Font("Sans Serif", Font.BOLD, 18));
+        }
         tabbedPane.addTab("Inventory", inventoryPanel);
         tabbedPane.addTab("Scans", scansPanel);
         tabbedPane.addTab("Shipyard", shipyardPanel);
@@ -113,10 +119,13 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         frame.add(statusPanel, BorderLayout.NORTH);
         frame.add(tabbedPane, BorderLayout.CENTER);
         frame.add(new JScrollPane(journalLogPanel), BorderLayout.SOUTH);
-        //        frame.setSize(1800, 900);
-        //        frame.setLocation(10, 10);
-        frame.setSize(1280, 720);
-        frame.setLocation(300, 100);
+        if (SidePanelApp.BIG_AND_BLACK) {
+            frame.setSize(1800, 900);
+            frame.setLocation(10, 10);
+        } else {
+            frame.setSize(1280, 720);
+            frame.setLocation(300, 100);
+        }
         frame.setVisible(true);
     }
 

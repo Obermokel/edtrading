@@ -1,21 +1,19 @@
 package borg.edtrading.gui;
 
+import borg.edtrading.SidePanelApp;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.sidepanel.Inventory;
 import borg.edtrading.sidepanel.InventoryListener;
-import org.apache.commons.lang3.StringUtils;
+import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.awt.Component;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -23,16 +21,13 @@ import java.util.Map;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.UIManager;
+import javax.swing.JTextField;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.table.DefaultTableCellRenderer;
 
 /**
  * InventoryPanel
@@ -45,14 +40,8 @@ public class InventoryPanel extends Box implements InventoryListener {
 
     static final Logger logger = LogManager.getLogger(InventoryPanel.class);
 
-    private static final boolean SHOW_BUTTONS = false;
-    private static final int HISTORY_SIZE = 100;
-
     private final Inventory inventory;
     private Map<ItemType, InventoryTableModel> tableModelsByType = new HashMap<>();
-
-    private final LinkedList<String> history = new LinkedList<>();
-    private final JList<String> historyList = new JList<>();
 
     public InventoryPanel(Inventory inventory) {
         super(BoxLayout.X_AXIS);
@@ -64,32 +53,18 @@ public class InventoryPanel extends Box implements InventoryListener {
             InventoryTableModel tableModel = new InventoryTableModel(this.inventory, type);
             this.tableModelsByType.put(type, tableModel);
             JTable table = new JTable(tableModel);
-            table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
-            table.setFont(new Font("Sans Serif", Font.BOLD, 18));
-            if (SHOW_BUTTONS) {
-                table.getColumn("+").setCellRenderer(new ButtonRenderer());
-                table.getColumn("+").setCellEditor(new ButtonEditor(new JCheckBox(), inventory, tableModel));
-                table.getColumn("-").setCellRenderer(new ButtonRenderer());
-                table.getColumn("-").setCellEditor(new ButtonEditor(new JCheckBox(), inventory, tableModel));
-            }
             table.setAutoCreateRowSorter(true);
-            if (SHOW_BUTTONS) {
-                for (int i = 0; i < 5; i++) {
-                    if (i == 0) {
-                        table.getColumnModel().getColumn(i).setPreferredWidth(200);
-                    } else if (i == 1 || i == 2) {
-                        table.getColumnModel().getColumn(i).setPreferredWidth(10);
-                    } else {
-                        table.getColumnModel().getColumn(i).setPreferredWidth(50);
-                    }
-                }
-            } else {
-                for (int i = 0; i < 3; i++) {
-                    if (i == 0) {
-                        table.getColumnModel().getColumn(i).setPreferredWidth(220);
-                    } else {
-                        table.getColumnModel().getColumn(i).setPreferredWidth(50);
-                    }
+            table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE); // TODO Required?
+            if (SidePanelApp.BIG_AND_BLACK) {
+                table.setFont(new Font("Sans Serif", Font.BOLD, 18));
+            }
+            table.getColumn("Name").setCellRenderer(new FlashingNameCellRenderer());
+            table.getColumn("Have").setCellEditor(new PlusMinusCellEditor(new JTextField(3)));
+            for (int i = 0; i < 3; i++) {
+                if (i == 0) {
+                    table.getColumnModel().getColumn(i).setPreferredWidth(220);
+                } else {
+                    table.getColumnModel().getColumn(i).setPreferredWidth(50);
                 }
             }
             JScrollPane scrollPane = new JScrollPane(table);
@@ -102,39 +77,25 @@ public class InventoryPanel extends Box implements InventoryListener {
     @Override
     public void onInventoryReset(ItemType type, String name, int count) {
         this.tableModelsByType.get(type).refresh();
-        this.addToHistory(String.format(Locale.US, "Reset: %s (%s) to %d", name, type.name(), count));
-        this.repaint();
+        this.repaint(); // TODO Required?
     }
 
     @Override
     public void onInventoryCollected(ItemType type, String name, int count) {
         this.tableModelsByType.get(type).refresh();
-        this.addToHistory(String.format(Locale.US, "Collected: %dx %s (%s)", count, name, type.name()));
-        this.repaint();
+        this.repaint(); // TODO Required?
     }
 
     @Override
     public void onInventoryDiscarded(ItemType type, String name, int count) {
         this.tableModelsByType.get(type).refresh();
-        this.addToHistory(String.format(Locale.US, "Discarded: %dx %s (%s)", count, name, type.name()));
-        this.repaint();
+        this.repaint(); // TODO Required?
     }
 
     @Override
     public void onInventorySpent(ItemType type, String name, int count) {
         this.tableModelsByType.get(type).refresh();
-        this.addToHistory(String.format(Locale.US, "Spent: %dx %s (%s)", count, name, type.name()));
-        this.repaint();
-    }
-
-    private void addToHistory(String line) {
-        if (StringUtils.isNotEmpty(line)) {
-            this.history.addFirst(line);
-            while (this.history.size() > HISTORY_SIZE) {
-                this.history.removeLast();
-            }
-            this.historyList.setListData(this.history.toArray(new String[this.history.size()]));
-        }
+        this.repaint(); // TODO Required?
     }
 
     public static class InventoryTableModel extends AbstractTableModel implements TableModelListener {
@@ -158,7 +119,7 @@ public class InventoryPanel extends Box implements InventoryListener {
             for (String name : this.inventory.getNames(this.type)) {
                 int have = this.inventory.getHave(name);
                 int surplus = this.inventory.getSurplus(name);
-                if (have != 0 || SHOW_BUTTONS) {
+                if (have != 0) {
                     rows.add(new InventoryTableRow(name, have, surplus));
                 }
             }
@@ -168,35 +129,19 @@ public class InventoryPanel extends Box implements InventoryListener {
 
         @Override
         public int getColumnCount() {
-            return SHOW_BUTTONS ? 5 : 3;
+            return 3;
         }
 
         @Override
         public String getColumnName(int columnIndex) {
-            if (SHOW_BUTTONS) {
-                if (columnIndex == 0) {
-                    return "Name";
-                } else if (columnIndex == 1) {
-                    return "+";
-                } else if (columnIndex == 2) {
-                    return "-";
-                } else if (columnIndex == 3) {
-                    return "Have";
-                } else if (columnIndex == 4) {
-                    return "Surplus";
-                } else {
-                    return null;
-                }
+            if (columnIndex == 0) {
+                return "Name";
+            } else if (columnIndex == 1) {
+                return "Have";
+            } else if (columnIndex == 2) {
+                return "Surplus";
             } else {
-                if (columnIndex == 0) {
-                    return "Name";
-                } else if (columnIndex == 1) {
-                    return "Have";
-                } else if (columnIndex == 2) {
-                    return "Surplus";
-                } else {
-                    return null;
-                }
+                return null;
             }
         }
 
@@ -209,75 +154,43 @@ public class InventoryPanel extends Box implements InventoryListener {
         public Object getValueAt(int rowIndex, int columnIndex) {
             InventoryTableRow row = this.rows.get(rowIndex);
 
-            if (SHOW_BUTTONS) {
-                if (columnIndex == 0) {
-                    return row.getName();
-                } else if (columnIndex == 1) {
-                    return "+" + this.getValueAt(rowIndex, 0);
-                } else if (columnIndex == 2) {
-                    return "-" + this.getValueAt(rowIndex, 0);
-                } else if (columnIndex == 3) {
-                    return row.getHave();
-                } else if (columnIndex == 4) {
-                    return row.getSurplus();
-                } else {
-                    return null;
-                }
+            if (columnIndex == 0) {
+                return row.getName();
+            } else if (columnIndex == 1) {
+                return row.getHave();
+            } else if (columnIndex == 2) {
+                return row.getSurplus();
             } else {
-                if (columnIndex == 0) {
-                    return row.getName();
-                } else if (columnIndex == 1) {
-                    return row.getHave();
-                } else if (columnIndex == 2) {
-                    return row.getSurplus();
-                } else {
-                    return null;
-                }
+                return null;
+            }
+        }
+
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            InventoryTableRow row = this.rows.get(rowIndex);
+
+            if (columnIndex == 1) {
+                row.setHave(MiscUtil.getAsInt(aValue, 0));
+                this.fireTableCellUpdated(rowIndex, columnIndex);
             }
         }
 
         @Override
         public Class getColumnClass(int columnIndex) {
-            if (SHOW_BUTTONS) {
-                if (columnIndex == 0) {
-                    return String.class;
-                } else if (columnIndex == 1) {
-                    return String.class;
-                } else if (columnIndex == 2) {
-                    return String.class;
-                } else if (columnIndex == 3) {
-                    return Integer.class;
-                } else if (columnIndex == 4) {
-                    return Integer.class;
-                } else {
-                    return null;
-                }
+            if (columnIndex == 0) {
+                return String.class;
+            } else if (columnIndex == 1) {
+                return Integer.class;
+            } else if (columnIndex == 2) {
+                return Integer.class;
             } else {
-                if (columnIndex == 0) {
-                    return String.class;
-                } else if (columnIndex == 1) {
-                    return Integer.class;
-                } else if (columnIndex == 2) {
-                    return Integer.class;
-                } else {
-                    return null;
-                }
+                return null;
             }
         }
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            if (SHOW_BUTTONS) {
-                if (columnIndex == 1) {
-                    return true;
-                } else if (columnIndex == 2) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                return columnIndex == 1; // 'Have' column is editable
-            }
+            return columnIndex == 1; // 'Have' column is editable
         }
 
         @Override
@@ -347,93 +260,31 @@ public class InventoryPanel extends Box implements InventoryListener {
 
     }
 
-    public static class ButtonRenderer extends JButton implements TableCellRenderer {
+    public static class FlashingNameCellRenderer extends DefaultTableCellRenderer {
 
-        private static final long serialVersionUID = -2294184162405104261L;
-
-        public ButtonRenderer() {
-            setOpaque(true);
-        }
+        private static final long serialVersionUID = -6076484142143621910L;
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            if (isSelected) {
-                setForeground(table.getSelectionForeground());
-                setBackground(table.getSelectionBackground());
-            } else {
-                setForeground(table.getForeground());
-                setBackground(UIManager.getColor("Button.background"));
-            }
-            setText((value == null) ? "" : value.toString());
-            return this;
+            return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         }
+
     }
 
-    public static class ButtonEditor extends DefaultCellEditor {
+    public static class PlusMinusCellEditor extends DefaultCellEditor {
 
-        private static final long serialVersionUID = -7551303461614498752L;
+        private static final long serialVersionUID = -6809216674791253543L;
 
-        protected JButton button;
+        //        public PlusMinusCellEditor(JCheckBox checkBox) {
+        //            super(checkBox);
+        //        }
+        //
+        //        public PlusMinusCellEditor(JComboBox comboBox) {
+        //            super(comboBox);
+        //        }
 
-        private Inventory inventory;
-        private InventoryTableModel tableModel;
-
-        private String label;
-
-        private boolean isPushed;
-
-        public ButtonEditor(JCheckBox checkBox, Inventory inventory, InventoryTableModel tableModel) {
-            super(checkBox);
-            this.inventory = inventory;
-            this.tableModel = tableModel;
-            button = new JButton();
-            button.setOpaque(true);
-            button.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    fireEditingStopped();
-                }
-            });
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            if (isSelected) {
-                button.setForeground(table.getSelectionForeground());
-                button.setBackground(table.getSelectionBackground());
-            } else {
-                button.setForeground(table.getForeground());
-                button.setBackground(table.getBackground());
-            }
-            label = (value == null) ? "" : value.toString();
-            button.setText(label);
-            isPushed = true;
-            return button;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            if (isPushed) {
-                if (label.startsWith("+")) {
-                    inventory.incOffset(label.substring(1));
-                } else if (label.startsWith("-")) {
-                    inventory.decOffset(label.substring(1));
-                }
-                this.tableModel.refresh();
-            }
-            isPushed = false;
-            return new String(label);
-        }
-
-        @Override
-        public boolean stopCellEditing() {
-            isPushed = false;
-            return super.stopCellEditing();
-        }
-
-        @Override
-        protected void fireEditingStopped() {
-            super.fireEditingStopped();
+        public PlusMinusCellEditor(JTextField textField) {
+            super(textField);
         }
 
     }

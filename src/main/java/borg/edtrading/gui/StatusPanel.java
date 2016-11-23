@@ -1,5 +1,6 @@
 package borg.edtrading.gui;
 
+import borg.edtrading.SidePanelApp;
 import borg.edtrading.data.Coord;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
@@ -80,18 +81,20 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         int hgap = 40;
         int vgap = 4;
 
-        this.locationLabel.setFont(font);
-        this.factionAndAllegianceLabel.setFont(font);
-        this.economyAndStateLabel.setFont(font);
-        this.governmentAndSecurityLabel.setFont(font);
-        this.shipNameLabel.setFont(font);
-        this.dataLabel.setFont(font);
-        this.matsLabel.setFont(font);
-        this.cargoLabel.setFont(font);
-        this.fuelLabel.setFont(font);
-        this.distanceFromSolLabel.setFont(font);
-        this.jumpLabel.setFont(font);
-        this.explLabel.setFont(font);
+        if (SidePanelApp.BIG_AND_BLACK) {
+            this.locationLabel.setFont(font);
+            this.factionAndAllegianceLabel.setFont(font);
+            this.economyAndStateLabel.setFont(font);
+            this.governmentAndSecurityLabel.setFont(font);
+            this.shipNameLabel.setFont(font);
+            this.dataLabel.setFont(font);
+            this.matsLabel.setFont(font);
+            this.cargoLabel.setFont(font);
+            this.fuelLabel.setFont(font);
+            this.distanceFromSolLabel.setFont(font);
+            this.jumpLabel.setFont(font);
+            this.explLabel.setFont(font);
+        }
 
         this.distanceFromSolLabel.setForeground(Color.GRAY);
         this.jumpLabel.setForeground(Color.GRAY);
