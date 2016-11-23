@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import javax.swing.Box;
@@ -66,9 +65,15 @@ public class InventoryPanel extends Box implements InventoryListener {
             table.getColumn("Have").setCellEditor(new PlusMinusCellEditor(new JTextField(3)));
             for (int i = 0; i < 3; i++) {
                 if (i == 0) {
-                    table.getColumnModel().getColumn(i).setPreferredWidth(220);
+                    if (type == ItemType.ELEMENT) {
+                        table.getColumnModel().getColumn(i).setPreferredWidth(150);
+                    } else if (type == ItemType.DATA) {
+                        table.getColumnModel().getColumn(i).setPreferredWidth(350);
+                    } else {
+                        table.getColumnModel().getColumn(i).setPreferredWidth(250);
+                    }
                 } else {
-                    table.getColumnModel().getColumn(i).setPreferredWidth(50);
+                    table.getColumnModel().getColumn(i).setPreferredWidth(25);
                 }
             }
             JScrollPane scrollPane = new JScrollPane(table);
@@ -165,7 +170,6 @@ public class InventoryPanel extends Box implements InventoryListener {
                 if (rowIndex >= 0) {
                     int counter = this.flashCountersByName.getOrDefault(name, 1);
                     counter--;
-                    logger.debug(name + "=" + counter);
                     if (counter <= 0) {
                         timer.stop();
                         this.flashColorsByName.remove(name);
@@ -173,7 +177,8 @@ public class InventoryPanel extends Box implements InventoryListener {
                     } else {
                         this.flashCountersByName.put(name, counter);
                     }
-                    this.fireTableRowsUpdated(rowIndex, rowIndex);
+                    //this.fireTableRowsUpdated(rowIndex, rowIndex);
+                    this.fireTableCellUpdated(rowIndex, 0);
                 }
             }
         }
@@ -256,7 +261,6 @@ public class InventoryPanel extends Box implements InventoryListener {
 
         @Override
         public void tableChanged(TableModelEvent e) {
-            // TODO Auto-generated method stub
             String changeType = "UNKNOWN";
             if (e.getType() == TableModelEvent.INSERT) {
                 changeType = "INSERT";
@@ -265,13 +269,13 @@ public class InventoryPanel extends Box implements InventoryListener {
             } else if (e.getType() == TableModelEvent.DELETE) {
                 changeType = "DELETE";
             }
-            logger.info(String.format(Locale.US, "%s col %d rows %d to %d on %s", changeType, e.getColumn(), e.getFirstRow(), e.getLastRow(), e.getSource()));
+            //logger.info(String.format(Locale.US, "%s col %d rows %d to %d on %s", changeType, e.getColumn(), e.getFirstRow(), e.getLastRow(), e.getSource()));
 
             if (e.getColumn() == 1 && e.getFirstRow() != TableModelEvent.HEADER_ROW && e.getFirstRow() == e.getLastRow()) {
                 String name = (String) this.getValueAt(e.getFirstRow(), 0);
                 int haveAfter = (int) this.getValueAt(e.getFirstRow(), 1);
                 int haveBefore = this.inventory.getHave(name);
-                logger.info(String.format(Locale.US, "%s %d -> %d", name, haveBefore, haveAfter));
+                //logger.info(String.format(Locale.US, "%s %d -> %d", name, haveBefore, haveAfter));
                 if (haveAfter != haveBefore) {
                     this.inventory.changeOffset(name, haveAfter - haveBefore);
                     this.refresh(null, null);
@@ -330,12 +334,16 @@ public class InventoryPanel extends Box implements InventoryListener {
             Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             if (row >= 0) {
                 String name = (String) table.getValueAt(row, 0);
-                logger.debug("Render " + name);
                 InventoryTableModel model = (InventoryTableModel) table.getModel();
                 Color flashingColor = model.getFlashingColor(name);
                 if (flashingColor != null) {
                     comp.setForeground(flashingColor);
+                } else if (isSelected) {
+                    comp.setForeground(table.getSelectionForeground());
+                } else {
+                    comp.setForeground(table.getForeground());
                 }
+                comp.repaint(); // TODO Required?
             }
             return comp;
         }

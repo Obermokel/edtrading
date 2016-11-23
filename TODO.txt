@@ -1,5 +1,6 @@
 TODO SidePanel:
 * Editable first discovery column
+* Smaller size for raw table, bigger for data table, normal for manufactured and commodity
 * Transactions tab
 * Remove inventory history, flash entry instead
 - Estimate exploration data

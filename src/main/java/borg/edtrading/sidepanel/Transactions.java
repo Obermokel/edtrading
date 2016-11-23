@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 /**
@@ -84,9 +85,9 @@ public class Transactions implements JournalUpdateListener, Serializable {
     }
 
     private void removeTransaction(Transaction transaction) {
-        if (transaction.getType() == TransactionType.MISSION) {
-            Transaction missionAcceptedTransaction = this.getTransactions(TransactionType.MISSION).stream().filter(t -> t.getMissionID().equals(transaction.getMissionID())).findFirst().get();
-            if (missionAcceptedTransaction != null) {
+        try {
+            if (transaction.getType() == TransactionType.MISSION) {
+                Transaction missionAcceptedTransaction = this.getTransactions(TransactionType.MISSION).stream().filter(t -> t.getMissionID().equals(transaction.getMissionID())).findFirst().get();
                 this.transactions.remove(missionAcceptedTransaction);
 
                 for (TransactionsListener listener : this.listeners) {
@@ -96,10 +97,8 @@ public class Transactions implements JournalUpdateListener, Serializable {
                         logger.warn(listener + " failed: " + ex);
                     }
                 }
-            }
-        } else if (transaction.getType() == TransactionType.COMMUNITY_GOAL) {
-            Transaction communityGoalJoinTransaction = this.getTransactions(TransactionType.COMMUNITY_GOAL).stream().filter(t -> t.getName().equals(transaction.getName())).findFirst().get();
-            if (communityGoalJoinTransaction != null) {
+            } else if (transaction.getType() == TransactionType.COMMUNITY_GOAL) {
+                Transaction communityGoalJoinTransaction = this.getTransactions(TransactionType.COMMUNITY_GOAL).stream().filter(t -> t.getName().equals(transaction.getName())).findFirst().get();
                 this.transactions.remove(communityGoalJoinTransaction);
 
                 for (TransactionsListener listener : this.listeners) {
@@ -110,6 +109,8 @@ public class Transactions implements JournalUpdateListener, Serializable {
                     }
                 }
             }
+        } catch (NoSuchElementException e) {
+            logger.debug("No corresponding transaction found for " + transaction);
         }
     }
 

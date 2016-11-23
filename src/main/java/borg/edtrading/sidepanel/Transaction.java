@@ -4,11 +4,14 @@ import borg.edtrading.journal.entries.missions.CommunityGoalJoinEntry;
 import borg.edtrading.journal.entries.missions.CommunityGoalRewardEntry;
 import borg.edtrading.journal.entries.missions.MissionAcceptedEntry;
 import borg.edtrading.journal.entries.missions.MissionCompletedEntry;
+import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Transaction
@@ -80,7 +83,7 @@ public class Transaction implements Serializable {
         this.setCommodityLocalized(e.getCommodityLocalized());
         this.setCommodityCount(e.getCount());
 
-        this.setCredits(e.getReward());
+        this.setCredits(MiscUtil.getAsInt(e.getReward(), 0));
     }
 
     public Transaction(CommunityGoalJoinEntry e) {
@@ -100,7 +103,12 @@ public class Transaction implements Serializable {
 
         this.setDestinationSystem(e.getSystem());
 
-        this.setCredits(e.getReward());
+        this.setCredits(MiscUtil.getAsInt(e.getReward(), 0));
+    }
+
+    @Override
+    public String toString() {
+        return String.format(Locale.US, "%s [%s] %s", this.getType(), new SimpleDateFormat("yyyy-MM-dd HH:mm").format(this.getTimestamp()), this.getName());
     }
 
     public TransactionType getType() {

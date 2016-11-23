@@ -29,6 +29,9 @@ public class PathViewPanel extends JPanel {
 
     private static final long serialVersionUID = -4865601248519686022L;
 
+    private static final int POINT_SIZE = 7;
+    private static final int POINT_OFFSET = (POINT_SIZE - 1) / 2;
+
     static final Logger logger = LogManager.getLogger(PathViewPanel.class);
 
     static final int PREFERRED_SIZE_TOP = 850;
@@ -74,8 +77,8 @@ public class PathViewPanel extends JPanel {
             this.sizeY = Math.max(this.sizeY, this.ymax - this.ymin);
             this.sizeXZ = Math.max(this.sizeXZ, this.zmax - this.zmin);
         }
-        this.sizeXZ *= 1.25f;
-        this.sizeY *= 1.25f;
+        this.sizeXZ *= 1.5f;
+        this.sizeY *= 1.5f;
         if (this.sizeY < this.sizeXZ / PREFERRED_FACTOR_SIDE) {
             this.sizeY = this.sizeXZ / PREFERRED_FACTOR_SIDE;
         } else if (this.sizeXZ < PREFERRED_FACTOR_SIDE * this.sizeY) {
@@ -104,12 +107,12 @@ public class PathViewPanel extends JPanel {
         Set<StarSystem> result = new HashSet<>();
         result.add(galaxy.searchStarSystemByName("Sol"));
         result.add(galaxy.searchStarSystemByName("Maia"));
-        result.add(galaxy.searchStarSystemByName("Sagittarius A*"));
-        result.add(galaxy.searchStarSystemByName("Beagle Point"));
-        result.add(galaxy.searchStarSystemByName("Colonia"));
         result.add(galaxy.searchStarSystemByName("VY Canis Majoris"));
         result.add(galaxy.searchStarSystemByName("Crab Pulsar"));
         result.add(galaxy.searchStarSystemByName("Rho Cassiopeiae"));
+        result.add(galaxy.searchStarSystemByName("Colonia"));
+        result.add(galaxy.searchStarSystemByName("Sagittarius A*"));
+        result.add(galaxy.searchStarSystemByName("Beagle Point"));
         result.remove(fromSystem);
         result.remove(toSystem);
 
@@ -144,7 +147,7 @@ public class PathViewPanel extends JPanel {
         g.drawString(this.viewName, 20, 20);
 
         // Draw -1000Ly line
-        g.setColor(Color.DARK_GRAY);
+        g.setColor(Color.CYAN);
         if ("Left view".equals(this.viewName)) {
             Point fromPoint = this.coordToPoint(new Coord(0, -1000, -sizeXZ));
             Point toPoint = this.coordToPoint(new Coord(0, -1000, sizeXZ));
@@ -161,21 +164,21 @@ public class PathViewPanel extends JPanel {
             Coord coord = refSystem.getCoord();
             Point point = this.coordToPoint(coord);
             String name = refSystem.getName();
-            g.fillOval(point.x, point.y, 5, 5);
-            g.drawString(name, point.x, point.y);
+            g.fillOval(point.x - POINT_OFFSET, point.y - POINT_OFFSET, POINT_SIZE, POINT_SIZE);
+            g.drawString(name, point.x - POINT_OFFSET, point.y - POINT_OFFSET);
         }
 
         // Draw from-system
         g.setColor(Color.GRAY);
         Point pFrom = this.coordToPoint(this.fromSystem.getCoord());
-        g.fillOval(pFrom.x, pFrom.y, 5, 5);
-        g.drawString(this.fromSystem.getName(), pFrom.x, pFrom.y);
+        g.fillOval(pFrom.x - POINT_OFFSET, pFrom.y - POINT_OFFSET, POINT_SIZE, POINT_SIZE);
+        g.drawString(this.fromSystem.getName(), pFrom.x - POINT_OFFSET, pFrom.y - POINT_OFFSET);
 
         // Draw to-system
         g.setColor(Color.GRAY);
         Point pTo = this.coordToPoint(this.toSystem.getCoord());
-        g.fillOval(pTo.x, pTo.y, 5, 5);
-        g.drawString(this.toSystem.getName(), pTo.x, pTo.y);
+        g.fillOval(pTo.x - POINT_OFFSET, pTo.y - POINT_OFFSET, POINT_SIZE, POINT_SIZE);
+        g.drawString(this.toSystem.getName(), pTo.x - POINT_OFFSET, pTo.y - POINT_OFFSET);
 
         // Draw path
         g.setColor(Color.ORANGE);

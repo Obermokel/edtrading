@@ -54,10 +54,10 @@ public interface Constants {
 
     File RARES_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\edrares.csv");
     File COMMODITIES_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\commodities.json");
-    File SYSTEMS_FILE = new File(System.getProperty("user.home"), "Downloads\\systems-2016-11-22.csv");
+    File SYSTEMS_FILE = new File(System.getProperty("user.home"), "Downloads\\systems-2016-11-23.csv");
     //File SYSTEMS_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\systems.json");
     //File SYSTEMS_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\systems_populated.json");
-    File BODIES_FILE = new File(System.getProperty("user.home"), "Downloads\\bodies-2016-11-22.jsonl");
+    File BODIES_FILE = new File(System.getProperty("user.home"), "Downloads\\bodies-2016-11-23.jsonl");
     //File BODIES_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\bodies.json");
     File STATIONS_FILE = new File(System.getProperty("user.home"), "Downloads\\stations.jsonl");
     //File STATIONS_FILE = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\stations.json");

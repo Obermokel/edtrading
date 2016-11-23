@@ -59,10 +59,16 @@ public class NeutronJumpApp {
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
 
-        final int maxFuelTons = 128;
-        final float maxFuelPerJump = 13.1f;
-        final float jumpRangeFuelFull = 30.75f;
-        final float jumpRangeFuelOpt = 33.11f;
+        // Anaconda
+        final int maxFuelTons = 96;
+        final float maxFuelPerJump = 8.32f;
+        final float jumpRangeFuelFull = 47.80f;
+        final float jumpRangeFuelOpt = 54.53f;
+        //        // Beluga
+        //        final int maxFuelTons = 128;
+        //        final float maxFuelPerJump = 13.1f;
+        //        final float jumpRangeFuelFull = 30.75f;
+        //        final float jumpRangeFuelOpt = 33.11f;
 
         final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
 
