@@ -1,4 +1,5 @@
 TODO SidePanel:
+* Editable first discovery column
 * Transactions tab
 * Remove inventory history, flash entry instead
 - Estimate exploration data

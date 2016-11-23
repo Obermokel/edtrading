@@ -5,6 +5,7 @@ import borg.edtrading.gui.JournalLogPanel;
 import borg.edtrading.gui.ScansPanel;
 import borg.edtrading.gui.ShipyardPanel;
 import borg.edtrading.gui.StatusPanel;
+import borg.edtrading.gui.TransactionsPanel;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.sidepanel.GameSession;
 import borg.edtrading.sidepanel.GameSessionListener;
@@ -12,6 +13,7 @@ import borg.edtrading.sidepanel.Inventory;
 import borg.edtrading.sidepanel.ShipLoadout;
 import borg.edtrading.sidepanel.ShipModule;
 import borg.edtrading.sidepanel.ShipModuleList;
+import borg.edtrading.sidepanel.Transactions;
 import borg.edtrading.sidepanel.TravelHistory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -45,8 +47,9 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
     private JFrame frame = null;
     private JournalReaderThread journalReaderThread = null;
     private GameSession gameSession = null;
-    private TravelHistory travelHistory = null;
     private Inventory inventory = null;
+    private Transactions transactions = null;
+    private TravelHistory travelHistory = null;
 
     public static void main(String[] args) throws IOException {
         new SidePanelApp().start();
@@ -76,8 +79,9 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         // Create and register the journal listeners
         gameSession = new GameSession(journalReaderThread);
         gameSession.addListener(this);
-        travelHistory = new TravelHistory(journalReaderThread, gameSession);
         inventory = new Inventory(journalReaderThread, gameSession);
+        transactions = new Transactions(journalReaderThread);
+        travelHistory = new TravelHistory(journalReaderThread, gameSession);
         new ShipModuleList(gameSession);
 
         // Init the reader from existing files, then start to watch for changes
@@ -101,6 +105,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         JournalLogPanel journalLogPanel = new JournalLogPanel(journalReaderThread);
         StatusPanel statusPanel = new StatusPanel(gameSession, travelHistory, inventory);
         InventoryPanel inventoryPanel = new InventoryPanel(inventory);
+        TransactionsPanel transactionsPanel = new TransactionsPanel(transactions);
         ScansPanel scansPanel = new ScansPanel(travelHistory);
         ShipyardPanel shipyardPanel = new ShipyardPanel(gameSession);
 
@@ -109,6 +114,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
             tabbedPane.setFont(new Font("Sans Serif", Font.BOLD, 18));
         }
         tabbedPane.addTab("Inventory", inventoryPanel);
+        tabbedPane.addTab("Transactions", transactionsPanel);
         tabbedPane.addTab("Scans", scansPanel);
         tabbedPane.addTab("Shipyard", shipyardPanel);
 

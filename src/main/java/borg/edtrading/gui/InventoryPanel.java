@@ -165,6 +165,7 @@ public class InventoryPanel extends Box implements InventoryListener {
                 if (rowIndex >= 0) {
                     int counter = this.flashCountersByName.getOrDefault(name, 1);
                     counter--;
+                    logger.debug(name + "=" + counter);
                     if (counter <= 0) {
                         timer.stop();
                         this.flashColorsByName.remove(name);
@@ -329,6 +330,7 @@ public class InventoryPanel extends Box implements InventoryListener {
             Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             if (row >= 0) {
                 String name = (String) table.getValueAt(row, 0);
+                logger.debug("Render " + name);
                 InventoryTableModel model = (InventoryTableModel) table.getModel();
                 Color flashingColor = model.getFlashingColor(name);
                 if (flashingColor != null) {
