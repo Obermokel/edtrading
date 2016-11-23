@@ -8,8 +8,11 @@ import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +27,7 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.Timer;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
@@ -76,29 +80,29 @@ public class InventoryPanel extends Box implements InventoryListener {
 
     @Override
     public void onInventoryReset(ItemType type, String name, int count) {
-        this.tableModelsByType.get(type).refresh();
+        this.tableModelsByType.get(type).refresh(name, Color.YELLOW);
         this.repaint(); // TODO Required?
     }
 
     @Override
     public void onInventoryCollected(ItemType type, String name, int count) {
-        this.tableModelsByType.get(type).refresh();
+        this.tableModelsByType.get(type).refresh(name, Color.GREEN);
         this.repaint(); // TODO Required?
     }
 
     @Override
     public void onInventoryDiscarded(ItemType type, String name, int count) {
-        this.tableModelsByType.get(type).refresh();
+        this.tableModelsByType.get(type).refresh(name, Color.RED);
         this.repaint(); // TODO Required?
     }
 
     @Override
     public void onInventorySpent(ItemType type, String name, int count) {
-        this.tableModelsByType.get(type).refresh();
+        this.tableModelsByType.get(type).refresh(name, Color.BLUE);
         this.repaint(); // TODO Required?
     }
 
-    public static class InventoryTableModel extends AbstractTableModel implements TableModelListener {
+    public static class InventoryTableModel extends AbstractTableModel implements TableModelListener, ActionListener {
 
         private static final long serialVersionUID = 6225525347374881663L;
 
@@ -106,15 +110,18 @@ public class InventoryPanel extends Box implements InventoryListener {
         private final ItemType type;
 
         private List<InventoryTableRow> rows = null;
+        private Map<String, Timer> timersByName = new HashMap<>();
+        private Map<String, Color> flashColorsByName = new HashMap<>();
+        private Map<String, Integer> flashCountersByName = new HashMap<>();
 
         public InventoryTableModel(Inventory inventory, ItemType type) {
             this.inventory = inventory;
             this.type = type;
-            this.refresh();
+            this.refresh(null, null);
             this.addTableModelListener(this);
         }
 
-        void refresh() {
+        void refresh(String flashName, Color flashColor) {
             List<InventoryTableRow> rows = new ArrayList<>();
             for (String name : this.inventory.getNames(this.type)) {
                 int have = this.inventory.getHave(name);
@@ -125,6 +132,59 @@ public class InventoryPanel extends Box implements InventoryListener {
             }
             this.rows = rows;
             this.fireTableDataChanged();
+            if (flashName != null && flashColor != null) {
+                Timer timer = this.timersByName.get(flashName);
+                if (timer == null) {
+                    timer = new Timer(666, this);
+                    timer.setRepeats(true);
+                    timer.setActionCommand(flashName);
+                    this.timersByName.put(flashName, timer);
+                }
+                this.flashColorsByName.put(flashName, flashColor);
+                this.flashCountersByName.put(flashName, 10);
+                if (!timer.isRunning()) {
+                    timer.start();
+                }
+            }
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (e.getSource() instanceof Timer) {
+                Timer timer = (Timer) e.getSource();
+                String name = e.getActionCommand();
+
+                int rowIndex = -1;
+                for (int idx = 0; idx < this.rows.size(); idx++) {
+                    if (this.rows.get(idx).getName().equals(name)) {
+                        rowIndex = idx;
+                        break;
+                    }
+                }
+
+                if (rowIndex >= 0) {
+                    int counter = this.flashCountersByName.getOrDefault(name, 1);
+                    counter--;
+                    if (counter <= 0) {
+                        timer.stop();
+                        this.flashColorsByName.remove(name);
+                        this.flashCountersByName.remove(name);
+                    } else {
+                        this.flashCountersByName.put(name, counter);
+                    }
+                    this.fireTableRowsUpdated(rowIndex, rowIndex);
+                }
+            }
+        }
+
+        public Color getFlashingColor(String name) {
+            int counter = this.flashCountersByName.getOrDefault(name, 0);
+
+            if (counter > 0 && counter % 2 == 1) {
+                return this.flashColorsByName.get(name);
+            } else {
+                return null;
+            }
         }
 
         @Override
@@ -213,7 +273,7 @@ public class InventoryPanel extends Box implements InventoryListener {
                 logger.info(String.format(Locale.US, "%s %d -> %d", name, haveBefore, haveAfter));
                 if (haveAfter != haveBefore) {
                     this.inventory.changeOffset(name, haveAfter - haveBefore);
-                    this.refresh();
+                    this.refresh(null, null);
                 }
             }
         }
@@ -266,7 +326,16 @@ public class InventoryPanel extends Box implements InventoryListener {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (row >= 0) {
+                String name = (String) table.getValueAt(row, 0);
+                InventoryTableModel model = (InventoryTableModel) table.getModel();
+                Color flashingColor = model.getFlashingColor(name);
+                if (flashingColor != null) {
+                    comp.setForeground(flashingColor);
+                }
+            }
+            return comp;
         }
 
     }
