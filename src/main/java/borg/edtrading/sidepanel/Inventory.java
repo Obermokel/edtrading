@@ -15,6 +15,7 @@ import borg.edtrading.journal.entries.inventory.MaterialCollectedEntry;
 import borg.edtrading.journal.entries.inventory.MaterialDiscardedEntry;
 import borg.edtrading.journal.entries.inventory.MiningRefinedEntry;
 import borg.edtrading.journal.entries.inventory.SellDronesEntry;
+import borg.edtrading.journal.entries.inventory.SynthesisEntry;
 import borg.edtrading.journal.entries.missions.MissionAcceptedEntry;
 import borg.edtrading.journal.entries.missions.MissionCompletedEntry;
 import borg.edtrading.journal.entries.starport.MarketBuyEntry;
@@ -271,6 +272,13 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
                 if (e.getIngredients() != null) {
                     for (String name : e.getIngredients().keySet()) {
                         this.spent(name, e.getIngredients().get(name), null);
+                    }
+                }
+            } else if (entry.getEvent() == Event.Synthesis) {
+                SynthesisEntry e = (SynthesisEntry) entry;
+                if (e.getMaterials() != null) {
+                    for (String name : e.getMaterials().keySet()) {
+                        this.spent(name, e.getMaterials().get(name), null);
                     }
                 }
             } else if (entry.getEvent() == Event.ShipyardBuy || entry.getEvent() == Event.ShipyardNew || entry.getEvent() == Event.ShipyardSwap) {

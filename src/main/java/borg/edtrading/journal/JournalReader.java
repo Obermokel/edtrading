@@ -46,6 +46,7 @@ import borg.edtrading.journal.entries.inventory.MaterialDiscoveredEntry;
 import borg.edtrading.journal.entries.inventory.MiningRefinedEntry;
 import borg.edtrading.journal.entries.inventory.ScientificResearchEntry;
 import borg.edtrading.journal.entries.inventory.SellDronesEntry;
+import borg.edtrading.journal.entries.inventory.SynthesisEntry;
 import borg.edtrading.journal.entries.location.ApproachSettlementEntry;
 import borg.edtrading.journal.entries.location.DockedEntry;
 import borg.edtrading.journal.entries.location.FSDJumpEntry;
@@ -376,6 +377,8 @@ public class JournalReader {
                     return new SupercruiseEntryEntry(timestamp, event, data);
                 case SupercruiseExit:
                     return new SupercruiseExitEntry(timestamp, event, data);
+                case Synthesis:
+                    return new SynthesisEntry(timestamp, event, data);
                 case Touchdown:
                     return new TouchdownEntry(timestamp, event, data);
                 case Undocked:

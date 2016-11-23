@@ -150,7 +150,55 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
                 for (String material : materials.keySet()) {
                     Float percentage = materials.get(material);
                     if (percentage != null) {
-                        if ("foo".equals(material) && percentage > 99.9f) {
+                        if ("antimony".equals(material) && percentage >= 1.0f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("arsenic".equals(material) && percentage >= 2.1f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("cadmium".equals(material) && percentage >= 1.6f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                            //                        } else if ("carbon".equals(material) && percentage >= 14.4f) {
+                            //                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                            //                        } else if ("chromium".equals(material) && percentage >= 9.4f) {
+                            //                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                            //                        } else if ("germanium".equals(material) && percentage >= 4.6f) {
+                            //                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                            //                        } else if ("iron".equals(material) && percentage >= 21.0f) {
+                            //                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                            //                        } else if ("manganese".equals(material) && percentage >= 8.6f) {
+                            //                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("mercury".equals(material) && percentage >= 0.9f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("molybdenum".equals(material) && percentage >= 1.4f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                            //                        } else if ("nickel".equals(material) && percentage >= 15.9f) {
+                            //                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("niobium".equals(material) && percentage >= 1.4f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                            //                        } else if ("phosphorus".equals(material) && percentage >= 9.2f) {
+                            //                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("polonium".equals(material) && percentage >= 0.6f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("ruthenium".equals(material) && percentage >= 1.3f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("selenium".equals(material) && percentage >= 4.1f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                            //                        } else if ("sulphur".equals(material) && percentage >= 17.1f) {
+                            //                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("technetium".equals(material) && percentage >= 0.7f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("tellurium".equals(material) && percentage >= 1.2f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("tin".equals(material) && percentage >= 1.3f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("tungsten".equals(material) && percentage >= 1.2f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                            //                        } else if ("vanadium".equals(material) && percentage >= 4.9f) {
+                            //                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("yttrium".equals(material) && percentage >= 1.3f) {
+                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                            //                        } else if ("zinc".equals(material) && percentage >= 5.7f) {
+                            //                            result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
+                        } else if ("zirconium".equals(material) && percentage >= 2.6f) {
                             result += String.format(Locale.US, "%s%.1f%% %s", result.length() > 0 ? ", " : "", percentage, material);
                         }
                     }

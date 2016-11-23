@@ -88,6 +88,7 @@ public enum Event {
     ShipyardSwap,
     SupercruiseEntry,
     SupercruiseExit,
+    Synthesis,
     Touchdown,
     Undocked,
     USSDrop,

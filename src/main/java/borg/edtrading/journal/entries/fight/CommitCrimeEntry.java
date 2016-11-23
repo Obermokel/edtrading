@@ -18,6 +18,7 @@ public class CommitCrimeEntry extends AbstractJournalEntry {
     private final String crimeType;
     private final String faction;
     private final String victim;
+    private final String victimLocalized;
     private final Integer bounty;
     private final Integer fine;
 
@@ -27,6 +28,7 @@ public class CommitCrimeEntry extends AbstractJournalEntry {
         this.crimeType = this.readString(data, "CrimeType");
         this.faction = this.readString(data, "Faction");
         this.victim = this.readString(data, "Victim");
+        this.victimLocalized = this.readString(data, "Victim_Localised");
         this.bounty = this.readInt(data, "Bounty");
         this.fine = this.readInt(data, "Fine");
     }
@@ -41,6 +43,10 @@ public class CommitCrimeEntry extends AbstractJournalEntry {
 
     public String getVictim() {
         return this.victim;
+    }
+
+    public String getVictimLocalized() {
+        return this.victimLocalized;
     }
 
     public Integer getBounty() {
