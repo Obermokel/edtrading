@@ -54,6 +54,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     private SortedMap<String, SortedMap<String, Integer>> spentByName = new TreeMap<>();
     private SortedMap<String, SortedMap<String, Float>> priorityByName = new TreeMap<>();
     private SortedMap<String, SortedMap<String, Integer>> surplusByName = new TreeMap<>();
+    private SortedMap<String, SortedMap<String, Integer>> requiredByName = new TreeMap<>();
 
     private final List<InventoryListener> listeners = new ArrayList<>();
 
@@ -176,6 +177,10 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
 
     public int getSurplus(String name) {
         return this.surplusByName.get(this.getCommander()).getOrDefault(name, 0);
+    }
+
+    public int getRequired(String name) {
+        return this.requiredByName.get(this.getCommander()).getOrDefault(name, 0);
     }
 
     public void changeOffset(String name, int offsetChange) {
@@ -328,6 +333,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
                 this.spentByName.put(this.getCommander(), new TreeMap<>());
                 this.priorityByName.put(this.getCommander(), new TreeMap<>());
                 this.surplusByName.put(this.getCommander(), new TreeMap<>());
+                this.requiredByName.put(this.getCommander(), new TreeMap<>());
                 this.loadOffsets(this.getCommander());
             }
         } catch (Exception e) {
@@ -441,6 +447,9 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         int actualDiscard = Math.min(maxDiscard, idealDiscard);
         int surplus = Math.max(0, actualDiscard);
         this.surplusByName.get(this.getCommander()).put(name, surplus);
+
+        // Compute required
+        this.requiredByName.get(this.getCommander()).put(name, Math.max(0, numKeep - numHave));
     }
 
     private static String guessName(String name, ItemType type) {

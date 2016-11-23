@@ -63,24 +63,21 @@ public class InventoryPanel extends Box implements InventoryListener {
             }
             table.getColumn("Name").setCellRenderer(new FlashingNameCellRenderer());
             table.getColumn("Have").setCellEditor(new PlusMinusCellEditor(new JTextField(3)));
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 4; i++) {
                 if (i == 0) {
                     table.getColumnModel().getColumn(i).setMinWidth(100);
                     table.getColumnModel().getColumn(i).setMaxWidth(1000);
-                    if (type == ItemType.ELEMENT) {
-                        table.getColumnModel().getColumn(i).setPreferredWidth(150);
-                    } else if (type == ItemType.DATA) {
-                        table.getColumnModel().getColumn(i).setPreferredWidth(350);
-                    } else {
-                        table.getColumnModel().getColumn(i).setPreferredWidth(250);
-                    }
+                    table.getColumnModel().getColumn(i).setPreferredWidth(750);
                 } else {
                     table.getColumnModel().getColumn(i).setMinWidth(50);
-                    table.getColumnModel().getColumn(i).setMaxWidth(200);
-                    table.getColumnModel().getColumn(i).setPreferredWidth(50);
+                    table.getColumnModel().getColumn(i).setMaxWidth(100);
+                    table.getColumnModel().getColumn(i).setPreferredWidth(75);
                 }
                 table.doLayout();
             }
+            table.getRowSorter().toggleSortOrder(2);
+            table.getRowSorter().toggleSortOrder(3);
+            table.getRowSorter().toggleSortOrder(3);
             JScrollPane scrollPane = new JScrollPane(table);
             this.add(scrollPane);
         }
@@ -136,8 +133,9 @@ public class InventoryPanel extends Box implements InventoryListener {
             for (String name : this.inventory.getNames(this.type)) {
                 int have = this.inventory.getHave(name);
                 int surplus = this.inventory.getSurplus(name);
-                if (have != 0) {
-                    rows.add(new InventoryTableRow(name, have, surplus));
+                int required = this.inventory.getRequired(name);
+                if (have != 0 || (this.type != ItemType.COMMODITY && required != 0)) {
+                    rows.add(new InventoryTableRow(name, have, surplus, required));
                 }
             }
             this.rows = rows;
@@ -200,7 +198,7 @@ public class InventoryPanel extends Box implements InventoryListener {
 
         @Override
         public int getColumnCount() {
-            return 3;
+            return 4;
         }
 
         @Override
@@ -211,6 +209,8 @@ public class InventoryPanel extends Box implements InventoryListener {
                 return "Have";
             } else if (columnIndex == 2) {
                 return "Surplus";
+            } else if (columnIndex == 3) {
+                return "Want";
             } else {
                 return null;
             }
@@ -231,6 +231,8 @@ public class InventoryPanel extends Box implements InventoryListener {
                 return row.getHave();
             } else if (columnIndex == 2) {
                 return row.getSurplus();
+            } else if (columnIndex == 3) {
+                return row.getRequired();
             } else {
                 return null;
             }
@@ -253,6 +255,8 @@ public class InventoryPanel extends Box implements InventoryListener {
             } else if (columnIndex == 1) {
                 return Integer.class;
             } else if (columnIndex == 2) {
+                return Integer.class;
+            } else if (columnIndex == 3) {
                 return Integer.class;
             } else {
                 return null;
@@ -297,11 +301,13 @@ public class InventoryPanel extends Box implements InventoryListener {
         private String name = null;
         private int have = 0;
         private int surplus = 0;
+        private int required = 0;
 
-        public InventoryTableRow(String name, int have, int surplus) {
+        public InventoryTableRow(String name, int have, int surplus, int required) {
             this.setName(name);
             this.setHave(have);
             this.setSurplus(surplus);
+            this.setRequired(required);
         }
 
         public String getName() {
@@ -326,6 +332,14 @@ public class InventoryPanel extends Box implements InventoryListener {
 
         public void setSurplus(int surplus) {
             this.surplus = surplus;
+        }
+
+        public int getRequired() {
+            return this.required;
+        }
+
+        public void setRequired(int required) {
+            this.required = required;
         }
 
     }
