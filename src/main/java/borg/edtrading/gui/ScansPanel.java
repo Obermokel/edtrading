@@ -56,28 +56,28 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
             table.setFont(new Font("Sans Serif", Font.BOLD, 18));
             table.setRowHeight(24);
         }
-        table.getColumn("Timestamp").setPreferredWidth(200);
+        table.getColumn("Timestamp").setPreferredWidth(170);
         table.getColumn("Timestamp").setCellRenderer(new TimestampCellRenderer());
         table.getColumn("Body").setPreferredWidth(300);
         table.getColumn("Body").setCellRenderer(new GenericCellRenderer());
-        table.getColumn("Type").setPreferredWidth(330);
+        table.getColumn("Type").setPreferredWidth(300);
         table.getColumn("Type").setCellRenderer(new GenericCellRenderer());
         table.getColumn("TFC?").setPreferredWidth(45);
-        table.getColumn("TFC?").setCellRenderer(new GenericCellRenderer());
-        table.getColumn("Radius").setPreferredWidth(130);
+        //table.getColumn("TFC?").setCellRenderer(new GenericCellRenderer());
+        table.getColumn("Radius").setPreferredWidth(120);
         table.getColumn("Radius").setCellRenderer(new RadiusCellRenderer());
-        table.getColumn("Mass").setPreferredWidth(100);
+        table.getColumn("Mass").setPreferredWidth(120);
         table.getColumn("Mass").setCellRenderer(new MassCellRenderer());
-        table.getColumn("Temp").setPreferredWidth(100);
+        table.getColumn("Temp").setPreferredWidth(120);
         table.getColumn("Temp").setCellRenderer(new TempCellRenderer());
         table.getColumn("Gravity").setPreferredWidth(100);
         table.getColumn("Gravity").setCellRenderer(new GravityCellRenderer());
-        table.getColumn("Mats").setPreferredWidth(350);
+        table.getColumn("Mats").setPreferredWidth(300);
         table.getColumn("Mats").setCellRenderer(new GenericCellRenderer());
         table.getColumn("Payout").setPreferredWidth(120);
         table.getColumn("Payout").setCellRenderer(new PayoutCellRenderer());
         table.getColumn("1st?").setPreferredWidth(45);
-        table.getColumn("1st?").setCellRenderer(new GenericCellRenderer());
+        //table.getColumn("1st?").setCellRenderer(new GenericCellRenderer());
         table.setAutoCreateRowSorter(true);
         JScrollPane scrollPane = new JScrollPane(table);
         this.add(scrollPane, BorderLayout.CENTER);
@@ -324,20 +324,17 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
         private static final long serialVersionUID = 1890080767427621901L;
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        public Component getTableCellRendererComponent(JTable table, Object radiusMeter, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, radiusMeter, isSelected, hasFocus, row, column);
             comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
             comp.setHorizontalAlignment(SwingConstants.RIGHT);
-            if (value instanceof Float) {
+            if (radiusMeter instanceof Float) {
                 ScansTableModel model = (ScansTableModel) table.getModel();
                 boolean isStar = StringUtils.isNotEmpty(model.getRow(row).getScannedBody().getStarClass());
                 if (isStar) {
-                    float factor = (float) value / 695700f;
-                    comp.setText(String.format(Locale.US, "%.2fx sun", factor));
+                    comp.setText(String.format(Locale.US, "%.2f SR", (float) radiusMeter / 695700000f));
                 } else {
-                    //                    float factor = (float) value / 6378f;
-                    //                    comp.setText(String.format(Locale.US, "%.2f ER", factor));
-                    comp.setText(String.format(Locale.US, "%.0fKM", value));
+                    comp.setText(String.format(Locale.US, "%,.0fKM", (float) radiusMeter / 1000f));
                 }
             }
             return comp;
@@ -350,17 +347,17 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
         private static final long serialVersionUID = -2028478960461078784L;
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        public Component getTableCellRendererComponent(JTable table, Object stellarMass, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, stellarMass, isSelected, hasFocus, row, column);
             comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
             comp.setHorizontalAlignment(SwingConstants.RIGHT);
-            if (value instanceof Float) {
+            if (stellarMass instanceof Float) {
                 ScansTableModel model = (ScansTableModel) table.getModel();
                 boolean isStar = StringUtils.isNotEmpty(model.getRow(row).getScannedBody().getStarClass());
                 if (isStar) {
-                    comp.setText(String.format(Locale.US, "%.4f SM", value));
+                    comp.setText(String.format(Locale.US, "%.4f SM", stellarMass));
                 } else {
-                    comp.setText(String.format(Locale.US, "%.4f EM", value));
+                    comp.setText(String.format(Locale.US, "%.4f EM", stellarMass));
                 }
             }
             return comp;
@@ -373,12 +370,12 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
         private static final long serialVersionUID = -5599524383613982944L;
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        public Component getTableCellRendererComponent(JTable table, Object tempKelvin, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, tempKelvin, isSelected, hasFocus, row, column);
             comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
             comp.setHorizontalAlignment(SwingConstants.RIGHT);
-            if (value instanceof Float) {
-                comp.setText(String.format(Locale.US, "%,.0fK", value));
+            if (tempKelvin instanceof Float) {
+                comp.setText(String.format(Locale.US, "%,.0fK", tempKelvin));
             }
             return comp;
         }
@@ -390,12 +387,12 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
         private static final long serialVersionUID = 7129431171069721825L;
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        public Component getTableCellRendererComponent(JTable table, Object gravityMs2, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, gravityMs2, isSelected, hasFocus, row, column);
             comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
             comp.setHorizontalAlignment(SwingConstants.RIGHT);
-            if (value instanceof Float) {
-                comp.setText(String.format(Locale.US, "%,.2fG", value));
+            if (gravityMs2 instanceof Float) {
+                comp.setText(String.format(Locale.US, "%,.2fG", (float) gravityMs2 / 9.81f));
             }
             return comp;
         }
@@ -407,12 +404,12 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
         private static final long serialVersionUID = -5827683827505851580L;
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        public Component getTableCellRendererComponent(JTable table, Object credits, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, credits, isSelected, hasFocus, row, column);
             comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
             comp.setHorizontalAlignment(SwingConstants.RIGHT);
-            if (value instanceof Integer) {
-                comp.setText(String.format(Locale.US, "%,d CR", value));
+            if (credits instanceof Integer) {
+                comp.setText(String.format(Locale.US, "%,d CR", credits));
             }
             return comp;
         }
