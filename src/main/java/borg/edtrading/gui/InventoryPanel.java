@@ -56,8 +56,10 @@ public class InventoryPanel extends Box implements InventoryListener {
 
         JSplitPane leftSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         leftSplitPane.setResizeWeight(0.5);
+        leftSplitPane.setContinuousLayout(true);
         JSplitPane rightSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         rightSplitPane.setResizeWeight(0.5);
+        rightSplitPane.setContinuousLayout(true);
 
         for (ItemType type : Arrays.asList(ItemType.ELEMENT, ItemType.MANUFACTURED, ItemType.DATA, ItemType.COMMODITY)) {
             // Add the table for this item type
@@ -78,7 +80,7 @@ public class InventoryPanel extends Box implements InventoryListener {
                 if (i == 0) {
                     table.getColumnModel().getColumn(i).setMinWidth(100);
                     table.getColumnModel().getColumn(i).setMaxWidth(1000);
-                    table.getColumnModel().getColumn(i).setPreferredWidth(750);
+                    table.getColumnModel().getColumn(i).setPreferredWidth(150);
                 } else {
                     table.getColumnModel().getColumn(i).setMinWidth(50);
                     table.getColumnModel().getColumn(i).setMaxWidth(100);
@@ -104,6 +106,7 @@ public class InventoryPanel extends Box implements InventoryListener {
 
         JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftSplitPane, rightSplitPane);
         mainSplitPane.setResizeWeight(0.5);
+        mainSplitPane.setContinuousLayout(true);
         this.add(mainSplitPane);
 
         inventory.addListener(this);

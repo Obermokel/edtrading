@@ -16,6 +16,7 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -33,6 +34,7 @@ public class JournalReaderThread extends Thread {
 
     private String currentFilename = null;
     private int lastProcessedLineNumber = 0;
+    private Date lastProcessedTimestamp = new Date(0);
     private final List<JournalUpdateListener> listeners = new ArrayList<>();
 
     public JournalReaderThread(Path journalDir) throws IOException {
@@ -92,11 +94,15 @@ public class JournalReaderThread extends Thread {
     private void updateJournal(String filename) {
         if (StringUtils.isNotEmpty(filename) && filename.startsWith("Journal.") && filename.endsWith(".log")) {
             try {
+                int lineNumberBackup = this.lastProcessedLineNumber;
+                String filenameBackup = this.currentFilename;
+
                 if (!filename.equals(this.currentFilename)) {
                     this.lastProcessedLineNumber = 0; // New file
                 }
                 this.currentFilename = filename;
 
+                boolean eventAdded = false;
                 List<String> lines = Files.readAllLines(this.journalDir.resolve(filename), StandardCharsets.UTF_8);
                 for (int lineNumber = 1; lineNumber <= lines.size(); lineNumber++) {
                     if (lineNumber > this.lastProcessedLineNumber) {
@@ -113,8 +119,11 @@ public class JournalReaderThread extends Thread {
                             }
                             AbstractJournalEntry entry = this.reader.readJournalLine(line);
 
-                            if (entry != null) {
+                            if (entry != null && entry.getTimestamp().compareTo(this.lastProcessedTimestamp) >= 0) {
+                                this.lastProcessedTimestamp = entry.getTimestamp();
+
                                 this.journal.add(entry);
+                                eventAdded = true;
 
                                 for (JournalUpdateListener listener : this.listeners) {
                                     try {
@@ -128,6 +137,11 @@ public class JournalReaderThread extends Thread {
                             logger.debug("Unknown event type '" + e.getEvent() + "' in line " + lineNumber + " of " + filename);
                         }
                     }
+                }
+
+                if (!eventAdded) {
+                    this.currentFilename = filenameBackup;
+                    this.lastProcessedLineNumber = lineNumberBackup;
                 }
             } catch (IOException | RuntimeException e) {
                 logger.error("Failed to read journal file " + this.currentFilename, e);
