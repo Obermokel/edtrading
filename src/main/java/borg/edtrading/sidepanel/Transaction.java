@@ -4,6 +4,7 @@ import borg.edtrading.journal.entries.missions.CommunityGoalJoinEntry;
 import borg.edtrading.journal.entries.missions.CommunityGoalRewardEntry;
 import borg.edtrading.journal.entries.missions.MissionAcceptedEntry;
 import borg.edtrading.journal.entries.missions.MissionCompletedEntry;
+import borg.edtrading.journal.entries.missions.MissionFailedEntry;
 import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -84,6 +85,16 @@ public class Transaction implements Serializable {
         this.setCommodityCount(e.getCount());
 
         this.setCredits(MiscUtil.getAsInt(e.getReward(), 0));
+    }
+
+    public Transaction(MissionFailedEntry e) {
+        this.setType(TransactionType.MISSION);
+        this.setTimestamp(e.getTimestamp());
+        this.setName(e.getName());
+
+        this.setMissionID(e.getMissionID());
+
+        this.setCredits(0);
     }
 
     public Transaction(CommunityGoalJoinEntry e) {

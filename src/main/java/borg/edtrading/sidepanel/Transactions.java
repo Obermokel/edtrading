@@ -8,6 +8,7 @@ import borg.edtrading.journal.entries.missions.CommunityGoalJoinEntry;
 import borg.edtrading.journal.entries.missions.CommunityGoalRewardEntry;
 import borg.edtrading.journal.entries.missions.MissionAcceptedEntry;
 import borg.edtrading.journal.entries.missions.MissionCompletedEntry;
+import borg.edtrading.journal.entries.missions.MissionFailedEntry;
 import borg.edtrading.sidepanel.Transaction.TransactionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,6 +53,8 @@ public class Transactions implements JournalUpdateListener, Serializable {
                 this.addTransaction(new Transaction((MissionAcceptedEntry) entry));
             } else if (entry.getEvent() == Event.MissionCompleted) {
                 this.removeTransaction(new Transaction((MissionCompletedEntry) entry));
+            } else if (entry.getEvent() == Event.MissionFailed) {
+                this.removeTransaction(new Transaction((MissionFailedEntry) entry));
             } else if (entry.getEvent() == Event.CommunityGoalJoin) {
                 this.addTransaction(new Transaction((CommunityGoalJoinEntry) entry));
             } else if (entry.getEvent() == Event.CommunityGoalReward) {
