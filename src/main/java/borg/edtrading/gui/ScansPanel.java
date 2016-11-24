@@ -1,24 +1,34 @@
 package borg.edtrading.gui;
 
+import borg.edtrading.SidePanelApp;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.sidepanel.ScannedBody;
 import borg.edtrading.sidepanel.TravelHistory;
 import borg.edtrading.sidepanel.TravelHistoryListener;
 import borg.edtrading.sidepanel.VisitedSystem;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Font;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 
 /**
  * ScansPanel
@@ -42,6 +52,32 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
         this.setLayout(new BorderLayout());
         this.tableModel = new ScansTableModel(travelHistory);
         JTable table = new JTable(tableModel);
+        if (SidePanelApp.BIG_AND_BLACK) {
+            table.setFont(new Font("Sans Serif", Font.BOLD, 18));
+            table.setRowHeight(24);
+        }
+        table.getColumn("Timestamp").setPreferredWidth(200);
+        table.getColumn("Timestamp").setCellRenderer(new TimestampCellRenderer());
+        table.getColumn("Body").setPreferredWidth(300);
+        table.getColumn("Body").setCellRenderer(new GenericCellRenderer());
+        table.getColumn("Type").setPreferredWidth(330);
+        table.getColumn("Type").setCellRenderer(new GenericCellRenderer());
+        table.getColumn("TFC?").setPreferredWidth(45);
+        table.getColumn("TFC?").setCellRenderer(new GenericCellRenderer());
+        table.getColumn("Radius").setPreferredWidth(130);
+        table.getColumn("Radius").setCellRenderer(new RadiusCellRenderer());
+        table.getColumn("Mass").setPreferredWidth(100);
+        table.getColumn("Mass").setCellRenderer(new MassCellRenderer());
+        table.getColumn("Temp").setPreferredWidth(100);
+        table.getColumn("Temp").setCellRenderer(new TempCellRenderer());
+        table.getColumn("Gravity").setPreferredWidth(100);
+        table.getColumn("Gravity").setCellRenderer(new GravityCellRenderer());
+        table.getColumn("Mats").setPreferredWidth(350);
+        table.getColumn("Mats").setCellRenderer(new GenericCellRenderer());
+        table.getColumn("Payout").setPreferredWidth(120);
+        table.getColumn("Payout").setCellRenderer(new PayoutCellRenderer());
+        table.getColumn("1st?").setPreferredWidth(45);
+        table.getColumn("1st?").setCellRenderer(new GenericCellRenderer());
         table.setAutoCreateRowSorter(true);
         JScrollPane scrollPane = new JScrollPane(table);
         this.add(scrollPane, BorderLayout.CENTER);
@@ -127,6 +163,10 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
             return this.rows.get(rowIndex).isCellEditable(columnIndex);
         }
 
+        ScansTableRow getRow(int rowIndex) {
+            return this.rows.get(rowIndex);
+        }
+
     }
 
     public static class ScansTableRow implements Serializable {
@@ -207,6 +247,10 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
             return result;
         }
 
+        ScannedBody getScannedBody() {
+            return this.scannedBody;
+        }
+
         Date getTimestamp() {
             return this.scannedBody.getTimestamp();
         }
@@ -242,6 +286,135 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
 
         boolean isCellEditable(int columnIndex) {
             return columnIndex == 10;
+        }
+
+    }
+
+    public static class TimestampCellRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = -3193170662964769643L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
+            if (value instanceof Date) {
+                comp.setText(new SimpleDateFormat("dd.MM.yyyy HH:mm").format((Date) value));
+            }
+            return comp;
+        }
+
+    }
+
+    public static class GenericCellRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = 1552177813355725235L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            JComponent comp = (JComponent) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
+            return comp;
+        }
+
+    }
+
+    public static class RadiusCellRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = 1890080767427621901L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
+            comp.setHorizontalAlignment(SwingConstants.RIGHT);
+            if (value instanceof Float) {
+                ScansTableModel model = (ScansTableModel) table.getModel();
+                boolean isStar = StringUtils.isNotEmpty(model.getRow(row).getScannedBody().getStarClass());
+                if (isStar) {
+                    float factor = (float) value / 695700f;
+                    comp.setText(String.format(Locale.US, "%.2fx sun", factor));
+                } else {
+                    //                    float factor = (float) value / 6378f;
+                    //                    comp.setText(String.format(Locale.US, "%.2f ER", factor));
+                    comp.setText(String.format(Locale.US, "%.0fKM", value));
+                }
+            }
+            return comp;
+        }
+
+    }
+
+    public static class MassCellRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = -2028478960461078784L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
+            comp.setHorizontalAlignment(SwingConstants.RIGHT);
+            if (value instanceof Float) {
+                ScansTableModel model = (ScansTableModel) table.getModel();
+                boolean isStar = StringUtils.isNotEmpty(model.getRow(row).getScannedBody().getStarClass());
+                if (isStar) {
+                    comp.setText(String.format(Locale.US, "%.4f SM", value));
+                } else {
+                    comp.setText(String.format(Locale.US, "%.4f EM", value));
+                }
+            }
+            return comp;
+        }
+
+    }
+
+    public static class TempCellRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = -5599524383613982944L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
+            comp.setHorizontalAlignment(SwingConstants.RIGHT);
+            if (value instanceof Float) {
+                comp.setText(String.format(Locale.US, "%,.0fK", value));
+            }
+            return comp;
+        }
+
+    }
+
+    public static class GravityCellRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = 7129431171069721825L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
+            comp.setHorizontalAlignment(SwingConstants.RIGHT);
+            if (value instanceof Float) {
+                comp.setText(String.format(Locale.US, "%,.2fG", value));
+            }
+            return comp;
+        }
+
+    }
+
+    public static class PayoutCellRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = -5827683827505851580L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            JLabel comp = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
+            comp.setHorizontalAlignment(SwingConstants.RIGHT);
+            if (value instanceof Integer) {
+                comp.setText(String.format(Locale.US, "%,d CR", value));
+            }
+            return comp;
         }
 
     }

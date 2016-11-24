@@ -131,6 +131,10 @@ public class ScannedBody implements Serializable {
         }
     }
 
+    public String getStarClass() {
+        return this.scanEntry.getStarType();
+    }
+
     public String getBodyType() {
         return this.bodyType;
     }
