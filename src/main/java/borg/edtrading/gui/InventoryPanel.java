@@ -149,7 +149,7 @@ public class InventoryPanel extends Box implements InventoryListener {
                     this.timersByName.put(flashName, timer);
                 }
                 this.flashColorsByName.put(flashName, flashColor);
-                this.flashCountersByName.put(flashName, 10);
+                this.flashCountersByName.put(flashName, 20);
                 if (!timer.isRunning()) {
                     timer.start();
                 }
@@ -355,12 +355,19 @@ public class InventoryPanel extends Box implements InventoryListener {
                 String name = (String) table.getValueAt(row, 0);
                 InventoryTableModel model = (InventoryTableModel) table.getModel();
                 Color flashingColor = model.getFlashingColor(name);
+                //                if (flashingColor != null) {
+                //                    comp.setForeground(flashingColor);
+                //                } else if (isSelected) {
+                //                    comp.setForeground(table.getSelectionForeground());
+                //                } else {
+                //                    comp.setForeground(table.getForeground());
+                //                }
                 if (flashingColor != null) {
-                    comp.setForeground(flashingColor);
+                    comp.setBackground(flashingColor);
                 } else if (isSelected) {
-                    comp.setForeground(table.getSelectionForeground());
+                    comp.setBackground(table.getSelectionBackground());
                 } else {
-                    comp.setForeground(table.getForeground());
+                    comp.setBackground(table.getBackground());
                 }
                 comp.repaint(); // TODO Required?
             }

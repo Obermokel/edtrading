@@ -42,7 +42,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
 
     static final Logger logger = LogManager.getLogger(SidePanelApp.class);
 
-    public static final boolean BIG_AND_BLACK = true;
+    public static final boolean BIG_AND_BLACK = false;
 
     private JFrame frame = null;
     private JournalReaderThread journalReaderThread = null;
