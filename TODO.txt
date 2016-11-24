@@ -1,8 +1,11 @@
 TODO SidePanel:
+* Faction screenshot scan
+* Remember last journal date
 * Editable first discovery column
 * Smaller size for raw table, bigger for data table, normal for manufactured and commodity
-* Transactions tab
-* Remove inventory history, flash entry instead
+* Mining mission commodities...
+- Transactions tab
+- Remove inventory history, flash entry instead
 - Estimate exploration data
 - CMDR/mode/group into title
 - Increase font sizes

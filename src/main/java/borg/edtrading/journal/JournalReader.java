@@ -35,6 +35,7 @@ import borg.edtrading.journal.entries.fleet.ShipyardTransferEntry;
 import borg.edtrading.journal.entries.game.FileheaderEntry;
 import borg.edtrading.journal.entries.game.LoadGameEntry;
 import borg.edtrading.journal.entries.game.ProgressEntry;
+import borg.edtrading.journal.entries.game.PromotionEntry;
 import borg.edtrading.journal.entries.game.RankEntry;
 import borg.edtrading.journal.entries.game.ScreenshotEntry;
 import borg.edtrading.journal.entries.inventory.BuyDronesEntry;
@@ -62,9 +63,11 @@ import borg.edtrading.journal.entries.missions.CommunityGoalRewardEntry;
 import borg.edtrading.journal.entries.missions.DataScannedEntry;
 import borg.edtrading.journal.entries.missions.MissionAcceptedEntry;
 import borg.edtrading.journal.entries.missions.MissionCompletedEntry;
+import borg.edtrading.journal.entries.missions.MissionFailedEntry;
 import borg.edtrading.journal.entries.slf.DockFighterEntry;
 import borg.edtrading.journal.entries.slf.LaunchFighterEntry;
 import borg.edtrading.journal.entries.slf.VehicleSwitchEntry;
+import borg.edtrading.journal.entries.srv.DatalinkScanEntry;
 import borg.edtrading.journal.entries.srv.DockSRVEntry;
 import borg.edtrading.journal.entries.srv.LaunchSRVEntry;
 import borg.edtrading.journal.entries.starport.BuyAmmoEntry;
@@ -241,6 +244,8 @@ public class JournalReader {
                     return new CrewFireEntry(timestamp, event, data);
                 case CrewHire:
                     return new CrewHireEntry(timestamp, event, data);
+                case DatalinkScan:
+                    return new DatalinkScanEntry(timestamp, event, data);
                 case DataScanned:
                     return new DataScannedEntry(timestamp, event, data);
                 case Died:
@@ -315,6 +320,8 @@ public class JournalReader {
                     return new MissionAcceptedEntry(timestamp, event, data);
                 case MissionCompleted:
                     return new MissionCompletedEntry(timestamp, event, data);
+                case MissionFailed:
+                    return new MissionFailedEntry(timestamp, event, data);
                 case ModuleBuy:
                     return new ModuleBuyEntry(timestamp, event, data);
                 case ModuleRetrieve:
@@ -333,6 +340,8 @@ public class JournalReader {
                     return new PayLegacyFinesEntry(timestamp, event, data);
                 case Progress:
                     return new ProgressEntry(timestamp, event, data);
+                case Promotion:
+                    return new PromotionEntry(timestamp, event, data);
                 case Rank:
                     return new RankEntry(timestamp, event, data);
                 case RebootRepair:

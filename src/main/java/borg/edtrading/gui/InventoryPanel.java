@@ -26,6 +26,7 @@ import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.Timer;
@@ -52,6 +53,11 @@ public class InventoryPanel extends Box implements InventoryListener {
         super(BoxLayout.X_AXIS);
 
         this.inventory = inventory;
+
+        JSplitPane leftSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        leftSplitPane.setResizeWeight(0.5);
+        JSplitPane rightSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        rightSplitPane.setResizeWeight(0.5);
 
         for (ItemType type : Arrays.asList(ItemType.ELEMENT, ItemType.MANUFACTURED, ItemType.DATA, ItemType.COMMODITY)) {
             // Add the table for this item type
@@ -84,8 +90,21 @@ public class InventoryPanel extends Box implements InventoryListener {
             table.getRowSorter().toggleSortOrder(3);
             table.getRowSorter().toggleSortOrder(3);
             JScrollPane scrollPane = new JScrollPane(table);
-            this.add(scrollPane);
+            //this.add(scrollPane);
+            if (type == ItemType.ELEMENT) {
+                leftSplitPane.setLeftComponent(scrollPane);
+            } else if (type == ItemType.MANUFACTURED) {
+                leftSplitPane.setRightComponent(scrollPane);
+            } else if (type == ItemType.DATA) {
+                rightSplitPane.setLeftComponent(scrollPane);
+            } else if (type == ItemType.COMMODITY) {
+                rightSplitPane.setRightComponent(scrollPane);
+            }
         }
+
+        JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftSplitPane, rightSplitPane);
+        mainSplitPane.setResizeWeight(0.5);
+        this.add(mainSplitPane);
 
         inventory.addListener(this);
     }
@@ -356,7 +375,8 @@ public class InventoryPanel extends Box implements InventoryListener {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             JComponent comp = (JComponent) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            comp.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
+            //comp.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
+            comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(5, 2, 5, 2)));
             if (row >= 0) {
                 String name = (String) table.getValueAt(row, 0);
                 InventoryTableModel model = (InventoryTableModel) table.getModel();
