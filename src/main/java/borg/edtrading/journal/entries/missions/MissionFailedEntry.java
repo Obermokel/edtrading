@@ -15,9 +15,22 @@ public class MissionFailedEntry extends AbstractJournalEntry {
 
     private static final long serialVersionUID = -265545630355337608L;
 
+    private final String name;
+    private final Integer missionID;
+
     public MissionFailedEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
-        // TODO Auto-generated constructor stub
+
+        this.name = this.readString(data, "Name");
+        this.missionID = this.readInt(data, "MissionID");
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public Integer getMissionID() {
+        return this.missionID;
     }
 
 }

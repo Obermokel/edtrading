@@ -15,9 +15,28 @@ public class PromotionEntry extends AbstractJournalEntry {
 
     private static final long serialVersionUID = 9058154050675300622L;
 
+    private final Integer combat;
+    private final Integer trade;
+    private final Integer explore;
+
     public PromotionEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
-        // TODO Auto-generated constructor stub
+
+        this.combat = this.readInt(data, "Combat");
+        this.trade = this.readInt(data, "Trade");
+        this.explore = this.readInt(data, "Explore");
+    }
+
+    public Integer getCombat() {
+        return this.combat;
+    }
+
+    public Integer getTrade() {
+        return this.trade;
+    }
+
+    public Integer getExplore() {
+        return this.explore;
     }
 
 }
