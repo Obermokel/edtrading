@@ -62,6 +62,9 @@ public class InventoryPanel extends Box implements InventoryListener {
                 table.setFont(new Font("Sans Serif", Font.BOLD, 18));
             }
             table.getColumn("Name").setCellRenderer(new FlashingNameCellRenderer());
+            table.getColumn("Have").setCellRenderer(new FlashingNameCellRenderer());
+            table.getColumn("Surplus").setCellRenderer(new FlashingNameCellRenderer());
+            table.getColumn("Want").setCellRenderer(new FlashingNameCellRenderer());
             table.getColumn("Have").setCellEditor(new PlusMinusCellEditor(new JTextField(3)));
             for (int i = 0; i < 4; i++) {
                 if (i == 0) {
@@ -180,8 +183,8 @@ public class InventoryPanel extends Box implements InventoryListener {
                     } else {
                         this.flashCountersByName.put(name, counter);
                     }
-                    //this.fireTableRowsUpdated(rowIndex, rowIndex);
-                    this.fireTableCellUpdated(rowIndex, 0);
+                    this.fireTableRowsUpdated(rowIndex, rowIndex);
+                    //this.fireTableCellUpdated(rowIndex, 0);
                 }
             }
         }
