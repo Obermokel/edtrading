@@ -55,10 +55,10 @@ public class InventoryPanel extends Box implements InventoryListener {
         this.inventory = inventory;
 
         JSplitPane leftSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        leftSplitPane.setResizeWeight(0.5);
+        leftSplitPane.setResizeWeight(0.4);
         leftSplitPane.setContinuousLayout(true);
         JSplitPane rightSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        rightSplitPane.setResizeWeight(0.5);
+        rightSplitPane.setResizeWeight(0.6);
         rightSplitPane.setContinuousLayout(true);
 
         for (ItemType type : Arrays.asList(ItemType.ELEMENT, ItemType.MANUFACTURED, ItemType.DATA, ItemType.COMMODITY)) {
@@ -70,6 +70,7 @@ public class InventoryPanel extends Box implements InventoryListener {
             table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE); // TODO Required?
             if (SidePanelApp.BIG_AND_BLACK) {
                 table.setFont(new Font("Sans Serif", Font.BOLD, 18));
+                table.setRowHeight(24);
             }
             table.getColumn("Name").setCellRenderer(new FlashingNameCellRenderer());
             table.getColumn("Have").setCellRenderer(new FlashingNameCellRenderer());
@@ -80,11 +81,11 @@ public class InventoryPanel extends Box implements InventoryListener {
                 if (i == 0) {
                     table.getColumnModel().getColumn(i).setMinWidth(100);
                     table.getColumnModel().getColumn(i).setMaxWidth(1000);
-                    table.getColumnModel().getColumn(i).setPreferredWidth(150);
+                    table.getColumnModel().getColumn(i).setPreferredWidth(200);
                 } else {
                     table.getColumnModel().getColumn(i).setMinWidth(50);
                     table.getColumnModel().getColumn(i).setMaxWidth(100);
-                    table.getColumnModel().getColumn(i).setPreferredWidth(75);
+                    table.getColumnModel().getColumn(i).setPreferredWidth(50);
                 }
                 table.doLayout();
             }
@@ -101,11 +102,12 @@ public class InventoryPanel extends Box implements InventoryListener {
                 rightSplitPane.setLeftComponent(scrollPane);
             } else if (type == ItemType.COMMODITY) {
                 rightSplitPane.setRightComponent(scrollPane);
+                table.getRowSorter().toggleSortOrder(0);
             }
         }
 
         JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftSplitPane, rightSplitPane);
-        mainSplitPane.setResizeWeight(0.5);
+        mainSplitPane.setResizeWeight(0.45);
         mainSplitPane.setContinuousLayout(true);
         this.add(mainSplitPane);
 
@@ -378,8 +380,7 @@ public class InventoryPanel extends Box implements InventoryListener {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             JComponent comp = (JComponent) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            //comp.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
-            comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(5, 2, 5, 2)));
+            comp.setBorder(BorderFactory.createCompoundBorder(comp.getBorder(), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
             if (row >= 0) {
                 String name = (String) table.getValueAt(row, 0);
                 InventoryTableModel model = (InventoryTableModel) table.getModel();
