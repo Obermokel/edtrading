@@ -20,9 +20,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
+import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -353,7 +355,8 @@ public class InventoryPanel extends Box implements InventoryListener {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            JComponent comp = (JComponent) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            comp.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
             if (row >= 0) {
                 String name = (String) table.getValueAt(row, 0);
                 InventoryTableModel model = (InventoryTableModel) table.getModel();
