@@ -23,6 +23,7 @@ public class ShipLoadout implements Serializable {
     private String shipType = null;
     private String shipName = null;
     private Integer buyPrice = null;
+    private Float fuelLevel = null;
     private Float maxFuelPerJump = 1.0f;
     private Float optTankJumpRange = 4.0f;
     private Float fullTankJumpRange = 3.0f;
@@ -104,6 +105,14 @@ public class ShipLoadout implements Serializable {
 
     public void setBuyPrice(Integer buyPrice) {
         this.buyPrice = buyPrice;
+    }
+
+    public Float getFuelLevel() {
+        return this.fuelLevel;
+    }
+
+    public void setFuelLevel(Float fuelLevel) {
+        this.fuelLevel = fuelLevel;
     }
 
     public Float getMaxFuelPerJump() {

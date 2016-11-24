@@ -40,6 +40,8 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
 
     static final Logger logger = LogManager.getLogger(TravelHistory.class);
 
+    private transient ShipLoadout currentShip = null;
+
     private Coord coord = null;
     private String systemName = null;
     private String bodyName = null;
@@ -285,6 +287,9 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 }
                 this.visitedSystems.addLast(visitedSystem);
                 this.visitedSystemNames.add(visitedSystem.getSystemName());
+                if (this.currentShip != null) {
+                    this.currentShip.setFuelLevel(this.getFuelLevel());
+                }
                 for (TravelHistoryListener listener : this.listeners) {
                     try {
                         listener.onLocationChanged();
@@ -296,6 +301,9 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
             } else if (entry.getEvent() == Event.FuelScoop) {
                 FuelScoopEntry e = (FuelScoopEntry) entry;
                 this.setFuelLevel(MiscUtil.getAsFloat(e.getTotal(), 0f));
+                if (this.currentShip != null) {
+                    this.currentShip.setFuelLevel(this.getFuelLevel());
+                }
                 for (TravelHistoryListener listener : this.listeners) {
                     try {
                         listener.onFuelLevelChanged(this.getFuelLevel());
@@ -308,6 +316,9 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 this.setFuelLevel(this.getFuelLevel() + MiscUtil.getAsFloat(e.getAmount(), 0f));
                 if (Math.abs(this.getFuelCapacity() - this.getFuelLevel()) <= 2f) {
                     this.setFuelLevel(this.getFuelCapacity()); // Assume fully refueled if close to max. There is always some inprecision due to fuel ticking down by time or launching fuel transfer drones.
+                }
+                if (this.currentShip != null) {
+                    this.currentShip.setFuelLevel(this.getFuelLevel());
                 }
                 for (TravelHistoryListener listener : this.listeners) {
                     try {
@@ -475,9 +486,11 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
         if (ship == null) {
             this.setFuelCapacity(0);
             this.setFuelLevel(0);
+            this.currentShip = null;
         } else {
             this.setFuelCapacity(ship.getFuelCapacity());
-            this.setFuelLevel(ship.getFuelCapacity() / 2.0f); // We don't know
+            this.setFuelLevel(MiscUtil.getAsFloat(ship.getFuelLevel(), 0f));
+            this.currentShip = ship;
         }
     }
 
@@ -496,9 +509,11 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
         if (newShip == null) {
             this.setFuelCapacity(0);
             this.setFuelLevel(0);
+            this.currentShip = null;
         } else {
             this.setFuelCapacity(newShip.getFuelCapacity());
-            this.setFuelLevel(newShip.getFuelCapacity() / 2.0f); // We don't know
+            this.setFuelLevel(MiscUtil.getAsFloat(newShip.getFuelLevel(), 0f));
+            this.currentShip = newShip;
         }
     }
 
