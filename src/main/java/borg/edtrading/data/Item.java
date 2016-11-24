@@ -165,6 +165,7 @@ public enum Item {
 
     // Other commodities
     AUTO_FABRICATORS("AUTO FABRICATORS", "autofabricators", ItemType.COMMODITY, 0),
+    BASIC_MEDICINES("BASIC MEDICINES", "basicmedicines", ItemType.COMMODITY, 0),
     BERTRANDITE("BERTRANDITE", "bertrandite", ItemType.COMMODITY, 0),
     BIOWASTE("BIOWASTE", "biowaste", ItemType.COMMODITY, 0),
     CLOTHING("CLOTHING", "clothing", ItemType.COMMODITY, 0),
