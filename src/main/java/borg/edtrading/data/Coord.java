@@ -76,6 +76,10 @@ public class Coord implements Serializable {
     //        return Math.abs(dx) + Math.abs(dy) + Math.abs(dz);
     //    }
 
+    public float distanceToSol() {
+        return (float) Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    }
+
     public float getX() {
         return this.x;
     }
