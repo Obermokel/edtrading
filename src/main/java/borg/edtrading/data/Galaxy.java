@@ -44,7 +44,8 @@ public class Galaxy {
     //    private final Map<Long, Commodity> commoditiesById;
     private final Map<Long, StarSystem> starSystemsById;
     private final Map<Long, Body> bodiesById;
-    //    private final Map<Long, Station> stationsById;
+    private final Map<Long, Faction> factionsById;
+    private final Map<Long, Station> stationsById;
     //    private final Map<Long, List<Station>> stationsByStarSystemId;
     //    private final Map<Long, List<MarketEntry>> marketEntriesByStationId;
 
@@ -56,9 +57,11 @@ public class Galaxy {
     //        this.stationsByStarSystemId = Collections.unmodifiableMap(stationsById.values().stream().collect(Collectors.groupingBy(Station::getStarSystemId)));
     //        this.marketEntriesByStationId = Collections.unmodifiableMap(marketEntriesByStationId);
     //    }
-    private Galaxy(Map<Long, StarSystem> starSystemsById, Map<Long, Body> bodiesById) {
+    private Galaxy(Map<Long, StarSystem> starSystemsById, Map<Long, Body> bodiesById, Map<Long, Faction> factionsById, Map<Long, Station> stationsById) {
         this.starSystemsById = Collections.unmodifiableMap(starSystemsById);
         this.bodiesById = Collections.unmodifiableMap(bodiesById);
+        this.factionsById = Collections.unmodifiableMap(factionsById);
+        this.stationsById = Collections.unmodifiableMap(stationsById);
     }
 
     public static Galaxy readDataFromFiles() throws IOException {
@@ -71,14 +74,15 @@ public class Galaxy {
         //        Map<Long, Commodity> commoditiesById = readCommodities(gson);
         Map<Long, StarSystem> starSystemsById = readStarSystems(gson);
         Map<Long, Body> bodiesById = readBodies(gson, starSystemsById);
-        //        Map<Long, Station> stationsById = readStations(gson, starSystemsById);
+        Map<Long, Faction> factionsById = readFactions(gson, starSystemsById);
+        Map<Long, Station> stationsById = readStations(gson, starSystemsById, factionsById);
         //        Map<Long, List<MarketEntry>> marketEntriesByStationId = readMarketEntries(stationsById, commoditiesById);
         //        setSoldRaresForStations(rares, commoditiesById.values(), starSystemsById.values(), stationsByStarSystemId);
         long end = System.currentTimeMillis();
         logger.info("Loaded data in " + (end - start) + " ms");
 
         //        return new Galaxy(rares, commoditiesById, starSystemsById, stationsById, marketEntriesByStationId);
-        return new Galaxy(starSystemsById, bodiesById);
+        return new Galaxy(starSystemsById, bodiesById, factionsById, stationsById);
     }
 
     //    private static List<Rare> readRares() throws IOException {
@@ -173,14 +177,79 @@ public class Galaxy {
         }
     }
 
-    //    private static Map<Long, Station> readStations(Gson gson, Map<Long, StarSystem> starSystems) throws IOException {
-    //        logger.debug("Loading stations...");
-    //        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(STATIONS_FILE), "UTF-8"))) {
-    //            List<Station> stations = Arrays.asList(gson.fromJson(reader, Station[].class));
-    //            stations.forEach(o -> o.setStarSystem(starSystems.get(o.getStarSystemId())));
-    //            return stations.stream().collect(Collectors.toMap(Station::getId, Function.identity()));
-    //        }
-    //    }
+    private static Map<Long, Faction> readFactions(Gson gson, Map<Long, StarSystem> starSystems) throws IOException {
+        logger.debug("Loading factions...");
+        File serFile = new File(Constants.TEMP_DIR, Constants.FACTIONS_FILE.getName() + ".ser");
+        if (serFile.exists() && serFile.lastModified() > Constants.FACTIONS_FILE.lastModified()) {
+            try (BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(serFile))) {
+                return (Map<Long, Faction>) SerializationUtils.deserialize(inputStream);
+            }
+        } else {
+            Map<Long, Faction> factionsById = null;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.FACTIONS_FILE), "UTF-8"))) {
+                List<Faction> factions = new ArrayList<>();
+                String line = reader.readLine();
+                while (line != null) {
+                    try {
+                        Faction[] faction = gson.fromJson("[" + line + "]", Faction[].class);
+                        factions.addAll(Arrays.asList(faction));
+                    } catch (JsonSyntaxException e) {
+                        logger.warn("Corrupt line in " + Constants.FACTIONS_FILE.getName() + ": " + line, e);
+                    }
+                    line = reader.readLine();
+                }
+                factions.forEach(b -> b.setHomeSystem(starSystems.get(b.getHomeSystemId())));
+                factionsById = factions.stream().collect(Collectors.toMap(Faction::getId, Function.identity()));
+                if (factionsById.size() != factions.size()) {
+                    logger.warn("Mapped " + factions.size() + " by " + factionsById.size() + " IDs");
+                }
+            }
+            try (BufferedOutputStream inputStream = new BufferedOutputStream(new FileOutputStream(serFile))) {
+                SerializationUtils.serialize((Serializable) factionsById, inputStream);
+            }
+            return factionsById;
+        }
+    }
+
+    private static Map<Long, Station> readStations(Gson gson, Map<Long, StarSystem> starSystems, Map<Long, Faction> factions) throws IOException {
+        logger.debug("Loading stations...");
+        File serFile = new File(Constants.TEMP_DIR, Constants.STATIONS_FILE.getName() + ".ser");
+        if (serFile.exists() && serFile.lastModified() > Constants.STATIONS_FILE.lastModified()) {
+            try (BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(serFile))) {
+                return (Map<Long, Station>) SerializationUtils.deserialize(inputStream);
+            }
+        } else {
+            Map<Long, Station> stationsById = null;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Constants.STATIONS_FILE), "UTF-8"))) {
+                List<Station> stations = new ArrayList<>();
+                String line = reader.readLine();
+                while (line != null) {
+                    try {
+                        Station[] station = gson.fromJson("[" + line + "]", Station[].class);
+                        stations.addAll(Arrays.asList(station));
+                    } catch (JsonSyntaxException e) {
+                        logger.warn("Corrupt line in " + Constants.STATIONS_FILE.getName() + ": " + line, e);
+                    }
+                    line = reader.readLine();
+                }
+                for (Station station : stations) {
+                    if (starSystems.get(station.getStarSystemId()) == null) {
+                        logger.warn("Star system not found: " + station + " (star system id: " + station.getStarSystemId() + ")");
+                    }
+                }
+                stations.forEach(b -> b.setStarSystem(starSystems.get(b.getStarSystemId())));
+                stations.forEach(b -> b.setControllingMinorFaction(factions.get(b.getControllingMinorFactionId())));
+                stationsById = stations.stream().collect(Collectors.toMap(Station::getId, Function.identity()));
+                if (stationsById.size() != stations.size()) {
+                    logger.warn("Mapped " + stations.size() + " by " + stationsById.size() + " IDs");
+                }
+            }
+            try (BufferedOutputStream inputStream = new BufferedOutputStream(new FileOutputStream(serFile))) {
+                SerializationUtils.serialize((Serializable) stationsById, inputStream);
+            }
+            return stationsById;
+        }
+    }
 
     //    private static Map<Long, List<MarketEntry>> readMarketEntries(Map<Long, Station> stations, Map<Long, Commodity> commodities) throws IOException {
     //        logger.debug("Loading market entries...");
@@ -208,6 +277,14 @@ public class Galaxy {
 
     public Map<Long, Body> getBodiesById() {
         return this.bodiesById;
+    }
+
+    public Map<Long, Faction> getFactionsById() {
+        return this.factionsById;
+    }
+
+    public Map<Long, Station> getStationsById() {
+        return this.stationsById;
     }
 
     //    public Map<Long, Station> getStationsById() {

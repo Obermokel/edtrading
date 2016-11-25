@@ -1,8 +1,8 @@
 TODO SidePanel:
 * Faction screenshot scan
-* Save fuel level
 * Editable first discovery column
 * Mining mission commodities...
+- Save fuel level
 - Smaller size for raw table, bigger for data table, normal for manufactured and commodity
 - Remember last journal date
 - Transactions tab
