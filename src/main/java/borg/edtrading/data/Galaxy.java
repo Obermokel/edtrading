@@ -1,6 +1,10 @@
 package borg.edtrading.data;
 
 import borg.edtrading.Constants;
+import borg.edtrading.eddb.data.Body;
+import borg.edtrading.eddb.data.Faction;
+import borg.edtrading.eddb.data.StarSystem;
+import borg.edtrading.eddb.data.Station;
 import borg.edtrading.json.BooleanDigitDeserializer;
 import borg.edtrading.json.SecondsSinceEpochDeserializer;
 import com.google.gson.Gson;

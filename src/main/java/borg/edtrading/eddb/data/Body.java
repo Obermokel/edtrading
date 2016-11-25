@@ -1,4 +1,4 @@
-package borg.edtrading.data;
+package borg.edtrading.eddb.data;
 
 import borg.edtrading.util.MiscUtil;
 import com.google.gson.annotations.SerializedName;

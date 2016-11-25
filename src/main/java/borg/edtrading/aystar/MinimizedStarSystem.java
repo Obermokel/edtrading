@@ -1,7 +1,7 @@
 package borg.edtrading.aystar;
 
 import borg.edtrading.data.Coord;
-import borg.edtrading.data.StarSystem;
+import borg.edtrading.eddb.data.StarSystem;
 
 import java.io.Serializable;
 

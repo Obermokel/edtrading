@@ -1,9 +1,9 @@
 package borg.edtrading;
 
-import borg.edtrading.data.Faction;
 import borg.edtrading.data.Galaxy;
-import borg.edtrading.data.StarSystem;
-import borg.edtrading.data.Station;
+import borg.edtrading.eddb.data.Faction;
+import borg.edtrading.eddb.data.StarSystem;
+import borg.edtrading.eddb.data.Station;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

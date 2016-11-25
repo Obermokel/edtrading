@@ -3,10 +3,10 @@ package borg.edtrading;
 import boofcv.alg.misc.ImageMiscOps;
 import boofcv.gui.binary.VisualizeBinaryData;
 import boofcv.struct.image.GrayU8;
-import borg.edtrading.data.Body;
 import borg.edtrading.data.Coord;
 import borg.edtrading.data.Galaxy;
-import borg.edtrading.data.StarSystem;
+import borg.edtrading.eddb.data.Body;
+import borg.edtrading.eddb.data.StarSystem;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

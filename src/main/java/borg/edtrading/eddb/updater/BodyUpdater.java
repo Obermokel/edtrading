@@ -1,4 +1,4 @@
-package borg.edtrading.eddb;
+package borg.edtrading.eddb.updater;
 
 import borg.edtrading.Constants;
 import borg.edtrading.bodyscanner.ScannedBodyInfo;

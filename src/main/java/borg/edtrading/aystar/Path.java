@@ -1,7 +1,7 @@
 package borg.edtrading.aystar;
 
 import borg.edtrading.data.Galaxy;
-import borg.edtrading.data.StarSystem;
+import borg.edtrading.eddb.data.StarSystem;
 
 import java.util.ArrayList;
 import java.util.Collections;

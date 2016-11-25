@@ -1,5 +1,6 @@
 package borg.edtrading.data;
 
+import borg.edtrading.eddb.data.Station;
 import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

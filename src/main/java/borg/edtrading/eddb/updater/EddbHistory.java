@@ -1,4 +1,4 @@
-package borg.edtrading.eddb;
+package borg.edtrading.eddb.updater;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;

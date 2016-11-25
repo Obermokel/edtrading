@@ -1,8 +1,8 @@
 package borg.edtrading.gui;
 
-import borg.edtrading.data.Body;
 import borg.edtrading.data.Coord;
 import borg.edtrading.data.Galaxy;
+import borg.edtrading.eddb.data.Body;
 import com.sun.j3d.utils.applet.MainFrame;
 import com.sun.j3d.utils.geometry.Sphere;
 import com.sun.j3d.utils.geometry.Text2D;

@@ -1,5 +1,6 @@
-package borg.edtrading.data;
+package borg.edtrading.eddb.data;
 
+import borg.edtrading.data.Coord;
 import borg.edtrading.util.MiscUtil;
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.csv.CSVRecord;

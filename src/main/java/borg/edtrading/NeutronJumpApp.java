@@ -2,10 +2,10 @@ package borg.edtrading;
 
 import borg.edtrading.aystar.AyStar;
 import borg.edtrading.aystar.Path;
-import borg.edtrading.data.Body;
 import borg.edtrading.data.Coord;
 import borg.edtrading.data.Galaxy;
-import borg.edtrading.data.StarSystem;
+import borg.edtrading.eddb.data.Body;
+import borg.edtrading.eddb.data.StarSystem;
 import borg.edtrading.gui.PathViewPanel;
 import borg.edtrading.gui.RouteViewPanel;
 import borg.edtrading.journal.Journal;

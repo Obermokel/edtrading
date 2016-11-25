@@ -4,9 +4,9 @@ import java.io.Closeable;
 import java.io.IOException;
 
 import borg.edtrading.data.Commodity;
-import borg.edtrading.data.StarSystem;
-import borg.edtrading.data.Station;
 import borg.edtrading.data.TradingData;
+import borg.edtrading.eddb.data.StarSystem;
+import borg.edtrading.eddb.data.Station;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
