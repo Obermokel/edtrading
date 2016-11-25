@@ -95,9 +95,9 @@ import borg.edtrading.journal.entries.wing.WingLeaveEntry;
 import borg.edtrading.util.MiscUtil;
 import com.google.gson.Gson;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.common.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileFilter;
