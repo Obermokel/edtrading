@@ -31,6 +31,7 @@ public class ScannedBody implements Serializable {
       PAYOUTS.put(                                "Class G", (2920+2920+2921+2917)/4);//2920+2920+2921+2917
       PAYOUTS.put(                                "Class K", (2904+2912+2917)/3);//2904+2912+2917
       PAYOUTS.put(                       "Class K_RedGiant", 2900);
+      PAYOUTS.put(                    "Class K_OrangeGiant", 2900);
       PAYOUTS.put(                                "Class M", (2898+2897+2895+2893)/4);//2898+2897+2895+2893
       PAYOUTS.put(                       "Class M_RedGiant", 2900);
       PAYOUTS.put(                                "Class C", 2902);//2902
@@ -109,6 +110,8 @@ public class ScannedBody implements Serializable {
                 return "Class " + e.getStarType() + " dwarf";
             } else if ("M_RedGiant".equals(e.getStarType()) || "K_RedGiant".equals(e.getStarType())) {
                 return "Class " + e.getStarType().replace("_RedGiant", "") + " red giant";
+            } else if ("M_OrangeGiant".equals(e.getStarType()) || "K_OrangeGiant".equals(e.getStarType())) {
+                return "Class " + e.getStarType().replace("_OrangeGiant", "") + " orange giant";
             } else {
                 return "Class " + e.getStarType() + " star";
             }
