@@ -1,16 +1,11 @@
 package borg.edtrading.eddb.data;
 
-import borg.edtrading.util.MiscUtil;
 import com.google.gson.annotations.SerializedName;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Body
@@ -22,8 +17,6 @@ public class Body implements Serializable {
     private static final long serialVersionUID = -3042831980225243954L;
 
     static final Logger logger = LogManager.getLogger(Body.class);
-
-    public static final String ES_TYPE = "body";
 
     private Long id = null;
     private String name = null;
@@ -306,50 +299,6 @@ public class Body implements Serializable {
 
     public void setTerraforming_state_name(String terraforming_state_name) {
         this.terraforming_state_name = terraforming_state_name;
-    }
-
-    // ==== ELASTIC SEARCH ====
-
-    public static XContentBuilder createElasticSearchMapping() {
-        try {
-            XContentBuilder builder = XContentFactory.jsonBuilder().humanReadable(true).startObject();
-
-            //@formatter:off
-            builder
-                .field("dynamic", "strict")
-                .startObject("properties")
-                    .startObject("name").field("type", "string").field("analyzer", "lowercaseKeyword").endObject()
-                .endObject(); // END properties
-            //@formatter:on
-
-            return builder.endObject();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create ElasticSearch mapping", e);
-        }
-    }
-
-    public static Body fromElasticSearchSource(Map<String, Object> source) {
-        Body object = new Body();
-
-        object.setName(MiscUtil.getAsString(source.get("name")));
-
-        return object;
-    }
-
-    public XContentBuilder toElasticSearchSource() {
-        try {
-            XContentBuilder builder = XContentFactory.jsonBuilder().humanReadable(true).startObject();
-
-            builder.field("name", this.getName());
-
-            return builder.endObject();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create ElasticSearch source for " + this, e);
-        }
-    }
-
-    public String getElasticSearchId() {
-        return this.getName().toLowerCase();
     }
 
     public static class SolidComposition implements Serializable {

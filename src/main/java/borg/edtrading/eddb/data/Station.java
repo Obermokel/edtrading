@@ -1,16 +1,11 @@
 package borg.edtrading.eddb.data;
 
-import borg.edtrading.util.MiscUtil;
 import com.google.gson.annotations.SerializedName;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Station
@@ -22,8 +17,6 @@ public class Station implements Serializable {
     private static final long serialVersionUID = -6292312329063206773L;
 
     static final Logger logger = LogManager.getLogger(Station.class);
-
-    public static final String ES_TYPE = "station";
 
     private Long id = null;
     private String name = null;
@@ -69,47 +62,6 @@ public class Station implements Serializable {
         this.setName(name);
         this.setStarSystem(starSystem);
         this.setDistanceFromStarInLs(distanceFromStarInLs);
-    }
-
-    public static XContentBuilder createElasticSearchMapping() {
-        try {
-            XContentBuilder builder = XContentFactory.jsonBuilder().humanReadable(true).startObject();
-
-            builder.field("dynamic", "strict");
-            builder.startObject("properties").startObject("name").field("type", "string").field("analyzer", "lowercaseKeyword").endObject().startObject("starSystem").startObject("properties").startObject("name").field("type", "string")
-                    .field("analyzer", "lowercaseKeyword").endObject().endObject().endObject() // END starSystem.properties
-                    .startObject("distanceFromStarInLs").field("type", "double").endObject().endObject(); // END properties
-
-            return builder.endObject();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create ElasticSearch mapping", e);
-        }
-    }
-
-    public static Station fromElasticSearchSource(Map<String, Object> source) {
-        String name = MiscUtil.getAsString(source.get("name"));
-        StarSystem starSystem = StarSystem.fromElasticSearchSource((Map<String, Object>) source.get("starSystem"));
-        float distanceFromStarInLs = MiscUtil.getAsFloat(source.get("distanceFromStarInLs"));
-
-        return new Station(name, starSystem, distanceFromStarInLs);
-    }
-
-    public XContentBuilder toElasticSearchSource() {
-        try {
-            XContentBuilder builder = XContentFactory.jsonBuilder().humanReadable(true).startObject();
-
-            builder.field("name", this.getName());
-            builder.startObject("starSystem").field("name", this.getStarSystem().getName()).endObject();
-            builder.field("distanceFromStarInLs", this.getDistanceFromStarInLs());
-
-            return builder.endObject();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create ElasticSearch source for " + this, e);
-        }
-    }
-
-    public String getElasticSearchId() {
-        return (this.getStarSystem().getName() + "_" + this.getName()).toLowerCase();
     }
 
     @Override
