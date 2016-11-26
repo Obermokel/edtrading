@@ -332,9 +332,9 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
                 ScansTableModel model = (ScansTableModel) table.getModel();
                 boolean isStar = StringUtils.isNotEmpty(model.getRow(row).getScannedBody().getStarClass());
                 if (isStar) {
-                    comp.setText(String.format(Locale.US, "%.2f SR", (float) radiusMeter / 695700000f));
+                    comp.setText(String.format(Locale.US, "%.2f R☉", (float) radiusMeter / 695700000f));
                 } else {
-                    comp.setText(String.format(Locale.US, "%,.0fKM", (float) radiusMeter / 1000f));
+                    comp.setText(String.format(Locale.US, "%,.0fkm", (float) radiusMeter / 1000f));
                 }
             }
             return comp;
@@ -353,11 +353,15 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
             comp.setHorizontalAlignment(SwingConstants.RIGHT);
             if (stellarMass instanceof Float) {
                 ScansTableModel model = (ScansTableModel) table.getModel();
-                boolean isStar = StringUtils.isNotEmpty(model.getRow(row).getScannedBody().getStarClass());
+                ScannedBody sb = model.getRow(row).getScannedBody();
+                boolean isStar = StringUtils.isNotEmpty(sb.getStarClass());
+                boolean isGasGaint = StringUtils.isNotEmpty(sb.getBodyType()) && sb.getBodyType().toLowerCase().contains("gas giant");
                 if (isStar) {
-                    comp.setText(String.format(Locale.US, "%.4f SM", stellarMass));
+                    comp.setText(String.format(Locale.US, "%.2f M☉", stellarMass));
+                } else if (isGasGaint) {
+                    comp.setText(String.format(Locale.US, "%.2f M♃", (float) stellarMass / 318f));
                 } else {
-                    comp.setText(String.format(Locale.US, "%.4f EM", stellarMass));
+                    comp.setText(String.format(Locale.US, "%.2f M♁", stellarMass));
                 }
             }
             return comp;
