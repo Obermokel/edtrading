@@ -286,7 +286,6 @@ public enum Blueprint {
     FRAGMENT_CANNON___DOUBLE_SHOT___GRADE_2                                         (Component.FRAGMENT_CANNON                         , Modification.DOUBLE_SHOT                             , 2, new IngredientsBuilder().add(Item.CARBON, 1).add(Item.MECHANICAL_EQUIPMENT, 1).add(Item.MICRO_CONTROLLERS, 1).build(), new EngineersBuilder().add(Engineer.TOD_THE_BLASTER_MCQUINN).add(Engineer.ZACARIAH_NEMO).build()),
     FRAGMENT_CANNON___DOUBLE_SHOT___GRADE_3                                         (Component.FRAGMENT_CANNON                         , Modification.DOUBLE_SHOT                             , 3, new IngredientsBuilder().add(Item.CARBON, 1).add(Item.CRACKED_INDUSTRIAL_FIRMWARE, 1).add(Item.MECHANICAL_EQUIPMENT, 1).add(Item.OSMIUM, 1).build(), new EngineersBuilder().add(Engineer.TOD_THE_BLASTER_MCQUINN).add(Engineer.ZACARIAH_NEMO).build()),
     FRAGMENT_CANNON___DOUBLE_SHOT___GRADE_4                                         (Component.FRAGMENT_CANNON                         , Modification.DOUBLE_SHOT                             , 4, new IngredientsBuilder().add(Item.MECHANICAL_COMPONENTS, 1).add(Item.SECURITY_FIRMWARE_PATCH, 1).add(Item.VANADIUM, 1).add(Item.OSMIUM, 1).build(), new EngineersBuilder().add(Engineer.ZACARIAH_NEMO).build()),
-    FRAGMENT_CANNON___DOUBLE_SHOT___GRADE_5                                         (Component.FRAGMENT_CANNON                         , Modification.DOUBLE_SHOT                             , 5, new IngredientsBuilder().build(), new EngineersBuilder().add(Engineer.ZACARIAH_NEMO).build()),
     FRAGMENT_CANNON___EFFICIENT_WEAPON___GRADE_1                                    (Component.FRAGMENT_CANNON                         , Modification.EFFICIENT_WEAPON                        , 1, new IngredientsBuilder().add(Item.SULPHUR, 1).build(), new EngineersBuilder().add(Engineer.TOD_THE_BLASTER_MCQUINN).add(Engineer.ZACARIAH_NEMO).build()),
     FRAGMENT_CANNON___EFFICIENT_WEAPON___GRADE_2                                    (Component.FRAGMENT_CANNON                         , Modification.EFFICIENT_WEAPON                        , 2, new IngredientsBuilder().add(Item.HEAT_DISPERSION_PLATE, 1).add(Item.SULPHUR, 1).add(Item.MICROWEAVE_COOLING_HOSES, 1).build(), new EngineersBuilder().add(Engineer.TOD_THE_BLASTER_MCQUINN).add(Engineer.ZACARIAH_NEMO).build()),
     FRAGMENT_CANNON___EFFICIENT_WEAPON___GRADE_3                                    (Component.FRAGMENT_CANNON                         , Modification.EFFICIENT_WEAPON                        , 3, new IngredientsBuilder().add(Item.CHROMIUM, 1).add(Item.EXCEPTIONAL_SCRAMBLED_EMISSION_DATA, 1).add(Item.HEAT_EXCHANGERS, 1).add(Item.SAMARIUM, 1).build(), new EngineersBuilder().add(Engineer.TOD_THE_BLASTER_MCQUINN).add(Engineer.ZACARIAH_NEMO).build()),
@@ -683,6 +682,11 @@ public enum Blueprint {
         this.grade = grade;
         this.ingredients = ingredients;
         this.engineers = engineers;
+    }
+
+    @Override
+    public String toString() {
+        return this.getComponent().getName()+" - "+this.getModification().getName()+ " Grade "+this.getGrade();
     }
 
     public Component getComponent() {

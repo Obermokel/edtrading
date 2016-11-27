@@ -100,7 +100,7 @@ public enum Item {
 
     // DATA
     ABERRANT_SHIELD_PATTERN_ANALYSIS                  ("Aberrant Shield Pattern Analysis"                , "shieldpatternanalysis"                           , ItemType.DATA            , 1),
-    ABNORMAL_COMPACT_EMISSION_DATA                    ("Abnormal Compact Emission Data"                  , "compactemissionsdata"                            , ItemType.DATA            , 2),
+    ABNORMAL_COMPACT_EMISSION_DATA                    ("Abnormal Compact Emissions Data"                 , "compactemissionsdata"                            , ItemType.DATA            , 2),
     ADAPTIVE_ENCRYPTORS_CAPTURE                       ("Adaptive Encryptors Capture"                     , "adaptiveencryptors"                              , ItemType.DATA            , 2),
     ANOMALOUS_BULK_SCAN_DATA                          ("Anomalous Bulk Scan Data"                        , "bulkscandata"                                    , ItemType.DATA            , -2),
     ANOMALOUS_FSD_TELEMETRY                           ("Anomalous FSD Telemetry"                         , "fsdtelemetry"                                    , ItemType.DATA            , -1),
@@ -208,10 +208,10 @@ public enum Item {
             typeList.add(item);
             ITEMS_BY_TYPE.put(item.getType(), typeList);
 
-            ITEM_BY_NAME.put(item.getName(), item);
+            ITEM_BY_NAME.put(item.getName().toUpperCase(), item);
 
             if (item.getJournalName() != null) {
-                ITEM_BY_JOURNALNAME.put(item.getJournalName(), item);
+                ITEM_BY_JOURNALNAME.put(item.getJournalName().toLowerCase(), item);
             } else {
                 Logger.warn("Unknown journal name: " + item);
             }
@@ -242,11 +242,11 @@ public enum Item {
     }
 
     public static Item byName(String name) {
-        return ITEM_BY_NAME.get(name);
+        return ITEM_BY_NAME.get(name.toUpperCase().replace("ABBERANT", "ABERRANT"));
     }
 
     public static Item byJournalName(String journalName) {
-        return ITEM_BY_JOURNALNAME.get(journalName);
+        return ITEM_BY_JOURNALNAME.get(journalName.toLowerCase());
     }
 
     public static Item findBestMatching(String name, ItemType type) {

@@ -3,6 +3,7 @@ package borg.edtrading.sidepanel;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.journal.Event;
+import borg.edtrading.journal.Journal;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.journal.JournalUpdateListener;
 import borg.edtrading.journal.NameCount;
@@ -67,6 +68,22 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         }
     }
 
+    public Inventory(String commander, Journal journal) throws IOException {
+        this.setCommander(commander);
+        this.offsetByName.put(this.getCommander(), new TreeMap<>());
+        this.haveByName.put(this.getCommander(), new TreeMap<>());
+        this.collectedByName.put(this.getCommander(), new TreeMap<>());
+        this.discardedByName.put(this.getCommander(), new TreeMap<>());
+        this.spentByName.put(this.getCommander(), new TreeMap<>());
+        this.priorityByName.put(this.getCommander(), new TreeMap<>());
+        this.surplusByName.put(this.getCommander(), new TreeMap<>());
+        this.requiredByName.put(this.getCommander(), new TreeMap<>());
+        this.loadOffsets(this.getCommander());
+        for (AbstractJournalEntry entry : journal.getEntries()) {
+            this.onNewJournalEntry(entry);
+        }
+    }
+
     private void loadOffsets(String commander) throws IOException {
         File dir = new File(System.getProperty("user.home"), ".edsidepanel");
         if (!dir.exists()) {
@@ -79,8 +96,13 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
             String json = FileUtils.readFileToString(file, "UTF-8");
             TreeMap<String, Number> offsets = new Gson().fromJson(json, TreeMap.class);
             for (String name : offsets.keySet()) {
-                this.offsetByName.get(commander).put(name, offsets.get(name).intValue());
-                this.haveByName.get(commander).put(name, offsets.get(name).intValue());
+                String guessedName = guessName(name, null);
+                try {
+                    this.offsetByName.get(commander).put(guessedName, offsets.get(name).intValue());
+                    this.haveByName.get(commander).put(guessedName, offsets.get(name).intValue());
+                } catch (Exception e) {
+                    logger.error("Failed to load offset for " + name + " (" + guessedName + ")", e);
+                }
             }
         }
     }
@@ -167,9 +189,9 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     }
 
     /**
-     * -1% = Useless weight...<br>
+     * -100% = Useless weight...<br>
      * 0% = Normal stuff<br>
-     * +1% = WANT IT!!!
+     * +100% = WANT IT!!!
      */
     public float getPriority(String name) {
         return this.priorityByName.get(this.getCommander()).getOrDefault(name, 0f);
@@ -356,7 +378,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         this.setCargoCapacity(newShip == null ? 0 : newShip.getCargoCapacity());
     }
 
-    synchronized void reset(String name, int count, ItemType type) {
+    public synchronized void reset(String name, int count, ItemType type) {
         String guessedName = guessName(name, type);
 
         this.haveByName.get(this.getCommander()).put(guessedName, count);
@@ -372,7 +394,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         }
     }
 
-    synchronized void collected(String name, int count, ItemType type) {
+    public synchronized void collected(String name, int count, ItemType type) {
         String guessedName = guessName(name, type);
 
         this.haveByName.get(this.getCommander()).put(guessedName, this.haveByName.get(this.getCommander()).getOrDefault(guessedName, 0) + count);
@@ -389,7 +411,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         }
     }
 
-    synchronized void discarded(String name, int count, ItemType type) {
+    public synchronized void discarded(String name, int count, ItemType type) {
         String guessedName = guessName(name, type);
 
         this.haveByName.get(this.getCommander()).put(guessedName, this.haveByName.get(this.getCommander()).getOrDefault(guessedName, 0) - count);
@@ -406,7 +428,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         }
     }
 
-    synchronized void spent(String name, int count, ItemType type) {
+    public synchronized void spent(String name, int count, ItemType type) {
         String guessedName = guessName(name, type);
 
         this.haveByName.get(this.getCommander()).put(guessedName, this.haveByName.get(this.getCommander()).getOrDefault(guessedName, 0) - count);
@@ -439,9 +461,9 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
 
         // Compute surplus
         int numHave = this.haveByName.get(this.getCommander()).getOrDefault(name, 0);
-        float normalizedPrio = (prio + 1f) / 2f; // -1% .. +1% -> 0% .. 1%
+        float normalizedPrio = (prio + 1f) / 2f; // -100% .. +100% -> 0% .. 100%
         int numKeep = 5 + Math.round(20 * normalizedPrio); // 5 .. 25
-        float discardPercent = 1f - normalizedPrio; // 0% .. 1% -> 1% .. 0%
+        float discardPercent = 1f - normalizedPrio; // 0% .. 100% -> 100% .. 0%
         int idealDiscard = Math.round(discardPercent * numHave);
         int maxDiscard = numHave - numKeep;
         int actualDiscard = Math.min(maxDiscard, idealDiscard);
@@ -453,10 +475,10 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     }
 
     private static String guessName(String name, ItemType type) {
-        Item item = Item.byName(name.toUpperCase());
+        Item item = Item.byName(name);
 
         if (item == null) {
-            item = Item.byJournalName(name.toLowerCase());
+            item = Item.byJournalName(name);
         }
 
         if (item != null) {
@@ -468,10 +490,10 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     }
 
     private static ItemType guessType(String name) {
-        Item item = Item.byName(name.toUpperCase());
+        Item item = Item.byName(name);
 
         if (item == null) {
-            item = Item.byJournalName(name.toLowerCase());
+            item = Item.byJournalName(name);
         }
 
         if (item != null) {

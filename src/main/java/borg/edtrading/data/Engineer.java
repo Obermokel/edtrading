@@ -40,6 +40,11 @@ public enum Engineer {
         this.base = base;
     }
 
+    @Override
+    public String toString() {
+        return this.getName();
+    }
+
     public String getName() {
         return this.name;
     }
