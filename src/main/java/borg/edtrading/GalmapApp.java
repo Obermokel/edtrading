@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import javax.imageio.ImageIO;
@@ -41,7 +42,8 @@ public class GalmapApp {
         float xmax = 0;
         float zmin = 0;
         float zmax = 0;
-        List<EddbBody> arrivalNeutronStars = eddbService.searchArrivalNeutronStars();
+        Map<String, Set<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
+        List<EddbBody> arrivalNeutronStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, "NS");
         Set<EddbSystem> systems = bodiesToSystems(arrivalNeutronStars);
         //Collection<StarSystem> systems = galaxy.getStarSystemsById().values();
         for (EddbSystem system : systems) {

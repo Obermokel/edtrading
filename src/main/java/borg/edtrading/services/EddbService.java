@@ -19,9 +19,9 @@ public interface EddbService {
 
     EddbSystem searchClosestSystemByCoord(Coord coord);
 
-    List<EddbBody> searchArrivalNeutronStars();
+    List<EddbBody> retainStarsOfSpectralClasses(Map<String, Set<EddbBody>> starsBySpectralClass, String... spectralClasses);
 
-    List<EddbBody> searchArrivalUnscoopableStars();
+    List<EddbBody> removeStarsOfSpectralClasses(Map<String, Set<EddbBody>> starsBySpectralClass, String... spectralClasses);
 
     Map<String, Set<EddbBody>> mapStarsBySpectralClass(boolean arrivalOnly);
 

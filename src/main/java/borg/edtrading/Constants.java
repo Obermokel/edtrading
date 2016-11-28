@@ -68,6 +68,6 @@ public interface Constants {
      * ==== OTHER ====
      */
 
-    Set<String> SCOOPABLE_SPECTRAL_CLASSES = new HashSet<>(Arrays.asList("O", "B", "A", "F", "G", "K", "M"));
+    Set<String> SCOOPABLE_SPECTRAL_CLASSES = new HashSet<>(Arrays.asList("O", "B", "A", "F", "G", "K", "K_RedGiant", "K_OrangeGiant", "M", "M_RedGiant", "M_OrangeGiant"));
 
 }

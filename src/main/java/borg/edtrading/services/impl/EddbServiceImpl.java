@@ -6,10 +6,11 @@ import borg.edtrading.eddb.data.EddbSystem;
 import borg.edtrading.eddb.repositories.EddbBodyRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.services.EddbService;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,8 +20,10 @@ import org.springframework.data.elasticsearch.core.query.SearchQuery;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -61,8 +64,13 @@ public class EddbServiceImpl implements EddbService {
         EddbSystem result = null;
         float closest = 999999f;
 
-        // TODO Optimize searchQuery to some 100 Ly
-        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices("eddb").withTypes("system").withPageable(new PageRequest(0, 1000)).build();
+        logger.debug("Searching closest system to " + coord);
+
+        double lookaround = 250.0;
+        RangeQueryBuilder rangeX = QueryBuilders.rangeQuery("x").from(coord.getX() - lookaround).to(coord.getX() + lookaround);
+        RangeQueryBuilder rangeY = QueryBuilders.rangeQuery("y").from(coord.getY() - lookaround).to(coord.getY() + lookaround);
+        RangeQueryBuilder rangeZ = QueryBuilders.rangeQuery("z").from(coord.getZ() - lookaround).to(coord.getZ() + lookaround);
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.boolQuery().must(rangeX).must(rangeY).must(rangeZ)).withIndices("eddb").withTypes("system").withPageable(new PageRequest(0, 1000)).build();
         String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
         boolean hasRecords = true;
         while (hasRecords) {
@@ -85,32 +93,30 @@ public class EddbServiceImpl implements EddbService {
     }
 
     @Override
-    public List<EddbBody> searchArrivalNeutronStars() {
-        Map<String, Set<EddbBody>> arrivalStarsBySpectralClass = this.mapStarsBySpectralClass(true);
-        Set<EddbBody> arrivalNeutronStars = arrivalStarsBySpectralClass.get("NS");
-        arrivalNeutronStars.addAll(this.findMappingProjectNeutronStars());
-        return new ArrayList<>(arrivalNeutronStars);
+    public List<EddbBody> retainStarsOfSpectralClasses(Map<String, Set<EddbBody>> starsBySpectralClass, String... spectralClasses) {
+        List<EddbBody> result = new ArrayList<>();
+
+        for (String spectralClass : spectralClasses) {
+            Set<EddbBody> stars = starsBySpectralClass.get(spectralClass);
+            if (stars != null) {
+                result.addAll(stars);
+            }
+        }
+
+        return result;
     }
 
     @Override
-    public List<EddbBody> searchArrivalUnscoopableStars() {
-        Map<String, Set<EddbBody>> arrivalStarsBySpectralClass = this.mapStarsBySpectralClass(true);
-        arrivalStarsBySpectralClass.remove("O");
-        arrivalStarsBySpectralClass.remove("B");
-        arrivalStarsBySpectralClass.remove("A");
-        arrivalStarsBySpectralClass.remove("F");
-        arrivalStarsBySpectralClass.remove("G");
-        arrivalStarsBySpectralClass.remove("K");
-        arrivalStarsBySpectralClass.remove("K_RedGiant");
-        arrivalStarsBySpectralClass.remove("K_OrangeGiant");
-        arrivalStarsBySpectralClass.remove("M");
-        arrivalStarsBySpectralClass.remove("M_RedGiant");
-        arrivalStarsBySpectralClass.remove("M_OrangeGiant");
-
+    public List<EddbBody> removeStarsOfSpectralClasses(Map<String, Set<EddbBody>> starsBySpectralClass, String... spectralClasses) {
         List<EddbBody> result = new ArrayList<>();
-        for (String unscoopableClass : arrivalStarsBySpectralClass.keySet()) {
-            result.addAll(arrivalStarsBySpectralClass.get(unscoopableClass));
+
+        Set<String> remove = new HashSet<>(Arrays.asList(spectralClasses));
+        for (String spectralClass : starsBySpectralClass.keySet()) {
+            if (!remove.contains(spectralClass)) {
+                result.addAll(starsBySpectralClass.get(spectralClass));
+            }
         }
+
         return result;
     }
 
@@ -118,32 +124,40 @@ public class EddbServiceImpl implements EddbService {
     public Map<String, Set<EddbBody>> mapStarsBySpectralClass(boolean arrivalOnly) {
         Map<String, Set<EddbBody>> result = new TreeMap<>();
 
-        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices("eddb").withTypes("body").withPageable(new PageRequest(0, 1000)).build();
+        BoolQueryBuilder combinedQuery = QueryBuilders.boolQuery();
+        if (arrivalOnly) {
+            combinedQuery.must(QueryBuilders.termQuery("isMainStar", true));
+        }
+        BoolQueryBuilder isStarQuery = QueryBuilders.boolQuery();
+        isStarQuery.should(QueryBuilders.existsQuery("spectralClass"));
+        isStarQuery.should(QueryBuilders.rangeQuery("typeId").gte(1L).lte(3L)); // FIXME Relies on BH, SMBH and NS to be exactly those IDs...
+        combinedQuery.must(isStarQuery);
+
+        logger.debug("Mapping" + (arrivalOnly ? " arrival" : "") + " stars by spectral class");
+
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(combinedQuery).withIndices("eddb").withTypes("body").withPageable(new PageRequest(0, 1000)).build();
         String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
         boolean hasRecords = true;
         while (hasRecords) {
             Page<EddbBody> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbBody.class);
             if (page.hasContent()) {
                 for (EddbBody body : page.getContent()) {
-                    if (arrivalOnly && !Boolean.TRUE.equals(body.getIsMainStar())) {
-                        // Skip
-                    } else {
-                        String spectralClass = body.getSpectralClass();
-                        if (StringUtils.isEmpty(spectralClass)) {
-                            if (EddbBody.TYPE_ID_BLACK_HOLE.equals(body.getTypeId())) {
-                                spectralClass = "BH";
-                            } else if (EddbBody.TYPE_ID_SUPERMASSIVE_BLACK_HOLE.equals(body.getTypeId())) {
-                                spectralClass = "SMBH";
-                            } else if (EddbBody.TYPE_ID_NEUTRON_STAR.equals(body.getTypeId())) {
-                                spectralClass = "NS";
-                            }
-                        }
-                        if (StringUtils.isNotEmpty(spectralClass)) {
-                            Set<EddbBody> stars = result.getOrDefault(spectralClass, new HashSet<>());
-                            stars.add(body);
-                            result.put(spectralClass, stars);
+                    String spectralClass = body.getSpectralClass();
+                    if (spectralClass == null) {
+                        if (EddbBody.TYPE_ID_BLACK_HOLE.equals(body.getTypeId())) {
+                            spectralClass = "BH";
+                        } else if (EddbBody.TYPE_ID_SUPERMASSIVE_BLACK_HOLE.equals(body.getTypeId())) {
+                            spectralClass = "SMBH";
+                        } else if (EddbBody.TYPE_ID_NEUTRON_STAR.equals(body.getTypeId())) {
+                            spectralClass = "NS";
                         }
                     }
+                    Set<EddbBody> stars = result.get(spectralClass);
+                    if (stars == null) {
+                        stars = new HashSet<>();
+                        result.put(spectralClass, stars);
+                    }
+                    stars.add(body);
                 }
             } else {
                 hasRecords = false;
@@ -151,12 +165,20 @@ public class EddbServiceImpl implements EddbService {
         }
         this.elasticsearchTemplate.clearScroll(scrollId);
 
+        if (logger.isDebugEnabled()) {
+            for (String spectralClass : result.keySet()) {
+                logger.debug(String.format(Locale.US, "%,11dx %s", result.get(spectralClass).size(), spectralClass));
+            }
+        }
+
         return result;
     }
 
     @Override
     public List<EddbSystem> loadAllSystems() {
         List<EddbSystem> result = new ArrayList<>();
+
+        logger.debug("Loading all systems");
 
         SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices("eddb").withTypes("system").withPageable(new PageRequest(0, 1000)).build();
         String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);

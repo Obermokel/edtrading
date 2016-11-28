@@ -90,8 +90,9 @@ public class NeutronJumpApp {
 
         // Try to find a route
         Map<String, Set<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
-        Set<EddbSystem> starSystemsWithNeutronStars = eddbService.searchArrivalNeutronStars().stream().map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toSet());
-        Set<EddbSystem> starSystemsWithUnscoopableStars = eddbService.searchArrivalUnscoopableStars().stream().map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toSet());
+        Set<EddbSystem> starSystemsWithNeutronStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, "NS").stream().map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toSet());
+        Set<EddbSystem> starSystemsWithUnscoopableStars = eddbService.removeStarsOfSpectralClasses(arrivalStarsBySpectralClass, Constants.SCOOPABLE_SPECTRAL_CLASSES.toArray(new String[0])).stream().map(b -> eddbSystemRepository.findOne(b.getSystemId()))
+                .collect(Collectors.toSet());
         Set<EddbSystem> starSystemsWithScoopableStars = new HashSet<>(eddbService.loadAllSystems());
         starSystemsWithScoopableStars.removeAll(starSystemsWithUnscoopableStars);
         starSystemsWithScoopableStars.add(fromSystem);
