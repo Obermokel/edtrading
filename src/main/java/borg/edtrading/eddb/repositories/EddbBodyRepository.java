@@ -14,4 +14,6 @@ public interface EddbBodyRepository extends ElasticsearchRepository<EddbBody, Lo
 
     Page<EddbBody> findByName(String name, Pageable pageable);
 
+    Page<EddbBody> findBySpectralClass(String spectralClass, Pageable pageable);
+
 }
