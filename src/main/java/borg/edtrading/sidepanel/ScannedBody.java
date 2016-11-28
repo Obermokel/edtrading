@@ -34,6 +34,7 @@ public class ScannedBody implements Serializable {
       PAYOUTS.put(                    "Class K_OrangeGiant", 2900);
       PAYOUTS.put(                                "Class M", (2898+2897+2895+2893)/4);//2898+2897+2895+2893
       PAYOUTS.put(                       "Class M_RedGiant", 2900);
+      PAYOUTS.put(                               "Class WC", 2900);
       PAYOUTS.put(                                "Class C", 2902);//2902
       PAYOUTS.put(                                "Class L", 2889);//2889
       PAYOUTS.put(                                "Class Y", 2882);//2882
@@ -106,6 +107,8 @@ public class ScannedBody implements Serializable {
                 return "T-Tauri star";
             } else if ("C".equals(e.getStarType())) {
                 return "Carbon star";
+            } else if ("WC".equals(e.getStarType())) {
+                return "Wolf-Rayet star";
             } else if ("L".equals(e.getStarType()) || "T".equals(e.getStarType()) || "Y".equals(e.getStarType())) {
                 return "Class " + e.getStarType() + " dwarf";
             } else if ("M_RedGiant".equals(e.getStarType()) || "K_RedGiant".equals(e.getStarType())) {
