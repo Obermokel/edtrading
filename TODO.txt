@@ -1,6 +1,7 @@
 TODO SidePanel:
 * Faction screenshot scan
 * Editable first discovery column
+* Stored modules: Own storage with module prices?
 * Mining mission commodities...
 - Save fuel level
 - Smaller size for raw table, bigger for data table, normal for manufactured and commodity
