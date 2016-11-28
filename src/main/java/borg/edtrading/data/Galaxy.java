@@ -48,8 +48,8 @@ public class Galaxy {
     //    private final Map<Long, Commodity> commoditiesById;
     private final Map<Long, StarSystem> starSystemsById;
     private final Map<Long, Body> bodiesById;
-    private final Map<Long, Faction> factionsById;
-    private final Map<Long, Station> stationsById;
+    //    private final Map<Long, Faction> factionsById;
+    //    private final Map<Long, Station> stationsById;
     //    private final Map<Long, List<Station>> stationsByStarSystemId;
     //    private final Map<Long, List<MarketEntry>> marketEntriesByStationId;
 
@@ -64,8 +64,8 @@ public class Galaxy {
     private Galaxy(Map<Long, StarSystem> starSystemsById, Map<Long, Body> bodiesById, Map<Long, Faction> factionsById, Map<Long, Station> stationsById) {
         this.starSystemsById = Collections.unmodifiableMap(starSystemsById);
         this.bodiesById = Collections.unmodifiableMap(bodiesById);
-        this.factionsById = Collections.unmodifiableMap(factionsById);
-        this.stationsById = Collections.unmodifiableMap(stationsById);
+        //        this.factionsById = Collections.unmodifiableMap(factionsById);
+        //        this.stationsById = Collections.unmodifiableMap(stationsById);
     }
 
     public static Galaxy readDataFromFiles() throws IOException {
@@ -78,15 +78,15 @@ public class Galaxy {
         //        Map<Long, Commodity> commoditiesById = readCommodities(gson);
         Map<Long, StarSystem> starSystemsById = readStarSystems(gson);
         Map<Long, Body> bodiesById = readBodies(gson, starSystemsById);
-        Map<Long, Faction> factionsById = readFactions(gson, starSystemsById);
-        Map<Long, Station> stationsById = readStations(gson, starSystemsById, factionsById);
+        //        Map<Long, Faction> factionsById = readFactions(gson, starSystemsById);
+        //        Map<Long, Station> stationsById = readStations(gson, starSystemsById, factionsById);
         //        Map<Long, List<MarketEntry>> marketEntriesByStationId = readMarketEntries(stationsById, commoditiesById);
         //        setSoldRaresForStations(rares, commoditiesById.values(), starSystemsById.values(), stationsByStarSystemId);
         long end = System.currentTimeMillis();
         logger.info("Loaded data in " + (end - start) + " ms");
 
         //        return new Galaxy(rares, commoditiesById, starSystemsById, stationsById, marketEntriesByStationId);
-        return new Galaxy(starSystemsById, bodiesById, factionsById, stationsById);
+        return new Galaxy(starSystemsById, bodiesById, null, null);
     }
 
     //    private static List<Rare> readRares() throws IOException {
@@ -283,13 +283,13 @@ public class Galaxy {
         return this.bodiesById;
     }
 
-    public Map<Long, Faction> getFactionsById() {
-        return this.factionsById;
-    }
+    //    public Map<Long, Faction> getFactionsById() {
+    //        return this.factionsById;
+    //    }
 
-    public Map<Long, Station> getStationsById() {
-        return this.stationsById;
-    }
+    //    public Map<Long, Station> getStationsById() {
+    //        return this.stationsById;
+    //    }
 
     //    public Map<Long, Station> getStationsById() {
     //        return this.stationsById;

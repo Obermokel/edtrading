@@ -54,21 +54,21 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        final String fromName = "Sol";
-        final String toName = "Colonia";
+        final String fromName = "Eafots BP-I d9-35";
+        final String toName = "Altair";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
 
-        //        // Anaconda
-        //        final int maxFuelTons = 96;
+        // Anaconda
+        final int maxFuelTons = 32;
+        final float maxFuelPerJump = 8.32f;
+        final float jumpRangeFuelFull = 46.06f;
+        final float jumpRangeFuelOpt = 47.60f;
+        //        // Beluga
+        //        final int maxFuelTons = 64;
         //        final float maxFuelPerJump = 8.32f;
-        //        final float jumpRangeFuelFull = 47.80f;
-        //        final float jumpRangeFuelOpt = 54.53f;
-        // Beluga
-        final int maxFuelTons = 128;
-        final float maxFuelPerJump = 13.1f;
-        final float jumpRangeFuelFull = 30.75f;
-        final float jumpRangeFuelOpt = 33.11f;
+        //        final float jumpRangeFuelFull = 47.22f;
+        //        final float jumpRangeFuelOpt = 51.22f;
 
         final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
 
