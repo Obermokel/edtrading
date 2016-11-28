@@ -1,16 +1,20 @@
 package borg.edtrading.eddb.data;
 
 import com.google.gson.annotations.SerializedName;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
 
 /**
  * EddbCommodity
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
+@Document(indexName = "eddb", type = "commodity")
 public class EddbCommodity implements EddbEntity {
 
     private static final long serialVersionUID = 5729070143960340119L;
 
+    @Id
     @SerializedName("id")
     private Long id = null;
     @SerializedName("name")
@@ -22,7 +26,7 @@ public class EddbCommodity implements EddbEntity {
     @SerializedName("category_id")
     private Long categoryId = null;
     @SerializedName("category")
-    private Category category = null;
+    private EddbCommodityCategory category = null;
 
     @Override
     public boolean equals(Object obj) {
@@ -97,18 +101,20 @@ public class EddbCommodity implements EddbEntity {
         this.categoryId = categoryId;
     }
 
-    public Category getCategory() {
+    public EddbCommodityCategory getCategory() {
         return this.category;
     }
 
-    public void setCategory(Category category) {
+    public void setCategory(EddbCommodityCategory category) {
         this.category = category;
     }
 
-    public static class Category implements EddbEntity {
+    @Document(indexName = "eddb", type = "commodityCategory")
+    public static class EddbCommodityCategory implements EddbEntity {
 
         private static final long serialVersionUID = -8865236596300999299L;
 
+        @Id
         @SerializedName("id")
         private Long id = null;
         @SerializedName("name")
@@ -125,7 +131,7 @@ public class EddbCommodity implements EddbEntity {
             if (this.getClass() != obj.getClass()) {
                 return false;
             }
-            Category other = (Category) obj;
+            EddbCommodityCategory other = (EddbCommodityCategory) obj;
             if (this.id == null) {
                 if (other.id != null) {
                     return false;

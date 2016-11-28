@@ -1,6 +1,8 @@
 package borg.edtrading.eddb.data;
 
 import com.google.gson.annotations.SerializedName;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
 
 import java.util.Date;
 
@@ -9,6 +11,7 @@ import java.util.Date;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
+@Document(indexName = "eddb", type = "faction")
 public class EddbFaction implements EddbEntity {
 
     private static final long serialVersionUID = -243465206806544150L;
@@ -23,6 +26,7 @@ public class EddbFaction implements EddbEntity {
         this.homeSystem = homeSystem;
     }
 
+    @Id
     @SerializedName("id")
     private Long id = null;
     @SerializedName("updated_at")

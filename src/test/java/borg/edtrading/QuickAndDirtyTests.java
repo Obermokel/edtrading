@@ -1,7 +1,10 @@
 package borg.edtrading;
 
+import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.data.domain.PageRequest;
 
 /**
  * QuickAndDirtyTests
@@ -13,6 +16,17 @@ public class QuickAndDirtyTests {
     static final Logger logger = LogManager.getLogger(QuickAndDirtyTests.class);
 
     public static void main(String[] args) throws Exception {
+        AnnotationConfigApplicationContext appctx = new AnnotationConfigApplicationContext(Config.class);
+        try {
+            EddbSystemRepository repo = appctx.getBean(EddbSystemRepository.class);
+            logger.info("Federation:   " + repo.findByAllegiance("Federation", new PageRequest(0, 10)).getTotalElements());
+            logger.info("Empire:       " + repo.findByAllegiance("Empire", new PageRequest(0, 10)).getTotalElements());
+            logger.info("Alliance:     " + repo.findByAllegiance("Alliance", new PageRequest(0, 10)).getTotalElements());
+            logger.info("Independent:  " + repo.findByAllegiance("Independent", new PageRequest(0, 10)).getTotalElements());
+            logger.info("None:         " + repo.findByAllegiance(null, new PageRequest(0, 10)).getTotalElements());
+        } finally {
+            appctx.close();
+        }
         //        Galaxy galaxy = Galaxy.readDataFromFiles();
         //        StarSystem sol = galaxy.searchStarSystemByName("Sol");
         //        Map<Long, List<Station>> stationsBySystem = galaxy.getStationsById().values().stream().collect(Collectors.groupingBy(Station::getStarSystemId));

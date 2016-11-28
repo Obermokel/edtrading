@@ -2,6 +2,10 @@ package borg.edtrading.eddb.data;
 
 import borg.edtrading.data.Coord;
 import com.google.gson.annotations.SerializedName;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -14,6 +18,7 @@ import java.util.List;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
+@Document(indexName = "eddb", type = "system")
 public class EddbSystem implements EddbEntity {
 
     private static final long serialVersionUID = -2929675737765201360L;
@@ -37,6 +42,7 @@ public class EddbSystem implements EddbEntity {
         this.distanceFromSol = distanceFromSol;
     }
 
+    @Id
     @SerializedName("id")
     private Long id = null;
     @SerializedName("updated_at")
@@ -53,6 +59,7 @@ public class EddbSystem implements EddbEntity {
     private Float y = null;
     @SerializedName("z")
     private Float z = null;
+    @Field(type = FieldType.Long)
     @SerializedName("population")
     private BigDecimal population = null;
     @SerializedName("is_populated")

@@ -1,6 +1,10 @@
 package borg.edtrading.eddb.data;
 
 import com.google.gson.annotations.SerializedName;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -13,6 +17,7 @@ import java.util.List;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
+@Document(indexName = "eddb", type = "body")
 public class EddbBody implements EddbEntity {
 
     private static final long serialVersionUID = -785705194031217696L;
@@ -27,6 +32,7 @@ public class EddbBody implements EddbEntity {
         this.system = system;
     }
 
+    @Id
     @SerializedName("id")
     private Long id = null;
     @SerializedName("created_at")
@@ -45,6 +51,7 @@ public class EddbBody implements EddbEntity {
     private Long typeId = null;
     @SerializedName("type_name")
     private String typeName = null;
+    @Field(type = FieldType.Double)
     @SerializedName("distance_to_arrival")
     private BigDecimal distanceToArrival = null;
     @SerializedName("full_spectral_class")
@@ -57,14 +64,18 @@ public class EddbBody implements EddbEntity {
     private String luminosityClass = null;
     @SerializedName("luminosity_sub_class")
     private String luminositySubClass = null;
+    @Field(type = FieldType.Double)
     @SerializedName("surface_temperature")
     private BigDecimal surfaceTemperature = null;
     @SerializedName("is_main_star")
     private Boolean isMainStar = null;
+    @Field(type = FieldType.Double)
     @SerializedName("age")
     private BigDecimal age = null;
+    @Field(type = FieldType.Double)
     @SerializedName("solar_masses")
     private BigDecimal solarMasses = null;
+    @Field(type = FieldType.Double)
     @SerializedName("solar_radius")
     private BigDecimal solarRadius = null;
     @SerializedName("catalogue_gliese_id")
@@ -85,36 +96,48 @@ public class EddbBody implements EddbEntity {
     private Long terraformingStateId = null;
     @SerializedName("terraforming_state_name")
     private String terraformingStateName = null;
+    @Field(type = FieldType.Double)
     @SerializedName("earth_masses")
     private BigDecimal earthMasses = null;
+    @Field(type = FieldType.Double)
     @SerializedName("radius")
     private BigDecimal radius = null;
+    @Field(type = FieldType.Double)
     @SerializedName("gravity")
     private BigDecimal gravity = null;
+    @Field(type = FieldType.Double)
     @SerializedName("surface_pressure")
     private BigDecimal surfacePressure = null;
+    @Field(type = FieldType.Double)
     @SerializedName("orbital_period")
     private BigDecimal orbitalPeriod = null;
+    @Field(type = FieldType.Double)
     @SerializedName("semi_major_axis")
     private BigDecimal semiMajorAxis = null;
+    @Field(type = FieldType.Double)
     @SerializedName("orbital_eccentricity")
     private BigDecimal orbitalEccentricity = null;
+    @Field(type = FieldType.Double)
     @SerializedName("orbital_inclination")
     private BigDecimal orbitalInclination = null;
+    @Field(type = FieldType.Double)
     @SerializedName("arg_of_periapsis")
     private BigDecimal argOfPeriapsis = null;
+    @Field(type = FieldType.Double)
     @SerializedName("rotational_period")
     private BigDecimal rotationalPeriod = null;
     @SerializedName("is_rotational_period_tidally_locked")
     private Boolean isRotationalPeriodTidallyLocked = null;
+    @Field(type = FieldType.Double)
     @SerializedName("axis_tilt")
     private BigDecimal axisTilt = null;
     @SerializedName("eg_id")
     private Long egId = null;
+    @Field(type = FieldType.Double)
     @SerializedName("belt_moon_masses")
     private BigDecimal beltMoonMasses = null;
     @SerializedName("rings")
-    private List<Ring> rings = null;
+    private List<EddbRing> rings = null;
     @SerializedName("atmosphere_composition")
     private List<AtmosphereShare> atmosphereComposition = null;
     @SerializedName("solid_composition")
@@ -501,11 +524,11 @@ public class EddbBody implements EddbEntity {
         this.beltMoonMasses = beltMoonMasses;
     }
 
-    public List<Ring> getRings() {
+    public List<EddbRing> getRings() {
         return this.rings;
     }
 
-    public void setRings(List<Ring> rings) {
+    public void setRings(List<EddbRing> rings) {
         if (rings == null || rings.isEmpty()) {
             this.rings = null;
         } else {
@@ -557,10 +580,12 @@ public class EddbBody implements EddbEntity {
         this.isLandable = isLandable;
     }
 
-    public static class Ring implements EddbEntity {
+    @Document(indexName = "eddb", type = "ring")
+    public static class EddbRing implements EddbEntity {
 
         private static final long serialVersionUID = 318036112349197244L;
 
+        @Id
         @SerializedName("id")
         private Long id = null;
         @SerializedName("created_at")
@@ -573,12 +598,16 @@ public class EddbBody implements EddbEntity {
         private Long ringTypeId = null;
         @SerializedName("ring_type_name")
         private String ringTypeName = null;
+        @Field(type = FieldType.Double)
         @SerializedName("semi_major_axis")
         private BigDecimal semiMajorAxis = null;
+        @Field(type = FieldType.Double)
         @SerializedName("ring_mass")
         private BigDecimal ringMass = null;
+        @Field(type = FieldType.Double)
         @SerializedName("ring_inner_radius")
         private BigDecimal ringInnerRadius = null;
+        @Field(type = FieldType.Double)
         @SerializedName("ring_outer_radius")
         private BigDecimal ringOuterRadius = null;
 
@@ -593,7 +622,7 @@ public class EddbBody implements EddbEntity {
             if (this.getClass() != obj.getClass()) {
                 return false;
             }
-            Ring other = (Ring) obj;
+            EddbRing other = (EddbRing) obj;
             if (this.id == null) {
                 if (other.id != null) {
                     return false;

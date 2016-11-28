@@ -1,16 +1,20 @@
 package borg.edtrading.eddb.data;
 
 import com.google.gson.annotations.SerializedName;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
 
 /**
  * EddbModule
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
+@Document(indexName = "eddb", type = "module")
 public class EddbModule implements EddbEntity {
 
     private static final long serialVersionUID = 6837140492504224340L;
 
+    @Id
     @SerializedName("id")
     private Long id = null;
     @SerializedName("name")
@@ -36,7 +40,7 @@ public class EddbModule implements EddbEntity {
     @SerializedName("group_id")
     private Long groupId = null;
     @SerializedName("group")
-    private Group group = null;
+    private EddbModuleGroup group = null;
 
     @Override
     public boolean equals(Object obj) {
@@ -167,18 +171,20 @@ public class EddbModule implements EddbEntity {
         this.groupId = groupId;
     }
 
-    public Group getGroup() {
+    public EddbModuleGroup getGroup() {
         return this.group;
     }
 
-    public void setGroup(Group group) {
+    public void setGroup(EddbModuleGroup group) {
         this.group = group;
     }
 
-    public static class Group implements EddbEntity {
+    @Document(indexName = "eddb", type = "moduleGroup")
+    public static class EddbModuleGroup implements EddbEntity {
 
         private static final long serialVersionUID = 7405734738160782320L;
 
+        @Id
         @SerializedName("id")
         private Long id = null;
         @SerializedName("name")
@@ -199,7 +205,7 @@ public class EddbModule implements EddbEntity {
             if (this.getClass() != obj.getClass()) {
                 return false;
             }
-            Group other = (Group) obj;
+            EddbModuleGroup other = (EddbModuleGroup) obj;
             if (this.id == null) {
                 if (other.id != null) {
                     return false;

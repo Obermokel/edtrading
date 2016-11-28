@@ -1,6 +1,8 @@
 package borg.edtrading.eddb.data;
 
 import com.google.gson.annotations.SerializedName;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
 
 import java.util.Date;
 
@@ -9,10 +11,12 @@ import java.util.Date;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
+@Document(indexName = "eddb", type = "marketEntry")
 public class EddbMarketEntry implements EddbEntity {
 
     private static final long serialVersionUID = -9190337609843319285L;
 
+    @Id
     @SerializedName("id")
     private Long id = null;
     @SerializedName("station_id")

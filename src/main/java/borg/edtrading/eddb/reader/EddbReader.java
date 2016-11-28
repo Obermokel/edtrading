@@ -1,15 +1,19 @@
 package borg.edtrading.eddb.reader;
 
-import borg.edtrading.data.Coord;
+import borg.edtrading.Config;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbCommodity;
 import borg.edtrading.eddb.data.EddbData;
 import borg.edtrading.eddb.data.EddbEntity;
 import borg.edtrading.eddb.data.EddbFaction;
-import borg.edtrading.eddb.data.EddbMarketEntry;
-import borg.edtrading.eddb.data.EddbModule;
 import borg.edtrading.eddb.data.EddbStation;
 import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.eddb.repositories.EddbBodyRepository;
+import borg.edtrading.eddb.repositories.EddbCommodityRepository;
+import borg.edtrading.eddb.repositories.EddbFactionRepository;
+import borg.edtrading.eddb.repositories.EddbMarketEntryRepository;
+import borg.edtrading.eddb.repositories.EddbStationRepository;
+import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.json.BooleanDigitDeserializer;
 import borg.edtrading.json.SecondsSinceEpochDeserializer;
 import com.google.gson.Gson;
@@ -22,6 +26,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,13 +40,14 @@ import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -52,80 +59,101 @@ public class EddbReader {
 
     static final Logger logger = LogManager.getLogger(EddbReader.class);
 
-    public static void main(String[] args) throws IOException {
-        read();
-    }
+    private static final File BASE_DIR = new File(System.getProperty("user.home"), ".eddbdata");
 
-    public static EddbData read() throws IOException {
+    private final AnnotationConfigApplicationContext appctx = new AnnotationConfigApplicationContext(Config.class);
+
+    public EddbData read() throws IOException {
+        if (!BASE_DIR.exists()) {
+            BASE_DIR.mkdirs();
+        }
+
         long downloadStart = System.currentTimeMillis();
-        File commoditiesFile = downloadIfUpdated("https://eddb.io/archive/v5/commodities.json");
-        File modulesFile = downloadIfUpdated("https://eddb.io/archive/v5/modules.json");
-        File marketEntriesFile = downloadIfUpdated("https://eddb.io/archive/v5/listings.csv");
-        File systemsFile = downloadIfUpdated("https://eddb.io/archive/v5/systems.csv");
-        File systemsPopulatedFile = downloadIfUpdated("https://eddb.io/archive/v5/systems_populated.json");
-        File bodiesFile = downloadIfUpdated("https://eddb.io/archive/v5/bodies.json");
-        File stationsFile = downloadIfUpdated("https://eddb.io/archive/v5/stations.json");
-        File factionsFile = downloadIfUpdated("https://eddb.io/archive/v5/factions.json");
+        File commoditiesFile = new File(BASE_DIR, "commodities.json");
+        if (this.downloadIfUpdated("https://eddb.io/archive/v5/commodities.json", commoditiesFile)) {
+            this.readJsonFileIntoRepo(commoditiesFile, EddbCommodity.class, this.appctx.getBean(EddbCommodityRepository.class));
+        }
+        File modulesFile = new File(BASE_DIR, "modules.json");
+        if (this.downloadIfUpdated("https://eddb.io/archive/v5/modules.json", modulesFile)) {
+            this.readJsonFileIntoRepo(modulesFile, EddbCommodity.class, this.appctx.getBean(EddbCommodityRepository.class));
+        }
+        File marketEntriesFile = new File(BASE_DIR, "listings.csv");
+        if (this.downloadIfUpdated("https://eddb.io/archive/v5/listings.csv", marketEntriesFile)) {
+            this.readCsvFileIntoRepo(marketEntriesFile, new EddbMarketEntryCsvRecordParser(), this.appctx.getBean(EddbMarketEntryRepository.class));
+        }
+        File systemsFile = new File(BASE_DIR, "systems.csv");
+        if (this.downloadIfUpdated("https://eddb.io/archive/v5/systems.csv", systemsFile)) {
+            this.readCsvFileIntoRepo(systemsFile, new EddbSystemCsvRecordParser(), this.appctx.getBean(EddbSystemRepository.class));
+        }
+        File systemsPopulatedFile = new File(BASE_DIR, "systems_populated.jsonl");
+        if (this.downloadIfUpdated("https://eddb.io/archive/v5/systems_populated.jsonl", systemsPopulatedFile)) {
+            this.readJsonFileIntoRepo(systemsPopulatedFile, EddbSystem.class, this.appctx.getBean(EddbSystemRepository.class));
+        }
+        File bodiesFile = new File(BASE_DIR, "bodies.jsonl");
+        if (this.downloadIfUpdated("https://eddb.io/archive/v5/bodies.jsonl", bodiesFile)) {
+            this.readJsonFileIntoRepo(bodiesFile, EddbBody.class, this.appctx.getBean(EddbBodyRepository.class));
+        }
+        File stationsFile = new File(BASE_DIR, "stations.jsonl");
+        if (this.downloadIfUpdated("https://eddb.io/archive/v5/stations.jsonl", stationsFile)) {
+            this.readJsonFileIntoRepo(stationsFile, EddbStation.class, this.appctx.getBean(EddbStationRepository.class));
+        }
+        File factionsFile = new File(BASE_DIR, "factions.jsonl");
+        if (this.downloadIfUpdated("https://eddb.io/archive/v5/factions.jsonl", factionsFile)) {
+            this.readJsonFileIntoRepo(factionsFile, EddbFaction.class, this.appctx.getBean(EddbFactionRepository.class));
+        }
         long downloadEnd = System.currentTimeMillis();
         logger.info("Downloaded data in " + DurationFormatUtils.formatDuration(downloadEnd - downloadStart, "H:mm:ss"));
 
-        long readStart = System.currentTimeMillis();
-        Map<Long, EddbCommodity> commoditiesById = readJsonFile(commoditiesFile, EddbCommodity.class);
-        Map<Long, EddbModule> modulesById = readJsonFile(modulesFile, EddbModule.class);
-        Map<Long, EddbMarketEntry> marketEntriesById = readCsvFile(marketEntriesFile, new EddbMarketEntryCsvRecordParser());
-        Map<Long, EddbSystem> systemsById = readCsvFile(systemsFile, new EddbSystemCsvRecordParser());
-        Map<Long, EddbSystem> systemsPopulatedById = readJsonFile(systemsPopulatedFile, EddbSystem.class);
-        Map<Long, EddbBody> bodiesById = readJsonFile(bodiesFile, EddbBody.class);
-        Map<Long, EddbStation> stationsById = readJsonFile(stationsFile, EddbStation.class);
-        Map<Long, EddbFaction> factionsById = readJsonFile(factionsFile, EddbFaction.class);
-        long readEnd = System.currentTimeMillis();
-        logger.info("Read data in " + DurationFormatUtils.formatDuration(readEnd - readStart, "H:mm:ss"));
-
-        logger.debug(String.format(Locale.US, "Raw data:\n%,11d commodities\n%,11d modules\n%,11d marketEntries\n%,11d systems\n%,11d systemsPopulated\n%,11d bodies\n%,11d stations\n%,11d factions", commoditiesById.size(), modulesById.size(),
-                marketEntriesById.size(), systemsById.size(), systemsPopulatedById.size(), bodiesById.size(), stationsById.size(), factionsById.size()));
-
-        long postprocessStart = System.currentTimeMillis();
-        systemsById.values().parallelStream().forEach(system -> {
-            system.setCoord(new Coord(system.getX(), system.getY(), system.getZ()));
-            system.setDistanceFromSol(system.getCoord().distanceToSol());
-        });
-        bodiesById.values().parallelStream().forEach(body -> {
-            body.setSystem(systemsById.get(body.getSystemId()));
-        });
-        stationsById.values().parallelStream().forEach(station -> {
-            station.setSystem(systemsById.get(station.getSystemId()));
-            station.setBody(bodiesById.get(station.getBodyId()));
-            station.setControllingMinorFaction(factionsById.get(station.getControllingMinorFactionId()));
-        });
-        factionsById.values().parallelStream().forEach(faction -> {
-            faction.setHomeSystem(systemsById.get(faction.getHomeSystemId()));
-        });
-        long postprocessEnd = System.currentTimeMillis();
-        logger.info("Post-processed data in " + DurationFormatUtils.formatDuration(postprocessEnd - postprocessStart, "H:mm:ss"));
-
-        return new EddbData(systemsById);
+        return null;
     }
 
-    private static <T extends EddbEntity> Map<Long, T> readCsvFile(File file, CSVRecordParser<T> csvRecordParser) throws IOException {
-        List<T> templist = new ArrayList<>();
+    private <T extends EddbEntity> Set<Long> readCsvFileIntoRepo(File file, CSVRecordParser<T> csvRecordParser, ElasticsearchRepository<T, Long> repo) throws IOException {
+        Set<Long> savedEntityIds = new HashSet<>();
+
+        final DateFormat dfEta = new SimpleDateFormat("MMM dd @ HH:mm", Locale.US);
+        final int batchSize = 1000;
+        final int total = this.countLines(file) - 1;
 
         logger.debug("Reading " + file.getName());
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"))) {
             Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(reader);
+
+            long startBatch = System.currentTimeMillis();
+            int n = 0;
+            List<T> batch = new ArrayList<>(batchSize);
             for (CSVRecord record : records) {
-                templist.add(csvRecordParser.parse(record));
+                batch.add(csvRecordParser.parse(record));
+                if (batch.size() >= batchSize) {
+                    for (T entity : repo.save(batch)) {
+                        savedEntityIds.add(entity.getId());
+                    }
+                    batch.clear();
+                }
+                if (++n % 100000 == 0) {
+                    long millis = System.currentTimeMillis() - startBatch;
+                    double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
+                    int entitiesRemaining = total - n;
+                    double secondsRemaining = entitiesRemaining / entitiesPerSec;
+                    Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
+                    logger.info(String.format(Locale.US, "Imported %,d of %,d %s (%.1f/sec) -- ETA %s", n, total, file.getName().substring(0, file.getName().lastIndexOf(".")), entitiesPerSec, dfEta.format(eta)));
+                    startBatch = System.currentTimeMillis();
+                }
             }
+            for (T entity : repo.save(batch)) {
+                savedEntityIds.add(entity.getId());
+            }
+            batch.clear();
         }
 
-        Map<Long, T> map = new HashMap<>(templist.size());
-        for (T t : templist) {
-            map.put(t.getId(), t);
-        }
-        return map;
+        return savedEntityIds;
     }
 
-    private static <T extends EddbEntity> Map<Long, T> readJsonFile(File file, Class<T> type) throws IOException {
-        ArrayList<T> templist = null;
+    private <T extends EddbEntity> Set<Long> readJsonFileIntoRepo(File file, Class<T> type, ElasticsearchRepository<T, Long> repo) throws IOException {
+        Set<Long> savedEntityIds = new HashSet<>();
+
+        final DateFormat dfEta = new SimpleDateFormat("MMM dd @ HH:mm", Locale.US);
+        final int batchSize = 1000;
+        final int total = this.countLines(file) - 1;
 
         //@formatter:off
         final Gson gson = new GsonBuilder()
@@ -140,53 +168,97 @@ public class EddbReader {
         logger.debug("Reading " + file.getName());
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"))) {
             if (file.getName().endsWith(".jsonl")) {
-                templist = new ArrayList<>();
+                long startBatch = System.currentTimeMillis();
+                int n = 0;
+                List<T> batch = new ArrayList<>(batchSize);
                 String line = reader.readLine();
                 while (line != null) {
                     try {
-                        templist.add(gson.fromJson(line, type));
+                        batch.add(gson.fromJson(line, type));
+                        if (batch.size() >= batchSize) {
+                            for (T entity : repo.save(batch)) {
+                                savedEntityIds.add(entity.getId());
+                            }
+                            batch.clear();
+                        }
+                        if (++n % 100000 == 0) {
+                            long millis = System.currentTimeMillis() - startBatch;
+                            double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
+                            int entitiesRemaining = total - n;
+                            double secondsRemaining = entitiesRemaining / entitiesPerSec;
+                            Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
+                            logger.info(String.format(Locale.US, "Imported %,d of %,d %ss (%.1f/sec) -- ETA %s", n, total, type.getSimpleName(), entitiesPerSec, dfEta.format(eta)));
+                            startBatch = System.currentTimeMillis();
+                        }
                     } catch (JsonSyntaxException e) {
                         logger.warn("Corrupt line in " + file + ": " + line, e);
                     }
                     line = reader.readLine();
                 }
-            } else {
-                T[] array = (T[]) gson.fromJson(reader, Array.newInstance(type, 0).getClass());
-                templist = new ArrayList<>(array.length);
-                for (T t : array) {
-                    templist.add(t);
+                for (T entity : repo.save(batch)) {
+                    savedEntityIds.add(entity.getId());
                 }
+                batch.clear();
+            } else {
+                T[] entities = (T[]) gson.fromJson(reader, Array.newInstance(type, 0).getClass());
+
+                long startBatch = System.currentTimeMillis();
+                int n = 0;
+                List<T> batch = new ArrayList<>(batchSize);
+                for (T loadedEntity : entities) {
+                    batch.add(loadedEntity);
+                    if (batch.size() >= batchSize) {
+                        for (T entity : repo.save(batch)) {
+                            savedEntityIds.add(entity.getId());
+                        }
+                        batch.clear();
+                    }
+                    if (++n % 100000 == 0) {
+                        long millis = System.currentTimeMillis() - startBatch;
+                        double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
+                        int entitiesRemaining = total - n;
+                        double secondsRemaining = entitiesRemaining / entitiesPerSec;
+                        Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
+                        logger.info(String.format(Locale.US, "Imported %,d of %,d %ss (%.1f/sec) -- ETA %s", n, total, type.getSimpleName(), entitiesPerSec, dfEta.format(eta)));
+                        startBatch = System.currentTimeMillis();
+                    }
+                }
+                for (T entity : repo.save(batch)) {
+                    savedEntityIds.add(entity.getId());
+                }
+                batch.clear();
             }
         }
 
-        Map<Long, T> map = new HashMap<>(templist.size());
-        for (T t : templist) {
-            map.put(t.getId(), t);
-        }
-        return map;
+        return savedEntityIds;
     }
 
-    private static File downloadIfUpdated(String url) throws IOException {
-        String filename = url.substring(url.lastIndexOf("/") + 1);
+    private int countLines(File file) throws IOException {
+        int total = 0;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"))) {
+            while (reader.readLine() != null) {
+                total++;
+            }
+        }
+        return total;
+    }
 
-        File baseDir = new File(System.getProperty("user.home"), ".eddbdata");
-        File backupDir = new File(baseDir, "backup");
+    private boolean downloadIfUpdated(String url, File file) throws IOException {
+        if (!file.exists() || headLastModified(url) > file.lastModified()) {
+            backup(file);
+            download(url, file);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private long backup(File sourceFile) throws IOException {
+        File backupDir = new File(BASE_DIR, "backup");
         if (!backupDir.exists()) {
             backupDir.mkdirs();
         }
-        File file = new File(baseDir, filename);
 
-        if (!file.exists() || headLastModified(url) > file.lastModified()) {
-            backup(file, backupDir);
-            download(url, file);
-        } else {
-            logger.debug(filename + " is up-to-date");
-        }
-
-        return file;
-    }
-
-    private static long backup(File sourceFile, File backupDir) throws IOException {
         InputStream in = null;
         ZipArchiveOutputStream out = null;
         try {
@@ -216,7 +288,7 @@ public class EddbReader {
         }
     }
 
-    private static long download(String url, File file) throws IOException {
+    private long download(String url, File file) throws IOException {
         HttpURLConnection conn = null;
         InputStream in = null;
         OutputStream out = null;
@@ -251,7 +323,7 @@ public class EddbReader {
         }
     }
 
-    private static long headLastModified(String url) throws IOException {
+    private long headLastModified(String url) throws IOException {
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(url).openConnection();
@@ -264,7 +336,7 @@ public class EddbReader {
         }
     }
 
-    private static long headContentLength(String url) throws IOException {
+    private long headContentLength(String url) throws IOException {
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(url).openConnection();
