@@ -1,8 +1,8 @@
 package borg.edtrading.gui;
 
 import borg.edtrading.aystar.Path;
-import borg.edtrading.data.Galaxy;
-import borg.edtrading.eddb.data.StarSystem;
+import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,19 +27,17 @@ public class RouteViewPanel extends JPanel {
     static final Logger logger = LogManager.getLogger(RouteViewPanel.class);
 
     // Constructor input
-    private final String viewName;
-    private final Galaxy galaxy;
-    private final StarSystem fromSystem;
-    private final StarSystem toSystem;
+    private final EddbSystemRepository repo;
+    private final EddbSystem fromSystem;
+    private final EddbSystem toSystem;
 
     // Updated at runtime
     private Path path = null;
 
-    public RouteViewPanel(String viewName, Galaxy galaxy, StarSystem fromSystem, StarSystem toSystem) {
+    public RouteViewPanel(EddbSystemRepository repo, EddbSystem fromSystem, EddbSystem toSystem) {
         this.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
-        this.viewName = viewName;
-        this.galaxy = galaxy;
+        this.repo = repo;
         this.fromSystem = fromSystem;
         this.toSystem = toSystem;
     }
@@ -67,8 +65,8 @@ public class RouteViewPanel extends JPanel {
         if (this.path != null) {
             Path p = this.path;
             while (p.getPrev() != null) {
-                StarSystem from = p.getPrev().getStarSystem(galaxy);
-                StarSystem to = p.getStarSystem(galaxy);
+                EddbSystem from = p.getPrev().getStarSystem(this.repo);
+                EddbSystem to = p.getStarSystem(this.repo);
                 g.drawString(String.format(Locale.US, "#%d: %s (+%.0f Ly) %s (=%.0f Ly)", p.getTotalJumps(), from.getName(), from.distanceTo(to), to.getName(), p.getTravelledDistanceLy()), x, y);
                 p = p.getPrev();
                 y += 12;

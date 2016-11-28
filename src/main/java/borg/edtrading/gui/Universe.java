@@ -1,8 +1,8 @@
 package borg.edtrading.gui;
 
 import borg.edtrading.data.Coord;
-import borg.edtrading.data.Galaxy;
-import borg.edtrading.eddb.data.Body;
+import borg.edtrading.eddb.data.EddbBody;
+import borg.edtrading.services.EddbService;
 import com.sun.j3d.utils.applet.MainFrame;
 import com.sun.j3d.utils.geometry.Sphere;
 import com.sun.j3d.utils.geometry.Text2D;
@@ -19,8 +19,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
@@ -43,14 +43,14 @@ public class Universe extends Applet implements KeyListener, ActionListener {
 
     static final Logger logger = LogManager.getLogger(Universe.class);
 
-    private final Galaxy galaxy;
+    private final EddbService eddbService;
     private float xloc = 0.0f;
     private float yloc = 0.0f;
     private TransformGroup objTrans;
     private Transform3D trans = new Transform3D();
 
-    public Universe(Galaxy galaxy) {
-        this.galaxy = galaxy;
+    public Universe(EddbService eddbService) {
+        this.eddbService = eddbService;
 
         this.setLayout(new BorderLayout());
 
@@ -77,7 +77,7 @@ public class Universe extends Applet implements KeyListener, ActionListener {
     }
 
     public static void main(String[] args) throws IOException {
-        Universe universe = new Universe(Galaxy.readDataFromFiles());
+        Universe universe = new Universe(null);
         universe.addKeyListener(universe);
         MainFrame mf = new MainFrame(universe, 256, 256);
     }
@@ -88,12 +88,12 @@ public class Universe extends Applet implements KeyListener, ActionListener {
         objTrans.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
         objRoot.addChild(objTrans);
 
-        List<Body> bodiesHavingSpectralClass = galaxy.getBodiesById().values().stream().filter(b -> b.getSpectral_class() != null).collect(Collectors.toList());
-        for (Body star : bodiesHavingSpectralClass) {
+        List<EddbBody> bodiesHavingSpectralClass = new ArrayList<>(); // TODO
+        for (EddbBody star : bodiesHavingSpectralClass) {
             //float radius = star.getSolar_radius() == null ? 1f : star.getSolar_radius().floatValue();
             float radius = 0.05f;
-            Coord coord = star.getStarSystem().getCoord();
-            Color3f color = spectralClassToEmissiveColor(star.getSpectral_class());
+            Coord coord = star.getSystem().getCoord();
+            Color3f color = spectralClassToEmissiveColor(star.getSpectralClass());
 
             TransformGroup tg = new TransformGroup();
             Transform3D transform = new Transform3D();

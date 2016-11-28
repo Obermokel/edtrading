@@ -3,19 +3,23 @@ package borg.edtrading;
 import borg.edtrading.aystar.AyStar;
 import borg.edtrading.aystar.Path;
 import borg.edtrading.data.Coord;
-import borg.edtrading.data.Galaxy;
-import borg.edtrading.eddb.data.Body;
-import borg.edtrading.eddb.data.StarSystem;
+import borg.edtrading.eddb.data.EddbBody;
+import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.eddb.repositories.EddbBodyRepository;
+import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.gui.PathViewPanel;
 import borg.edtrading.gui.RouteViewPanel;
 import borg.edtrading.journal.Journal;
 import borg.edtrading.journal.JournalReader;
+import borg.edtrading.services.EddbService;
 import borg.edtrading.util.FuelAndJumpRangeLookup;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.data.domain.PageRequest;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -23,10 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -47,8 +49,9 @@ public class NeutronJumpApp {
 
     static final Logger logger = LogManager.getLogger(NeutronJumpApp.class);
 
-    private static final Long TYPE_ID_NEUTRON_STAR = new Long(3);
     private static final File ROUTES_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Routes");
+
+    private static final AnnotationConfigApplicationContext APPCTX = new AnnotationConfigApplicationContext(Config.class);
 
     // Sol, Altair, Shinrarta Dezhra
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
@@ -72,66 +75,52 @@ public class NeutronJumpApp {
 
         final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
 
-        // Lookup source and destination
-        Galaxy galaxy = Galaxy.readDataFromFiles();
-        StarSystem fromSystem = galaxy.searchStarSystemByName(fromName);
-        StarSystem toSystem = galaxy.searchStarSystemByName(toName);
-        logger.debug(String.format("%s → %s: %.0f Ly", fromSystem.toString(), toSystem.toString(), fromSystem.distanceTo(toSystem)));
+        EddbService eddbService = APPCTX.getBean(EddbService.class);
+        EddbSystemRepository eddbSystemRepository = APPCTX.getBean(EddbSystemRepository.class);
+        EddbBodyRepository eddbBodyRepository = APPCTX.getBean(EddbBodyRepository.class);
 
-        //        StarSystem fromTemp = galaxy.searchStarSystemByName("Bleia Eohn QH-G b0");
-        //        StarSystem toTemp = galaxy.searchStarSystemByName("Swoiwns RF-D d13-7");
-        //        logger.debug(String.format("%s → %s: %.0f Ly", fromTemp.getName(), toTemp.getName(), fromTemp.distanceTo(toTemp)));
-        //
-        //        fromTemp = galaxy.searchStarSystemByName("Swoiwns RH-M c23-7");
-        //        toTemp = galaxy.searchStarSystemByName("Col 359 Sector QT-I d9-37");
-        //        logger.debug(String.format("%s → %s: %.0f Ly", fromTemp.getName(), toTemp.getName(), fromTemp.distanceTo(toTemp)));
-        //
-        //        fromTemp = galaxy.searchStarSystemByName("Col 359 Sector PW-Z b15-0");
-        //        toTemp = galaxy.searchStarSystemByName("PSR J1752-2806");
-        //        logger.debug(String.format("%s → %s: %.0f Ly", fromTemp.getName(), toTemp.getName(), fromTemp.distanceTo(toTemp)));
-        //
-        //        fromTemp = galaxy.searchStarSystemByName("Col 285 Sector YH-F b26-8");
-        //        toTemp = galaxy.searchStarSystemByName("Sol");
-        //        logger.debug(String.format("%s → %s: %.0f Ly", fromTemp.getName(), toTemp.getName(), fromTemp.distanceTo(toTemp)));
+        // Lookup source and destination
+        EddbSystem fromSystem = eddbService.searchSystemByName(fromName);
+        EddbSystem toSystem = eddbService.searchSystemByName(toName);
+        logger.debug(String.format("%s → %s: %.0f Ly", fromSystem.toString(), toSystem.toString(), fromSystem.distanceTo(toSystem)));
 
         // Write a simple waypoints file
         final String baseFilename = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss").format(new Date()) + " " + fromSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_") + " to " + toSystem.getName().replaceAll("[^\\w\\s\\-\\+\\.]", "_");
-        writeWaypointsFile(fromSystem, toSystem, galaxy);
+        writeWaypointsFile(fromSystem, toSystem, eddbService);
 
         // Try to find a route
-        List<Body> arrivalNeutronStars = findArrivalNeutronStars(galaxy.getBodiesById().values());
-        Set<StarSystem> starSystemsWithNeutronStars = bodiesToSystems(arrivalNeutronStars);
-        starSystemsWithNeutronStars.addAll(findMappingProjectNeutronStars(galaxy));
-        Set<StarSystem> starSystemsWithScoopableStars = new HashSet<>(galaxy.getStarSystemsById().values());
-        starSystemsWithScoopableStars.removeAll(starSystemsWithNeutronStars);
+        Map<String, Set<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
+        Set<EddbSystem> starSystemsWithNeutronStars = eddbService.searchArrivalNeutronStars().stream().map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toSet());
+        Set<EddbSystem> starSystemsWithUnscoopableStars = eddbService.searchArrivalUnscoopableStars().stream().map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toSet());
+        Set<EddbSystem> starSystemsWithScoopableStars = new HashSet<>(eddbService.loadAllSystems());
+        starSystemsWithScoopableStars.removeAll(starSystemsWithUnscoopableStars);
+        starSystemsWithScoopableStars.add(fromSystem);
         starSystemsWithScoopableStars.add(toSystem);
-        Map<String, Set<StarSystem>> systemsBySpectralClass = mapSystemsBySpectralClass(galaxy.getBodiesById().values());
         logger.debug("Total known neutron stars (EDDB + Mapping Project): " + starSystemsWithNeutronStars.size());
 
         JFrame frame = new JFrame("Route");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
-        //routeAndTopPanel.setPreferredSize(new Dimension(500, 500));
-        RouteViewPanel routeViewPanel = new RouteViewPanel("Route", galaxy, fromSystem, toSystem);
+        RouteViewPanel routeViewPanel = new RouteViewPanel(eddbSystemRepository, fromSystem, toSystem);
         c.gridx = 0;
         c.gridy = 0;
         c.gridwidth = 1;
         c.gridheight = 1;
         frame.add(routeViewPanel, c);
-        PathViewPanel topViewPanel = new PathViewPanel("Top view", galaxy, fromSystem, toSystem);
+        PathViewPanel topViewPanel = new PathViewPanel("Top view", eddbService, fromSystem, toSystem);
         c.gridx = 1;
         c.gridy = 0;
         c.gridwidth = 1;
         c.gridheight = 1;
         frame.add(topViewPanel, c);
-        PathViewPanel leftViewPanel = new PathViewPanel("Left view", galaxy, fromSystem, toSystem);
+        PathViewPanel leftViewPanel = new PathViewPanel("Left view", eddbService, fromSystem, toSystem);
         c.gridx = 0;
         c.gridy = 1;
         c.gridwidth = 2;
         c.gridheight = 1;
         frame.add(leftViewPanel, c);
-        PathViewPanel frontViewPanel = new PathViewPanel("Front view", galaxy, fromSystem, toSystem);
+        PathViewPanel frontViewPanel = new PathViewPanel("Front view", eddbService, fromSystem, toSystem);
         c.gridx = 0;
         c.gridy = 2;
         c.gridwidth = 2;
@@ -168,15 +157,15 @@ public class NeutronJumpApp {
         Journal journal = new Journal(new JournalReader().readEntireJournal(Constants.JOURNAL_DIR));
 
         // Write route as VoiceAttack TXT file
-        String route = routeToVoiceAttackTxt(sortedPaths, starSystemsWithNeutronStars, systemsBySpectralClass, galaxy, fuelJumpLUT, journal);
+        String route = routeToVoiceAttackTxt(sortedPaths, starSystemsWithNeutronStars, arrivalStarsBySpectralClass, eddbSystemRepository, eddbBodyRepository, fuelJumpLUT, journal);
         FileUtils.write(new File(ROUTES_DIR, baseFilename + " Route.txt"), route, "UTF-8");
 
         // Write route as human readable HTML file
-        String html = routeToHumanReadableHtml(sortedPaths, starSystemsWithNeutronStars, systemsBySpectralClass, galaxy, fuelJumpLUT, journal);
+        String html = routeToHumanReadableHtml(sortedPaths, starSystemsWithNeutronStars, arrivalStarsBySpectralClass, eddbSystemRepository, eddbBodyRepository, fuelJumpLUT, journal);
         FileUtils.write(new File(ROUTES_DIR, baseFilename + " Route.html"), html, "UTF-8");
     }
 
-    private static void writeWaypointsFile(StarSystem fromSystem, StarSystem toSystem, Galaxy galaxy) throws IOException {
+    private static void writeWaypointsFile(EddbSystem fromSystem, EddbSystem toSystem, EddbService eddbService) throws IOException {
         float directDistance = fromSystem.distanceTo(toSystem);
         if (directDistance > 999) {
             File waypointsFile = new File(ROUTES_DIR,
@@ -191,16 +180,17 @@ public class NeutronJumpApp {
             float stepZ = (toCoord.getZ() - fromCoord.getZ()) / waypointsNeeded;
             for (int wp = 1; wp <= waypointsNeeded; wp++) {
                 Coord coord = new Coord(fromCoord.getX() + wp * stepX, fromCoord.getY() + wp * stepY, fromCoord.getZ() + wp * stepZ);
-                StarSystem closestSystem = galaxy.searchClosestStarSystemByName(coord);
+                EddbSystem closestSystem = eddbService.searchClosestSystemByCoord(coord);
                 FileUtils.write(waypointsFile, String.format(Locale.US, "Waypoint %2d: %s\n", wp, closestSystem.getName()), "UTF-8", true);
             }
         }
     }
 
-    private static String routeToVoiceAttackTxt(List<Path> sortedPaths, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, Galaxy galaxy, FuelAndJumpRangeLookup fuelJumpLUT, Journal journal) {
+    private static String routeToVoiceAttackTxt(List<Path> sortedPaths, Set<EddbSystem> starSystemsWithNeutronStars, Map<String, Set<EddbBody>> arrivalStarsBySpectralClass, EddbSystemRepository repo, EddbBodyRepository bodyrepo,
+            FuelAndJumpRangeLookup fuelJumpLUT, Journal journal) {
         Date eddbDumpDate = new Date(Constants.BODIES_FILE.lastModified());
-        StarSystem fromSystem = sortedPaths.get(0).getStarSystem(galaxy);
-        StarSystem toSystem = sortedPaths.get(sortedPaths.size() - 1).getStarSystem(galaxy);
+        EddbSystem fromSystem = sortedPaths.get(0).getStarSystem(repo);
+        EddbSystem toSystem = sortedPaths.get(sortedPaths.size() - 1).getStarSystem(repo);
         String fromName = fromSystem.getName();
         String toName = toSystem.getName();
         float directDistance = fromSystem.distanceTo(toSystem);
@@ -218,15 +208,15 @@ public class NeutronJumpApp {
         LinkedList<String> lines = new LinkedList<>();
         for (int i = 0; i < sortedPaths.size(); i++) {
             Path currPath = sortedPaths.get(i);
-            StarSystem currSystem = currPath.getStarSystem(galaxy);
+            EddbSystem currSystem = currPath.getStarSystem(repo);
             String currName = currSystem.getName();
-            String currClass = lookupSpectralClass(currSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
+            String currClass = lookupSpectralClass(currSystem.getId(), arrivalStarsBySpectralClass);
             String currKnownCss = journal.getVisitedSystems().contains(currName) ? " known" : "";
             float jumpDistance = 0;
             String flags = "";
             if (prevPath != null) {
                 jumpNo++;
-                StarSystem prevSystem = prevPath.getStarSystem(galaxy);
+                EddbSystem prevSystem = prevPath.getStarSystem(repo);
                 jumpDistance = currSystem.distanceTo(prevSystem);
                 travelledLy += jumpDistance;
                 String neutronJumpCss = starSystemsWithNeutronStars.contains(prevSystem) ? "neutronJump" : "normalJump";
@@ -245,7 +235,7 @@ public class NeutronJumpApp {
                 }
                 String evenOddCss = jumpNo % 2 == 0 ? "even" : "odd";
                 String prevName = prevSystem.getName();
-                String prevClass = lookupSpectralClass(prevSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
+                String prevClass = lookupSpectralClass(prevSystem.getId(), arrivalStarsBySpectralClass);
                 String prevKnownCss = journal.getVisitedSystems().contains(prevName) ? " known" : "";
                 String notes = "";
                 if (plotRoute) {
@@ -262,10 +252,10 @@ public class NeutronJumpApp {
                     flags += "F";
                     notes += "<span class=\"fuelWarning\">" + String.format(Locale.US, "%.1ft", currPath.getFuelLevel()) + "</span>";
                 }
-                List<Body> valuableBodies = findValuableBodies(currSystem, galaxy);
+                List<EddbBody> valuableBodies = findValuableBodies(currSystem, bodyrepo);
                 if (valuableBodies.size() > 0) {
                     int unknown = 0;
-                    for (Body body : valuableBodies) {
+                    for (EddbBody body : valuableBodies) {
                         if (!journal.getScannedBodies().contains(body.getName())) {
                             unknown++;
                         }
@@ -286,12 +276,13 @@ public class NeutronJumpApp {
         return lines.stream().collect(Collectors.joining("\n"));
     }
 
-    private static String routeToHumanReadableHtml(List<Path> sortedPaths, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass, Galaxy galaxy, FuelAndJumpRangeLookup fuelJumpLUT, Journal journal) {
+    private static String routeToHumanReadableHtml(List<Path> sortedPaths, Set<EddbSystem> starSystemsWithNeutronStars, Map<String, Set<EddbBody>> arrivalStarsBySpectralClass, EddbSystemRepository repo, EddbBodyRepository bodyrepo,
+            FuelAndJumpRangeLookup fuelJumpLUT, Journal journal) {
         StringBuilder html = new StringBuilder();
 
         Date eddbDumpDate = new Date(Constants.BODIES_FILE.lastModified());
-        StarSystem fromSystem = sortedPaths.get(0).getStarSystem(galaxy);
-        StarSystem toSystem = sortedPaths.get(sortedPaths.size() - 1).getStarSystem(galaxy);
+        EddbSystem fromSystem = sortedPaths.get(0).getStarSystem(repo);
+        EddbSystem toSystem = sortedPaths.get(sortedPaths.size() - 1).getStarSystem(repo);
         String fromName = fromSystem.getName();
         String toName = toSystem.getName();
         float directDistance = fromSystem.distanceTo(toSystem);
@@ -334,8 +325,8 @@ public class NeutronJumpApp {
         for (Path currPath : sortedPaths) {
             if (prevPath != null) {
                 jumpNo++;
-                StarSystem prevSystem = prevPath.getStarSystem(galaxy);
-                StarSystem currSystem = currPath.getStarSystem(galaxy);
+                EddbSystem prevSystem = prevPath.getStarSystem(repo);
+                EddbSystem currSystem = currPath.getStarSystem(repo);
                 float jumpDistance = currSystem.distanceTo(prevSystem);
                 travelledLy += jumpDistance;
                 String neutronJumpCss = starSystemsWithNeutronStars.contains(prevSystem) ? "neutronJump" : "normalJump";
@@ -350,10 +341,10 @@ public class NeutronJumpApp {
                 }
                 String evenOddCss = jumpNo % 2 == 0 ? "even" : "odd";
                 String prevName = prevSystem.getName();
-                String prevClass = lookupSpectralClass(prevSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
+                String prevClass = lookupSpectralClass(prevSystem.getId(), arrivalStarsBySpectralClass);
                 String prevKnownCss = journal.getVisitedSystems().contains(prevName) ? " known" : "";
                 String currName = currSystem.getName();
-                String currClass = lookupSpectralClass(currSystem, starSystemsWithNeutronStars, systemsBySpectralClass);
+                String currClass = lookupSpectralClass(currSystem.getId(), arrivalStarsBySpectralClass);
                 String currKnownCss = journal.getVisitedSystems().contains(currName) ? " known" : "";
                 String flags = "";
                 String notes = "";
@@ -371,10 +362,10 @@ public class NeutronJumpApp {
                     flags += "F";
                     notes += "<span class=\"fuelWarning\">" + String.format(Locale.US, "%.1ft", currPath.getFuelLevel()) + "</span>";
                 }
-                List<Body> valuableBodies = findValuableBodies(currSystem, galaxy);
+                List<EddbBody> valuableBodies = findValuableBodies(currSystem, bodyrepo);
                 if (valuableBodies.size() > 0) {
                     int unknown = 0;
-                    for (Body body : valuableBodies) {
+                    for (EddbBody body : valuableBodies) {
                         if (!journal.getScannedBodies().contains(body.getName())) {
                             unknown++;
                         }
@@ -408,125 +399,23 @@ public class NeutronJumpApp {
         return html.toString();
     }
 
-    private static String lookupSpectralClass(StarSystem system, Set<StarSystem> starSystemsWithNeutronStars, Map<String, Set<StarSystem>> systemsBySpectralClass) {
-        if (starSystemsWithNeutronStars.contains(system)) {
-            return "NS";
-        } else {
-            for (String spectralClass : systemsBySpectralClass.keySet()) {
-                if (systemsBySpectralClass.get(spectralClass).contains(system)) {
-                    return spectralClass;
-                }
-            }
-            return "?";
-        }
-    }
-
-    private static Set<StarSystem> findMappingProjectNeutronStars(Galaxy galaxy) throws IOException {
-        File neutronStarNamesFile = new File(Constants.EDTRADING_BASE_DIR, "neutron stars.txt");
-        File neutronStarIdsFile = new File(Constants.EDTRADING_BASE_DIR, "neutron stars.dat");
-        Set<StarSystem> neutronStars = null;
-        if (!neutronStarIdsFile.exists() || neutronStarNamesFile.lastModified() > neutronStarIdsFile.lastModified()) {
-            neutronStars = findStarSystemsWithName(galaxy.getStarSystemsById().values(), FileUtils.readLines(neutronStarNamesFile, "UTF-8"));
-            FileUtils.write(neutronStarIdsFile, neutronStars.stream().map(ss -> String.valueOf(ss.getId())).collect(Collectors.joining("\n")), "UTF-8", false);
-        } else {
-            neutronStars = findStarSystemsWithId(galaxy.getStarSystemsById(), FileUtils.readLines(neutronStarIdsFile, "UTF-8"));
-        }
-        return neutronStars;
-    }
-
-    private static Set<StarSystem> findStarSystemsWithId(Map<Long, StarSystem> starSystemsById, List<String> ids) {
-        Set<StarSystem> result = new HashSet<>(ids.size());
-
-        List<Long> longIds = ids.stream().map(n -> Long.valueOf(n)).collect(Collectors.toList());
-        for (Long id : longIds) {
-            StarSystem starSystem = starSystemsById.get(id);
-            if (starSystem != null) {
-                result.add(starSystem);
-            }
-        }
-
-        logger.trace("Found " + result.size() + " of all " + ids.size() + " IDs");
-
-        return result;
-    }
-
-    private static Set<StarSystem> findStarSystemsWithName(Collection<StarSystem> starSystems, List<String> names) {
-        Set<StarSystem> result = new HashSet<>(names.size());
-
-        List<String> lowercaseNames = names.stream().map(n -> n.toLowerCase()).collect(Collectors.toList());
-        for (StarSystem starSystem : starSystems) {
-            for (String name : lowercaseNames) {
-                if (name.startsWith(starSystem.getName().toLowerCase())) {
-                    if (StringUtils.getLevenshteinDistance(name, starSystem.getName().toLowerCase()) <= 4) {
-                        result.add(starSystem);
+    private static String lookupSpectralClass(Long systemId, Map<String, Set<EddbBody>> arrivalStarsBySpectralClass) {
+        if (systemId != null) {
+            for (String spectralClass : arrivalStarsBySpectralClass.keySet()) {
+                for (EddbBody star : arrivalStarsBySpectralClass.get(spectralClass)) {
+                    if (systemId.equals(star.getSystemId())) {
+                        return spectralClass;
                     }
                 }
             }
         }
-
-        logger.debug("Found " + result.size() + " of all " + names.size() + " names");
-
-        return result;
+        return "?";
     }
 
-    private static List<Body> findArrivalNeutronStars(Collection<Body> bodies) {
-        List<Body> result = new ArrayList<>();
-
-        for (Body body : bodies) {
-            if (TYPE_ID_NEUTRON_STAR.equals(body.getTypeId())) {
-                if (Boolean.TRUE.equals(body.getIs_main_star())) {
-                    result.add(body);
-                }
-            }
-        }
-
-        logger.trace(result.size() + " of all " + bodies.size() + " bodies are arrival neutron stars");
-
-        return result;
-    }
-
-    private static Set<StarSystem> bodiesToSystems(Collection<Body> bodies) {
-        Set<StarSystem> result = new HashSet<>(bodies.size());
-
-        for (Body body : bodies) {
-            if (body.getStarSystem() != null) {
-                result.add(body.getStarSystem());
-            }
-        }
-
-        logger.trace(result.size() + " of all " + bodies.size() + " bodies have a known star system");
-
-        return result;
-    }
-
-    private static Map<String, Set<StarSystem>> mapSystemsBySpectralClass(Collection<Body> bodies) {
-        List<Body> bodiesHavingSpectralClass = bodies.stream().filter(b -> b.getSpectral_class() != null).collect(Collectors.toList());
-        List<Body> arrivalBodiesHavingSpectralClass = bodiesHavingSpectralClass.stream().filter(b -> Boolean.TRUE.equals(b.getIs_main_star())).collect(Collectors.toList());
-        List<Body> scoopableArrivalStars = new ArrayList<>(arrivalBodiesHavingSpectralClass.size() / 2);
-
-        Map<String, List<Body>> bodiesBySpectralClass = arrivalBodiesHavingSpectralClass.stream().collect(Collectors.groupingBy(Body::getSpectral_class));
-        for (String spectralClass : bodiesBySpectralClass.keySet()) {
-            float spectralClassPercentOfAllArrivalStars = (100f * bodiesBySpectralClass.get(spectralClass).size()) / arrivalBodiesHavingSpectralClass.size();
-            logger.trace(String.format("Spectral class %-20s: %d bodies (%.1f%%)", spectralClass, bodiesBySpectralClass.get(spectralClass).size(), spectralClassPercentOfAllArrivalStars));
-            if (Constants.SCOOPABLE_SPECTRAL_CLASSES.contains(spectralClass)) {
-                scoopableArrivalStars.addAll(bodiesBySpectralClass.get(spectralClass));
-            }
-        }
-        logger.debug(String.format(Locale.US, "Having a spectral class:  %9d (%.1f%% of all bodies)", bodiesHavingSpectralClass.size(), (100f * bodiesHavingSpectralClass.size()) / bodies.size()));
-        logger.debug(String.format(Locale.US, "Being arrival star:       %9d (%.1f%% of having spectral class)", arrivalBodiesHavingSpectralClass.size(), (100f * arrivalBodiesHavingSpectralClass.size()) / bodiesHavingSpectralClass.size()));
-        logger.debug(String.format(Locale.US, "Scoopable:                %9d (%.1f%% of being arrival)", scoopableArrivalStars.size(), (100f * scoopableArrivalStars.size()) / arrivalBodiesHavingSpectralClass.size()));
-
-        Map<String, Set<StarSystem>> result = new LinkedHashMap<>();
-        for (String spectralClass : bodiesBySpectralClass.keySet()) {
-            result.put(spectralClass, bodiesBySpectralClass.get(spectralClass).stream().filter(b -> b.getStarSystem() != null).map(Body::getStarSystem).collect(Collectors.toSet()));
-        }
-        return result;
-    }
-
-    static List<Body> findValuableBodies(StarSystem system, Galaxy galaxy) {
-        List<Body> result = new ArrayList<>(0);
-        for (Body body : galaxy.searchBodiesOfStarSystem(system.getId())) {
-            if (StringUtils.isNotEmpty(body.getTerraforming_state_name()) && !"Not terraformable".equals(body.getTerraforming_state_name())) {
+    static List<EddbBody> findValuableBodies(EddbSystem system, EddbBodyRepository repo) {
+        List<EddbBody> result = new ArrayList<>(0);
+        for (EddbBody body : repo.findBySystemId(system.getId(), new PageRequest(0, 100)).getContent()) {
+            if (StringUtils.isNotEmpty(body.getTerraformingStateName()) && !"Not terraformable".equals(body.getTerraformingStateName())) {
                 result.add(body);
             } else if (StringUtils.isNotEmpty(body.getTypeName())) {
                 if ("Ammonia world".equals(body.getTypeName()) || "Earth-like world".equals(body.getTypeName()) || "Water giant".equals(body.getTypeName()) || "Water world".equals(body.getTypeName())) {

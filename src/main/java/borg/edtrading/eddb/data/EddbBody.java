@@ -22,6 +22,10 @@ public class EddbBody implements EddbEntity {
 
     private static final long serialVersionUID = -785705194031217696L;
 
+    public static final Long TYPE_ID_BLACK_HOLE = new Long(1);
+    public static final Long TYPE_ID_SUPERMASSIVE_BLACK_HOLE = new Long(2);
+    public static final Long TYPE_ID_NEUTRON_STAR = new Long(3);
+
     private transient EddbSystem system = null;
 
     public EddbSystem getSystem() {

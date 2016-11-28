@@ -4,11 +4,12 @@ import boofcv.alg.misc.ImageMiscOps;
 import boofcv.gui.binary.VisualizeBinaryData;
 import boofcv.struct.image.GrayU8;
 import borg.edtrading.data.Coord;
-import borg.edtrading.data.Galaxy;
-import borg.edtrading.eddb.data.Body;
-import borg.edtrading.eddb.data.StarSystem;
+import borg.edtrading.eddb.data.EddbBody;
+import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.services.EddbService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.awt.Point;
 import java.io.File;
@@ -30,18 +31,20 @@ public class GalmapApp {
 
     static final Logger logger = LogManager.getLogger(GalmapApp.class);
 
+    private static final AnnotationConfigApplicationContext APPCTX = new AnnotationConfigApplicationContext(Config.class);
+
     public static void main(String[] args) throws Exception {
         int imageSize = 16384;
 
-        Galaxy galaxy = Galaxy.readDataFromFiles();
+        EddbService eddbService = APPCTX.getBean(EddbService.class);
         float xmin = 0;
         float xmax = 0;
         float zmin = 0;
         float zmax = 0;
-        List<Body> arrivalNeutronStars = findArrivalNeutronStars(galaxy.getBodiesById().values());
-        Set<StarSystem> systems = bodiesToSystems(arrivalNeutronStars);
+        List<EddbBody> arrivalNeutronStars = eddbService.searchArrivalNeutronStars();
+        Set<EddbSystem> systems = bodiesToSystems(arrivalNeutronStars);
         //Collection<StarSystem> systems = galaxy.getStarSystemsById().values();
-        for (StarSystem system : systems) {
+        for (EddbSystem system : systems) {
             xmin = Math.min(xmin, system.getCoord().getX());
             xmax = Math.max(xmax, system.getCoord().getX());
             zmin = Math.min(zmin, system.getCoord().getZ());
@@ -59,7 +62,7 @@ public class GalmapApp {
         GrayU8 image = new GrayU8(imageSize, imageSize);
         ImageMiscOps.fill(image, 0);
         int psize = 11;
-        for (StarSystem system : systems) {
+        for (EddbSystem system : systems) {
             Point p = coordToPoint(system.getCoord(), imageSize, xmin, zmin, galaxySize);
             //image.unsafe_set(p.x, p.y, 1);
             ImageMiscOps.fillRectangle(image, 1, p.x - psize / 2 + 1, p.y - psize / 2 + 1, psize, psize);
@@ -69,12 +72,12 @@ public class GalmapApp {
 
     private static final Long TYPE_ID_NEUTRON_STAR = new Long(3);
 
-    private static List<Body> findArrivalNeutronStars(Collection<Body> bodies) {
-        List<Body> result = new ArrayList<>();
+    private static List<EddbBody> findArrivalNeutronStars(Collection<EddbBody> bodies) {
+        List<EddbBody> result = new ArrayList<>();
 
-        for (Body body : bodies) {
+        for (EddbBody body : bodies) {
             if (TYPE_ID_NEUTRON_STAR.equals(body.getTypeId())) {
-                if (Boolean.TRUE.equals(body.getIs_main_star())) {
+                if (Boolean.TRUE.equals(body.getIsMainStar())) {
                     result.add(body);
                 }
             }
@@ -85,12 +88,12 @@ public class GalmapApp {
         return result;
     }
 
-    private static Set<StarSystem> bodiesToSystems(Collection<Body> bodies) {
-        Set<StarSystem> result = new HashSet<>(bodies.size());
+    private static Set<EddbSystem> bodiesToSystems(Collection<EddbBody> bodies) {
+        Set<EddbSystem> result = new HashSet<>(bodies.size());
 
-        for (Body body : bodies) {
-            if (body.getStarSystem() != null) {
-                result.add(body.getStarSystem());
+        for (EddbBody body : bodies) {
+            if (body.getSystem() != null) {
+                result.add(body.getSystem());
             }
         }
 

@@ -1,7 +1,7 @@
 package borg.edtrading.aystar;
 
-import borg.edtrading.data.Galaxy;
-import borg.edtrading.eddb.data.StarSystem;
+import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.eddb.repositories.EddbSystemRepository;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -96,8 +96,8 @@ public class Path implements Comparable<Path> {
         return sortedPaths;
     }
 
-    public StarSystem getStarSystem(Galaxy galaxy) {
-        return galaxy.getStarSystemsById().get(this.getMinimizedStarSystem().getId());
+    public EddbSystem getStarSystem(EddbSystemRepository repo) {
+        return repo.findOne(this.getMinimizedStarSystem().getId());
     }
 
     public Path getPrev() {

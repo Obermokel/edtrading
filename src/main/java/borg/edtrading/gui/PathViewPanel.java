@@ -2,8 +2,8 @@ package borg.edtrading.gui;
 
 import borg.edtrading.aystar.Path;
 import borg.edtrading.data.Coord;
-import borg.edtrading.data.Galaxy;
-import borg.edtrading.eddb.data.StarSystem;
+import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.services.EddbService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,9 +40,9 @@ public class PathViewPanel extends JPanel {
 
     // Constructor input
     private final String viewName;
-    private final Galaxy galaxy;
-    private final StarSystem fromSystem;
-    private final StarSystem toSystem;
+    private final EddbService eddbService;
+    private final EddbSystem fromSystem;
+    private final EddbSystem toSystem;
 
     // Calculated
     private float xmin;
@@ -53,20 +53,20 @@ public class PathViewPanel extends JPanel {
     private float zmax;
     private float sizeXZ;
     private float sizeY;
-    private List<StarSystem> referenceSystems;
+    private List<EddbSystem> referenceSystems;
 
     // Updated at runtime
     private Path path = null;
 
-    public PathViewPanel(String viewName, Galaxy galaxy, StarSystem fromSystem, StarSystem toSystem) {
+    public PathViewPanel(String viewName, EddbService eddbService, EddbSystem fromSystem, EddbSystem toSystem) {
         this.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
         this.viewName = viewName;
-        this.galaxy = galaxy;
+        this.eddbService = eddbService;
         this.fromSystem = fromSystem;
         this.toSystem = toSystem;
 
-        for (StarSystem system : Arrays.asList(fromSystem, toSystem)) {
+        for (EddbSystem system : Arrays.asList(fromSystem, toSystem)) {
             this.xmin = Math.min(this.xmin, system.getCoord().getX());
             this.xmax = Math.max(this.xmax, system.getCoord().getX());
             this.ymin = Math.min(this.ymin, system.getCoord().getY());
@@ -100,19 +100,19 @@ public class PathViewPanel extends JPanel {
             this.zmax += (diff / 2);
         }
 
-        this.referenceSystems = this.generateReferenceSystems(galaxy, fromSystem, toSystem);
+        this.referenceSystems = this.generateReferenceSystems(eddbService, fromSystem, toSystem);
     }
 
-    private List<StarSystem> generateReferenceSystems(Galaxy galaxy, StarSystem fromSystem, StarSystem toSystem) {
-        Set<StarSystem> result = new HashSet<>();
-        result.add(galaxy.searchStarSystemByName("Sol"));
-        result.add(galaxy.searchStarSystemByName("Maia"));
-        result.add(galaxy.searchStarSystemByName("VY Canis Majoris"));
-        result.add(galaxy.searchStarSystemByName("Crab Pulsar"));
-        result.add(galaxy.searchStarSystemByName("Rho Cassiopeiae"));
-        result.add(galaxy.searchStarSystemByName("Colonia"));
-        result.add(galaxy.searchStarSystemByName("Sagittarius A*"));
-        result.add(galaxy.searchStarSystemByName("Beagle Point"));
+    private List<EddbSystem> generateReferenceSystems(EddbService eddbService, EddbSystem fromSystem, EddbSystem toSystem) {
+        Set<EddbSystem> result = new HashSet<>();
+        result.add(eddbService.searchSystemByName("Sol"));
+        result.add(eddbService.searchSystemByName("Maia"));
+        result.add(eddbService.searchSystemByName("VY Canis Majoris"));
+        result.add(eddbService.searchSystemByName("Crab Pulsar"));
+        result.add(eddbService.searchSystemByName("Rho Cassiopeiae"));
+        result.add(eddbService.searchSystemByName("Colonia"));
+        result.add(eddbService.searchSystemByName("Sagittarius A*"));
+        result.add(eddbService.searchSystemByName("Beagle Point"));
         result.remove(fromSystem);
         result.remove(toSystem);
 
@@ -160,7 +160,7 @@ public class PathViewPanel extends JPanel {
 
         // Draw reference systems
         g.setColor(Color.GRAY);
-        for (StarSystem refSystem : this.referenceSystems) {
+        for (EddbSystem refSystem : this.referenceSystems) {
             Coord coord = refSystem.getCoord();
             Point point = this.coordToPoint(coord);
             String name = refSystem.getName();

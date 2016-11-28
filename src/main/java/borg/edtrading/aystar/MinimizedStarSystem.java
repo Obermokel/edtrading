@@ -1,7 +1,7 @@
 package borg.edtrading.aystar;
 
 import borg.edtrading.data.Coord;
-import borg.edtrading.eddb.data.StarSystem;
+import borg.edtrading.eddb.data.EddbSystem;
 
 import java.io.Serializable;
 
@@ -17,9 +17,9 @@ public class MinimizedStarSystem implements Serializable {
     private final Long id;
     private final Coord coord;
 
-    public MinimizedStarSystem(StarSystem fullStarSystem) {
-        this.id = fullStarSystem.getId();
-        this.coord = fullStarSystem.getCoord();
+    public MinimizedStarSystem(EddbSystem eddbSystem) {
+        this.id = eddbSystem.getId();
+        this.coord = eddbSystem.getCoord();
     }
 
     @Override

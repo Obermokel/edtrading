@@ -1,7 +1,7 @@
 package borg.edtrading.aystar;
 
 import borg.edtrading.data.Coord;
-import borg.edtrading.eddb.data.StarSystem;
+import borg.edtrading.eddb.data.EddbSystem;
 import borg.edtrading.util.FuelAndJumpRangeLookup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,7 +38,7 @@ public class AyStar {
     private float maxTotalDistanceLy = 0;
     private Path closestToGoalSoFar = null;
 
-    public void initialize(StarSystem source, StarSystem goal, Set<StarSystem> starSystemsWithNeutronStars, Set<StarSystem> starSystemsWithScoopableStars, FuelAndJumpRangeLookup fuelJumpLUT) {
+    public void initialize(EddbSystem source, EddbSystem goal, Set<EddbSystem> starSystemsWithNeutronStars, Set<EddbSystem> starSystemsWithScoopableStars, FuelAndJumpRangeLookup fuelJumpLUT) {
         if (!starSystemsWithNeutronStars.contains(goal) && !starSystemsWithScoopableStars.contains(goal)) {
             throw new IllegalArgumentException("goal not in useable star systems");
         } else {

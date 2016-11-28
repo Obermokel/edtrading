@@ -1,5 +1,6 @@
 package borg.edtrading;
 
+import borg.edtrading.eddb.reader.EddbReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
@@ -22,7 +23,7 @@ import java.net.InetSocketAddress;
  */
 @Configuration
 @EnableElasticsearchRepositories(basePackages = "borg.edtrading.eddb.repositories")
-@ComponentScan(basePackages = { "borg.edtrading.services" })
+@ComponentScan(basePackages = { "borg.edtrading.services.impl" })
 public class Config {
 
     static final Logger logger = LogManager.getLogger(Config.class);
@@ -37,6 +38,11 @@ public class Config {
         TransportClient client = TransportClient.builder().settings(Settings.settingsBuilder().put("cluster.name", "eddbmirror")).build();
         client.addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress("127.0.0.1", 9300)));
         return client;
+    }
+
+    @Bean
+    public EddbReader eddbReader() {
+        return new EddbReader();
     }
 
 }

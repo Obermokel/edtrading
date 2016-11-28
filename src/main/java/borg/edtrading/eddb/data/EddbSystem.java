@@ -23,10 +23,17 @@ public class EddbSystem implements EddbEntity {
 
     private static final long serialVersionUID = -2929675737765201360L;
 
-    private transient Coord coord = null;
-    private transient Float distanceFromSol = null;
+    public float distanceTo(EddbSystem other) {
+        return this.getCoord().distanceTo(other.getCoord());
+    }
+
+    private Coord coord = null;
+    private Float distanceFromSol = null;
 
     public Coord getCoord() {
+        if (this.coord == null) {
+            this.coord = new Coord(this.getX(), this.getY(), this.getZ());
+        }
         return this.coord;
     }
 
@@ -35,6 +42,9 @@ public class EddbSystem implements EddbEntity {
     }
 
     public Float getDistanceFromSol() {
+        if (this.distanceFromSol == null) {
+            this.distanceFromSol = this.getCoord().distanceToSol();
+        }
         return this.distanceFromSol;
     }
 

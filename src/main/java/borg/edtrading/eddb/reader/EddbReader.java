@@ -1,9 +1,7 @@
 package borg.edtrading.eddb.reader;
 
-import borg.edtrading.Config;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbCommodity;
-import borg.edtrading.eddb.data.EddbData;
 import borg.edtrading.eddb.data.EddbEntity;
 import borg.edtrading.eddb.data.EddbFaction;
 import borg.edtrading.eddb.data.EddbStation;
@@ -26,7 +24,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
 import java.io.BufferedReader;
@@ -61,14 +60,15 @@ public class EddbReader {
 
     private static final File BASE_DIR = new File(System.getProperty("user.home"), ".eddbdata");
 
-    private final AnnotationConfigApplicationContext appctx = new AnnotationConfigApplicationContext(Config.class);
+    @Autowired
+    private ApplicationContext appctx = null;
 
-    public EddbData read() throws IOException {
+    public void loadEddbDataIntoElasticsearch() throws IOException {
         if (!BASE_DIR.exists()) {
             BASE_DIR.mkdirs();
         }
 
-        long downloadStart = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
         File commoditiesFile = new File(BASE_DIR, "commodities.json");
         if (this.downloadIfUpdated("https://eddb.io/archive/v5/commodities.json", commoditiesFile)) {
             this.readJsonFileIntoRepo(commoditiesFile, EddbCommodity.class, this.appctx.getBean(EddbCommodityRepository.class));
@@ -101,10 +101,8 @@ public class EddbReader {
         if (this.downloadIfUpdated("https://eddb.io/archive/v5/factions.jsonl", factionsFile)) {
             this.readJsonFileIntoRepo(factionsFile, EddbFaction.class, this.appctx.getBean(EddbFactionRepository.class));
         }
-        long downloadEnd = System.currentTimeMillis();
-        logger.info("Downloaded data in " + DurationFormatUtils.formatDuration(downloadEnd - downloadStart, "H:mm:ss"));
-
-        return null;
+        long end = System.currentTimeMillis();
+        logger.info("Downloaded data in " + DurationFormatUtils.formatDuration(end - start, "H:mm:ss"));
     }
 
     private <T extends EddbEntity> Set<Long> readCsvFileIntoRepo(File file, CSVRecordParser<T> csvRecordParser, ElasticsearchRepository<T, Long> repo) throws IOException {
