@@ -5,6 +5,7 @@ import borg.edtrading.aystar.Path;
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.eddb.reader.EddbReader;
 import borg.edtrading.eddb.repositories.EddbBodyRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.gui.PathViewPanel;
@@ -75,6 +76,7 @@ public class NeutronJumpApp {
 
         final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
 
+        APPCTX.getBean(EddbReader.class).loadEddbDataIntoElasticsearch();
         EddbService eddbService = APPCTX.getBean(EddbService.class);
         EddbSystemRepository eddbSystemRepository = APPCTX.getBean(EddbSystemRepository.class);
         EddbBodyRepository eddbBodyRepository = APPCTX.getBean(EddbBodyRepository.class);
@@ -189,59 +191,23 @@ public class NeutronJumpApp {
 
     private static String routeToVoiceAttackTxt(List<Path> sortedPaths, Set<EddbSystem> starSystemsWithNeutronStars, Map<String, Set<EddbBody>> arrivalStarsBySpectralClass, EddbSystemRepository repo, EddbBodyRepository bodyrepo,
             FuelAndJumpRangeLookup fuelJumpLUT, Journal journal) {
-        Date eddbDumpDate = new Date(Constants.BODIES_FILE.lastModified());
-        EddbSystem fromSystem = sortedPaths.get(0).getStarSystem(repo);
-        EddbSystem toSystem = sortedPaths.get(sortedPaths.size() - 1).getStarSystem(repo);
-        String fromName = fromSystem.getName();
-        String toName = toSystem.getName();
-        float directDistance = fromSystem.distanceTo(toSystem);
         float routeDistance = sortedPaths.get(sortedPaths.size() - 1).getTravelledDistanceLy();
-        int jumpsUsingHighway = sortedPaths.size() - 1;
-        int jumpsTraditional = Math.round(directDistance / fuelJumpLUT.getJumpRangeFuelFull());
-        int jumpsSaved = jumpsTraditional - jumpsUsingHighway;
-        float jumpsSavedPercent = 100f * jumpsSaved / jumpsTraditional;
 
-        int jumpNo = 0;
-        int unboostedJumps = 0;
         float travelledLy = 0;
         boolean halfwayPassed = false;
         Path prevPath = null;
-        LinkedList<String> lines = new LinkedList<>();
+        LinkedList<VoiceAttackLine> lines = new LinkedList<>();
         for (int i = 0; i < sortedPaths.size(); i++) {
             Path currPath = sortedPaths.get(i);
             EddbSystem currSystem = currPath.getStarSystem(repo);
             String currName = currSystem.getName();
             String currClass = lookupSpectralClass(currSystem.getId(), arrivalStarsBySpectralClass);
-            String currKnownCss = journal.getVisitedSystems().contains(currName) ? " known" : "";
             float jumpDistance = 0;
             String flags = "";
             if (prevPath != null) {
-                jumpNo++;
                 EddbSystem prevSystem = prevPath.getStarSystem(repo);
                 jumpDistance = currSystem.distanceTo(prevSystem);
                 travelledLy += jumpDistance;
-                String neutronJumpCss = starSystemsWithNeutronStars.contains(prevSystem) ? "neutronJump" : "normalJump";
-                boolean plotRoute = false;
-                if (starSystemsWithNeutronStars.contains(prevSystem)) {
-                    unboostedJumps = 0;
-                } else {
-                    unboostedJumps++;
-                    if (unboostedJumps >= 2 && (starSystemsWithNeutronStars.contains(currSystem) || i == sortedPaths.size() - 1)) {
-                        for (int r = 1; r < unboostedJumps; r++) {
-                            lines.removeLast();
-                        }
-                        jumpDistance = 999;
-                        plotRoute = true;
-                    }
-                }
-                String evenOddCss = jumpNo % 2 == 0 ? "even" : "odd";
-                String prevName = prevSystem.getName();
-                String prevClass = lookupSpectralClass(prevSystem.getId(), arrivalStarsBySpectralClass);
-                String prevKnownCss = journal.getVisitedSystems().contains(prevName) ? " known" : "";
-                String notes = "";
-                if (plotRoute) {
-                    flags += "R"; // Route
-                }
                 if (currName.replaceAll("[^\\-]", "").length() < 2) {
                     flags += "N"; // Pron name
                 }
@@ -251,7 +217,6 @@ public class NeutronJumpApp {
                 }
                 if (currPath.getFuelLevel() <= (fuelJumpLUT.getMaxFuelPerJump() + 2)) {
                     flags += "F";
-                    notes += "<span class=\"fuelWarning\">" + String.format(Locale.US, "%.1ft", currPath.getFuelLevel()) + "</span>";
                 }
                 List<EddbBody> valuableBodies = findValuableBodies(currSystem, bodyrepo);
                 if (valuableBodies.size() > 0) {
@@ -260,9 +225,6 @@ public class NeutronJumpApp {
                         if (!journal.getScannedBodies().contains(body.getName())) {
                             unknown++;
                         }
-                        String knownCss = journal.getScannedBodies().contains(body.getName()) ? "known" : "";
-                        String typeCss = body.getTypeName().toLowerCase().replaceAll("\\W", "-");
-                        notes += "<span class=\"valuablePlanet " + typeCss + " " + knownCss + "\">" + escapeHtml4(body.getName().replace(currName + " ", "")) + "</span>";
                     }
                     if (unknown > 0) {
                         flags += "P"; // Planets
@@ -270,11 +232,49 @@ public class NeutronJumpApp {
                 }
                 // TODO S
             }
-            lines.add(String.format(Locale.US, "%-50s%5.0f%10s%10s", currName.replace("'", " "), jumpDistance, currClass, flags));
+            lines.add(new VoiceAttackLine(currName, jumpDistance, currClass, flags));
             prevPath = currPath;
         }
 
-        return lines.stream().collect(Collectors.joining("\n"));
+        int nUnboostedJumps = 0;
+        for (int index = 1; index < lines.size(); index++) {
+            VoiceAttackLine line = lines.get(index);
+            if (!"NS".equals(line.jumpToClass)) {
+                nUnboostedJumps++;
+            } else {
+                if (nUnboostedJumps >= 3) {
+                    for (int setnull = 2; setnull <= nUnboostedJumps; setnull++) {
+                        lines.set(index - setnull, null);
+                    }
+                    EddbSystem routeFrom = sortedPaths.get((index - nUnboostedJumps) - 1).getStarSystem(repo);
+                    EddbSystem routeTo = sortedPaths.get(index - 1).getStarSystem(repo);
+
+                    lines.get(index - 1).flags += "R";
+                    lines.get(index - 1).jumpDistance += routeFrom.distanceTo(routeTo);
+                }
+                nUnboostedJumps = 0;
+            }
+        }
+
+        return lines.stream().filter(l -> l != null).map(l -> l.format()).collect(Collectors.joining("\n"));
+    }
+
+    public static class VoiceAttackLine {
+        public String jumpToName = null;
+        public float jumpDistance = 0f;
+        public String jumpToClass = null;
+        public String flags = null;
+
+        public VoiceAttackLine(String jumpToName, float jumpDistance, String jumpToClass, String flags) {
+            this.jumpToName = jumpToName;
+            this.jumpDistance = jumpDistance;
+            this.jumpToClass = jumpToClass;
+            this.flags = flags;
+        }
+
+        public String format() {
+            return String.format(Locale.US, "%-50s%5.0f%10s%10s", jumpToName.replace("'", " "), jumpDistance, jumpToClass, flags);
+        }
     }
 
     private static String routeToHumanReadableHtml(List<Path> sortedPaths, Set<EddbSystem> starSystemsWithNeutronStars, Map<String, Set<EddbBody>> arrivalStarsBySpectralClass, EddbSystemRepository repo, EddbBodyRepository bodyrepo,

@@ -11,9 +11,13 @@ public class Coord implements Serializable {
 
     private static final long serialVersionUID = 1052805326828839956L;
 
-    private final float x;
-    private final float y;
-    private final float z;
+    private float x = 0f;
+    private float y = 0f;
+    private float z = 0f;
+
+    public Coord() {
+        // Default
+    }
 
     public Coord(float x, float y, float z) {
         this.x = x;
@@ -84,12 +88,24 @@ public class Coord implements Serializable {
         return this.x;
     }
 
+    public void setX(float x) {
+        this.x = x;
+    }
+
     public float getY() {
         return this.y;
     }
 
+    public void setY(float y) {
+        this.y = y;
+    }
+
     public float getZ() {
         return this.z;
+    }
+
+    public void setZ(float z) {
+        this.z = z;
     }
 
 }
