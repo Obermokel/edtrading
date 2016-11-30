@@ -93,11 +93,11 @@ public class EddbServiceImpl implements EddbService {
     }
 
     @Override
-    public List<EddbBody> retainStarsOfSpectralClasses(Map<String, Set<EddbBody>> starsBySpectralClass, String... spectralClasses) {
+    public List<EddbBody> retainStarsOfSpectralClasses(Map<String, List<EddbBody>> starsBySpectralClass, String... spectralClasses) {
         List<EddbBody> result = new ArrayList<>();
 
         for (String spectralClass : spectralClasses) {
-            Set<EddbBody> stars = starsBySpectralClass.get(spectralClass);
+            List<EddbBody> stars = starsBySpectralClass.get(spectralClass);
             if (stars != null) {
                 result.addAll(stars);
             }
@@ -107,7 +107,7 @@ public class EddbServiceImpl implements EddbService {
     }
 
     @Override
-    public List<EddbBody> removeStarsOfSpectralClasses(Map<String, Set<EddbBody>> starsBySpectralClass, String... spectralClasses) {
+    public List<EddbBody> removeStarsOfSpectralClasses(Map<String, List<EddbBody>> starsBySpectralClass, String... spectralClasses) {
         List<EddbBody> result = new ArrayList<>();
 
         Set<String> remove = new HashSet<>(Arrays.asList(spectralClasses));
@@ -121,8 +121,8 @@ public class EddbServiceImpl implements EddbService {
     }
 
     @Override
-    public Map<String, Set<EddbBody>> mapStarsBySpectralClass(boolean arrivalOnly) {
-        Map<String, Set<EddbBody>> result = new TreeMap<>();
+    public Map<String, List<EddbBody>> mapStarsBySpectralClass(boolean arrivalOnly) {
+        Map<String, List<EddbBody>> result = new TreeMap<>();
 
         BoolQueryBuilder combinedQuery = QueryBuilders.boolQuery();
         if (arrivalOnly) {
@@ -152,9 +152,9 @@ public class EddbServiceImpl implements EddbService {
                             spectralClass = "NS";
                         }
                     }
-                    Set<EddbBody> stars = result.get(spectralClass);
+                    List<EddbBody> stars = result.get(spectralClass);
                     if (stars == null) {
-                        stars = new HashSet<>();
+                        stars = new ArrayList<>();
                         result.put(spectralClass, stars);
                     }
                     stars.add(body);

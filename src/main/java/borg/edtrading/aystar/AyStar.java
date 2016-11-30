@@ -38,7 +38,7 @@ public class AyStar {
     private float maxTotalDistanceLy = 0;
     private Path closestToGoalSoFar = null;
 
-    public void initialize(EddbSystem source, EddbSystem goal, Set<EddbSystem> starSystemsWithNeutronStars, Set<EddbSystem> starSystemsWithScoopableStars, FuelAndJumpRangeLookup fuelJumpLUT) {
+    public void initialize(EddbSystem source, EddbSystem goal, List<EddbSystem> starSystemsWithNeutronStars, List<EddbSystem> starSystemsWithScoopableStars, FuelAndJumpRangeLookup fuelJumpLUT) {
         if (!starSystemsWithNeutronStars.contains(goal) && !starSystemsWithScoopableStars.contains(goal)) {
             throw new IllegalArgumentException("goal not in useable star systems");
         } else {

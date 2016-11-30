@@ -6,7 +6,6 @@ import borg.edtrading.eddb.data.EddbSystem;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * EddbService
@@ -19,11 +18,11 @@ public interface EddbService {
 
     EddbSystem searchClosestSystemByCoord(Coord coord);
 
-    List<EddbBody> retainStarsOfSpectralClasses(Map<String, Set<EddbBody>> starsBySpectralClass, String... spectralClasses);
+    List<EddbBody> retainStarsOfSpectralClasses(Map<String, List<EddbBody>> starsBySpectralClass, String... spectralClasses);
 
-    List<EddbBody> removeStarsOfSpectralClasses(Map<String, Set<EddbBody>> starsBySpectralClass, String... spectralClasses);
+    List<EddbBody> removeStarsOfSpectralClasses(Map<String, List<EddbBody>> starsBySpectralClass, String... spectralClasses);
 
-    Map<String, Set<EddbBody>> mapStarsBySpectralClass(boolean arrivalOnly);
+    Map<String, List<EddbBody>> mapStarsBySpectralClass(boolean arrivalOnly);
 
     List<EddbSystem> loadAllSystems();
 

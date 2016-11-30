@@ -42,7 +42,7 @@ public class GalmapApp {
         float xmax = 0;
         float zmin = 0;
         float zmax = 0;
-        Map<String, Set<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
+        Map<String, List<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
         List<EddbBody> arrivalNeutronStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, "NS");
         Set<EddbSystem> systems = bodiesToSystems(arrivalNeutronStars);
         //Collection<StarSystem> systems = galaxy.getStarSystemsById().values();
