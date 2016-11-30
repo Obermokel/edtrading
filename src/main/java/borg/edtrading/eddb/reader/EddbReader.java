@@ -21,6 +21,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -185,7 +186,7 @@ public class EddbReader {
                             int entitiesRemaining = total - n;
                             double secondsRemaining = entitiesRemaining / entitiesPerSec;
                             Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
-                            logger.info(String.format(Locale.US, "Imported %,d of %,d %ss (%.1f/sec) -- ETA %s", n, total, type.getSimpleName(), entitiesPerSec, dfEta.format(eta)));
+                            logger.info(String.format(Locale.US, "Imported %,d of %,d %s (%.1f/sec) -- ETA %s", n, total, file.getName().substring(0, file.getName().lastIndexOf(".")), entitiesPerSec, dfEta.format(eta)));
                             startBatch = System.currentTimeMillis();
                         }
                     } catch (JsonSyntaxException e) {
@@ -217,7 +218,7 @@ public class EddbReader {
                         int entitiesRemaining = total - n;
                         double secondsRemaining = entitiesRemaining / entitiesPerSec;
                         Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
-                        logger.info(String.format(Locale.US, "Imported %,d of %,d %ss (%.1f/sec) -- ETA %s", n, total, type.getSimpleName(), entitiesPerSec, dfEta.format(eta)));
+                        logger.info(String.format(Locale.US, "Imported %,d of %,d %s (%.1f/sec) -- ETA %s", n, total, file.getName().substring(0, file.getName().lastIndexOf(".")), entitiesPerSec, dfEta.format(eta)));
                         startBatch = System.currentTimeMillis();
                     }
                 }
@@ -242,7 +243,7 @@ public class EddbReader {
     }
 
     private boolean downloadIfUpdated(String url, File file) throws IOException {
-        if (!file.exists() || headLastModified(url) > file.lastModified()) {
+        if (!file.exists() || (System.currentTimeMillis() - file.lastModified() > DateUtils.MILLIS_PER_DAY / 2L && headLastModified(url) > file.lastModified())) {
             backup(file);
             download(url, file);
             return true;

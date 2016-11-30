@@ -17,7 +17,7 @@ import java.util.List;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-@Document(indexName = "eddb", type = "body")
+@Document(indexName = "eddb", type = "body", shards = 10, replicas = 0)
 public class EddbBody implements EddbEntity {
 
     private static final long serialVersionUID = -785705194031217696L;
@@ -39,8 +39,10 @@ public class EddbBody implements EddbEntity {
     @Id
     @SerializedName("id")
     private Long id = null;
+    @Field(type = FieldType.Date)
     @SerializedName("created_at")
     private Date createdAt = null;
+    @Field(type = FieldType.Date)
     @SerializedName("updated_at")
     private Date updatedAt = null;
     @SerializedName("name")
@@ -584,7 +586,7 @@ public class EddbBody implements EddbEntity {
         this.isLandable = isLandable;
     }
 
-    @Document(indexName = "eddb", type = "ring")
+    @Document(indexName = "eddb", type = "ring", shards = 10, replicas = 0)
     public static class EddbRing implements EddbEntity {
 
         private static final long serialVersionUID = 318036112349197244L;
@@ -592,8 +594,10 @@ public class EddbBody implements EddbEntity {
         @Id
         @SerializedName("id")
         private Long id = null;
+        @Field(type = FieldType.Date)
         @SerializedName("created_at")
         private Date createdAt = null;
+        @Field(type = FieldType.Date)
         @SerializedName("updated_at")
         private Date updatedAt = null;
         @SerializedName("name")

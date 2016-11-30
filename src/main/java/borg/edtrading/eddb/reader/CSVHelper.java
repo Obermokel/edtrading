@@ -76,7 +76,7 @@ public abstract class CSVHelper {
         if (StringUtils.isEmpty(value)) {
             return null;
         } else {
-            return new Date(Long.valueOf(value));
+            return new Date(1000L * Long.valueOf(value));
         }
     }
 

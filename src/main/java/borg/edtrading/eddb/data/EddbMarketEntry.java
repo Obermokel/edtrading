@@ -3,6 +3,8 @@ package borg.edtrading.eddb.data;
 import com.google.gson.annotations.SerializedName;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.util.Date;
 
@@ -11,7 +13,7 @@ import java.util.Date;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-@Document(indexName = "eddb", type = "marketEntry")
+@Document(indexName = "eddb", type = "marketEntry", shards = 10, replicas = 0)
 public class EddbMarketEntry implements EddbEntity {
 
     private static final long serialVersionUID = -9190337609843319285L;
@@ -19,6 +21,9 @@ public class EddbMarketEntry implements EddbEntity {
     @Id
     @SerializedName("id")
     private Long id = null;
+    @Field(type = FieldType.Date)
+    @SerializedName("collected_at")
+    private Date collectedAt = null;
     @SerializedName("station_id")
     private Long stationId = null;
     @SerializedName("commodity_id")
@@ -31,8 +36,6 @@ public class EddbMarketEntry implements EddbEntity {
     private Integer demand = null;
     @SerializedName("sell_price")
     private Integer sellPrice = null;
-    @SerializedName("collected_at")
-    private Date collectedAt = null;
 
     @Override
     public boolean equals(Object obj) {
@@ -73,6 +76,14 @@ public class EddbMarketEntry implements EddbEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Date getCollectedAt() {
+        return this.collectedAt;
+    }
+
+    public void setCollectedAt(Date collectedAt) {
+        this.collectedAt = collectedAt;
     }
 
     public Long getStationId() {
@@ -121,14 +132,6 @@ public class EddbMarketEntry implements EddbEntity {
 
     public void setSellPrice(Integer sellPrice) {
         this.sellPrice = sellPrice;
-    }
-
-    public Date getCollectedAt() {
-        return this.collectedAt;
-    }
-
-    public void setCollectedAt(Date collectedAt) {
-        this.collectedAt = collectedAt;
     }
 
 }

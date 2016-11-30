@@ -14,7 +14,7 @@ import java.util.Date;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-@Document(indexName = "eddb", type = "station")
+@Document(indexName = "eddb", type = "station", shards = 10, replicas = 0)
 public class EddbStation implements EddbEntity {
 
     private static final long serialVersionUID = 7221235081735765915L;
@@ -50,6 +50,7 @@ public class EddbStation implements EddbEntity {
     @Id
     @SerializedName("id")
     private Long id = null;
+    @Field(type = FieldType.Date)
     @SerializedName("updated_at")
     private Date updatedAt = null;
     @SerializedName("name")
@@ -121,10 +122,13 @@ public class EddbStation implements EddbEntity {
     //    private List<String> sellingShips = null;
     //    @SerializedName("selling_modules")
     //    private List<Long> sellingModules = null;
+    @Field(type = FieldType.Date)
     @SerializedName("shipyard_updated_at")
     private Date shipyardUpdatedAt = null;
+    @Field(type = FieldType.Date)
     @SerializedName("outfitting_updated_at")
     private Date outfittingUpdatedAt = null;
+    @Field(type = FieldType.Date)
     @SerializedName("market_updated_at")
     private Date marketUpdatedAt = null;
 

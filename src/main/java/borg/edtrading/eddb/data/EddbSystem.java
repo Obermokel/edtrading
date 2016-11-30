@@ -18,7 +18,7 @@ import java.util.List;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-@Document(indexName = "eddb", type = "system")
+@Document(indexName = "eddb", type = "system", shards = 10, replicas = 0)
 public class EddbSystem implements EddbEntity {
 
     private static final long serialVersionUID = -2929675737765201360L;
@@ -55,6 +55,7 @@ public class EddbSystem implements EddbEntity {
     @Id
     @SerializedName("id")
     private Long id = null;
+    @Field(type = FieldType.Date)
     @SerializedName("updated_at")
     private Date updatedAt = null;
     @SerializedName("edsm_id")
