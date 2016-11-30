@@ -58,21 +58,21 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        final String fromName = "Eafots BP-I d9-35";
-        final String toName = "Altair";
+        final String fromName = "Sol";
+        final String toName = "Blu Thua AI-A c14-10";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
 
-        // Anaconda
-        final int maxFuelTons = 32;
-        final float maxFuelPerJump = 8.32f;
-        final float jumpRangeFuelFull = 46.06f;
-        final float jumpRangeFuelOpt = 47.60f;
-        //        // Beluga
-        //        final int maxFuelTons = 64;
+        //        // Anaconda
+        //        final int maxFuelTons = 32;
         //        final float maxFuelPerJump = 8.32f;
-        //        final float jumpRangeFuelFull = 47.22f;
-        //        final float jumpRangeFuelOpt = 51.22f;
+        //        final float jumpRangeFuelFull = 46.06f;
+        //        final float jumpRangeFuelOpt = 47.60f;
+        // Beluga
+        final int maxFuelTons = 128;
+        final float maxFuelPerJump = 13.1f;
+        final float jumpRangeFuelFull = 29.87f;
+        final float jumpRangeFuelOpt = 32.0f;
 
         final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
 
@@ -281,7 +281,7 @@ public class NeutronJumpApp {
             FuelAndJumpRangeLookup fuelJumpLUT, Journal journal) {
         StringBuilder html = new StringBuilder();
 
-        Date eddbDumpDate = new Date(Constants.BODIES_FILE.lastModified());
+        Date eddbDumpDate = new Date(new File(System.getProperty("user.home"), ".eddbdata/systems.csv").lastModified());
         EddbSystem fromSystem = sortedPaths.get(0).getStarSystem(repo);
         EddbSystem toSystem = sortedPaths.get(sortedPaths.size() - 1).getStarSystem(repo);
         String fromName = fromSystem.getName();

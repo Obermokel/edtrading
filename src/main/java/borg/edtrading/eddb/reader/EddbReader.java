@@ -109,7 +109,7 @@ public class EddbReader {
         Set<Long> savedEntityIds = new HashSet<>();
 
         final DateFormat dfEta = new SimpleDateFormat("MMM dd @ HH:mm", Locale.US);
-        final int batchSize = 1000;
+        final int batchSize = 10000;
         final int total = this.countLines(file) - 1;
 
         logger.debug("Reading " + file.getName());
@@ -150,7 +150,7 @@ public class EddbReader {
         Set<Long> savedEntityIds = new HashSet<>();
 
         final DateFormat dfEta = new SimpleDateFormat("MMM dd @ HH:mm", Locale.US);
-        final int batchSize = 1000;
+        final int batchSize = 10000;
         final int total = this.countLines(file) - 1;
 
         //@formatter:off

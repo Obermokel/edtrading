@@ -34,7 +34,7 @@ public class ScannedBody implements Serializable {
       PAYOUTS.put(                    "Class K_OrangeGiant", 2900);
       PAYOUTS.put(                                "Class M", (2898+2897+2895+2893)/4);//2898+2897+2895+2893
       PAYOUTS.put(                       "Class M_RedGiant", 2900);
-      PAYOUTS.put(                               "Class WC", 2900);
+      PAYOUTS.put(                               "Class WC", 2911);//2911
       PAYOUTS.put(                                "Class C", 2902);//2902
       PAYOUTS.put(                                "Class L", 2889);//2889
       PAYOUTS.put(                                "Class Y", 2882);//2882
@@ -63,7 +63,7 @@ public class ScannedBody implements Serializable {
 
       PAYOUTS.put(                "High metal content body", (6532+7567+5222)/3);//6532+7567+5222
       PAYOUTS.put(                               "Icy body", (925+1117+1155+902)/4);//925+1117+1155+902
-      PAYOUTS.put(                        "Metal rich body", (12981+9241)/2);//12981+9241
+      PAYOUTS.put(                        "Metal rich body", (12981+9241+12835)/3);//12981+9241+12835
       PAYOUTS.put(                             "Rocky body", (888+865)/2);//888+865
       PAYOUTS.put(                         "Rocky ice body", 1072);//1072
       //@formatter:on
