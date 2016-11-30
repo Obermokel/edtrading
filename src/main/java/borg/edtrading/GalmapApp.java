@@ -7,14 +7,19 @@ import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;
 import borg.edtrading.services.EddbService;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.awt.Point;
 import java.io.File;
-import java.util.ArrayList;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -36,6 +41,8 @@ public class GalmapApp {
 
     public static void main(String[] args) throws Exception {
         int imageSize = 16384;
+
+        writeStatsCsv();
 
         EddbService eddbService = APPCTX.getBean(EddbService.class);
         float xmin = 0;
@@ -72,24 +79,6 @@ public class GalmapApp {
         ImageIO.write(VisualizeBinaryData.renderBinary(image, false, null), "png", new File(Constants.TEMP_DIR, "galmap.png"));
     }
 
-    private static final Long TYPE_ID_NEUTRON_STAR = new Long(3);
-
-    private static List<EddbBody> findArrivalNeutronStars(Collection<EddbBody> bodies) {
-        List<EddbBody> result = new ArrayList<>();
-
-        for (EddbBody body : bodies) {
-            if (TYPE_ID_NEUTRON_STAR.equals(body.getTypeId())) {
-                if (Boolean.TRUE.equals(body.getIsMainStar())) {
-                    result.add(body);
-                }
-            }
-        }
-
-        logger.trace(result.size() + " of all " + bodies.size() + " bodies are arrival neutron stars");
-
-        return result;
-    }
-
     private static Set<EddbSystem> bodiesToSystems(Collection<EddbBody> bodies) {
         Set<EddbSystem> result = new HashSet<>(bodies.size());
 
@@ -108,6 +97,39 @@ public class GalmapApp {
         float xPercent = (coord.getX() - xmin) / galaxySize;
         float yPercent = 1.0f - ((coord.getZ() - zmin) / galaxySize);
         return new Point(Math.round(xPercent * imageSize), Math.round(yPercent * imageSize));
+    }
+
+    private static void writeStatsCsv() throws IOException, ParseException {
+
+        EddbService eddbService = APPCTX.getBean(EddbService.class);
+        Map<String, List<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
+
+        File csvFile = new File(Constants.TEMP_DIR, "arrivalStars.csv");
+        FileUtils.write(csvFile, "Datum", "ISO-8859-1", false);
+        for (String spectralClass : arrivalStarsBySpectralClass.keySet()) {
+            FileUtils.write(csvFile, ";" + spectralClass, "ISO-8859-1", true);
+        }
+        FileUtils.write(csvFile, ";TOTAL\r\n", "ISO-8859-1", true);
+
+        long date = new SimpleDateFormat("dd.MM.yyyy HH:mm").parse("25.10.2016 12:00").getTime();
+
+        while (date < System.currentTimeMillis()) {
+            String datum = new SimpleDateFormat("dd.MM.yyyy").format(new Date(date));
+            FileUtils.write(csvFile, datum, "ISO-8859-1", true);
+            int total = 0;
+            for (String spectralClass : arrivalStarsBySpectralClass.keySet()) {
+                int n = 0;
+                for (EddbBody star : arrivalStarsBySpectralClass.get(spectralClass)) {
+                    if (star.getCreatedAt().getTime() <= date) {
+                        n++;
+                        total++;
+                    }
+                }
+                FileUtils.write(csvFile, ";" + n, "ISO-8859-1", true);
+            }
+            FileUtils.write(csvFile, ";" + total + "\r\n", "ISO-8859-1", true);
+            date += DateUtils.MILLIS_PER_DAY;
+        }
     }
 
 }
