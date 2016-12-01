@@ -103,7 +103,7 @@ public class NeutronJumpApp {
         //                .map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toList());
         starSystemsWithScoopableStars.add(fromSystem);
         starSystemsWithScoopableStars.add(toSystem);
-        logger.debug("Total known neutron stars (EDDB + Mapping Project): " + starSystemsWithNeutronStars.size());
+        logger.debug("Total known neutron stars: " + starSystemsWithNeutronStars.size());
 
         JFrame frame = new JFrame("Route");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
