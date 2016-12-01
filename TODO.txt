@@ -1,6 +1,8 @@
 TODO SidePanel:
+* 1 jump before and after neutron star
 * Faction screenshot scan
 * Editable first discovery column
+* Sell module
 * Stored modules: Own storage with module prices?
 * Mining mission commodities...
 - Save fuel level

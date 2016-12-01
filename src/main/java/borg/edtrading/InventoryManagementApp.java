@@ -56,46 +56,66 @@ public class InventoryManagementApp {
         for (SellExplorationDataEntry entry : sellEntries) {
             if (entry.getSystems().size() == 1) {
                 systemName = entry.getSystems().get(0);
-                List<String> scannedBodies = scannedBodyNamesBySystemName.get(systemName);
-                String date = new SimpleDateFormat("dd. MMM HH:mm").format(entry.getTimestamp());
-                System.out.println(String.format(Locale.US, "[%s] %-25s %,7d + %,7d    %s", date, entry.getSystems().get(0) + ":", entry.getBaseValue(), entry.getBonus(), entry.getDiscovered().toString()));
-
-                if (entry.getDiscovered().size() == 1) {
-                    // 1 systems w/ 1 discovery
-                    String bodyName = entry.getDiscovered().get(0);
-                    String bodyClass = scannedBodyClassesByBodyName.get(bodyName);
-                    int bonus = entry.getBonus();
-                    int base = 2 * bonus;
-                    int jump = entry.getBaseValue() - base;
-
-                    List<Integer> payoutsBody = payouts.getOrDefault(bodyClass, new ArrayList<>());
-                    payoutsBody.add(base);
-                    payouts.put(bodyClass, payoutsBody);
-
-                    List<Integer> payoutsJump = payouts.getOrDefault("JUMP", new ArrayList<>());
-                    payoutsJump.add(jump);
-                    payouts.put("JUMP", payoutsJump);
-                } else if (scannedBodies != null && scannedBodies.size() == 1) {
-                    // 1 systems w/ 1 scan
-                    int medianJumpPayout = 3302; // TODO Adjust
-
-                    String bodyName = scannedBodies.get(0);
-                    String bodyClass = scannedBodyClassesByBodyName.get(bodyName);
-                    int total = entry.getBaseValue();
-                    int base = total - medianJumpPayout;
-
-                    if (base > 0) {
-                        List<Integer> payoutsBody = payouts.getOrDefault(bodyClass, new ArrayList<>());
-                        payoutsBody.add(base);
-                        payouts.put(bodyClass, payoutsBody);
+                List<String> scannedBodies = scannedBodyNamesBySystemName.getOrDefault(systemName, Collections.emptyList());
+                if (scannedBodies.size() <= 1) {
+                    String date = new SimpleDateFormat("dd. MMM HH:mm").format(entry.getTimestamp());
+                    String scans = "";
+                    if (!scannedBodies.isEmpty()) {
+                        scans = "Scans: ";
+                        for (String scannedBody : scannedBodies) {
+                            scans += scannedBody;
+                            scans += "=";
+                            scans += scannedBodyClassesByBodyName.get(scannedBody);
+                            scans += "; ";
+                        }
                     }
-                } else if (entry.getDiscovered().size() == 0 && (scannedBodies == null || scannedBodies.size() == 0)) {
-                    // 1 systems w/o discovery and scan
-                    int jump = entry.getBaseValue();
+                    String discoveries = "";
+                    if (!entry.getDiscovered().isEmpty()) {
+                        discoveries = " | Discoveries: ";
+                        for (String discovery : entry.getDiscovered()) {
+                            scans += discovery;
+                            scans += "=";
+                            scans += scannedBodyClassesByBodyName.get(discovery);
+                            scans += "; ";
+                        }
+                    }
+                    System.out.println(String.format(Locale.US, "[%s] %-35s %,7d + %-,7d    %s%s", date, entry.getSystems().get(0) + ":", entry.getBaseValue(), entry.getBonus(), scans, discoveries));
 
-                    List<Integer> payoutsJump = payouts.getOrDefault("JUMP", new ArrayList<>());
-                    payoutsJump.add(jump);
-                    payouts.put("JUMP", payoutsJump);
+                    if (entry.getDiscovered().size() == 0 && scannedBodies.size() == 0) {
+                        // 1 systems w/o discovery and scan
+                        int jumpPayout = entry.getBaseValue();
+
+                        List<Integer> payoutsJump = payouts.getOrDefault("JUMP", new ArrayList<>());
+                        payoutsJump.add(jumpPayout);
+                        payouts.put("JUMP", payoutsJump);
+                    } else if (scannedBodies.size() == 1) {
+                        // 1 systems w/ 1 scan
+                        int jumpPayout = 3302; // TODO Adjust
+
+                        String bodyName = scannedBodies.get(0);
+                        String bodyClass = scannedBodyClassesByBodyName.get(bodyName);
+                        int scanPayout = MiscUtil.getAsInt(entry.getBaseValue(), 0);
+                        int bonus = MiscUtil.getAsInt(entry.getBonus(), 0);
+
+                        if (entry.getDiscovered().size() == 1) {
+                            jumpPayout = scanPayout - 2 * bonus;
+                            List<Integer> payoutsJump = payouts.getOrDefault("JUMP", new ArrayList<>());
+                            payoutsJump.add(jumpPayout);
+                            payouts.put("JUMP", payoutsJump);
+
+                            scanPayout = 2 * bonus;
+                            List<Integer> payoutsBody = payouts.getOrDefault(bodyClass, new ArrayList<>());
+                            payoutsBody.add(scanPayout);
+                            payouts.put(bodyClass, payoutsBody);
+                        } else {
+                            scanPayout -= jumpPayout;
+                            if (scanPayout > 0) {
+                                List<Integer> payoutsBody = payouts.getOrDefault(bodyClass, new ArrayList<>());
+                                payoutsBody.add(scanPayout);
+                                payouts.put(bodyClass, payoutsBody);
+                            }
+                        }
+                    }
                 }
             }
         }
