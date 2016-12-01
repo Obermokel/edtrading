@@ -2,8 +2,6 @@ TODO SidePanel:
 * 1 jump before and after neutron star
 * Faction screenshot scan
 * Editable first discovery column
-* Sell module
-* Stored modules: Own storage with module prices?
 * Mining mission commodities...
 - Save fuel level
 - Smaller size for raw table, bigger for data table, normal for manufactured and commodity
@@ -14,6 +12,8 @@ TODO SidePanel:
 - CMDR/mode/group into title
 - Increase font sizes
 - Shipyard tab
+- Sell module
+- Stored modules: Own storage with module prices?
 
 TODO Tablet:
 left perm: system/body -- est exp data
