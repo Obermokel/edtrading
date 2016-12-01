@@ -13,7 +13,7 @@ import java.util.Date;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-@Document(indexName = "eddb", type = "faction", shards = 10, replicas = 0)
+@Document(indexName = "eddbfaction", type = "eddbfaction", shards = 1, replicas = 0)
 public class EddbFaction implements EddbEntity {
 
     private static final long serialVersionUID = -243465206806544150L;

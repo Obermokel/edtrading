@@ -9,7 +9,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-@Document(indexName = "eddb", type = "module", shards = 10, replicas = 0)
+@Document(indexName = "eddbmodule", type = "eddbmodule", shards = 1, replicas = 0)
 public class EddbModule implements EddbEntity {
 
     private static final long serialVersionUID = 6837140492504224340L;
@@ -179,12 +179,10 @@ public class EddbModule implements EddbEntity {
         this.group = group;
     }
 
-    @Document(indexName = "eddb", type = "moduleGroup", shards = 10, replicas = 0)
     public static class EddbModuleGroup implements EddbEntity {
 
         private static final long serialVersionUID = 7405734738160782320L;
 
-        @Id
         @SerializedName("id")
         private Long id = null;
         @SerializedName("name")

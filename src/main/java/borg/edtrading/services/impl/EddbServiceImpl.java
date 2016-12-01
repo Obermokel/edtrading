@@ -70,7 +70,7 @@ public class EddbServiceImpl implements EddbService {
         RangeQueryBuilder rangeX = QueryBuilders.rangeQuery("x").from(coord.getX() - lookaround).to(coord.getX() + lookaround);
         RangeQueryBuilder rangeY = QueryBuilders.rangeQuery("y").from(coord.getY() - lookaround).to(coord.getY() + lookaround);
         RangeQueryBuilder rangeZ = QueryBuilders.rangeQuery("z").from(coord.getZ() - lookaround).to(coord.getZ() + lookaround);
-        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.boolQuery().must(rangeX).must(rangeY).must(rangeZ)).withIndices("eddb").withTypes("system").withPageable(new PageRequest(0, 1000)).build();
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.boolQuery().must(rangeX).must(rangeY).must(rangeZ)).withIndices("eddbsystem").withTypes("eddbsystem").withPageable(new PageRequest(0, 1000)).build();
         String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
         boolean hasRecords = true;
         while (hasRecords) {
@@ -135,7 +135,7 @@ public class EddbServiceImpl implements EddbService {
 
         logger.debug("Mapping" + (arrivalOnly ? " arrival" : "") + " stars by spectral class");
 
-        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(combinedQuery).withIndices("eddb").withTypes("body").withPageable(new PageRequest(0, 1000)).build();
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(combinedQuery).withIndices("eddbbody").withTypes("eddbbody").withPageable(new PageRequest(0, 1000)).build();
         String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
         boolean hasRecords = true;
         while (hasRecords) {
@@ -180,7 +180,7 @@ public class EddbServiceImpl implements EddbService {
 
         logger.debug("Loading all systems");
 
-        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices("eddb").withTypes("system").withPageable(new PageRequest(0, 1000)).build();
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices("eddbsystem").withTypes("eddbsystem").withPageable(new PageRequest(0, 1000)).build();
         String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
         boolean hasRecords = true;
         while (hasRecords) {

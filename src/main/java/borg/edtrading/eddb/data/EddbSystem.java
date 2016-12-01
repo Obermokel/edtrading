@@ -18,7 +18,7 @@ import java.util.List;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-@Document(indexName = "eddb", type = "system", shards = 10, replicas = 0)
+@Document(indexName = "eddbsystem", type = "eddbsystem", shards = 4, replicas = 0)
 public class EddbSystem implements EddbEntity {
 
     private static final long serialVersionUID = -2929675737765201360L;
@@ -109,6 +109,7 @@ public class EddbSystem implements EddbEntity {
     private Long controllingMinorFactionId = null;
     @SerializedName("controlling_minor_faction")
     private String controllingMinorFaction = null;
+    @Field(type = FieldType.Nested)
     @SerializedName("minor_faction_presences")
     private List<FactionPresence> minorFactionPresences = null;
 

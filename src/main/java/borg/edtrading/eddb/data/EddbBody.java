@@ -17,7 +17,7 @@ import java.util.List;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-@Document(indexName = "eddb", type = "body", shards = 10, replicas = 0)
+@Document(indexName = "eddbbody", type = "eddbbody", shards = 4, replicas = 0)
 public class EddbBody implements EddbEntity {
 
     private static final long serialVersionUID = -785705194031217696L;
@@ -142,12 +142,16 @@ public class EddbBody implements EddbEntity {
     @Field(type = FieldType.Double)
     @SerializedName("belt_moon_masses")
     private BigDecimal beltMoonMasses = null;
+    @Field(type = FieldType.Nested)
     @SerializedName("rings")
     private List<EddbRing> rings = null;
+    @Field(type = FieldType.Nested)
     @SerializedName("atmosphere_composition")
     private List<AtmosphereShare> atmosphereComposition = null;
+    @Field(type = FieldType.Nested)
     @SerializedName("solid_composition")
     private List<CompositionShare> solidComposition = null;
+    @Field(type = FieldType.Nested)
     @SerializedName("materials")
     private List<MaterialShare> materials = null;
     @SerializedName("is_landable")
@@ -586,12 +590,10 @@ public class EddbBody implements EddbEntity {
         this.isLandable = isLandable;
     }
 
-    @Document(indexName = "eddb", type = "ring", shards = 10, replicas = 0)
     public static class EddbRing implements EddbEntity {
 
         private static final long serialVersionUID = 318036112349197244L;
 
-        @Id
         @SerializedName("id")
         private Long id = null;
         @Field(type = FieldType.Date)
