@@ -189,6 +189,18 @@ public class EddbBody implements EddbEntity {
         return "#" + this.id + " " + this.name;
     }
 
+    public String toStarClass() {
+        if (TYPE_ID_SUPERMASSIVE_BLACK_HOLE.equals(this.getTypeId())) {
+            return "SMBH";
+        } else if (TYPE_ID_BLACK_HOLE.equals(this.getTypeId())) {
+            return "BH";
+        } else if (TYPE_ID_NEUTRON_STAR.equals(this.getTypeId())) {
+            return "NS";
+        } else {
+            return this.getSpectralClass();
+        }
+    }
+
     @Override
     public Long getId() {
         return this.id;

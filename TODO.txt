@@ -1,5 +1,6 @@
 TODO SidePanel:
 * 1 jump before and after neutron star
+* current jump range * boost level
 * Faction screenshot scan
 * Editable first discovery column
 * Mining mission commodities...
