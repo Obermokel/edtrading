@@ -309,6 +309,7 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         float minJumpRange = MiscUtil.getAsFloat(this.gameSession.getCurrentShipLoadout().getFullTankJumpRange(), 1.0f);
         float maxJumpRange = MiscUtil.getAsFloat(this.gameSession.getCurrentShipLoadout().getOptTankJumpRange(), 1.0f);
         float currentJumpRange = FuelAndJumpRangeLookup.estimateCurrentJumpRange(totalFuel, (int) capacityFuel, maxFuelPerJump, minJumpRange, maxJumpRange);
+        currentJumpRange *= this.travelHistory.getBoostLevel();
         this.jumpLabel.setText(String.format(Locale.US, "Jump: %.2f Ly", currentJumpRange));
         int explPayout = this.travelHistory.estimateRemainingExplorationPayout();
         this.explLabel.setText(String.format(Locale.US, "Expl: %,d CR", explPayout));

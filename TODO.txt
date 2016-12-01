@@ -1,6 +1,4 @@
 TODO SidePanel:
-* 1 jump before and after neutron star
-* current jump range * boost level
 * Faction screenshot scan
 * Editable first discovery column
 * Mining mission commodities...
@@ -15,6 +13,8 @@ TODO SidePanel:
 - Shipyard tab
 - Sell module
 - Stored modules: Own storage with module prices?
+- current jump range * boost level
+- 1 jump before and after neutron star
 
 TODO Tablet:
 left perm: system/body -- est exp data

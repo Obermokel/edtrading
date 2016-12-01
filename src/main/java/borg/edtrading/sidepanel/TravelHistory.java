@@ -17,6 +17,7 @@ import borg.edtrading.journal.entries.location.TouchdownEntry;
 import borg.edtrading.journal.entries.location.UndockedEntry;
 import borg.edtrading.journal.entries.starport.RefuelAllEntry;
 import borg.edtrading.journal.entries.travel.FuelScoopEntry;
+import borg.edtrading.journal.entries.travel.JetConeBoostEntry;
 import borg.edtrading.util.MiscUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -58,6 +59,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
     private boolean landed = true;
     private float fuelLevel = 0;
     private int fuelCapacity = 0;
+    private float boostLevel = 1;
 
     private final LinkedList<VisitedSystem> visitedSystems = new LinkedList<>();
     private final Set<String> visitedSystemNames = new HashSet<>();
@@ -213,6 +215,14 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
         this.fuelCapacity = fuelCapacity;
     }
 
+    public float getBoostLevel() {
+        return this.boostLevel;
+    }
+
+    public void setBoostLevel(float boostLevel) {
+        this.boostLevel = boostLevel;
+    }
+
     public LinkedList<VisitedSystem> getVisitedSystems() {
         return this.visitedSystems;
     }
@@ -279,6 +289,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 this.setInSupercruise(true);
                 this.setLanded(false);
                 this.setFuelLevel(MiscUtil.getAsFloat(e.getFuelLevel(), 0f));
+                this.setBoostLevel(1f);
                 VisitedSystem visitedSystem = new VisitedSystem(e);
                 if (visitedSystem.isUninhabited() && !this.visitedSystemNames.contains(visitedSystem.getSystemName())) {
                     if (visitedSystem.getCoord().distanceTo(new Coord(0, 0, 0)) > 200) {
@@ -304,6 +315,16 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 if (this.currentShip != null) {
                     this.currentShip.setFuelLevel(this.getFuelLevel());
                 }
+                for (TravelHistoryListener listener : this.listeners) {
+                    try {
+                        listener.onFuelLevelChanged(this.getFuelLevel());
+                    } catch (Exception ex) {
+                        logger.warn(listener + " failed: " + ex);
+                    }
+                }
+            } else if (entry.getEvent() == Event.JetConeBoost) {
+                JetConeBoostEntry e = (JetConeBoostEntry) entry;
+                this.setBoostLevel(e.getBoostValue());
                 for (TravelHistoryListener listener : this.listeners) {
                     try {
                         listener.onFuelLevelChanged(this.getFuelLevel());
