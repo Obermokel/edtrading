@@ -31,10 +31,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.JFrame;
@@ -58,8 +60,8 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        final String fromName = "Sol";
-        final String toName = "Blu Thua AI-A c14-10";
+        final String fromName = "Boewnst KS-S c20-959";
+        final String toName = "Colonia";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
 
@@ -93,11 +95,12 @@ public class NeutronJumpApp {
         // Try to find a route
         Map<String, List<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
         List<EddbSystem> starSystemsWithNeutronStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, "NS").parallelStream().map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toList());
-        //        Set<EddbSystem> starSystemsWithUnscoopableStars = eddbService.removeStarsOfSpectralClasses(arrivalStarsBySpectralClass, Constants.SCOOPABLE_SPECTRAL_CLASSES.toArray(new String[0])).stream().map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toSet());
-        //        Set<EddbSystem> starSystemsWithScoopableStars = new HashSet<>(eddbService.loadAllSystems());
-        //        starSystemsWithScoopableStars.removeAll(starSystemsWithUnscoopableStars);
-        List<EddbSystem> starSystemsWithScoopableStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, Constants.SCOOPABLE_SPECTRAL_CLASSES.toArray(new String[0])).parallelStream()
-                .map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toList());
+        Set<EddbSystem> starSystemsWithUnscoopableStars = eddbService.removeStarsOfSpectralClasses(arrivalStarsBySpectralClass, Constants.SCOOPABLE_SPECTRAL_CLASSES.toArray(new String[0])).parallelStream()
+                .map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toSet());
+        Set<EddbSystem> starSystemsWithScoopableStars = new HashSet<>(eddbService.loadAllSystems());
+        starSystemsWithScoopableStars.removeAll(starSystemsWithUnscoopableStars);
+        //        List<EddbSystem> starSystemsWithScoopableStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, Constants.SCOOPABLE_SPECTRAL_CLASSES.toArray(new String[0])).parallelStream()
+        //                .map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toList());
         starSystemsWithScoopableStars.add(fromSystem);
         starSystemsWithScoopableStars.add(toSystem);
         logger.debug("Total known neutron stars (EDDB + Mapping Project): " + starSystemsWithNeutronStars.size());
@@ -212,7 +215,7 @@ public class NeutronJumpApp {
             int nUnboostedJumps = 0;
             for (int index = 0; index < this.getElements().size(); index++) {
                 RouteElement e = this.getElements().get(index);
-                if ("NS".equals(e.getFromSpectralClass())) {
+                if (!"NS".equals(e.getFromSpectralClass())) {
                     nUnboostedJumps++;
                 } else {
                     if (nUnboostedJumps >= 3) {
@@ -381,7 +384,7 @@ public class NeutronJumpApp {
                     }
                 }
             }
-            return String.format(Locale.US, "%-50s%5.0f%10s%10s", this.getToSystem().getName().replace("'", " "), jumpDistance, this.getToSpectralClass(), flags);
+            return String.format(Locale.US, "%-50s%5.0f%10s%10s\n", this.getToSystem().getName().replace("'", " "), jumpDistance, this.getToSpectralClass(), flags);
         }
 
         public static String toHtmlTableHeadline() {
