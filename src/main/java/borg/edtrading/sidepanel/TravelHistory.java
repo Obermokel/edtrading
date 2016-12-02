@@ -260,6 +260,13 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                     for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
                         if (scannedBody.getBodyName().equals(bodyName)) {
                             scannedBody.setToFirstDiscovered();
+                            for (TravelHistoryListener listener : this.listeners) {
+                                try {
+                                    listener.onLocationChanged();
+                                } catch (Exception ex) {
+                                    logger.warn(listener + " failed: " + ex);
+                                }
+                            }
                             return;
                         }
                     }
@@ -278,6 +285,13 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                     for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
                         if (scannedBody.getBodyName().equals(bodyName)) {
                             scannedBody.setToNotFirstDiscovered();
+                            for (TravelHistoryListener listener : this.listeners) {
+                                try {
+                                    listener.onLocationChanged();
+                                } catch (Exception ex) {
+                                    logger.warn(listener + " failed: " + ex);
+                                }
+                            }
                             return;
                         }
                     }

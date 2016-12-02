@@ -94,7 +94,9 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
 
     @Override
     public void tableChanged(TableModelEvent e) {
-        this.tableModel.refresh(this.travelHistory);
+        if (e.getColumn() == 10) {
+            this.tableModel.refresh(this.travelHistory);
+        }
     }
 
     @Override
