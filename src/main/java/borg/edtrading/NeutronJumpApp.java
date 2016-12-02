@@ -788,7 +788,7 @@ public class NeutronJumpApp {
                 result.add(body);
             } else if (EddbBody.TYPE_ID_NEUTRON_STAR.equals(body.getTypeId()) && !Boolean.TRUE.equals(body.getIsMainStar())) {
                 result.add(body);
-            } else if ("DA".equals(body.getSpectralClass()) || "DB".equals(body.getSpectralClass())) {
+            } else if ("DA".equals(body.getSpectralClass()) || "DB".equals(body.getSpectralClass()) || "DC".equals(body.getSpectralClass())) {
                 result.add(body);
             }
         }

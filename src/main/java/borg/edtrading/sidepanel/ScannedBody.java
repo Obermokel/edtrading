@@ -45,6 +45,7 @@ public class ScannedBody implements Serializable {
       PAYOUTS.put(                                "Class H", (44721+45177+45367)/3);//44721+45177+45367
       PAYOUTS.put(                               "Class DA", (27370+27020)/2);//27370+27020
       PAYOUTS.put(                               "Class DB", 27000);
+      PAYOUTS.put(                               "Class DC", 27017);//27017
 
       PAYOUTS.put(                          "Ammonia world", 48802);//48802
       PAYOUTS.put(                         "Earthlike body", (71874+65997)/2);//71874+65997
@@ -101,7 +102,7 @@ public class ScannedBody implements Serializable {
                 return "Black hole";
             } else if ("N".equals(e.getStarType())) {
                 return "Neutron star";
-            } else if ("DA".equals(e.getStarType()) || "DB".equals(e.getStarType())) {
+            } else if ("DA".equals(e.getStarType()) || "DB".equals(e.getStarType()) || "DC".equals(e.getStarType())) {
                 return "White dwarf";
             } else if ("TTS".equals(e.getStarType())) {
                 return "T-Tauri star";
