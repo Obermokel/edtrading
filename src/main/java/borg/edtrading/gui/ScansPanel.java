@@ -6,6 +6,7 @@ import borg.edtrading.sidepanel.ScannedBody;
 import borg.edtrading.sidepanel.TravelHistory;
 import borg.edtrading.sidepanel.TravelHistoryListener;
 import borg.edtrading.sidepanel.VisitedSystem;
+import borg.edtrading.util.MiscUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,12 +22,16 @@ import java.util.Locale;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
@@ -35,7 +40,7 @@ import javax.swing.table.DefaultTableCellRenderer;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class ScansPanel extends JPanel implements TravelHistoryListener {
+public class ScansPanel extends JPanel implements TravelHistoryListener, TableModelListener {
 
     private static final long serialVersionUID = -4409093032216648613L;
 
@@ -51,6 +56,7 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
         //this.setLayout(new FlowLayout(FlowLayout.LEFT));
         this.setLayout(new BorderLayout());
         this.tableModel = new ScansTableModel(travelHistory);
+        this.tableModel.addTableModelListener(this);
         JTable table = new JTable(tableModel);
         if (SidePanelApp.BIG_AND_BLACK) {
             table.setFont(new Font("Sans Serif", Font.BOLD, 18));
@@ -78,11 +84,17 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
         table.getColumn("Payout").setCellRenderer(new PayoutCellRenderer());
         table.getColumn("1st?").setPreferredWidth(33);
         //table.getColumn("1st?").setCellRenderer(new GenericCellRenderer());
+        table.getColumn("1st?").setCellEditor(new DefaultCellEditor(new JCheckBox()));
         table.setAutoCreateRowSorter(true);
         JScrollPane scrollPane = new JScrollPane(table);
         this.add(scrollPane, BorderLayout.CENTER);
 
         travelHistory.addListener(this);
+    }
+
+    @Override
+    public void tableChanged(TableModelEvent e) {
+        this.tableModel.refresh(this.travelHistory);
     }
 
     @Override
@@ -105,6 +117,7 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
         private static final long serialVersionUID = -8604700804393478706L;
 
         private final LinkedList<ScansTableRow> rows = new LinkedList<>();
+        private TravelHistory travelHistory = null;
 
         public ScansTableModel(TravelHistory travelHistory) {
             for (int idxSystem = travelHistory.getVisitedSystems().size() - 1; idxSystem >= 0; idxSystem--) {
@@ -114,6 +127,7 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
                     this.rows.addLast(new ScansTableRow(sb));
                 }
             }
+            this.travelHistory = travelHistory;
         }
 
         public void refresh(TravelHistory travelHistory) {
@@ -129,6 +143,7 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
                     }
                 }
             }
+            this.travelHistory = travelHistory;
 
             this.fireTableDataChanged();
         }
@@ -156,6 +171,18 @@ public class ScansPanel extends JPanel implements TravelHistoryListener {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             return this.rows.get(rowIndex).getValueAt(columnIndex);
+        }
+
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            if (columnIndex == 10) {
+                if (MiscUtil.getAsBoolean(aValue)) {
+                    this.travelHistory.setToAssumedFirstDiscovery(this.getRow(rowIndex).getScannedBody().getBodyName());
+                } else {
+                    this.travelHistory.unsetAssumedFirstDiscovery(this.getRow(rowIndex).getScannedBody().getBodyName());
+                }
+                this.fireTableCellUpdated(rowIndex, columnIndex);
+            }
         }
 
         @Override

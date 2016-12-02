@@ -166,6 +166,11 @@ public class ScannedBody implements Serializable {
         this.remainingBonusPayout = this.remainingBasePayout / 2;
     }
 
+    public void setToNotFirstDiscovered() {
+        this.firstDiscovered = false;
+        this.remainingBonusPayout = 0;
+    }
+
     public void setToPayedOut() {
         this.remainingBasePayout = 0;
         this.remainingBonusPayout = 0;

@@ -19,16 +19,21 @@ import borg.edtrading.journal.entries.starport.RefuelAllEntry;
 import borg.edtrading.journal.entries.travel.FuelScoopEntry;
 import borg.edtrading.journal.entries.travel.JetConeBoostEntry;
 import borg.edtrading.util.MiscUtil;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * TravelHistory
@@ -61,12 +66,14 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
     private int fuelCapacity = 0;
     private float boostLevel = 1;
 
+    private final Set<String> assumedFirstDiscoveries = new TreeSet<>();
     private final LinkedList<VisitedSystem> visitedSystems = new LinkedList<>();
     private final Set<String> visitedSystemNames = new HashSet<>();
 
     private final List<TravelHistoryListener> listeners = new ArrayList<>();
 
     public TravelHistory(JournalReaderThread journalReaderThread, GameSession gameSession) {
+        this.loadAssumedFirstDiscoveries();
         if (journalReaderThread != null) {
             journalReaderThread.addListener(this);
         }
@@ -240,6 +247,70 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
             return false;
         } else {
             return this.listeners.remove(listener);
+        }
+    }
+
+    public void setToAssumedFirstDiscovery(String bodyName) {
+        if (bodyName != null) {
+            if (this.assumedFirstDiscoveries.add(bodyName)) {
+                this.saveAssumedFirstDiscoveries();
+
+                for (int i = this.visitedSystems.size() - 1; i >= 0; i--) {
+                    VisitedSystem visitedSystem = this.visitedSystems.get(i);
+                    for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
+                        if (scannedBody.getBodyName().equals(bodyName)) {
+                            scannedBody.setToFirstDiscovered();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void unsetAssumedFirstDiscovery(String bodyName) {
+        if (bodyName != null) {
+            if (this.assumedFirstDiscoveries.remove(bodyName)) {
+                this.saveAssumedFirstDiscoveries();
+
+                for (int i = this.visitedSystems.size() - 1; i >= 0; i--) {
+                    VisitedSystem visitedSystem = this.visitedSystems.get(i);
+                    for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
+                        if (scannedBody.getBodyName().equals(bodyName)) {
+                            scannedBody.setToNotFirstDiscovered();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void saveAssumedFirstDiscoveries() {
+        try {
+            File dir = new File(System.getProperty("user.home"), ".edsidepanel");
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            File file = new File(dir, "AssumedFirstDiscoveries.txt");
+            FileUtils.write(file, this.assumedFirstDiscoveries.stream().collect(Collectors.joining("\n")), "UTF-8", false);
+        } catch (IOException e) {
+            logger.error("Failed to save assumed first discoveries", e);
+        }
+    }
+
+    public void loadAssumedFirstDiscoveries() {
+        try {
+            File dir = new File(System.getProperty("user.home"), ".edsidepanel");
+            File file = new File(dir, "AssumedFirstDiscoveries.txt");
+            if (file.exists() && file.length() > 0) {
+                this.assumedFirstDiscoveries.clear();
+                for (String line : FileUtils.readLines(file, "UTF-8")) {
+                    this.assumedFirstDiscoveries.add(line);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Failed to load assumed first discoveries", e);
         }
     }
 
@@ -449,6 +520,9 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 this.setBodyName(scannedBody.getBodyName());
                 this.setBodyType(scannedBody.getBodyType());
                 this.visitedSystems.getLast().getScannedBodies().addLast(scannedBody);
+                if (this.assumedFirstDiscoveries.contains(scannedBody.getBodyName())) {
+                    scannedBody.setToFirstDiscovered();
+                }
                 for (TravelHistoryListener listener : this.listeners) {
                     try {
                         listener.onLocationChanged();
@@ -468,6 +542,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                                 payedOut = true;
                             }
                             for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
+                                this.unsetAssumedFirstDiscovery(scannedBody.getBodyName());
                                 if (e.getDiscovered().contains(scannedBody.getBodyName())) {
                                     scannedBody.setToFirstDiscovered();
                                 }
