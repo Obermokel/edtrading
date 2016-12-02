@@ -72,11 +72,11 @@ public class InventoryPanel extends Box implements InventoryListener {
                 table.setFont(new Font("Sans Serif", Font.BOLD, 18));
                 table.setRowHeight(24);
             }
-            table.getColumn("Name").setCellRenderer(new FlashingNameCellRenderer());
-            table.getColumn("Have").setCellRenderer(new FlashingNameCellRenderer());
-            table.getColumn("Surplus").setCellRenderer(new FlashingNameCellRenderer());
-            table.getColumn("Want").setCellRenderer(new FlashingNameCellRenderer());
-            table.getColumn("Have").setCellEditor(new PlusMinusCellEditor(new JTextField(3)));
+            table.getColumn("Name").setCellRenderer(new FlashingBackgroundCellRenderer());
+            table.getColumn("Have").setCellRenderer(new FlashingBackgroundCellRenderer());
+            table.getColumn("Surplus").setCellRenderer(new FlashingBackgroundCellRenderer());
+            table.getColumn("Want").setCellRenderer(new FlashingBackgroundCellRenderer());
+            table.getColumn("Have").setCellEditor(new DefaultCellEditor(new JTextField(3)));
             for (int i = 0; i < 4; i++) {
                 if (i == 0) {
                     table.getColumnModel().getColumn(i).setMinWidth(100);
@@ -373,7 +373,7 @@ public class InventoryPanel extends Box implements InventoryListener {
 
     }
 
-    public static class FlashingNameCellRenderer extends DefaultTableCellRenderer {
+    public static class FlashingBackgroundCellRenderer extends DefaultTableCellRenderer {
 
         private static final long serialVersionUID = -6076484142143621910L;
 
@@ -385,13 +385,6 @@ public class InventoryPanel extends Box implements InventoryListener {
                 String name = (String) table.getValueAt(row, 0);
                 InventoryTableModel model = (InventoryTableModel) table.getModel();
                 Color flashingColor = model.getFlashingColor(name);
-                //                if (flashingColor != null) {
-                //                    comp.setForeground(flashingColor);
-                //                } else if (isSelected) {
-                //                    comp.setForeground(table.getSelectionForeground());
-                //                } else {
-                //                    comp.setForeground(table.getForeground());
-                //                }
                 if (flashingColor != null) {
                     comp.setBackground(flashingColor);
                 } else if (isSelected) {
@@ -402,24 +395,6 @@ public class InventoryPanel extends Box implements InventoryListener {
                 comp.repaint(); // TODO Required?
             }
             return comp;
-        }
-
-    }
-
-    public static class PlusMinusCellEditor extends DefaultCellEditor {
-
-        private static final long serialVersionUID = -6809216674791253543L;
-
-        //        public PlusMinusCellEditor(JCheckBox checkBox) {
-        //            super(checkBox);
-        //        }
-        //
-        //        public PlusMinusCellEditor(JComboBox comboBox) {
-        //            super(comboBox);
-        //        }
-
-        public PlusMinusCellEditor(JTextField textField) {
-            super(textField);
         }
 
     }
