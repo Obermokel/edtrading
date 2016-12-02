@@ -1,7 +1,5 @@
 TODO SidePanel:
-* Rekursion in scans table!!!
 * Faction screenshot scan
-* Editable first discovery column
 * Sort scheint kaputt in der Scans table
 * Mining mission commodities...
 - Save fuel level
@@ -18,6 +16,8 @@ TODO SidePanel:
 - current jump range * boost level
 - 1 jump before and after neutron star
 - commodities from eddb + categories
+- Editable first discovery column
+- Rekursion in scans table!!!
 
 TODO Tablet:
 left perm: system/body -- est exp data

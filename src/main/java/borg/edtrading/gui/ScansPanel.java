@@ -179,9 +179,9 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if (columnIndex == 10) {
                 if (MiscUtil.getAsBoolean(aValue)) {
-                    this.travelHistory.setToAssumedFirstDiscovery(this.getRow(rowIndex).getScannedBody().getBodyName());
+                    this.travelHistory.setToAssumedFirstDiscovery(this.lookupScannedBody(rowIndex).getBodyName());
                 } else {
-                    this.travelHistory.unsetAssumedFirstDiscovery(this.getRow(rowIndex).getScannedBody().getBodyName());
+                    this.travelHistory.unsetAssumedFirstDiscovery(this.lookupScannedBody(rowIndex).getBodyName());
                 }
                 this.fireTableCellUpdated(rowIndex, columnIndex);
             }
@@ -192,8 +192,23 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
             return this.rows.get(rowIndex).isCellEditable(columnIndex);
         }
 
-        ScansTableRow getRow(int rowIndex) {
-            return this.rows.get(rowIndex);
+        ScannedBody lookupScannedBody(int rowIndex) {
+            return this.lookupScannedBody((String) this.getValueAt(rowIndex, 1));
+        }
+
+        ScannedBody lookupScannedBody(String bodyName) {
+            if (StringUtils.isNotEmpty(bodyName)) {
+                for (int idxSystem = travelHistory.getVisitedSystems().size() - 1; idxSystem >= 0; idxSystem--) {
+                    VisitedSystem vs = travelHistory.getVisitedSystems().get(idxSystem);
+                    for (int idxBody = vs.getScannedBodies().size() - 1; idxBody >= 0; idxBody--) {
+                        ScannedBody sb = vs.getScannedBodies().get(idxBody);
+                        if (sb.getBodyName().equals(bodyName)) {
+                            return sb;
+                        }
+                    }
+                }
+            }
+            return null;
         }
 
     }
@@ -359,7 +374,8 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
             comp.setHorizontalAlignment(SwingConstants.RIGHT);
             if (radiusMeter instanceof Float) {
                 ScansTableModel model = (ScansTableModel) table.getModel();
-                boolean isStar = StringUtils.isNotEmpty(model.getRow(row).getScannedBody().getStarClass());
+                ScannedBody sb = model.lookupScannedBody(row);
+                boolean isStar = StringUtils.isNotEmpty(sb.getStarClass());
                 if (isStar) {
                     comp.setText(String.format(Locale.US, "%.2f R☉", (float) radiusMeter / 695700000f));
                 } else {
@@ -382,7 +398,7 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
             comp.setHorizontalAlignment(SwingConstants.RIGHT);
             if (stellarMass instanceof Float) {
                 ScansTableModel model = (ScansTableModel) table.getModel();
-                ScannedBody sb = model.getRow(row).getScannedBody();
+                ScannedBody sb = model.lookupScannedBody(row);
                 boolean isStar = StringUtils.isNotEmpty(sb.getStarClass());
                 boolean isGasGaint = StringUtils.isNotEmpty(sb.getBodyType()) && sb.getBodyType().toLowerCase().contains("gas giant");
                 if (isStar) {
