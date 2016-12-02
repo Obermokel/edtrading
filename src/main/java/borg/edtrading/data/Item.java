@@ -226,7 +226,7 @@ public enum Item {
     INSULATING_MEMBRANE                               ("Insulating Membrane"                             , "insulatingmembrane"                              , ItemType.COMMODITY       , "Industrial Materials"   , 1),
     MEDB_STARLUBE                                     ("Medb Starlube"                                   , "medbstarlube"                                    , ItemType.COMMODITY       , "Industrial Materials"   , 2),
     METAALLOYS                                        ("Meta-Alloys"                                     , "metaalloys"                                      , ItemType.COMMODITY       , "Industrial Materials"   , 0),
-    MICROWEAVE_COOLING_HOSES                          ("Micro-Weave Cooling Hoses"                       , "microweavecoolinghoses"                          , ItemType.COMMODITY       , "Industrial Materials"   , 1),
+    MICROWEAVE_COOLING_HOSES                          ("Micro-Weave Cooling Hoses"                       , "coolinghoses"                                    , ItemType.COMMODITY       , "Industrial Materials"   , 1),
     NEOFABRIC_INSULATION                              ("Neofabric Insulation"                            , "neofabricinsulation"                             , ItemType.COMMODITY       , "Industrial Materials"   , 1),
     POLYMERS                                          ("Polymers"                                        , "polymers"                                        , ItemType.COMMODITY       , "Industrial Materials"   , 0),
     SEMICONDUCTORS                                    ("Semiconductors"                                  , "semiconductors"                                  , ItemType.COMMODITY       , "Industrial Materials"   , 0),
@@ -277,7 +277,7 @@ public enum Item {
     HN_SHOCK_MOUNT                                    ("HN Shock Mount"                                  , "hnshockmount"                                    , ItemType.COMMODITY       , "Machinery"              , 1),
     ION_DISTRIBUTOR                                   ("Ion Distributor"                                 , "iondistributor"                                  , ItemType.COMMODITY       , "Machinery"              , 1),
     MAGNETIC_EMITTER_COIL                             ("Magnetic Emitter Coil"                           , "magneticemittercoil"                             , ItemType.COMMODITY       , "Machinery"              , 1),
-    MARINE_EQUIPMENT                                  ("Marine Equipment"                                , "marineequipment"                                 , ItemType.COMMODITY       , "Machinery"              , 0),
+    MARINE_EQUIPMENT                                  ("Marine Equipment"                                , "marinesupplies"                                  , ItemType.COMMODITY       , "Machinery"              , 0),
     MICROBIAL_FURNACES                                ("Microbial Furnaces"                              , "microbialfurnaces"                               , ItemType.COMMODITY       , "Machinery"              , 0),
     MINERAL_EXTRACTORS                                ("Mineral Extractors"                              , "mineralextractors"                               , ItemType.COMMODITY       , "Machinery"              , 0),
     MODULAR_TERMINALS                                 ("Modular Terminals"                               , "modularterminals"                                , ItemType.COMMODITY       , "Machinery"              , 1),
@@ -346,7 +346,7 @@ public enum Item {
     LITHIUM_HYDROXIDE                                 ("Lithium Hydroxide"                               , "lithiumhydroxide"                                , ItemType.COMMODITY       , "Minerals"               , 0),
     LOW_TEMPERATURE_DIAMONDS                          ("Low Temperature Diamonds"                        , "lowtemperaturediamonds"                          , ItemType.COMMODITY       , "Minerals"               , 0),
     METHANE_CLATHRATE                                 ("Methane Clathrate"                               , "methaneclathrate"                                , ItemType.COMMODITY       , "Minerals"               , 0),
-    METHANOL_MONOHYDRATE                              ("Methanol Monohydrate"                            , "methanolmonohydrate"                             , ItemType.COMMODITY       , "Minerals"               , 0),
+    METHANOL_MONOHYDRATE_CRYSTALS                     ("Methanol Monohydrate Crystals"                   , "methanolmonohydratecrystals"                     , ItemType.COMMODITY       , "Minerals"               , 0),
     MOISSANITE                                        ("Moissanite"                                      , "moissanite"                                      , ItemType.COMMODITY       , "Minerals"               , 0),
     NGADANDARI_FIRE_OPALS                             ("Ngadandari Fire Opals"                           , "ngadandarifireopals"                             , ItemType.COMMODITY       , "Minerals"               , 2),
     PAINITE                                           ("Painite"                                         , "painite"                                         , ItemType.COMMODITY       , "Minerals"               , 0),
@@ -457,7 +457,7 @@ public enum Item {
             typeList.add(item);
             ITEMS_BY_TYPE.put(item.getType(), typeList);
 
-            ITEM_BY_NAME.put(item.getName().toUpperCase(), item);
+            ITEM_BY_NAME.put(item.getName().toUpperCase().replace("-", " "), item);
 
             if (item.getJournalName() != null) {
                 ITEM_BY_JOURNALNAME.put(item.getJournalName().toLowerCase(), item);
@@ -501,7 +501,7 @@ public enum Item {
     }
 
     public static Item byName(String name) {
-        return ITEM_BY_NAME.get(name.toUpperCase().replace("ABBERANT", "ABERRANT"));
+        return ITEM_BY_NAME.get(name.toUpperCase().replace("ABBERANT", "ABERRANT").replace("-", " "));
     }
 
     public static Item byJournalName(String journalName) {
