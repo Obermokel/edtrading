@@ -3,7 +3,6 @@ TODO SidePanel:
 * Faction screenshot scan
 * Editable first discovery column
 * Sort scheint kaputt in der Scans table
-* commodities from eddb + categories
 * Mining mission commodities...
 - Save fuel level
 - Smaller size for raw table, bigger for data table, normal for manufactured and commodity
@@ -18,6 +17,7 @@ TODO SidePanel:
 - Stored modules: Own storage with module prices?
 - current jump range * boost level
 - 1 jump before and after neutron star
+- commodities from eddb + categories
 
 TODO Tablet:
 left perm: system/body -- est exp data
