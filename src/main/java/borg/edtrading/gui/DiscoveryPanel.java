@@ -5,10 +5,12 @@ import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;
 import borg.edtrading.eddb.repositories.EddbBodyRepository;
+import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.services.EddbService;
 import borg.edtrading.sidepanel.TravelHistory;
 import borg.edtrading.sidepanel.TravelHistoryListener;
+import borg.edtrading.util.StarUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -341,12 +343,36 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             zsize = ((float) this.getHeight() / (float) this.getWidth()) * xsize;
             zfrom = coord.getZ() - zsize / 2;
             zto = coord.getZ() + zsize / 2;
+            EddbSystemRepository systemRepo = this.appctx.getBean(EddbSystemRepository.class);
             EddbBodyRepository bodyRepo = this.appctx.getBean(EddbBodyRepository.class);
             int psize = Math.round(this.getWidth() / 150f);
             if (psize % 2 == 0) {
                 psize++;
             }
             int poffset = (psize - 1) / 2;
+
+            Page<EddbSystem> systems = systemRepo.findByCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 10000));
+            for (EddbSystem system : systems.getContent()) {
+                Point p = this.coordToPoint(system.getCoord());
+                float dy = Math.abs(system.getCoord().getY() - coord.getY());
+                int alpha = 255 - Math.round((dy / 25f) * 192);
+
+                g.setColor(new Color(80, 80, 80, alpha));
+                g.fillRect(p.x - 1, p.y - 1, 3, 3);
+            }
+
+            Page<EddbBody> mainStars = bodyRepo.findByIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(Boolean.TRUE, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 10000));
+            for (EddbBody mainStar : mainStars.getContent()) {
+                if (StringUtils.isNotEmpty(mainStar.getSpectralClass())) {
+                    Point p = this.coordToPoint(mainStar.getCoord());
+                    float dy = Math.abs(mainStar.getCoord().getY() - coord.getY());
+                    int alpha = 255 - Math.round((dy / 25f) * 64);
+
+                    Color color = StarUtil.spectralClassToColor(mainStar.getSpectralClass());
+                    g.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
+                    g.fillRect(p.x - 1, p.y - 1, 3, 3);
+                }
+            }
 
             Page<EddbBody> blackHoles = bodyRepo.findByTypeIdAndIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_BLACK_HOLE, Boolean.TRUE, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
             for (EddbBody blackHole : blackHoles.getContent()) {
@@ -378,9 +404,9 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             for (EddbBody earthLikeWorld : earthLikeWorlds.getContent()) {
                 Point p = this.coordToPoint(earthLikeWorld.getCoord());
 
-                g.setColor(new Color(0, 0, 120));
+                g.setColor(new Color(0, 40, 120));
                 g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
-                g.setColor(new Color(0, 120, 0));
+                g.setColor(new Color(40, 180, 0));
                 g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
                 g.setColor(this.travelHistory.isScanned(earthLikeWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
                 g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
@@ -420,7 +446,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
 
                 g.setColor(new Color(0, 160, 20));
                 g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
-                g.setColor(new Color(120, 120, 120));
+                g.setColor(new Color(200, 120, 50));
                 g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
                 g.setColor(this.travelHistory.isScanned(terraformingCandidate.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
                 g.setFont(new Font("Sans Serif", Font.PLAIN, 12));

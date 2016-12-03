@@ -16,6 +16,8 @@ public interface EddbSystemRepository extends ElasticsearchRepository<EddbSystem
 
     Page<EddbSystem> findByAllegiance(String allegiance, Pageable pageable);
 
+    Page<EddbSystem> findByCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(float xfrom, float xto, float yfrom, float yto, float zfrom, float zto, Pageable pageable);
+
     //    @Query("{\"bool\": {\"must\": [{\"match\": {\"name\": \"?0\"}}]}}")
     //    Page<EddbSystem> findBySystemNameUsingCustomQuery(String name, Pageable pageable);
 
