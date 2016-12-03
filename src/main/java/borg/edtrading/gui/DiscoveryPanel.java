@@ -3,30 +3,39 @@ package borg.edtrading.gui;
 import borg.edtrading.SidePanelApp;
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
+import borg.edtrading.eddb.data.EddbSystem;
 import borg.edtrading.eddb.repositories.EddbBodyRepository;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
+import borg.edtrading.services.EddbService;
 import borg.edtrading.sidepanel.TravelHistory;
 import borg.edtrading.sidepanel.TravelHistoryListener;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Point;
 import java.util.List;
 import java.util.Locale;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 /**
  * DiscoveryPanel
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class DiscoveryPanel extends Box implements TravelHistoryListener {
+public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
 
     private static final long serialVersionUID = 2933866499279397227L;
 
@@ -42,14 +51,17 @@ public class DiscoveryPanel extends Box implements TravelHistoryListener {
     private JLabel closestWaterWorld = new JLabel("Closest water world: -");
     private JLabel closestTerraformable = new JLabel("Closest terraformable: -");
 
+    private Area area = null;
+
     public DiscoveryPanel(ApplicationContext appctx, TravelHistory travelHistory) {
-        super(BoxLayout.Y_AXIS);
+        this.setLayout(new BorderLayout());
 
         this.appctx = appctx;
         this.travelHistory = travelHistory;
         travelHistory.addListener(this);
 
-        Font font = new Font("Sans Serif", Font.BOLD, 24);
+        Box box = new Box(BoxLayout.Y_AXIS);
+        Font font = new Font("Sans Serif", Font.BOLD, 18);
         if (SidePanelApp.BIG_AND_BLACK) {
             this.closestBlackHole.setFont(font);
             this.closestNeutronStar.setFont(font);
@@ -59,12 +71,16 @@ public class DiscoveryPanel extends Box implements TravelHistoryListener {
             this.closestTerraformable.setFont(font);
         }
 
-        this.add(this.closestBlackHole);
-        this.add(this.closestNeutronStar);
-        this.add(this.closestEarthLikeWorld);
-        this.add(this.closestAmmoniaWorld);
-        this.add(this.closestWaterWorld);
-        this.add(this.closestTerraformable);
+        box.add(this.closestBlackHole);
+        box.add(this.closestNeutronStar);
+        box.add(this.closestEarthLikeWorld);
+        box.add(this.closestAmmoniaWorld);
+        box.add(this.closestWaterWorld);
+        box.add(this.closestTerraformable);
+        this.add(box, BorderLayout.WEST);
+
+        this.area = new Area(appctx, travelHistory);
+        this.add(this.area, BorderLayout.CENTER);
 
         this.updatePanel();
     }
@@ -75,6 +91,8 @@ public class DiscoveryPanel extends Box implements TravelHistoryListener {
     }
 
     private void updatePanel() {
+        this.area.repaint();
+
         final Coord coord = this.travelHistory.getCoord();
 
         final EddbBodyRepository bodyRepo = this.appctx.getBean(EddbBodyRepository.class);
@@ -282,6 +300,161 @@ public class DiscoveryPanel extends Box implements TravelHistoryListener {
     @Override
     public void onExplorationDataSold(SellExplorationDataEntry journalEntry) {
         // Do nothing
+    }
+
+    public static class Area extends JPanel {
+
+        private static final long serialVersionUID = 8383226308842901529L;
+
+        private ApplicationContext appctx = null;
+        private TravelHistory travelHistory = null;
+        private float xsize = 100f;
+        private float xfrom = 0f - xsize;
+        private float xto = 0f + xsize;
+        private float ysize = 25f;
+        private float yfrom = 0f - ysize;
+        private float yto = 0f + ysize;
+        private float zsize = 100f;
+        private float zfrom = 0f - zsize;
+        private float zto = 0f + zsize;
+
+        public Area(ApplicationContext appctx, TravelHistory travelHistory) {
+            this.appctx = appctx;
+            this.travelHistory = travelHistory;
+        }
+
+        @Override
+        public void paint(Graphics g) {
+            super.paintComponent(g);
+
+            // Black background
+            g.setColor(new Color(20, 20, 25));
+            g.fillRect(0, 0, this.getWidth(), this.getHeight());
+
+            Coord coord = this.travelHistory.getCoord();
+            xsize = 2 * 100f;
+            xfrom = coord.getX() - xsize / 2;
+            xto = coord.getX() + xsize / 2;
+            ysize = 2 * 25f;
+            yfrom = coord.getY() - ysize / 2;
+            yto = coord.getY() + ysize / 2;
+            zsize = ((float) this.getHeight() / (float) this.getWidth()) * xsize;
+            zfrom = coord.getZ() - zsize / 2;
+            zto = coord.getZ() + zsize / 2;
+            EddbBodyRepository bodyRepo = this.appctx.getBean(EddbBodyRepository.class);
+            int psize = Math.round(this.getWidth() / 150f);
+            if (psize % 2 == 0) {
+                psize++;
+            }
+            int poffset = (psize - 1) / 2;
+
+            Page<EddbBody> blackHoles = bodyRepo.findByTypeIdAndIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_BLACK_HOLE, Boolean.TRUE, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            for (EddbBody blackHole : blackHoles.getContent()) {
+                Point p = this.coordToPoint(blackHole.getCoord());
+
+                g.setColor(new Color(80, 80, 80));
+                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
+                g.setColor(new Color(0, 0, 0));
+                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
+                g.setColor(this.travelHistory.isScanned(blackHole.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+                g.drawString(blackHole.getName(), p.x + psize, p.y + psize / 2);
+            }
+
+            Page<EddbBody> neutronStars = bodyRepo.findByTypeIdAndIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_NEUTRON_STAR, Boolean.TRUE, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            for (EddbBody neutronStar : neutronStars.getContent()) {
+                Point p = this.coordToPoint(neutronStar.getCoord());
+
+                g.setColor(new Color(0, 0, 160));
+                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
+                g.setColor(new Color(255, 255, 255));
+                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
+                g.setColor(this.travelHistory.isScanned(neutronStar.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+                g.drawString(neutronStar.getName(), p.x + psize, p.y + psize / 2);
+            }
+
+            Page<EddbBody> earthLikeWorlds = bodyRepo.findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_EARTH_LIKE_WORLD, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            for (EddbBody earthLikeWorld : earthLikeWorlds.getContent()) {
+                Point p = this.coordToPoint(earthLikeWorld.getCoord());
+
+                g.setColor(new Color(0, 0, 120));
+                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
+                g.setColor(new Color(0, 120, 0));
+                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
+                g.setColor(this.travelHistory.isScanned(earthLikeWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+                g.drawString(earthLikeWorld.getName(), p.x + psize, p.y + psize / 2);
+            }
+
+            Page<EddbBody> ammoniaWorlds = bodyRepo.findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_AMMONIA_WORLD, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            for (EddbBody ammoniaWorld : ammoniaWorlds.getContent()) {
+                Point p = this.coordToPoint(ammoniaWorld.getCoord());
+
+                g.setColor(new Color(140, 140, 40));
+                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
+                g.setColor(new Color(120, 120, 0));
+                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
+                g.setColor(this.travelHistory.isScanned(ammoniaWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+                g.drawString(ammoniaWorld.getName(), p.x + psize, p.y + psize / 2);
+            }
+
+            Page<EddbBody> waterWorlds = bodyRepo.findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_WATER_WORLD, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            for (EddbBody waterWorld : waterWorlds.getContent()) {
+                Point p = this.coordToPoint(waterWorld.getCoord());
+
+                g.setColor(new Color(0, 0, 120));
+                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
+                g.setColor(new Color(0, 0, 80));
+                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
+                g.setColor(this.travelHistory.isScanned(waterWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+                g.drawString(waterWorld.getName(), p.x + psize, p.y + psize / 2);
+            }
+
+            Page<EddbBody> terraformingCandidates = bodyRepo.findByTerraformingStateIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TERRAFORMING_STATE_ID_CANDIDATE_FOR_TERRAFORMING, xfrom, xto, yfrom, yto, zfrom, zto,
+                    new PageRequest(0, 1000));
+            for (EddbBody terraformingCandidate : terraformingCandidates.getContent()) {
+                Point p = this.coordToPoint(terraformingCandidate.getCoord());
+
+                g.setColor(new Color(0, 160, 20));
+                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
+                g.setColor(new Color(120, 120, 120));
+                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
+                g.setColor(this.travelHistory.isScanned(terraformingCandidate.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+                g.drawString(terraformingCandidate.getName(), p.x + psize, p.y + psize / 2);
+            }
+
+            // Me
+            g.setColor(Color.ORANGE);
+            try {
+                EddbSystem system = this.appctx.getBean(EddbService.class).searchSystemByName(this.travelHistory.getSystemName());
+                Page<EddbBody> bodies = bodyRepo.findBySystemId(system.getId(), new PageRequest(0, 250));
+                g.setColor(Color.RED);
+                for (EddbBody body : bodies.getContent()) {
+                    if (Boolean.TRUE.equals(body.getIsMainStar())) {
+                        if (StringUtils.isNotEmpty(body.getSpectralClass())) {
+                            g.setColor(Color.GREEN);
+                        }
+                        break;
+                    }
+                }
+            } catch (BeansException e) {
+                logger.error("Failed to find current system '" + this.travelHistory.getSystemName() + "'", e);
+            }
+            Point p = this.coordToPoint(coord);
+            g.fillRect(p.x - poffset, p.y - poffset, psize, psize);
+        }
+
+        private Point coordToPoint(Coord coord) {
+            float xPercent = (coord.getX() - this.xfrom) / this.xsize;
+            float yPercent = 1.0f - ((coord.getZ() - this.zfrom) / this.zsize);
+
+            return new Point(Math.round(xPercent * this.getWidth()), Math.round(yPercent * this.getHeight()));
+        }
+
     }
 
 }
