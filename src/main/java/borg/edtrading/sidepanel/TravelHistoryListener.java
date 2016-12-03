@@ -9,7 +9,11 @@ import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
  */
 public interface TravelHistoryListener {
 
+    void onSystemChanged();
+
     void onLocationChanged();
+
+    void onBodyScanned(ScannedBody scannedBody);
 
     void onFuelLevelChanged(float newFuelLevel);
 

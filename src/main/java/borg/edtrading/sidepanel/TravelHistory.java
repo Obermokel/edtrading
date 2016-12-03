@@ -397,6 +397,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 }
                 for (TravelHistoryListener listener : this.listeners) {
                     try {
+                        listener.onSystemChanged();
                         listener.onLocationChanged();
                         listener.onFuelLevelChanged(this.getFuelLevel());
                     } catch (Exception ex) {
@@ -549,6 +550,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 }
                 for (TravelHistoryListener listener : this.listeners) {
                     try {
+                        listener.onBodyScanned(scannedBody);
                         listener.onLocationChanged();
                     } catch (Exception ex) {
                         logger.warn(listener + " failed: " + ex);

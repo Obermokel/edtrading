@@ -1,5 +1,6 @@
 package borg.edtrading;
 
+import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.eddb.reader.EddbReader;
 import borg.edtrading.gui.DiscoveryPanel;
 import borg.edtrading.gui.InventoryPanel;
@@ -9,14 +10,18 @@ import borg.edtrading.gui.ShipyardPanel;
 import borg.edtrading.gui.StatusPanel;
 import borg.edtrading.gui.TransactionsPanel;
 import borg.edtrading.journal.JournalReaderThread;
+import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.sidepanel.GameSession;
 import borg.edtrading.sidepanel.GameSessionListener;
 import borg.edtrading.sidepanel.Inventory;
+import borg.edtrading.sidepanel.InventoryListener;
+import borg.edtrading.sidepanel.ScannedBody;
 import borg.edtrading.sidepanel.ShipLoadout;
 import borg.edtrading.sidepanel.ShipModule;
 import borg.edtrading.sidepanel.ShipModuleList;
 import borg.edtrading.sidepanel.Transactions;
 import borg.edtrading.sidepanel.TravelHistory;
+import borg.edtrading.sidepanel.TravelHistoryListener;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,7 +47,7 @@ import javax.swing.UIManager;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class SidePanelApp implements WindowListener, GameSessionListener {
+public class SidePanelApp implements WindowListener, GameSessionListener, TravelHistoryListener, InventoryListener {
 
     static final Logger logger = LogManager.getLogger(SidePanelApp.class);
 
@@ -51,6 +56,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
     public static final boolean BIG_AND_BLACK = true;
 
     private JFrame frame = null;
+    private JTabbedPane tabbedPane = null;
     private JournalReaderThread journalReaderThread = null;
     private GameSession gameSession = null;
     private Inventory inventory = null;
@@ -63,7 +69,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
 
     private void start() throws IOException {
         Path journalDir = Paths.get(System.getProperty("user.home"));
-        if (!"Guenther".equalsIgnoreCase(journalDir.getFileName().toString())) {
+        if (!"Guenther".equalsIgnoreCase(Paths.get(System.getProperty("user.home")).getFileName().toString())) {
             journalDir = journalDir.resolve("Saved Games\\Frontier Developments\\Elite Dangerous");
         } else {
             journalDir = journalDir.resolve("Google Drive\\Elite Dangerous\\Journal");
@@ -88,8 +94,10 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         gameSession = new GameSession(journalReaderThread);
         gameSession.addListener(this);
         inventory = new Inventory(journalReaderThread, gameSession);
+        inventory.addListener(this);
         transactions = new Transactions(journalReaderThread);
         travelHistory = new TravelHistory(journalReaderThread, gameSession);
+        travelHistory.addListener(this);
         new ShipModuleList(gameSession);
 
         // Init the reader from existing files, then start to watch for changes
@@ -118,7 +126,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         DiscoveryPanel discoveryPanel = new DiscoveryPanel(APPCTX, travelHistory);
         ShipyardPanel shipyardPanel = new ShipyardPanel(gameSession);
 
-        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane = new JTabbedPane();
         if (SidePanelApp.BIG_AND_BLACK) {
             tabbedPane.setFont(new Font("Sans Serif", Font.BOLD, 18));
         }
@@ -134,7 +142,9 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         frame.setLayout(new BorderLayout());
         frame.add(statusPanel, BorderLayout.NORTH);
         frame.add(tabbedPane, BorderLayout.CENTER);
-        frame.add(new JScrollPane(journalLogPanel), BorderLayout.SOUTH);
+        if ("Guenther".equalsIgnoreCase(Paths.get(System.getProperty("user.home")).getFileName().toString())) {
+            frame.add(new JScrollPane(journalLogPanel), BorderLayout.SOUTH);
+        }
         if (SidePanelApp.BIG_AND_BLACK) {
             frame.setSize(1800, 900);
             frame.setLocation(10, 10);
@@ -231,6 +241,53 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
     @Override
     public void windowDeactivated(WindowEvent e) {
         // Do nothing
+    }
+
+    @Override
+    public void onSystemChanged() {
+        tabbedPane.setSelectedIndex(3);
+    }
+
+    @Override
+    public void onLocationChanged() {
+        // Do nothing
+    }
+
+    @Override
+    public void onBodyScanned(ScannedBody scannedBody) {
+        if (scannedBody.getDistanceFromArrivalLS() != null && scannedBody.getDistanceFromArrivalLS().floatValue() > 0f) {
+            tabbedPane.setSelectedIndex(2);
+        }
+    }
+
+    @Override
+    public void onFuelLevelChanged(float newFuelLevel) {
+        // Do nothing
+    }
+
+    @Override
+    public void onExplorationDataSold(SellExplorationDataEntry journalEntry) {
+        tabbedPane.setSelectedIndex(2);
+    }
+
+    @Override
+    public void onInventoryReset(ItemType type, String name, int count) {
+        tabbedPane.setSelectedIndex(0);
+    }
+
+    @Override
+    public void onInventoryCollected(ItemType type, String name, int count) {
+        tabbedPane.setSelectedIndex(0);
+    }
+
+    @Override
+    public void onInventoryDiscarded(ItemType type, String name, int count) {
+        tabbedPane.setSelectedIndex(0);
+    }
+
+    @Override
+    public void onInventorySpent(ItemType type, String name, int count) {
+        tabbedPane.setSelectedIndex(0);
     }
 
 }

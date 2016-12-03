@@ -8,6 +8,7 @@ import borg.edtrading.sidepanel.GameSession;
 import borg.edtrading.sidepanel.GameSessionListener;
 import borg.edtrading.sidepanel.Inventory;
 import borg.edtrading.sidepanel.InventoryListener;
+import borg.edtrading.sidepanel.ScannedBody;
 import borg.edtrading.sidepanel.ShipLoadout;
 import borg.edtrading.sidepanel.ShipModule;
 import borg.edtrading.sidepanel.TravelHistory;
@@ -157,8 +158,18 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
     }
 
     @Override
+    public void onSystemChanged() {
+        //this.updatePanel();
+    }
+
+    @Override
     public void onLocationChanged() {
         this.updatePanel();
+    }
+
+    @Override
+    public void onBodyScanned(ScannedBody scannedBody) {
+        //this.updatePanel();
     }
 
     @Override

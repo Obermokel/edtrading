@@ -90,7 +90,17 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
     }
 
     @Override
+    public void onSystemChanged() {
+        this.updatePanel();
+    }
+
+    @Override
     public void onLocationChanged() {
+        // Do nothing
+    }
+
+    @Override
+    public void onBodyScanned(ScannedBody scannedBody) {
         this.updatePanel();
     }
 

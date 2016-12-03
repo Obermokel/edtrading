@@ -100,7 +100,17 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
     }
 
     @Override
+    public void onSystemChanged() {
+        // Do nothing
+    }
+
+    @Override
     public void onLocationChanged() {
+        // Do nothing
+    }
+
+    @Override
+    public void onBodyScanned(ScannedBody scannedBody) {
         this.tableModel.refresh(this.travelHistory);
     }
 
