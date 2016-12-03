@@ -8,8 +8,10 @@ import borg.edtrading.eddb.repositories.EddbBodyRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.services.EddbService;
+import borg.edtrading.sidepanel.ScannedBody;
 import borg.edtrading.sidepanel.TravelHistory;
 import borg.edtrading.sidepanel.TravelHistoryListener;
+import borg.edtrading.sidepanel.VisitedSystem;
 import borg.edtrading.util.StarUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -374,6 +376,30 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 }
             }
 
+            for (int i = this.travelHistory.getVisitedSystems().size() - 1; i >= 0 && i >= this.travelHistory.getVisitedSystems().size() - 1000; i--) {
+                VisitedSystem visitedSystem = this.travelHistory.getVisitedSystems().get(i);
+
+                Point p = this.coordToPoint(visitedSystem.getCoord());
+                float dy = Math.abs(visitedSystem.getCoord().getY() - coord.getY());
+                if (dy <= 25f) {
+                    int alpha = 255 - Math.round((dy / 25f) * 192);
+
+                    g.setColor(new Color(80, 80, 80, alpha));
+                    g.fillRect(p.x - 1, p.y - 1, 3, 3);
+
+                    for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
+                        if (scannedBody.getDistanceFromArrivalLS() != null && scannedBody.getDistanceFromArrivalLS().floatValue() == 0f) {
+                            alpha = 255 - Math.round((dy / 25f) * 64);
+
+                            Color color = StarUtil.spectralClassToColor(scannedBody.getStarClass());
+                            g.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
+                            g.fillRect(p.x - 1, p.y - 1, 3, 3);
+                            break;
+                        }
+                    }
+                }
+            }
+
             Page<EddbBody> blackHoles = bodyRepo.findByTypeIdAndIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_BLACK_HOLE, Boolean.TRUE, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
             for (EddbBody blackHole : blackHoles.getContent()) {
                 Point p = this.coordToPoint(blackHole.getCoord());
@@ -457,18 +483,34 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             g.setColor(Color.ORANGE);
             try {
                 EddbSystem system = this.appctx.getBean(EddbService.class).searchSystemByName(this.travelHistory.getSystemName());
-                Page<EddbBody> bodies = bodyRepo.findBySystemId(system.getId(), new PageRequest(0, 250));
-                g.setColor(Color.RED);
-                for (EddbBody body : bodies.getContent()) {
-                    if (Boolean.TRUE.equals(body.getIsMainStar())) {
-                        if (StringUtils.isNotEmpty(body.getSpectralClass())) {
-                            g.setColor(Color.GREEN);
+                if (system != null) {
+                    Page<EddbBody> bodies = bodyRepo.findBySystemId(system.getId(), new PageRequest(0, 250));
+                    g.setColor(Color.RED);
+                    for (EddbBody body : bodies.getContent()) {
+                        if (Boolean.TRUE.equals(body.getIsMainStar())) {
+                            if (StringUtils.isNotEmpty(body.getSpectralClass())) {
+                                g.setColor(Color.GREEN);
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
             } catch (BeansException e) {
                 logger.error("Failed to find current system '" + this.travelHistory.getSystemName() + "'", e);
+            }
+            if (!g.getColor().equals(Color.GREEN)) {
+                for (int i = this.travelHistory.getVisitedSystems().size() - 1; !g.getColor().equals(Color.GREEN) && i >= 0 && i >= this.travelHistory.getVisitedSystems().size() - 1000; i--) {
+                    VisitedSystem visitedSystem = this.travelHistory.getVisitedSystems().get(i);
+                    if (visitedSystem.getCoord().distanceTo(coord) <= 0.01f) {
+                        for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
+                            if (scannedBody.getDistanceFromArrivalLS() != null && scannedBody.getDistanceFromArrivalLS().floatValue() == 0f) {
+                                g.setColor(Color.GREEN);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
             }
             Point p = this.coordToPoint(coord);
             g.fillRect(p.x - poffset, p.y - poffset, psize, psize);

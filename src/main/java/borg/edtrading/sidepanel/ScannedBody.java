@@ -181,6 +181,10 @@ public class ScannedBody implements Serializable {
         return this.scanEntry.getTimestamp();
     }
 
+    public Float getDistanceFromArrivalLS() {
+        return this.scanEntry.getDistanceFromArrivalLS();
+    }
+
     public String getBodyName() {
         return this.scanEntry.getBodyName();
     }

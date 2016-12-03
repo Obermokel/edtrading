@@ -25,9 +25,9 @@ public abstract class StarUtil {
             return new Color(210, 196, 144);
         } else if ("G".equals(spectralClass)) {
             return new Color(233, 194, 125);
-        } else if ("K".equals(spectralClass)) {
+        } else if ("K".equals(spectralClass) || "K_RedGiant".equals(spectralClass) || "K_OrangeGiant".equals(spectralClass)) {
             return new Color(242, 152, 79);
-        } else if ("M".equals(spectralClass)) {
+        } else if ("M".equals(spectralClass) || "M_RedGiant".equals(spectralClass) || "M_OrangeGiant".equals(spectralClass)) {
             return new Color(221, 125, 61);
         } else if ("Y".equals(spectralClass)) {
             return new Color(58, 18, 20);
@@ -37,6 +37,8 @@ public abstract class StarUtil {
             return new Color(72, 8, 41);
         } else if ("TTS".equals(spectralClass)) {
             return new Color(239, 217, 90);
+        } else if ("N".equals(spectralClass)) {
+            return new Color(224, 224, 255);
         } else {
             logger.warn("Unknown spectral class '" + spectralClass + "'");
             return new Color(255, 0, 255);
