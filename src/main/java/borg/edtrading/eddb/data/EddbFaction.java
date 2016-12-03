@@ -1,5 +1,6 @@
 package borg.edtrading.eddb.data;
 
+import borg.edtrading.data.Coord;
 import com.google.gson.annotations.SerializedName;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -19,6 +20,7 @@ public class EddbFaction implements EddbEntity {
     private static final long serialVersionUID = -243465206806544150L;
 
     private transient EddbSystem homeSystem = null;
+    private Coord coord = null;
 
     public EddbSystem getHomeSystem() {
         return this.homeSystem;
@@ -26,6 +28,14 @@ public class EddbFaction implements EddbEntity {
 
     public void setHomeSystem(EddbSystem homeSystem) {
         this.homeSystem = homeSystem;
+    }
+
+    public Coord getCoord() {
+        return this.coord;
+    }
+
+    public void setCoord(Coord coord) {
+        this.coord = coord;
     }
 
     @Id

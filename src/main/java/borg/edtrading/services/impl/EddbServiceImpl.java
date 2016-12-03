@@ -2,13 +2,20 @@ package borg.edtrading.services.impl;
 
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
+import borg.edtrading.eddb.data.EddbFaction;
+import borg.edtrading.eddb.data.EddbMarketEntry;
+import borg.edtrading.eddb.data.EddbStation;
 import borg.edtrading.eddb.data.EddbSystem;
 import borg.edtrading.eddb.repositories.EddbBodyRepository;
+import borg.edtrading.eddb.repositories.EddbFactionRepository;
+import borg.edtrading.eddb.repositories.EddbMarketEntryRepository;
+import borg.edtrading.eddb.repositories.EddbStationRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.services.EddbService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +52,105 @@ public class EddbServiceImpl implements EddbService {
     private EddbBodyRepository bodyRepository = null;
 
     @Autowired
+    private EddbStationRepository stationRepository = null;
+
+    @Autowired
+    private EddbFactionRepository factionRepository = null;
+
+    @Autowired
+    private EddbMarketEntryRepository marketEntryRepository = null;
+
+    @Autowired
     private ElasticsearchTemplate elasticsearchTemplate = null;
+
+    @Override
+    public void setMissingCoords() {
+        QueryBuilder qb = QueryBuilders.boolQuery().mustNot(QueryBuilders.existsQuery("coord"));
+
+        logger.debug("Setting body coords...");
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbbody").withTypes("eddbbody").withPageable(new PageRequest(0, 1000)).build();
+        String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
+        boolean hasRecords = true;
+        while (hasRecords) {
+            Page<EddbBody> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbBody.class);
+            if (page.hasContent()) {
+                List<EddbBody> content = page.getContent();
+                content.parallelStream().forEach(c -> {
+                    EddbSystem system = this.systemRepository.findOne(c.getSystemId());
+                    if (system != null) {
+                        c.setCoord(system.getCoord());
+                    }
+                });
+                this.bodyRepository.save(content);
+            } else {
+                hasRecords = false;
+            }
+        }
+        this.elasticsearchTemplate.clearScroll(scrollId);
+
+        logger.debug("Setting station coords...");
+        searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbstation").withTypes("eddbstation").withPageable(new PageRequest(0, 1000)).build();
+        scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
+        hasRecords = true;
+        while (hasRecords) {
+            Page<EddbStation> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbStation.class);
+            if (page.hasContent()) {
+                List<EddbStation> content = page.getContent();
+                content.parallelStream().forEach(c -> {
+                    EddbSystem system = this.systemRepository.findOne(c.getSystemId());
+                    if (system != null) {
+                        c.setCoord(system.getCoord());
+                    }
+                });
+                this.stationRepository.save(content);
+            } else {
+                hasRecords = false;
+            }
+        }
+        this.elasticsearchTemplate.clearScroll(scrollId);
+
+        logger.debug("Setting faction home coords...");
+        searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbfaction").withTypes("eddbfaction").withPageable(new PageRequest(0, 1000)).build();
+        scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
+        hasRecords = true;
+        while (hasRecords) {
+            Page<EddbFaction> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbFaction.class);
+            if (page.hasContent()) {
+                List<EddbFaction> content = page.getContent();
+                content.parallelStream().forEach(c -> {
+                    EddbSystem system = this.systemRepository.findOne(c.getHomeSystemId());
+                    if (system != null) {
+                        c.setCoord(system.getCoord());
+                    }
+                });
+                this.factionRepository.save(content);
+            } else {
+                hasRecords = false;
+            }
+        }
+        this.elasticsearchTemplate.clearScroll(scrollId);
+
+        logger.debug("Setting market entry coords...");
+        searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbmarketentry").withTypes("eddbmarketentry").withPageable(new PageRequest(0, 1000)).build();
+        scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
+        hasRecords = true;
+        while (hasRecords) {
+            Page<EddbMarketEntry> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbMarketEntry.class);
+            if (page.hasContent()) {
+                List<EddbMarketEntry> content = page.getContent();
+                content.parallelStream().forEach(c -> {
+                    EddbStation station = this.stationRepository.findOne(c.getStationId());
+                    if (station != null) {
+                        c.setCoord(station.getCoord());
+                    }
+                });
+                this.marketEntryRepository.save(content);
+            } else {
+                hasRecords = false;
+            }
+        }
+        this.elasticsearchTemplate.clearScroll(scrollId);
+    }
 
     @Override
     public EddbSystem searchSystemByName(String name) {

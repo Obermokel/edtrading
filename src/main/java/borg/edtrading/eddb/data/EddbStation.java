@@ -1,5 +1,6 @@
 package borg.edtrading.eddb.data;
 
+import borg.edtrading.data.Coord;
 import com.google.gson.annotations.SerializedName;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -22,6 +23,7 @@ public class EddbStation implements EddbEntity {
     private transient EddbSystem system = null;
     private transient EddbBody body = null;
     private transient EddbFaction controllingMinorFaction = null;
+    private Coord coord = null;
 
     public EddbSystem getSystem() {
         return this.system;
@@ -45,6 +47,14 @@ public class EddbStation implements EddbEntity {
 
     public void setControllingMinorFaction(EddbFaction controllingMinorFaction) {
         this.controllingMinorFaction = controllingMinorFaction;
+    }
+
+    public Coord getCoord() {
+        return this.coord;
+    }
+
+    public void setCoord(Coord coord) {
+        this.coord = coord;
     }
 
     @Id

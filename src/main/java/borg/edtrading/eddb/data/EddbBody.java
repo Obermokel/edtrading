@@ -1,5 +1,6 @@
 package borg.edtrading.eddb.data;
 
+import borg.edtrading.data.Coord;
 import com.google.gson.annotations.SerializedName;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -25,8 +26,14 @@ public class EddbBody implements EddbEntity {
     public static final Long TYPE_ID_BLACK_HOLE = new Long(1);
     public static final Long TYPE_ID_SUPERMASSIVE_BLACK_HOLE = new Long(2);
     public static final Long TYPE_ID_NEUTRON_STAR = new Long(3);
+    public static final Long TYPE_ID_EARTH_LIKE_WORLD = new Long(26);
+    public static final Long TYPE_ID_AMMONIA_WORLD = new Long(20);
+    public static final Long TYPE_ID_WATER_WORLD = new Long(36);
+
+    public static final Long TERRAFORMING_STATE_ID_CANDIDATE_FOR_TERRAFORMING = new Long(2);
 
     private transient EddbSystem system = null;
+    private Coord coord = null;
 
     public EddbSystem getSystem() {
         return this.system;
@@ -34,6 +41,14 @@ public class EddbBody implements EddbEntity {
 
     public void setSystem(EddbSystem system) {
         this.system = system;
+    }
+
+    public Coord getCoord() {
+        return this.coord;
+    }
+
+    public void setCoord(Coord coord) {
+        this.coord = coord;
     }
 
     @Id

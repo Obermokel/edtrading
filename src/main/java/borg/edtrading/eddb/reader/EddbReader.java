@@ -14,6 +14,7 @@ import borg.edtrading.eddb.repositories.EddbStationRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.json.BooleanDigitDeserializer;
 import borg.edtrading.json.SecondsSinceEpochDeserializer;
+import borg.edtrading.services.EddbService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -21,7 +22,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -102,6 +102,7 @@ public class EddbReader {
         if (this.downloadIfUpdated("https://eddb.io/archive/v5/factions.jsonl", factionsFile)) {
             this.readJsonFileIntoRepo(factionsFile, EddbFaction.class, this.appctx.getBean(EddbFactionRepository.class));
         }
+        this.appctx.getBean(EddbService.class).setMissingCoords();
         long end = System.currentTimeMillis();
         logger.info("Downloaded data in " + DurationFormatUtils.formatDuration(end - start, "H:mm:ss"));
     }
@@ -243,7 +244,8 @@ public class EddbReader {
     }
 
     private boolean downloadIfUpdated(String url, File file) throws IOException {
-        if (!file.exists() || (System.currentTimeMillis() - file.lastModified() > DateUtils.MILLIS_PER_DAY / 2L && headLastModified(url) > file.lastModified())) {
+        //if (!file.exists() || (System.currentTimeMillis() - file.lastModified() > DateUtils.MILLIS_PER_DAY / 2L && headLastModified(url) > file.lastModified())) {
+        if (!file.exists() || headLastModified(url) > file.lastModified()) {
             backup(file);
             download(url, file);
             return true;

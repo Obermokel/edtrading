@@ -14,6 +14,8 @@ import java.util.Map;
  */
 public interface EddbService {
 
+    void setMissingCoords();
+
     EddbSystem searchSystemByName(String name);
 
     EddbSystem searchClosestSystemByCoord(Coord coord);

@@ -1,5 +1,7 @@
 package borg.edtrading;
 
+import borg.edtrading.eddb.reader.EddbReader;
+import borg.edtrading.gui.DiscoveryPanel;
 import borg.edtrading.gui.InventoryPanel;
 import borg.edtrading.gui.JournalLogPanel;
 import borg.edtrading.gui.ScansPanel;
@@ -18,6 +20,8 @@ import borg.edtrading.sidepanel.TravelHistory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.BeansException;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
@@ -41,6 +45,8 @@ import javax.swing.UIManager;
 public class SidePanelApp implements WindowListener, GameSessionListener {
 
     static final Logger logger = LogManager.getLogger(SidePanelApp.class);
+
+    private static final AnnotationConfigApplicationContext APPCTX = new AnnotationConfigApplicationContext(Config.class);
 
     public static final boolean BIG_AND_BLACK = true;
 
@@ -70,6 +76,8 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
                 e.printStackTrace();
             }
         }
+
+        new EddbReaderThread().start();
 
         frame = new JFrame("SidePanel");
 
@@ -107,6 +115,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         InventoryPanel inventoryPanel = new InventoryPanel(inventory);
         TransactionsPanel transactionsPanel = new TransactionsPanel(transactions);
         ScansPanel scansPanel = new ScansPanel(travelHistory);
+        DiscoveryPanel discoveryPanel = new DiscoveryPanel(APPCTX, travelHistory);
         ShipyardPanel shipyardPanel = new ShipyardPanel(gameSession);
 
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -116,6 +125,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
         tabbedPane.addTab("Inventory", inventoryPanel);
         tabbedPane.addTab("Transactions", transactionsPanel);
         tabbedPane.addTab("Scans", scansPanel);
+        tabbedPane.addTab("Discovery", discoveryPanel);
         tabbedPane.addTab("Shipyard", shipyardPanel);
 
         // Construct the window with all panels
@@ -133,6 +143,24 @@ public class SidePanelApp implements WindowListener, GameSessionListener {
             frame.setLocation(300, 100);
         }
         frame.setVisible(true);
+    }
+
+    static class EddbReaderThread extends Thread {
+
+        EddbReaderThread() {
+            this.setName("EddbReaderThread");
+            this.setDaemon(true);
+        }
+
+        @Override
+        public void run() {
+            try {
+                APPCTX.getBean(EddbReader.class).loadEddbDataIntoElasticsearch();
+            } catch (BeansException | IOException e) {
+                logger.error("Failed to read EDDB data into ES", e);
+            }
+        }
+
     }
 
     @Override

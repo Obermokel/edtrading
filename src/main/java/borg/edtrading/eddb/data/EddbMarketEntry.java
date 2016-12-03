@@ -1,5 +1,6 @@
 package borg.edtrading.eddb.data;
 
+import borg.edtrading.data.Coord;
 import com.google.gson.annotations.SerializedName;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -17,6 +18,16 @@ import java.util.Date;
 public class EddbMarketEntry implements EddbEntity {
 
     private static final long serialVersionUID = -9190337609843319285L;
+
+    private Coord coord = null;
+
+    public Coord getCoord() {
+        return this.coord;
+    }
+
+    public void setCoord(Coord coord) {
+        this.coord = coord;
+    }
 
     @Id
     @SerializedName("id")

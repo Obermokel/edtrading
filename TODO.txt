@@ -1,6 +1,7 @@
 TODO SidePanel:
 * Faction screenshot scan
 * Sort scheint kaputt in der Scans table
+* Delete non-existing eddb entities
 * Mining mission commodities...
 - Save fuel level
 - Smaller size for raw table, bigger for data table, normal for manufactured and commodity

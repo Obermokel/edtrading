@@ -69,6 +69,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
     private final Set<String> assumedFirstDiscoveries = new TreeSet<>();
     private final LinkedList<VisitedSystem> visitedSystems = new LinkedList<>();
     private final Set<String> visitedSystemNames = new HashSet<>();
+    private final Set<String> scannedBodyNames = new HashSet<>();
 
     private final List<TravelHistoryListener> listeners = new ArrayList<>();
 
@@ -92,6 +93,14 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
             }
         }
         return estimate;
+    }
+
+    public boolean isVisited(String systemName) {
+        return this.visitedSystemNames.contains(systemName);
+    }
+
+    public boolean isScanned(String bodyName) {
+        return this.scannedBodyNames.contains(bodyName);
     }
 
     public Coord getCoord() {
@@ -534,6 +543,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                 this.setBodyName(scannedBody.getBodyName());
                 this.setBodyType(scannedBody.getBodyType());
                 this.visitedSystems.getLast().getScannedBodies().addLast(scannedBody);
+                this.scannedBodyNames.add(scannedBody.getBodyName());
                 if (this.assumedFirstDiscoveries.contains(scannedBody.getBodyName())) {
                     scannedBody.setToFirstDiscovered();
                 }
