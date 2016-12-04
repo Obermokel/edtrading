@@ -83,7 +83,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
             }
         }
 
-        new EddbReaderThread().start();
+        APPCTX.getBean(EddbReader.class).loadEddbDataIntoElasticsearch();
 
         frame = new JFrame("SidePanel");
 
@@ -94,15 +94,16 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
         gameSession = new GameSession(journalReaderThread);
         gameSession.addListener(this);
         inventory = new Inventory(journalReaderThread, gameSession);
-        inventory.addListener(this);
         transactions = new Transactions(journalReaderThread);
         travelHistory = new TravelHistory(journalReaderThread, gameSession);
-        travelHistory.addListener(this);
         new ShipModuleList(gameSession);
 
         // Init the reader from existing files, then start to watch for changes
         journalReaderThread.init();
         journalReaderThread.start();
+
+        inventory.addListener(this);
+        travelHistory.addListener(this);
 
         //        LinkedList<VisitedSystem> visitedSystems = this.travelHistory.getVisitedSystems();
         //        for (int i = visitedSystems.size() - 1; i >= 0; i--) {

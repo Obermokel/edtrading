@@ -23,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
@@ -33,6 +34,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 /**
  * DiscoveryPanel
@@ -48,12 +50,18 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
     private ApplicationContext appctx = null;
     private TravelHistory travelHistory = null;
 
-    private JLabel closestBlackHole = new JLabel("Closest black hole: -");
-    private JLabel closestNeutronStar = new JLabel("Closest neutron star: -");
-    private JLabel closestEarthLikeWorld = new JLabel("Closest earth-like world: -");
-    private JLabel closestAmmoniaWorld = new JLabel("Closest ammonia world: -");
-    private JLabel closestWaterWorld = new JLabel("Closest water world: -");
-    private JLabel closestTerraformable = new JLabel("Closest terraformable: -");
+    private JTextField txtClosestBlackHoleName = new JTextField(30);
+    private JLabel lblClosestBlackHoleDistance = new JLabel();
+    private JTextField txtClosestNeutronStarName = new JTextField(30);
+    private JLabel lblClosestNeutronStarDistance = new JLabel();
+    private JTextField txtClosestEarthLikeWorldName = new JTextField(30);
+    private JLabel lblClosestEarthLikeWorldDistance = new JLabel();
+    private JTextField txtClosestAmmoniaWorldName = new JTextField(30);
+    private JLabel lblClosestAmmoniaWorldDistance = new JLabel();
+    private JTextField txtClosestWaterWorldName = new JTextField(30);
+    private JLabel lblClosestWaterWorldDistance = new JLabel();
+    private JTextField txtClosestTerraformableName = new JTextField(30);
+    private JLabel lblClosestTerraformableDistance = new JLabel();
 
     private Area area = null;
 
@@ -67,26 +75,59 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
         Box box = new Box(BoxLayout.Y_AXIS);
         Font font = new Font("Sans Serif", Font.BOLD, 18);
         if (SidePanelApp.BIG_AND_BLACK) {
-            this.closestBlackHole.setFont(font);
-            this.closestNeutronStar.setFont(font);
-            this.closestEarthLikeWorld.setFont(font);
-            this.closestAmmoniaWorld.setFont(font);
-            this.closestWaterWorld.setFont(font);
-            this.closestTerraformable.setFont(font);
+            this.txtClosestBlackHoleName.setFont(font);
+            this.lblClosestBlackHoleDistance.setFont(font);
+            this.txtClosestNeutronStarName.setFont(font);
+            this.lblClosestNeutronStarDistance.setFont(font);
+            this.txtClosestEarthLikeWorldName.setFont(font);
+            this.lblClosestEarthLikeWorldDistance.setFont(font);
+            this.txtClosestAmmoniaWorldName.setFont(font);
+            this.lblClosestAmmoniaWorldDistance.setFont(font);
+            this.txtClosestWaterWorldName.setFont(font);
+            this.lblClosestWaterWorldDistance.setFont(font);
+            this.txtClosestTerraformableName.setFont(font);
+            this.lblClosestTerraformableDistance.setFont(font);
         }
 
-        box.add(this.closestBlackHole);
-        box.add(this.closestNeutronStar);
-        box.add(this.closestEarthLikeWorld);
-        box.add(this.closestAmmoniaWorld);
-        box.add(this.closestWaterWorld);
-        box.add(this.closestTerraformable);
-        this.add(box, BorderLayout.WEST);
+        box.add(distanceLabel("Closest black hole:", this.lblClosestBlackHoleDistance));
+        box.add(this.txtClosestBlackHoleName);
+        box.add(new JLabel(" "));
+        box.add(distanceLabel("Closest neutron star:", this.lblClosestNeutronStarDistance));
+        box.add(this.txtClosestNeutronStarName);
+        box.add(new JLabel(" "));
+        box.add(distanceLabel("Closest earth-like world:", this.lblClosestEarthLikeWorldDistance));
+        box.add(this.txtClosestEarthLikeWorldName);
+        box.add(new JLabel(" "));
+        box.add(distanceLabel("Closest ammonia world:", this.lblClosestAmmoniaWorldDistance));
+        box.add(this.txtClosestAmmoniaWorldName);
+        box.add(new JLabel(" "));
+        box.add(distanceLabel("Closest water world:", this.lblClosestWaterWorldDistance));
+        box.add(this.txtClosestWaterWorldName);
+        box.add(new JLabel(" "));
+        box.add(distanceLabel("Closest terraformable:", this.lblClosestTerraformableDistance));
+        box.add(this.txtClosestTerraformableName);
+        box.add(new JLabel(" "));
+        JPanel dummyPanel = new JPanel(new BorderLayout());
+        dummyPanel.add(box, BorderLayout.NORTH);
+        dummyPanel.add(new JLabel(""), BorderLayout.CENTER);
+        this.add(dummyPanel, BorderLayout.WEST);
 
         this.area = new Area(appctx, travelHistory);
         this.add(this.area, BorderLayout.CENTER);
 
         this.updatePanel();
+    }
+
+    private JPanel distanceLabel(String label, JLabel lblDistance) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        JLabel lbl = new JLabel(label);
+        if (SidePanelApp.BIG_AND_BLACK) {
+            lbl.setFont(new Font("Sans Serif", Font.BOLD, 18));
+            lblDistance.setFont(new Font("Sans Serif", Font.BOLD, 18));
+        }
+        panel.add(lbl);
+        panel.add(lblDistance);
+        return panel;
     }
 
     @Override
@@ -139,7 +180,8 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             }
         }
         if (closestBlackHole != null) {
-            this.closestBlackHole.setText(String.format(Locale.US, "Closest black hole: %s (%.1f Ly)", closestBlackHole.getName(), closestBlackHoleDistance));
+            this.txtClosestBlackHoleName.setText(String.format(Locale.US, "%s", closestBlackHole.getName()));
+            this.lblClosestBlackHoleDistance.setText(String.format(Locale.US, "%.1f Ly", closestBlackHoleDistance));
         }
 
         EddbBody closestNeutronStar = null;
@@ -170,7 +212,8 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             }
         }
         if (closestNeutronStar != null) {
-            this.closestNeutronStar.setText(String.format(Locale.US, "Closest neutron star: %s (%.1f Ly)", closestNeutronStar.getName(), closestNeutronStarDistance));
+            this.txtClosestNeutronStarName.setText(String.format(Locale.US, "%s", closestNeutronStar.getName()));
+            this.lblClosestNeutronStarDistance.setText(String.format(Locale.US, "%.1f Ly", closestNeutronStarDistance));
         }
 
         EddbBody closestEarthLikeWorld = null;
@@ -203,7 +246,8 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             }
         }
         if (closestEarthLikeWorld != null) {
-            this.closestEarthLikeWorld.setText(String.format(Locale.US, "Closest earth-like world: %s (%.1f Ly)", closestEarthLikeWorld.getName(), closestEarthLikeWorldDistance));
+            this.txtClosestEarthLikeWorldName.setText(String.format(Locale.US, "%s", closestEarthLikeWorld.getName()));
+            this.lblClosestEarthLikeWorldDistance.setText(String.format(Locale.US, "%.1f Ly", closestEarthLikeWorldDistance));
         }
 
         EddbBody closestAmmoniaWorld = null;
@@ -236,7 +280,8 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             }
         }
         if (closestAmmoniaWorld != null) {
-            this.closestAmmoniaWorld.setText(String.format(Locale.US, "Closest ammonia world: %s (%.1f Ly)", closestAmmoniaWorld.getName(), closestAmmoniaWorldDistance));
+            this.txtClosestAmmoniaWorldName.setText(String.format(Locale.US, "%s", closestAmmoniaWorld.getName()));
+            this.lblClosestAmmoniaWorldDistance.setText(String.format(Locale.US, "%.1f Ly", closestAmmoniaWorldDistance));
         }
 
         EddbBody closestWaterWorld = null;
@@ -269,7 +314,8 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             }
         }
         if (closestWaterWorld != null) {
-            this.closestWaterWorld.setText(String.format(Locale.US, "Closest water world: %s (%.1f Ly)", closestWaterWorld.getName(), closestWaterWorldDistance));
+            this.txtClosestWaterWorldName.setText(String.format(Locale.US, "%s", closestWaterWorld.getName()));
+            this.lblClosestWaterWorldDistance.setText(String.format(Locale.US, "%.1f Ly", closestWaterWorldDistance));
         }
 
         EddbBody closestTerraformable = null;
@@ -302,7 +348,8 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             }
         }
         if (closestTerraformable != null) {
-            this.closestTerraformable.setText(String.format(Locale.US, "Closest terraformable: %s (%.1f Ly)", closestTerraformable.getName(), closestTerraformableDistance));
+            this.txtClosestTerraformableName.setText(String.format(Locale.US, "%s", closestTerraformable.getName()));
+            this.lblClosestTerraformableDistance.setText(String.format(Locale.US, "%.1f Ly", closestTerraformableDistance));
         }
     }
 
@@ -346,10 +393,10 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             g.fillRect(0, 0, this.getWidth(), this.getHeight());
 
             Coord coord = this.travelHistory.getCoord();
-            xsize = 2 * 100f;
+            xsize = 2 * 160f;
             xfrom = coord.getX() - xsize / 2;
             xto = coord.getX() + xsize / 2;
-            ysize = 2 * 25f;
+            ysize = xsize / 4;
             yfrom = coord.getY() - ysize / 2;
             yto = coord.getY() + ysize / 2;
             zsize = ((float) this.getHeight() / (float) this.getWidth()) * xsize;
@@ -367,7 +414,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             for (EddbSystem system : systems.getContent()) {
                 Point p = this.coordToPoint(system.getCoord());
                 float dy = Math.abs(system.getCoord().getY() - coord.getY());
-                int alpha = 255 - Math.round((dy / 25f) * 192);
+                int alpha = 255 - Math.round((dy / (ysize / 2)) * 192);
 
                 g.setColor(new Color(80, 80, 80, alpha));
                 g.fillRect(p.x - 1, p.y - 1, 3, 3);
@@ -378,7 +425,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 if (StringUtils.isNotEmpty(mainStar.getSpectralClass())) {
                     Point p = this.coordToPoint(mainStar.getCoord());
                     float dy = Math.abs(mainStar.getCoord().getY() - coord.getY());
-                    int alpha = 255 - Math.round((dy / 25f) * 64);
+                    int alpha = 255 - Math.round((dy / (ysize / 2)) * 64);
 
                     Color color = StarUtil.spectralClassToColor(mainStar.getSpectralClass());
                     g.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
@@ -392,14 +439,14 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 Point p = this.coordToPoint(visitedSystem.getCoord());
                 float dy = Math.abs(visitedSystem.getCoord().getY() - coord.getY());
                 if (dy <= 25f) {
-                    int alpha = 255 - Math.round((dy / 25f) * 192);
+                    int alpha = 255 - Math.round((dy / (ysize / 2)) * 192);
 
                     g.setColor(new Color(80, 80, 80, alpha));
                     g.fillRect(p.x - 1, p.y - 1, 3, 3);
 
                     for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
                         if (scannedBody.getDistanceFromArrivalLS() != null && scannedBody.getDistanceFromArrivalLS().floatValue() == 0f) {
-                            alpha = 255 - Math.round((dy / 25f) * 64);
+                            alpha = 255 - Math.round((dy / (ysize / 2)) * 64);
 
                             Color color = StarUtil.spectralClassToColor(scannedBody.getStarClass());
                             g.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
