@@ -5,6 +5,7 @@ import borg.edtrading.eddb.data.EddbBody.MaterialShare;
 import borg.edtrading.eddb.repositories.EddbBodyRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.util.MiscUtil;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.logging.log4j.LogManager;
@@ -17,6 +18,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.SearchQuery;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -101,6 +103,21 @@ public class QuickAndDirtyTests {
                 float top99 = shares.get((shares.size() * 99) / 100);
                 double avg = shares.stream().collect(Collectors.averagingDouble(s -> (double) s));
                 System.out.println(String.format(Locale.US, "%,11dx %-20s AVG=%4.1f%%    MED=%4.1f%%    T80=%4.1f%%    T90=%4.1f%%    T99=%4.1f%%", n, mat, avg, median, top80, top90, top99));
+            }
+            File csvFile = new File(Constants.TEMP_DIR, "mats.csv");
+            FileUtils.write(csvFile, "Percentage;" + sharesByMat.keySet().stream().collect(Collectors.joining(";")) + "\r\n", "ISO-8859-1", false);
+            for (float percentage = 0.1f; percentage <= 50.0f; percentage += 0.1f) {
+                FileUtils.write(csvFile, String.format(Locale.GERMANY, "%.1f", percentage), "ISO-8859-1", true);
+                for (String mat : sharesByMat.keySet()) {
+                    int n = 0;
+                    for (float share : sharesByMat.get(mat)) {
+                        if (Math.abs(share - percentage) <= 0.01f) {
+                            n++;
+                        }
+                    }
+                    FileUtils.write(csvFile, String.format(Locale.GERMANY, ";%d", n), "ISO-8859-1", true);
+                }
+                FileUtils.write(csvFile, "\r\n", "ISO-8859-1", true);
             }
         } finally {
             appctx.close();
