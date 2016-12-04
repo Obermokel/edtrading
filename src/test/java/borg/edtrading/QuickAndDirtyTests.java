@@ -1,6 +1,7 @@
 package borg.edtrading;
 
 import borg.edtrading.eddb.data.EddbBody;
+import borg.edtrading.eddb.data.EddbBody.MaterialShare;
 import borg.edtrading.eddb.repositories.EddbBodyRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.util.MiscUtil;
@@ -16,8 +17,13 @@ import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.SearchQuery;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * QuickAndDirtyTests
@@ -46,13 +52,12 @@ public class QuickAndDirtyTests {
             logger.info("G: " + bodyrepo.findBySpectralClass("G", new PageRequest(0, 10)).getTotalElements());
             logger.info("K: " + bodyrepo.findBySpectralClass("K", new PageRequest(0, 10)).getTotalElements());
             logger.info("M: " + bodyrepo.findBySpectralClass("M", new PageRequest(0, 10)).getTotalElements());
-            logger.info("-: " + bodyrepo.findBySpectralClass(null, new PageRequest(0, 10)).getTotalElements());
-            logger.info("*: " + bodyrepo.findBySpectralClass("*", new PageRequest(0, 10)).getTotalElements());
 
             final MutableInt total = new MutableInt(0);
             LinkedHashMap<String, Integer> nByClass = new LinkedHashMap<>();
+            TreeMap<String, List<Float>> sharesByMat = new TreeMap<>();
             ElasticsearchTemplate elasticsearchTemplate = appctx.getBean(ElasticsearchTemplate.class);
-            SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices("eddb").withTypes("body").withPageable(new PageRequest(0, 1000)).build();
+            SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices("eddbbody").withTypes("eddbbody").withPageable(new PageRequest(0, 1000)).build();
             String scrollId = elasticsearchTemplate.scan(searchQuery, 1000, false);
             boolean hasRecords = true;
             while (hasRecords) {
@@ -62,8 +67,18 @@ public class QuickAndDirtyTests {
                         if (StringUtils.isNotEmpty(b.getSpectralClass())) {
                             total.increment();
                             nByClass.put(b.getSpectralClass(), nByClass.getOrDefault(b.getSpectralClass(), 0) + 1);
-                        } else if (b.getSolarRadius() != null && !new Long(1).equals(b.getTypeId()) && !new Long(3).equals(b.getTypeId())) {
-                            System.out.println(String.format(Locale.US, "%d %s", b.getTypeId(), b.getTypeName()));
+                        }
+                        if (b.getMaterials() != null) {
+                            for (MaterialShare matshare : b.getMaterials()) {
+                                if (StringUtils.isNotEmpty(matshare.getName()) && matshare.getShare() != null) {
+                                    List<Float> shares = sharesByMat.get(matshare.getName());
+                                    if (shares == null) {
+                                        shares = new ArrayList<>();
+                                        sharesByMat.put(matshare.getName(), shares);
+                                    }
+                                    shares.add(matshare.getShare());
+                                }
+                            }
                         }
                     });
                 } else {
@@ -76,6 +91,17 @@ public class QuickAndDirtyTests {
                 System.out.println(String.format(Locale.US, "%,11dx %s", nByClass.get(spectralClass), spectralClass));
             }
             System.out.println(String.format(Locale.US, "%,11dx total", total.intValue()));
+            for (String mat : sharesByMat.keySet()) {
+                List<Float> shares = sharesByMat.get(mat);
+                Collections.sort(shares);
+                int n = shares.size();
+                float median = shares.get((shares.size() * 5) / 10);
+                float top80 = shares.get((shares.size() * 8) / 10);
+                float top90 = shares.get((shares.size() * 9) / 10);
+                float top99 = shares.get((shares.size() * 99) / 100);
+                double avg = shares.stream().collect(Collectors.averagingDouble(s -> (double) s));
+                System.out.println(String.format(Locale.US, "%,11dx %-20s AVG=%4.1f%%    MED=%4.1f%%    T80=%4.1f%%    T90=%4.1f%%    T99=%4.1f%%", n, mat, avg, median, top80, top90, top99));
+            }
         } finally {
             appctx.close();
         }

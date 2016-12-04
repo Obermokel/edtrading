@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * EddbBody
@@ -813,7 +814,7 @@ public class EddbBody implements EddbEntity {
 
         @Override
         public String toString() {
-            return "#" + this.id + " " + this.name;
+            return String.format(Locale.US, "%.1f%% %s", this.share, this.name);
         }
 
         @Override
