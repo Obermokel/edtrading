@@ -393,15 +393,18 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             g.fillRect(0, 0, this.getWidth(), this.getHeight());
 
             Coord coord = this.travelHistory.getCoord();
-            xsize = 2 * 160f;
-            xfrom = coord.getX() - xsize / 2;
-            xto = coord.getX() + xsize / 2;
-            ysize = xsize / 4;
-            yfrom = coord.getY() - ysize / 2;
-            yto = coord.getY() + ysize / 2;
-            zsize = ((float) this.getHeight() / (float) this.getWidth()) * xsize;
+            //zsize = ((float) this.getHeight() / (float) this.getWidth()) * xsize;
+            zsize = 2 * 150f;
             zfrom = coord.getZ() - zsize / 2;
             zto = coord.getZ() + zsize / 2;
+            //xsize = 2 * 160f;
+            xsize = ((float) this.getWidth() / (float) this.getHeight()) * zsize;
+            xfrom = coord.getX() - xsize / 2;
+            xto = coord.getX() + xsize / 2;
+            //ysize = xsize / 4;
+            ysize = zsize / 4;
+            yfrom = coord.getY() - ysize / 2;
+            yto = coord.getY() + ysize / 2;
             EddbSystemRepository systemRepo = this.appctx.getBean(EddbSystemRepository.class);
             EddbBodyRepository bodyRepo = this.appctx.getBean(EddbBodyRepository.class);
             int psize = Math.round(this.getWidth() / 150f);
@@ -414,7 +417,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             for (EddbSystem system : systems.getContent()) {
                 Point p = this.coordToPoint(system.getCoord());
                 float dy = Math.abs(system.getCoord().getY() - coord.getY());
-                int alpha = 255 - Math.round((dy / (ysize / 2)) * 192);
+                int alpha = 255 - Math.round((dy / (ysize / 2)) * 255);
 
                 g.setColor(new Color(80, 80, 80, alpha));
                 g.fillRect(p.x - 1, p.y - 1, 3, 3);
@@ -425,7 +428,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 if (StringUtils.isNotEmpty(mainStar.getSpectralClass())) {
                     Point p = this.coordToPoint(mainStar.getCoord());
                     float dy = Math.abs(mainStar.getCoord().getY() - coord.getY());
-                    int alpha = 255 - Math.round((dy / (ysize / 2)) * 64);
+                    int alpha = 255 - Math.round((dy / (ysize / 2)) * 127);
 
                     Color color = StarUtil.spectralClassToColor(mainStar.getSpectralClass());
                     g.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
@@ -439,14 +442,14 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 Point p = this.coordToPoint(visitedSystem.getCoord());
                 float dy = Math.abs(visitedSystem.getCoord().getY() - coord.getY());
                 if (dy <= 25f) {
-                    int alpha = 255 - Math.round((dy / (ysize / 2)) * 192);
+                    int alpha = 255 - Math.round((dy / (ysize / 2)) * 255);
 
                     g.setColor(new Color(80, 80, 80, alpha));
                     g.fillRect(p.x - 1, p.y - 1, 3, 3);
 
                     for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
                         if (scannedBody.getDistanceFromArrivalLS() != null && scannedBody.getDistanceFromArrivalLS().floatValue() == 0f) {
-                            alpha = 255 - Math.round((dy / (ysize / 2)) * 64);
+                            alpha = 255 - Math.round((dy / (ysize / 2)) * 127);
 
                             Color color = StarUtil.spectralClassToColor(scannedBody.getStarClass());
                             g.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
