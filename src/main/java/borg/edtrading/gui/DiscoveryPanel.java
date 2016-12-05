@@ -540,12 +540,12 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             }
 
             // Me
-            g.setColor(Color.ORANGE);
+            g.setColor(Color.RED);
             try {
                 EddbSystem system = this.appctx.getBean(EddbService.class).searchSystemByName(this.travelHistory.getSystemName());
                 if (system != null) {
                     Page<EddbBody> bodies = bodyRepo.findBySystemId(system.getId(), new PageRequest(0, 250));
-                    g.setColor(Color.RED);
+                    g.setColor(Color.ORANGE);
                     for (EddbBody body : bodies.getContent()) {
                         if (Boolean.TRUE.equals(body.getIsMainStar())) {
                             if (StringUtils.isNotEmpty(body.getSpectralClass())) {

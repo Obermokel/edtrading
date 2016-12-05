@@ -40,6 +40,11 @@ public interface Constants {
      */
     File SURFACE_MATS_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Surface Materials");
 
+    /**
+     * Where screenshots showing factions are stored
+     */
+    File FACTION_SCREENSHOTS_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Factions");
+
     String SURFACE_MATS_SUBDIR = "_FULLSYS_";
 
     /**
