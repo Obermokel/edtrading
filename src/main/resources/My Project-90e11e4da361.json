@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "delta-frame-151612",
+  "private_key_id": "90e11e4da36197ae776b59c3e7986fed65f0754e",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCtMwd1GfbMGIy5\n/KXLYpQdHAoNie0PeB++EkyHMxoOI0YYt46idKj+xjAgDt2OqFr5wVQTQRmK29GX\nTFOHWdxLOTKyJw1vvcnQeDch4xy/dEqALo8JLwxVk1soUIwvjVMYdg+nW2HrFsTJ\n4zZdflZqASc5ukTR+FRSSKUz8x52iWkpEf0sRxk6fqx5mk4adZlkQKclRBQXsAhx\nLxK5zpG50y1fbhywldWflVqhnwYyVPK2vCPoee46jtrCQtblQ68nbTHUGgtcLjnf\nYUe2r1o8ngy6cDBZDl4JNlKAM+5awRMaalRVBJzZHP+lETYyVvUFtGKL32cw/zbS\n61vmPqO3AgMBAAECggEAcRpKu2jKJru9YlMfPbLRQDUoR3ETcq+iIvA2M2/miub0\nBn4P0fzWwxFPKhArFNbSGhjqu2wervQfaWr5fQDsf98JQReJibfpS47FigaSpl/d\nqtk8pOWpa1TACZKYCRGD+wxV6pcdWXTT63bJ8MHo0m6QW/1MpcVB4z33S/ZupT7B\nY830vrG7VwMdFgsjmuPUzHvegKO9v/3a8W7GuhGtAJAROA3i9Ye28bLQgjxcOwSc\nfBRBC0KUDzp6LwPkYozhqSJ8RmVyMfIDnDYqHR9lr6VYjq/a8aGFYCwKu/PILifW\n/Kr7OvQPCHe8NRRn8/im5qyMAe8AFEsLnvbEein4iQKBgQDYd0OFXA+dWPKRwsZo\nsHJPSTd3XHyEXACsGqe4DNR84lb7OvJcV/Sm2J6+k4D0loAPY5HNYDIzPaZqRUc0\nihyeAqoaYplBbfaZb/X9mSkHtCeSbU7/nCJiMhNh+t3PbJzuJmFxh36aY+tnkIEu\nHmIkegoi//o7XT5rrQkCcJV9RQKBgQDM1N0ErdxeukZHcEiq5QrbtHgcpUzqb4iz\ngIQilHkrNLvfZwwk6hz4xAWRkynwkcJiLNwmbiFeIPTlmfzmYjQWglVXpV3Huhdd\nKdKzHeqbca8nRMttNFB2+2g9CH0aWsZ1KkoHDvfDonDe57O01X9aKkw6tdnai7JL\nWrNUl0T2ywKBgQDIn/kHsCSUvCzOJc0ImIjJrV1oFmMdtbu1x1qtPc7vFERzwtV/\n+tE4lkrC7Sk3CAoWuT0YMVE1pq0Hj8AIFP2jAWsw2zOZrdZBrcA7U+nwRuvqTb9L\nLyW7Bxhp1j4gklT8cLwdoewYIgW7TfY8jVJ+5lFg0QjWXnyNBan1Be23VQKBgC9O\nej06akr2eoTFSgMuIvPbGmKDSuBaIhhS9jGGWPXBmCJgik18RHSv0RluA6GsCFjk\nQ3Qcu1giBG2CwwXyaFVKhKtZZe9a60p4/lCf+C8ucmV/Xfw6uNrB9bEi5MHRdURa\nH/7BVje4rJjOqpJ5PJB2dGSa21W+Lc95gzFmPmdBAoGAJ1w20wf/R7OBPZRZ+3yz\nEJnyoyT+Hf0lqHl1/YkEvcFiLCjkKQspg2d8oX5JCyLgTpZjZwBY2zCr4fglWF0x\nw2mLBTE301zjLpO72swKvTECQSJqIBYx6QJUhuCSmOFn7KhZCPJ5rLq+/xxgEW7b\nXRBew6SNwnFAnWOjKFuEGiE=\n-----END PRIVATE KEY-----\n",
+  "client_email": "edtools@delta-frame-151612.iam.gserviceaccount.com",
+  "client_id": "103151795095979926770",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://accounts.google.com/o/oauth2/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/edtools%40delta-frame-151612.iam.gserviceaccount.com"
+}
