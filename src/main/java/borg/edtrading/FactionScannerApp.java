@@ -60,6 +60,7 @@ public class FactionScannerApp {
 
         for (File screenshotFile : screenshotFiles) {
             Screenshot screenshot = Screenshot.loadFromFile(screenshotFile, 3840, 2160, null);
+            //x=0,y=350,w=840,h=1620
             Region region = screenshot.getAsRegion();
             region.applyTransformation("BSTO", new KeepBodyScannerTextOnlyTransformation());
             region.applyTransformation("GRAY", new RgbToGrayTransformation());
