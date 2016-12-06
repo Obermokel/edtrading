@@ -20,8 +20,6 @@ public class VisitedSystem implements Serializable {
 
     static final Logger logger = LogManager.getLogger(VisitedSystem.class);
 
-    private static final int AVG_JUMP_PAYOUT = 3302;
-
     private Date timestamp = null;
     private Coord coord = null;
     private String systemName = null;
@@ -94,7 +92,7 @@ public class VisitedSystem implements Serializable {
     }
 
     public void setAverageJumpPayout() {
-        this.remainingPayout = AVG_JUMP_PAYOUT;
+        this.remainingPayout = ScannedBody.AVG_JUMP_PAYOUT;
     }
 
     public void setToPayedOut() {

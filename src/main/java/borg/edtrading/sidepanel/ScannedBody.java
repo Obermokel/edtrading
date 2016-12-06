@@ -21,7 +21,8 @@ public class ScannedBody implements Serializable {
 
     static final Logger logger = LogManager.getLogger(ScannedBody.class);
 
-    private static final Map<String, Integer> PAYOUTS = new HashMap<>();
+    public static final int AVG_JUMP_PAYOUT = 4883;
+    public static final Map<String, Integer> PAYOUTS = new HashMap<>();
     static {
       //@formatter:off
       PAYOUTS.put(                                "Class O", 3962);//3962
