@@ -1,7 +1,8 @@
 TODO SidePanel:
-* Faction screenshot scan
 * Sort scheint kaputt in der Scans table
 * Delete non-existing eddb entities
+* Rarity icon in inventory table
+* Status panel fixed/preferred sizes
 * Mining mission commodities...
 - Save fuel level
 - Smaller size for raw table, bigger for data table, normal for manufactured and commodity
@@ -19,6 +20,7 @@ TODO SidePanel:
 - commodities from eddb + categories
 - Editable first discovery column
 - Rekursion in scans table!!!
+- Faction screenshot scan
 
 TODO Tablet:
 left perm: system/body -- est exp data
