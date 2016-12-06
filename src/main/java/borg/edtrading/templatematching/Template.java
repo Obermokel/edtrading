@@ -29,14 +29,16 @@ public class Template {
 
     private final File file;
     private final GrayF32 pixels;
-    // TODO mask
+    private final GrayF32 mask;
     private final String text;
 
     private final Map<String, GrayF32> scaledPixelsCache = new HashMap<>();
+    private final Map<String, GrayF32> scaledMaskCache = new HashMap<>();
 
-    private Template(File file, GrayF32 pixels, String text) {
+    private Template(File file, GrayF32 pixels, GrayF32 mask, String text) {
         this.file = file;
         this.pixels = pixels;
+        this.mask = mask;
         this.text = text;
     }
 
@@ -49,14 +51,19 @@ public class Template {
         File file = new File(textDir, String.format("%s#%s#%d.%d.png", textToFolder(templateText), fn, region.getxInScreenshot(), region.getyInScreenshot()));
         ImageIO.write(VisualizeImageData.grayMagnitude(pixels, null, -1), "png", file);
 
-        return new Template(file, pixels, templateText);
+        return new Template(file, pixels, null, templateText);
     }
 
     public static Template fromFile(File file) throws IOException {
         GrayF32 pixels = ImageUtil.normalize(ConvertBufferedImage.convertFrom(ImageIO.read(file), (GrayF32) null));
         String text = folderToText(file.getParentFile().getName());
+        GrayF32 mask = null;
+        File maskFile = new File(file.getParentFile(), file.getName().replace(".png", "_mask.png"));
+        if (maskFile.exists()) {
+            mask = ImageUtil.normalize(ConvertBufferedImage.convertFrom(ImageIO.read(maskFile), (GrayF32) null));
+        }
 
-        return new Template(file, pixels, text);
+        return new Template(file, pixels, mask, text);
     }
 
     public static List<Template> fromFolder(String templateSetName) throws IOException {
@@ -100,6 +107,21 @@ public class Template {
         }
     }
 
+    public GrayF32 scaleMaskToSize(int width, int height) {
+        if (this.getMask() == null) {
+            return null;
+        } else if (this.getMask().getWidth() == width && this.getMask().getHeight() == height) {
+            return this.getMask();
+        } else if (this.scaledMaskCache.containsKey(width + "x" + height)) {
+            return this.scaledMaskCache.get(width + "x" + height);
+        } else {
+            GrayF32 scaled = new GrayF32(width, height);
+            new FDistort().input(this.getMask()).output(scaled).interp(TypeInterpolate.BICUBIC).scaleExt().apply();
+            this.scaledMaskCache.put(width + "x" + height, scaled);
+            return scaled;
+        }
+    }
+
     /**
      * Source file of this template data
      */
@@ -112,6 +134,10 @@ public class Template {
      */
     public GrayF32 getPixels() {
         return this.pixels;
+    }
+
+    public GrayF32 getMask() {
+        return this.mask;
     }
 
     /**
