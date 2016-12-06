@@ -15,7 +15,9 @@ public abstract class StarUtil {
     static final Logger logger = LogManager.getLogger(StarUtil.class);
 
     public static Color spectralClassToColor(String spectralClass) {
-        if ("O".equals(spectralClass)) {
+        if (spectralClass == null || spectralClass.isEmpty()) {
+            return new Color(255, 0, 255);
+        } else if ("O".equals(spectralClass)) {
             return new Color(207, 218, 235);
         } else if ("B".equals(spectralClass)) {
             return new Color(200, 219, 227);
@@ -37,8 +39,12 @@ public abstract class StarUtil {
             return new Color(72, 8, 41);
         } else if ("TTS".equals(spectralClass)) {
             return new Color(239, 217, 90);
-        } else if ("N".equals(spectralClass)) {
+        } else if ("N".equals(spectralClass) || "NS".equals(spectralClass)) {
             return new Color(224, 224, 255);
+        } else if ("H".equals(spectralClass) || "BH".equals(spectralClass) || "SMBH".equals(spectralClass)) {
+            return new Color(0, 0, 0);
+        } else if (spectralClass.startsWith("D")) {
+            return new Color(224, 212, 224); // White dwarf
         } else {
             logger.warn("Unknown spectral class '" + spectralClass + "'");
             return new Color(255, 0, 255);
