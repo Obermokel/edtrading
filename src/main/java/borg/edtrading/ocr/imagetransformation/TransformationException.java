@@ -1,4 +1,4 @@
-package borg.edtrading.imagetransformation;
+package borg.edtrading.ocr.imagetransformation;
 
 /**
  * TransformationException

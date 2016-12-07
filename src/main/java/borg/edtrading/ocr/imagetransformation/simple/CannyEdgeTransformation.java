@@ -1,12 +1,12 @@
-package borg.edtrading.imagetransformation.simple;
+package borg.edtrading.ocr.imagetransformation.simple;
 
 import boofcv.alg.feature.detect.edge.CannyEdge;
 import boofcv.factory.feature.detect.edge.FactoryEdgeDetectors;
 import boofcv.struct.image.GrayS16;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageBase;
-import borg.edtrading.imagetransformation.Transformation;
-import borg.edtrading.imagetransformation.TransformationException;
+import borg.edtrading.ocr.imagetransformation.Transformation;
+import borg.edtrading.ocr.imagetransformation.TransformationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
