@@ -1,6 +1,6 @@
 package borg.edtrading.ocr;
 
-import borg.edtrading.bodyscanner.BodyScanner;
+import borg.edtrading.ocr.bodyscanner.BodyScanner;
 import borg.edtrading.ocr.templatematching.Match;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

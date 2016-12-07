@@ -1,11 +1,11 @@
 package borg.edtrading;
 
-import borg.edtrading.bodyscanner.BodyScanner;
-import borg.edtrading.bodyscanner.BodyScannerResult;
-import borg.edtrading.bodyscanner.ScannedBodyInfo;
 import borg.edtrading.data.Item;
 import borg.edtrading.eddb.updater.BodyUpdater;
 import borg.edtrading.eddb.updater.SystemNotFoundException;
+import borg.edtrading.ocr.bodyscanner.BodyScanner;
+import borg.edtrading.ocr.bodyscanner.BodyScannerResult;
+import borg.edtrading.ocr.bodyscanner.ScannedBodyInfo;
 import borg.edtrading.util.ImageUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;

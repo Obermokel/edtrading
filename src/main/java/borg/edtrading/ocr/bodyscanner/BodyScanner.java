@@ -1,4 +1,4 @@
-package borg.edtrading.bodyscanner;
+package borg.edtrading.ocr.bodyscanner;
 
 import boofcv.gui.image.VisualizeImageData;
 import boofcv.io.image.ConvertBufferedImage;

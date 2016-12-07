@@ -1,4 +1,5 @@
 TODO SidePanel:
+* Komplett auf Spring umstellen
 * Sort scheint kaputt in der Scans table
 * Delete non-existing eddb entities
 * Rarity icon in inventory table

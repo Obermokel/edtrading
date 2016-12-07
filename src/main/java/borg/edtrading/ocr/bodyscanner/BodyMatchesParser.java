@@ -1,4 +1,4 @@
-package borg.edtrading.bodyscanner;
+package borg.edtrading.ocr.bodyscanner;
 
 import borg.edtrading.Constants;
 import borg.edtrading.data.BodyInfo;
