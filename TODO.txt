@@ -1,9 +1,11 @@
 TODO SidePanel:
 * Komplett auf Spring umstellen
+* Route planning und scanner in sidepanel integrieren
 * Sort scheint kaputt in der Scans table
 * Delete non-existing eddb entities
 * Rarity icon in inventory table
 * Status panel fixed/preferred sizes
+* Template matching mit masks könnte kaputt sein
 * Mining mission commodities...
 - Save fuel level
 - Smaller size for raw table, bigger for data table, normal for manufactured and commodity
