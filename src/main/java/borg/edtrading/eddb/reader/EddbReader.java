@@ -15,8 +15,6 @@ import borg.edtrading.eddb.repositories.EddbMarketEntryRepository;
 import borg.edtrading.eddb.repositories.EddbModuleRepository;
 import borg.edtrading.eddb.repositories.EddbStationRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
-import borg.edtrading.json.BooleanDigitDeserializer;
-import borg.edtrading.json.SecondsSinceEpochDeserializer;
 import borg.edtrading.services.EddbService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

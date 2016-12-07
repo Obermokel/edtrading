@@ -1,4 +1,4 @@
-package borg.edtrading.json;
+package borg.edtrading.eddb.reader;
 
 import java.lang.reflect.Type;
 import java.util.Date;

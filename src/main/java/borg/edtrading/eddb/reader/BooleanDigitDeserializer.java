@@ -1,4 +1,4 @@
-package borg.edtrading.json;
+package borg.edtrading.eddb.reader;
 
 import borg.edtrading.util.MiscUtil;
 import com.google.gson.JsonDeserializationContext;
