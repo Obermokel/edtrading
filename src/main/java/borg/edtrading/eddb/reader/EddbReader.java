@@ -115,6 +115,12 @@ public class EddbReader {
         logger.info("Downloaded data in " + DurationFormatUtils.formatDuration(end - start, "H:mm:ss"));
     }
 
+    public void reindexBodies() throws IOException {
+        File bodiesFile = new File(BASE_DIR, "bodies.jsonl");
+        Set<Long> currentEntityIds = this.readJsonFileIntoRepo(bodiesFile, EddbBody.class, this.appctx.getBean(EddbBodyRepository.class));
+        this.appctx.getBean(EddbService.class).deleteOldEntities("eddbbody", EddbBody.class, currentEntityIds);
+    }
+
     private <T extends EddbEntity> Set<Long> readCsvFileIntoRepo(File file, CSVRecordParser<T> csvRecordParser, ElasticsearchRepository<T, Long> repo) throws IOException {
         Set<Long> savedEntityIds = new HashSet<>();
 

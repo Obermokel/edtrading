@@ -55,6 +55,13 @@ public class QuickAndDirtyTests {
             logger.info("K: " + bodyrepo.findBySpectralClass("K", new PageRequest(0, 10)).getTotalElements());
             logger.info("M: " + bodyrepo.findBySpectralClass("M", new PageRequest(0, 10)).getTotalElements());
 
+            float radius = 100.0f;
+            //            appctx.getBean(EddbReader.class).reindexBodies();
+            //            appctx.getBean(EddbService.class).setMissingCoords();
+            //            logger.info("x: " + bodyrepo.findByCoord_x(-1000.0, 1000.0, new PageRequest(0, 10)).getTotalElements());
+            //            logger.info("xyz: " + bodyrepo.findNearCoord(-radius, radius, -radius, radius, -radius, radius, new PageRequest(0, 10)).getTotalElements());
+            logger.info("Polonium: " + bodyrepo.findByMaterialGteNearCoord("Polonium", 0.1f, -radius, radius, -radius, radius, -radius, radius, new PageRequest(0, 10)).getTotalElements());
+
             final MutableInt total = new MutableInt(0);
             LinkedHashMap<String, Integer> nByClass = new LinkedHashMap<>();
             TreeMap<String, List<Float>> sharesByMat = new TreeMap<>();
