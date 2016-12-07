@@ -1,4 +1,4 @@
-package borg.edtrading.templatematching;
+package borg.edtrading.ocr.templatematching;
 
 import boofcv.abst.distort.FDistort;
 import boofcv.alg.interpolate.TypeInterpolate;

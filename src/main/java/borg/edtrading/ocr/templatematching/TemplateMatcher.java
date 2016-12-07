@@ -1,4 +1,4 @@
-package borg.edtrading.templatematching;
+package borg.edtrading.ocr.templatematching;
 
 import boofcv.struct.image.GrayF32;
 import borg.edtrading.imagetransformation.Transformation;

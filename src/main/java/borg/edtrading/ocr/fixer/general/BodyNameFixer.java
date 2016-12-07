@@ -2,7 +2,7 @@ package borg.edtrading.ocr.fixer.general;
 
 import borg.edtrading.ocr.fixer.AbstractFixer;
 import borg.edtrading.ocr.fixer.FixerException;
-import borg.edtrading.templatematching.Match;
+import borg.edtrading.ocr.templatematching.Match;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

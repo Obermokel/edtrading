@@ -1,6 +1,6 @@
 package borg.edtrading.ocr.fixer;
 
-import borg.edtrading.templatematching.Match;
+import borg.edtrading.ocr.templatematching.Match;
 
 import java.util.List;
 

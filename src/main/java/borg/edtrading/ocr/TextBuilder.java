@@ -2,8 +2,8 @@ package borg.edtrading.ocr;
 
 import borg.edtrading.ocr.TextLine.TextLineBuilder;
 import borg.edtrading.ocr.Word.WordBuilder;
+import borg.edtrading.ocr.templatematching.Match;
 import borg.edtrading.screenshots.Screenshot;
-import borg.edtrading.templatematching.Match;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
