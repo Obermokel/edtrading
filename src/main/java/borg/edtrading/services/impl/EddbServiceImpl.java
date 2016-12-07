@@ -2,6 +2,7 @@ package borg.edtrading.services.impl;
 
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
+import borg.edtrading.eddb.data.EddbEntity;
 import borg.edtrading.eddb.data.EddbFaction;
 import borg.edtrading.eddb.data.EddbMarketEntry;
 import borg.edtrading.eddb.data.EddbStation;
@@ -299,6 +300,35 @@ public class EddbServiceImpl implements EddbService {
         this.elasticsearchTemplate.clearScroll(scrollId);
 
         return result;
+    }
+
+    @Override
+    public <T extends EddbEntity> void deleteOldEntities(String index, Class<T> type, Set<Long> currentEntityIds) {
+        logger.trace("Deleting old entities from " + index);
+
+        Set<Long> oldEntityIds = new HashSet<>();
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices(index).withTypes(index).withPageable(new PageRequest(0, 1000)).build();
+        String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
+        boolean hasRecords = true;
+        while (hasRecords) {
+            Page<T> page = this.elasticsearchTemplate.scroll(scrollId, 5000, type);
+            if (page.hasContent()) {
+                for (T entity : page.getContent()) {
+                    if (!currentEntityIds.contains(entity.getId())) {
+                        oldEntityIds.add(entity.getId());
+                    }
+                }
+            } else {
+                hasRecords = false;
+            }
+        }
+        this.elasticsearchTemplate.clearScroll(scrollId);
+
+        for (Long oldEntityId : oldEntityIds) {
+            this.elasticsearchTemplate.delete(type, String.valueOf(oldEntityId));
+        }
+
+        logger.debug("Deleted " + oldEntityIds.size() + " entities from " + index);
     }
 
     private Set<EddbBody> findMappingProjectNeutronStars() {

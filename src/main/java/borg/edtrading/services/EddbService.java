@@ -2,10 +2,12 @@ package borg.edtrading.services;
 
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
+import borg.edtrading.eddb.data.EddbEntity;
 import borg.edtrading.eddb.data.EddbSystem;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * EddbService
@@ -27,5 +29,7 @@ public interface EddbService {
     Map<String, List<EddbBody>> mapStarsBySpectralClass(boolean arrivalOnly);
 
     List<EddbSystem> loadAllSystems();
+
+    <T extends EddbEntity> void deleteOldEntities(String index, Class<T> type, Set<Long> currentEntityIds);
 
 }

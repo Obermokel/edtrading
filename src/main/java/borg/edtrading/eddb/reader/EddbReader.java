@@ -4,12 +4,15 @@ import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbCommodity;
 import borg.edtrading.eddb.data.EddbEntity;
 import borg.edtrading.eddb.data.EddbFaction;
+import borg.edtrading.eddb.data.EddbMarketEntry;
+import borg.edtrading.eddb.data.EddbModule;
 import borg.edtrading.eddb.data.EddbStation;
 import borg.edtrading.eddb.data.EddbSystem;
 import borg.edtrading.eddb.repositories.EddbBodyRepository;
 import borg.edtrading.eddb.repositories.EddbCommodityRepository;
 import borg.edtrading.eddb.repositories.EddbFactionRepository;
 import borg.edtrading.eddb.repositories.EddbMarketEntryRepository;
+import borg.edtrading.eddb.repositories.EddbModuleRepository;
 import borg.edtrading.eddb.repositories.EddbStationRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.json.BooleanDigitDeserializer;
@@ -72,35 +75,42 @@ public class EddbReader {
         long start = System.currentTimeMillis();
         File commoditiesFile = new File(BASE_DIR, "commodities.json");
         if (this.downloadIfUpdated("https://eddb.io/archive/v5/commodities.json", commoditiesFile)) {
-            this.readJsonFileIntoRepo(commoditiesFile, EddbCommodity.class, this.appctx.getBean(EddbCommodityRepository.class));
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(commoditiesFile, EddbCommodity.class, this.appctx.getBean(EddbCommodityRepository.class));
+            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbcommodity", EddbCommodity.class, currentEntityIds);
         }
         File modulesFile = new File(BASE_DIR, "modules.json");
         if (this.downloadIfUpdated("https://eddb.io/archive/v5/modules.json", modulesFile)) {
-            this.readJsonFileIntoRepo(modulesFile, EddbCommodity.class, this.appctx.getBean(EddbCommodityRepository.class));
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(modulesFile, EddbModule.class, this.appctx.getBean(EddbModuleRepository.class));
+            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbmodule", EddbModule.class, currentEntityIds);
         }
         File marketEntriesFile = new File(BASE_DIR, "listings.csv");
         if (this.downloadIfUpdated("https://eddb.io/archive/v5/listings.csv", marketEntriesFile)) {
-            this.readCsvFileIntoRepo(marketEntriesFile, new EddbMarketEntryCsvRecordParser(), this.appctx.getBean(EddbMarketEntryRepository.class));
+            Set<Long> currentEntityIds = this.readCsvFileIntoRepo(marketEntriesFile, new EddbMarketEntryCsvRecordParser(), this.appctx.getBean(EddbMarketEntryRepository.class));
+            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbmarketentry", EddbMarketEntry.class, currentEntityIds);
         }
         File systemsFile = new File(BASE_DIR, "systems.csv");
-        if (this.downloadIfUpdated("https://eddb.io/archive/v5/systems.csv", systemsFile)) {
-            this.readCsvFileIntoRepo(systemsFile, new EddbSystemCsvRecordParser(), this.appctx.getBean(EddbSystemRepository.class));
-        }
         File systemsPopulatedFile = new File(BASE_DIR, "systems_populated.jsonl");
-        if (this.downloadIfUpdated("https://eddb.io/archive/v5/systems_populated.jsonl", systemsPopulatedFile)) {
-            this.readJsonFileIntoRepo(systemsPopulatedFile, EddbSystem.class, this.appctx.getBean(EddbSystemRepository.class));
+        boolean systemsUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/systems.csv", systemsFile);
+        boolean systemsPopulatedUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/systems_populated.jsonl", systemsPopulatedFile);
+        if (systemsUpdated || systemsPopulatedUpdated) {
+            Set<Long> currentEntityIds = this.readCsvFileIntoRepo(systemsFile, new EddbSystemCsvRecordParser(), this.appctx.getBean(EddbSystemRepository.class));
+            currentEntityIds.addAll(this.readJsonFileIntoRepo(systemsPopulatedFile, EddbSystem.class, this.appctx.getBean(EddbSystemRepository.class)));
+            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbsystem", EddbSystem.class, currentEntityIds);
         }
         File bodiesFile = new File(BASE_DIR, "bodies.jsonl");
         if (this.downloadIfUpdated("https://eddb.io/archive/v5/bodies.jsonl", bodiesFile)) {
-            this.readJsonFileIntoRepo(bodiesFile, EddbBody.class, this.appctx.getBean(EddbBodyRepository.class));
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(bodiesFile, EddbBody.class, this.appctx.getBean(EddbBodyRepository.class));
+            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbbody", EddbBody.class, currentEntityIds);
         }
         File stationsFile = new File(BASE_DIR, "stations.jsonl");
         if (this.downloadIfUpdated("https://eddb.io/archive/v5/stations.jsonl", stationsFile)) {
-            this.readJsonFileIntoRepo(stationsFile, EddbStation.class, this.appctx.getBean(EddbStationRepository.class));
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(stationsFile, EddbStation.class, this.appctx.getBean(EddbStationRepository.class));
+            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbstation", EddbStation.class, currentEntityIds);
         }
         File factionsFile = new File(BASE_DIR, "factions.jsonl");
         if (this.downloadIfUpdated("https://eddb.io/archive/v5/factions.jsonl", factionsFile)) {
-            this.readJsonFileIntoRepo(factionsFile, EddbFaction.class, this.appctx.getBean(EddbFactionRepository.class));
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(factionsFile, EddbFaction.class, this.appctx.getBean(EddbFactionRepository.class));
+            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbfaction", EddbFaction.class, currentEntityIds);
         }
         this.appctx.getBean(EddbService.class).setMissingCoords();
         long end = System.currentTimeMillis();
