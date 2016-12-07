@@ -1,6 +1,6 @@
 package borg.edtrading.bodyscanner;
 
-import borg.edtrading.screenshots.Screenshot;
+import borg.edtrading.ocr.screenshots.Screenshot;
 
 import java.awt.image.BufferedImage;
 

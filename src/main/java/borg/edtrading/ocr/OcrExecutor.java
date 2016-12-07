@@ -9,10 +9,10 @@ import borg.edtrading.imagetransformation.simple.GaussianBlurTransformation;
 import borg.edtrading.imagetransformation.simple.KeepBodyScannerTextOnlyTransformation;
 import borg.edtrading.imagetransformation.simple.RgbToGrayTransformation;
 import borg.edtrading.imagetransformation.simple.ThresholdTransformation;
+import borg.edtrading.ocr.screenshots.Region;
 import borg.edtrading.ocr.templatematching.Match;
 import borg.edtrading.ocr.templatematching.Template;
 import borg.edtrading.ocr.templatematching.TemplateMatcher;
-import borg.edtrading.screenshots.Region;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

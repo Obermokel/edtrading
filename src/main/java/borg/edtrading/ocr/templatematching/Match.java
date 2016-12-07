@@ -1,6 +1,6 @@
 package borg.edtrading.ocr.templatematching;
 
-import borg.edtrading.screenshots.Region;
+import borg.edtrading.ocr.screenshots.Region;
 
 import java.awt.Rectangle;
 import java.util.List;

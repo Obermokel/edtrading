@@ -1,7 +1,7 @@
 package borg.edtrading.ocr;
 
+import borg.edtrading.ocr.screenshots.Region;
 import borg.edtrading.ocr.templatematching.Template;
-import borg.edtrading.screenshots.Region;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -7,7 +7,7 @@ import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.image.GrayF32;
 import borg.edtrading.Constants;
 import borg.edtrading.imagetransformation.Transformation;
-import borg.edtrading.screenshots.Region;
+import borg.edtrading.ocr.screenshots.Region;
 import borg.edtrading.util.ImageUtil;
 
 import java.io.File;
