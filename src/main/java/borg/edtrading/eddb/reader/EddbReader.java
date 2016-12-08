@@ -15,7 +15,6 @@ import borg.edtrading.eddb.repositories.EddbMarketEntryRepository;
 import borg.edtrading.eddb.repositories.EddbModuleRepository;
 import borg.edtrading.eddb.repositories.EddbStationRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
-import borg.edtrading.services.EddbService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -26,8 +25,14 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.SearchQuery;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
 import java.io.BufferedReader;
@@ -51,6 +56,8 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
+import javax.annotation.PostConstruct;
+
 /**
  * EddbReader
  *
@@ -63,62 +70,273 @@ public class EddbReader {
     private static final File BASE_DIR = new File(System.getProperty("user.home"), ".eddbdata");
 
     @Autowired
-    private ApplicationContext appctx = null;
+    private ElasticsearchOperations esTemplate = null;
+    @Autowired
+    private EddbSystemRepository systemRepo = null;
+    @Autowired
+    private EddbBodyRepository bodyRepo = null;
+    @Autowired
+    private EddbStationRepository stationRepo = null;
+    @Autowired
+    private EddbFactionRepository factionRepo = null;
+    @Autowired
+    private EddbMarketEntryRepository marketEntryRepo = null;
+    @Autowired
+    private EddbCommodityRepository commodityRepo = null;
+    @Autowired
+    private EddbModuleRepository moduleRepo = null;
 
-    public void loadEddbDataIntoElasticsearch() throws IOException {
+    @PostConstruct
+    public void updateMappings() {
+        if (this.esTemplate.indexExists(EddbSystem.class)) {
+            try {
+                this.esTemplate.putMapping(EddbSystem.class);
+            } catch (Exception e) {
+                logger.debug("Deleting system index");
+                this.esTemplate.deleteIndex(EddbSystem.class);
+                logger.debug("Creating system index");
+                this.esTemplate.createIndex(EddbSystem.class);
+            }
+        }
+
+        if (this.esTemplate.indexExists(EddbBody.class)) {
+            try {
+                this.esTemplate.putMapping(EddbBody.class);
+            } catch (Exception e) {
+                logger.debug("Deleting body index");
+                this.esTemplate.deleteIndex(EddbBody.class);
+                logger.debug("Creating body index");
+                this.esTemplate.createIndex(EddbBody.class);
+            }
+        }
+
+        if (this.esTemplate.indexExists(EddbStation.class)) {
+            try {
+                this.esTemplate.putMapping(EddbStation.class);
+            } catch (Exception e) {
+                logger.debug("Deleting station index");
+                this.esTemplate.deleteIndex(EddbStation.class);
+                logger.debug("Creating station index");
+                this.esTemplate.createIndex(EddbStation.class);
+            }
+        }
+
+        if (this.esTemplate.indexExists(EddbFaction.class)) {
+            try {
+                this.esTemplate.putMapping(EddbFaction.class);
+            } catch (Exception e) {
+                logger.debug("Deleting faction index");
+                this.esTemplate.deleteIndex(EddbFaction.class);
+                logger.debug("Creating faction index");
+                this.esTemplate.createIndex(EddbFaction.class);
+            }
+        }
+
+        if (this.esTemplate.indexExists(EddbMarketEntry.class)) {
+            try {
+                this.esTemplate.putMapping(EddbMarketEntry.class);
+            } catch (Exception e) {
+                logger.debug("Deleting market entry index");
+                this.esTemplate.deleteIndex(EddbMarketEntry.class);
+                logger.debug("Creating market entry index");
+                this.esTemplate.createIndex(EddbMarketEntry.class);
+            }
+        }
+
+        if (this.esTemplate.indexExists(EddbCommodity.class)) {
+            try {
+                this.esTemplate.putMapping(EddbCommodity.class);
+            } catch (Exception e) {
+                logger.debug("Deleting commodity index");
+                this.esTemplate.deleteIndex(EddbCommodity.class);
+                logger.debug("Creating commodity index");
+                this.esTemplate.createIndex(EddbCommodity.class);
+            }
+        }
+
+        if (this.esTemplate.indexExists(EddbModule.class)) {
+            try {
+                this.esTemplate.putMapping(EddbModule.class);
+            } catch (Exception e) {
+                logger.debug("Deleting module index");
+                this.esTemplate.deleteIndex(EddbModule.class);
+                logger.debug("Creating module index");
+                this.esTemplate.createIndex(EddbModule.class);
+            }
+        }
+    }
+
+    public void loadEddbDataIntoElasticsearch(boolean forceReindex) throws IOException {
         if (!BASE_DIR.exists()) {
             BASE_DIR.mkdirs();
         }
 
         long start = System.currentTimeMillis();
         File commoditiesFile = new File(BASE_DIR, "commodities.json");
-        if (this.downloadIfUpdated("https://eddb.io/archive/v5/commodities.json", commoditiesFile)) {
-            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(commoditiesFile, EddbCommodity.class, this.appctx.getBean(EddbCommodityRepository.class));
-            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbcommodity", EddbCommodity.class, currentEntityIds);
+        boolean commoditiesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/commodities.json", commoditiesFile);
+        if (commoditiesUpdated || forceReindex || this.commodityRepo.count() <= 0) {
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(commoditiesFile, EddbCommodity.class, this.commodityRepo);
+            this.deleteOldEntities("eddbcommodity", EddbCommodity.class, currentEntityIds);
         }
         File modulesFile = new File(BASE_DIR, "modules.json");
-        if (this.downloadIfUpdated("https://eddb.io/archive/v5/modules.json", modulesFile)) {
-            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(modulesFile, EddbModule.class, this.appctx.getBean(EddbModuleRepository.class));
-            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbmodule", EddbModule.class, currentEntityIds);
+        boolean modulesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/modules.json", modulesFile);
+        if (modulesUpdated || forceReindex || this.moduleRepo.count() <= 0) {
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(modulesFile, EddbModule.class, this.moduleRepo);
+            this.deleteOldEntities("eddbmodule", EddbModule.class, currentEntityIds);
         }
         File marketEntriesFile = new File(BASE_DIR, "listings.csv");
-        if (this.downloadIfUpdated("https://eddb.io/archive/v5/listings.csv", marketEntriesFile)) {
-            Set<Long> currentEntityIds = this.readCsvFileIntoRepo(marketEntriesFile, new EddbMarketEntryCsvRecordParser(), this.appctx.getBean(EddbMarketEntryRepository.class));
-            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbmarketentry", EddbMarketEntry.class, currentEntityIds);
+        boolean marketEntriesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/listings.csv", marketEntriesFile);
+        if (marketEntriesUpdated || forceReindex || this.marketEntryRepo.count() <= 0) {
+            Set<Long> currentEntityIds = this.readCsvFileIntoRepo(marketEntriesFile, new EddbMarketEntryCsvRecordParser(), this.marketEntryRepo);
+            this.deleteOldEntities("eddbmarketentry", EddbMarketEntry.class, currentEntityIds);
         }
         File systemsFile = new File(BASE_DIR, "systems.csv");
         File systemsPopulatedFile = new File(BASE_DIR, "systems_populated.jsonl");
         boolean systemsUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/systems.csv", systemsFile);
         boolean systemsPopulatedUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/systems_populated.jsonl", systemsPopulatedFile);
-        if (systemsUpdated || systemsPopulatedUpdated) {
-            Set<Long> currentEntityIds = this.readCsvFileIntoRepo(systemsFile, new EddbSystemCsvRecordParser(), this.appctx.getBean(EddbSystemRepository.class));
-            currentEntityIds.addAll(this.readJsonFileIntoRepo(systemsPopulatedFile, EddbSystem.class, this.appctx.getBean(EddbSystemRepository.class)));
-            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbsystem", EddbSystem.class, currentEntityIds);
+        if (systemsUpdated || systemsPopulatedUpdated || forceReindex || this.systemRepo.count() <= 0) {
+            Set<Long> currentEntityIds = this.readCsvFileIntoRepo(systemsFile, new EddbSystemCsvRecordParser(), this.systemRepo);
+            currentEntityIds.addAll(this.readJsonFileIntoRepo(systemsPopulatedFile, EddbSystem.class, this.systemRepo));
+            this.deleteOldEntities("eddbsystem", EddbSystem.class, currentEntityIds);
         }
         File bodiesFile = new File(BASE_DIR, "bodies.jsonl");
-        if (this.downloadIfUpdated("https://eddb.io/archive/v5/bodies.jsonl", bodiesFile)) {
-            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(bodiesFile, EddbBody.class, this.appctx.getBean(EddbBodyRepository.class));
-            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbbody", EddbBody.class, currentEntityIds);
+        boolean bodiesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/bodies.jsonl", bodiesFile);
+        if (bodiesUpdated || forceReindex || this.bodyRepo.count() <= 0) {
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(bodiesFile, EddbBody.class, this.bodyRepo);
+            this.deleteOldEntities("eddbbody", EddbBody.class, currentEntityIds);
         }
         File stationsFile = new File(BASE_DIR, "stations.jsonl");
-        if (this.downloadIfUpdated("https://eddb.io/archive/v5/stations.jsonl", stationsFile)) {
-            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(stationsFile, EddbStation.class, this.appctx.getBean(EddbStationRepository.class));
-            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbstation", EddbStation.class, currentEntityIds);
+        boolean stationsUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/stations.jsonl", stationsFile);
+        if (stationsUpdated || forceReindex || this.stationRepo.count() <= 0) {
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(stationsFile, EddbStation.class, this.stationRepo);
+            this.deleteOldEntities("eddbstation", EddbStation.class, currentEntityIds);
         }
         File factionsFile = new File(BASE_DIR, "factions.jsonl");
-        if (this.downloadIfUpdated("https://eddb.io/archive/v5/factions.jsonl", factionsFile)) {
-            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(factionsFile, EddbFaction.class, this.appctx.getBean(EddbFactionRepository.class));
-            this.appctx.getBean(EddbService.class).deleteOldEntities("eddbfaction", EddbFaction.class, currentEntityIds);
+        boolean factionsUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/factions.jsonl", factionsFile);
+        if (factionsUpdated || forceReindex || this.factionRepo.count() <= 0) {
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(factionsFile, EddbFaction.class, this.factionRepo);
+            this.deleteOldEntities("eddbfaction", EddbFaction.class, currentEntityIds);
         }
-        this.appctx.getBean(EddbService.class).setMissingCoords();
+        this.enrichEddbData();
         long end = System.currentTimeMillis();
         logger.info("Downloaded data in " + DurationFormatUtils.formatDuration(end - start, "H:mm:ss"));
     }
 
-    public void reindexBodies() throws IOException {
-        File bodiesFile = new File(BASE_DIR, "bodies.jsonl");
-        Set<Long> currentEntityIds = this.readJsonFileIntoRepo(bodiesFile, EddbBody.class, this.appctx.getBean(EddbBodyRepository.class));
-        this.appctx.getBean(EddbService.class).deleteOldEntities("eddbbody", EddbBody.class, currentEntityIds);
+    private <T extends EddbEntity> void deleteOldEntities(String index, Class<T> type, Set<Long> currentEntityIds) {
+        logger.trace("Deleting old entities from " + index);
+
+        Set<Long> oldEntityIds = new HashSet<>();
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices(index).withTypes(index).withPageable(new PageRequest(0, 1000)).build();
+        String scrollId = esTemplate.scan(searchQuery, 1000, false);
+        boolean hasRecords = true;
+        while (hasRecords) {
+            Page<T> page = esTemplate.scroll(scrollId, 5000, type);
+            if (page.hasContent()) {
+                for (T entity : page.getContent()) {
+                    if (!currentEntityIds.contains(entity.getId())) {
+                        oldEntityIds.add(entity.getId());
+                    }
+                }
+            } else {
+                hasRecords = false;
+            }
+        }
+        esTemplate.clearScroll(scrollId);
+
+        for (Long oldEntityId : oldEntityIds) {
+            esTemplate.delete(type, String.valueOf(oldEntityId));
+        }
+
+        logger.debug("Deleted " + oldEntityIds.size() + " entities from " + index);
+    }
+
+    private void enrichEddbData() {
+        QueryBuilder qb = QueryBuilders.boolQuery().mustNot(QueryBuilders.existsQuery("coord"));
+
+        logger.debug("Setting body coords...");
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbbody").withTypes("eddbbody").withPageable(new PageRequest(0, 1000)).build();
+        String scrollId = esTemplate.scan(searchQuery, 1000, false);
+        boolean hasRecords = true;
+        while (hasRecords) {
+            Page<EddbBody> page = esTemplate.scroll(scrollId, 5000, EddbBody.class);
+            if (page.hasContent()) {
+                List<EddbBody> content = page.getContent();
+                content.parallelStream().forEach(c -> {
+                    c.setStarClass(c.toStarClass());
+                    EddbSystem system = systemRepo.findOne(c.getSystemId());
+                    if (system != null) {
+                        c.setCoord(system.getCoord());
+                    }
+                });
+                bodyRepo.save(content);
+            } else {
+                hasRecords = false;
+            }
+        }
+        esTemplate.clearScroll(scrollId);
+
+        logger.debug("Setting station coords...");
+        searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbstation").withTypes("eddbstation").withPageable(new PageRequest(0, 1000)).build();
+        scrollId = esTemplate.scan(searchQuery, 1000, false);
+        hasRecords = true;
+        while (hasRecords) {
+            Page<EddbStation> page = esTemplate.scroll(scrollId, 5000, EddbStation.class);
+            if (page.hasContent()) {
+                List<EddbStation> content = page.getContent();
+                content.parallelStream().forEach(c -> {
+                    EddbSystem system = systemRepo.findOne(c.getSystemId());
+                    if (system != null) {
+                        c.setCoord(system.getCoord());
+                    }
+                });
+                stationRepo.save(content);
+            } else {
+                hasRecords = false;
+            }
+        }
+        esTemplate.clearScroll(scrollId);
+
+        logger.debug("Setting faction home coords...");
+        searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbfaction").withTypes("eddbfaction").withPageable(new PageRequest(0, 1000)).build();
+        scrollId = esTemplate.scan(searchQuery, 1000, false);
+        hasRecords = true;
+        while (hasRecords) {
+            Page<EddbFaction> page = esTemplate.scroll(scrollId, 5000, EddbFaction.class);
+            if (page.hasContent()) {
+                List<EddbFaction> content = page.getContent();
+                content.parallelStream().forEach(c -> {
+                    EddbSystem system = systemRepo.findOne(c.getHomeSystemId());
+                    if (system != null) {
+                        c.setCoord(system.getCoord());
+                    }
+                });
+                factionRepo.save(content);
+            } else {
+                hasRecords = false;
+            }
+        }
+        esTemplate.clearScroll(scrollId);
+
+        logger.debug("Setting market entry coords...");
+        searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbmarketentry").withTypes("eddbmarketentry").withPageable(new PageRequest(0, 1000)).build();
+        scrollId = esTemplate.scan(searchQuery, 1000, false);
+        hasRecords = true;
+        while (hasRecords) {
+            Page<EddbMarketEntry> page = esTemplate.scroll(scrollId, 5000, EddbMarketEntry.class);
+            if (page.hasContent()) {
+                List<EddbMarketEntry> content = page.getContent();
+                content.parallelStream().forEach(c -> {
+                    EddbStation station = stationRepo.findOne(c.getStationId());
+                    if (station != null) {
+                        c.setCoord(station.getCoord());
+                    }
+                });
+                marketEntryRepo.save(content);
+            } else {
+                hasRecords = false;
+            }
+        }
+        esTemplate.clearScroll(scrollId);
     }
 
     private <T extends EddbEntity> Set<Long> readCsvFileIntoRepo(File file, CSVRecordParser<T> csvRecordParser, ElasticsearchRepository<T, Long> repo) throws IOException {

@@ -2,33 +2,28 @@ package borg.edtrading.services.impl;
 
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
-import borg.edtrading.eddb.data.EddbEntity;
-import borg.edtrading.eddb.data.EddbFaction;
-import borg.edtrading.eddb.data.EddbMarketEntry;
-import borg.edtrading.eddb.data.EddbStation;
 import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.eddb.reader.EddbReader;
 import borg.edtrading.eddb.repositories.EddbBodyRepository;
-import borg.edtrading.eddb.repositories.EddbFactionRepository;
-import borg.edtrading.eddb.repositories.EddbMarketEntryRepository;
-import borg.edtrading.eddb.repositories.EddbStationRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.services.EddbService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.SearchQuery;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -47,114 +42,41 @@ public class EddbServiceImpl implements EddbService {
     static final Logger logger = LogManager.getLogger(EddbServiceImpl.class);
 
     @Autowired
+    private EddbReader eddbReader = null;
+
+    @Autowired
     private EddbSystemRepository systemRepository = null;
 
     @Autowired
     private EddbBodyRepository bodyRepository = null;
 
     @Autowired
-    private EddbStationRepository stationRepository = null;
-
-    @Autowired
-    private EddbFactionRepository factionRepository = null;
-
-    @Autowired
-    private EddbMarketEntryRepository marketEntryRepository = null;
-
-    @Autowired
     private ElasticsearchTemplate elasticsearchTemplate = null;
 
     @Override
-    public void setMissingCoords() {
-        QueryBuilder qb = QueryBuilders.boolQuery().mustNot(QueryBuilders.existsQuery("coord"));
+    public List<EddbSystem> loadAllSystems() {
+        List<EddbSystem> result = new ArrayList<>();
 
-        logger.debug("Setting body coords...");
-        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbbody").withTypes("eddbbody").withPageable(new PageRequest(0, 1000)).build();
+        logger.debug("Loading all systems");
+
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices("eddbsystem").withPageable(new PageRequest(0, 1000)).build();
         String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
         boolean hasRecords = true;
         while (hasRecords) {
-            Page<EddbBody> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbBody.class);
+            Page<EddbSystem> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbSystem.class);
             if (page.hasContent()) {
-                List<EddbBody> content = page.getContent();
-                content.parallelStream().forEach(c -> {
-                    EddbSystem system = this.systemRepository.findOne(c.getSystemId());
-                    if (system != null) {
-                        c.setCoord(system.getCoord());
-                    }
-                });
-                this.bodyRepository.save(content);
+                result.addAll(page.getContent());
             } else {
                 hasRecords = false;
             }
         }
         this.elasticsearchTemplate.clearScroll(scrollId);
 
-        logger.debug("Setting station coords...");
-        searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbstation").withTypes("eddbstation").withPageable(new PageRequest(0, 1000)).build();
-        scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
-        hasRecords = true;
-        while (hasRecords) {
-            Page<EddbStation> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbStation.class);
-            if (page.hasContent()) {
-                List<EddbStation> content = page.getContent();
-                content.parallelStream().forEach(c -> {
-                    EddbSystem system = this.systemRepository.findOne(c.getSystemId());
-                    if (system != null) {
-                        c.setCoord(system.getCoord());
-                    }
-                });
-                this.stationRepository.save(content);
-            } else {
-                hasRecords = false;
-            }
-        }
-        this.elasticsearchTemplate.clearScroll(scrollId);
-
-        logger.debug("Setting faction home coords...");
-        searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbfaction").withTypes("eddbfaction").withPageable(new PageRequest(0, 1000)).build();
-        scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
-        hasRecords = true;
-        while (hasRecords) {
-            Page<EddbFaction> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbFaction.class);
-            if (page.hasContent()) {
-                List<EddbFaction> content = page.getContent();
-                content.parallelStream().forEach(c -> {
-                    EddbSystem system = this.systemRepository.findOne(c.getHomeSystemId());
-                    if (system != null) {
-                        c.setCoord(system.getCoord());
-                    }
-                });
-                this.factionRepository.save(content);
-            } else {
-                hasRecords = false;
-            }
-        }
-        this.elasticsearchTemplate.clearScroll(scrollId);
-
-        logger.debug("Setting market entry coords...");
-        searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbmarketentry").withTypes("eddbmarketentry").withPageable(new PageRequest(0, 1000)).build();
-        scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
-        hasRecords = true;
-        while (hasRecords) {
-            Page<EddbMarketEntry> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbMarketEntry.class);
-            if (page.hasContent()) {
-                List<EddbMarketEntry> content = page.getContent();
-                content.parallelStream().forEach(c -> {
-                    EddbStation station = this.stationRepository.findOne(c.getStationId());
-                    if (station != null) {
-                        c.setCoord(station.getCoord());
-                    }
-                });
-                this.marketEntryRepository.save(content);
-            } else {
-                hasRecords = false;
-            }
-        }
-        this.elasticsearchTemplate.clearScroll(scrollId);
+        return result;
     }
 
     @Override
-    public EddbSystem searchSystemByName(String name) {
+    public EddbSystem findSystemByName(String name) {
         Page<EddbSystem> page = this.systemRepository.findByName(name, new PageRequest(0, 10));
         if (page.getTotalElements() == 0) {
             return null;
@@ -166,64 +88,36 @@ public class EddbServiceImpl implements EddbService {
     }
 
     @Override
-    public EddbSystem searchClosestSystemByCoord(Coord coord) {
-        EddbSystem result = null;
-        float closest = 999999f;
-
+    public EddbSystem findNearestSystem(Coord coord) {
         logger.debug("Searching closest system to " + coord);
 
-        double lookaround = 250.0;
-        RangeQueryBuilder rangeX = QueryBuilders.rangeQuery("x").from(coord.getX() - lookaround).to(coord.getX() + lookaround);
-        RangeQueryBuilder rangeY = QueryBuilders.rangeQuery("y").from(coord.getY() - lookaround).to(coord.getY() + lookaround);
-        RangeQueryBuilder rangeZ = QueryBuilders.rangeQuery("z").from(coord.getZ() - lookaround).to(coord.getZ() + lookaround);
-        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.boolQuery().must(rangeX).must(rangeY).must(rangeZ)).withIndices("eddbsystem").withTypes("eddbsystem").withPageable(new PageRequest(0, 1000)).build();
-        String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
-        boolean hasRecords = true;
-        while (hasRecords) {
-            Page<EddbSystem> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbSystem.class);
-            if (page.hasContent()) {
-                for (EddbSystem s : page.getContent()) {
-                    float dist = s.getCoord().distanceTo(coord);
-                    if (dist < closest) {
-                        closest = dist;
-                        result = s;
+        EddbSystem nearestSystem = null;
+        Float nearestSystemDistance = null;
+        for (float range = 2; range <= 16384 && nearestSystem == null; range *= 2) {
+            Page<EddbSystem> page = this.findSystemsNear(coord, range, new PageRequest(0, 1000));
+            while (page != null) {
+                List<EddbSystem> systems = page.getContent();
+                for (EddbSystem system : systems) {
+                    float distance = system.getCoord().distanceTo(coord);
+                    if (nearestSystemDistance == null || distance < nearestSystemDistance) {
+                        nearestSystemDistance = distance;
+                        nearestSystem = system;
                     }
                 }
-            } else {
-                hasRecords = false;
+                if (page.hasNext()) {
+                    page = this.findSystemsNear(coord, range, page.nextPageable());
+                } else {
+                    page = null;
+                }
             }
         }
-        this.elasticsearchTemplate.clearScroll(scrollId);
 
-        return result;
+        return nearestSystem;
     }
 
     @Override
-    public List<EddbBody> retainStarsOfSpectralClasses(Map<String, List<EddbBody>> starsBySpectralClass, String... spectralClasses) {
-        List<EddbBody> result = new ArrayList<>();
-
-        for (String spectralClass : spectralClasses) {
-            List<EddbBody> stars = starsBySpectralClass.get(spectralClass);
-            if (stars != null) {
-                result.addAll(stars);
-            }
-        }
-
-        return result;
-    }
-
-    @Override
-    public List<EddbBody> removeStarsOfSpectralClasses(Map<String, List<EddbBody>> starsBySpectralClass, String... spectralClasses) {
-        List<EddbBody> result = new ArrayList<>();
-
-        Set<String> remove = new HashSet<>(Arrays.asList(spectralClasses));
-        for (String spectralClass : starsBySpectralClass.keySet()) {
-            if (!remove.contains(spectralClass)) {
-                result.addAll(starsBySpectralClass.get(spectralClass));
-            }
-        }
-
-        return result;
+    public List<EddbBody> findBodiesOfSystem(Long systemId) {
+        return this.bodyRepository.findBySystemId(systemId, new PageRequest(0, 1000)).getContent();
     }
 
     @Override
@@ -281,60 +175,45 @@ public class EddbServiceImpl implements EddbService {
     }
 
     @Override
-    public List<EddbSystem> loadAllSystems() {
-        List<EddbSystem> result = new ArrayList<>();
+    public List<EddbBody> retainStarsOfSpectralClasses(Map<String, List<EddbBody>> starsBySpectralClass, String... spectralClasses) {
+        List<EddbBody> result = new ArrayList<>();
 
-        logger.debug("Loading all systems");
-
-        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices("eddbsystem").withTypes("eddbsystem").withPageable(new PageRequest(0, 1000)).build();
-        String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
-        boolean hasRecords = true;
-        while (hasRecords) {
-            Page<EddbSystem> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbSystem.class);
-            if (page.hasContent()) {
-                result.addAll(page.getContent());
-            } else {
-                hasRecords = false;
+        for (String spectralClass : spectralClasses) {
+            List<EddbBody> stars = starsBySpectralClass.get(spectralClass);
+            if (stars != null) {
+                result.addAll(stars);
             }
         }
-        this.elasticsearchTemplate.clearScroll(scrollId);
 
         return result;
     }
 
     @Override
-    public <T extends EddbEntity> void deleteOldEntities(String index, Class<T> type, Set<Long> currentEntityIds) {
-        logger.trace("Deleting old entities from " + index);
+    public List<EddbBody> removeStarsOfSpectralClasses(Map<String, List<EddbBody>> starsBySpectralClass, String... spectralClasses) {
+        List<EddbBody> result = new ArrayList<>();
 
-        Set<Long> oldEntityIds = new HashSet<>();
-        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices(index).withTypes(index).withPageable(new PageRequest(0, 1000)).build();
-        String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
-        boolean hasRecords = true;
-        while (hasRecords) {
-            Page<T> page = this.elasticsearchTemplate.scroll(scrollId, 5000, type);
-            if (page.hasContent()) {
-                for (T entity : page.getContent()) {
-                    if (!currentEntityIds.contains(entity.getId())) {
-                        oldEntityIds.add(entity.getId());
-                    }
-                }
-            } else {
-                hasRecords = false;
+        Set<String> remove = new HashSet<>(Arrays.asList(spectralClasses));
+        for (String spectralClass : starsBySpectralClass.keySet()) {
+            if (!remove.contains(spectralClass)) {
+                result.addAll(starsBySpectralClass.get(spectralClass));
             }
         }
-        this.elasticsearchTemplate.clearScroll(scrollId);
 
-        for (Long oldEntityId : oldEntityIds) {
-            this.elasticsearchTemplate.delete(type, String.valueOf(oldEntityId));
+        return result;
+    }
+
+    @Override
+    public void updateEddbData(boolean forceReindex) {
+        try {
+            this.eddbReader.loadEddbDataIntoElasticsearch(forceReindex);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to update EDDB data", e);
         }
-
-        logger.debug("Deleted " + oldEntityIds.size() + " entities from " + index);
     }
 
     private Set<EddbBody> findMappingProjectNeutronStars() {
         Set<EddbBody> neutronStars = new HashSet<>();
 
-        // TODO
         //        File neutronStarNamesFile = new File(Constants.EDTRADING_BASE_DIR, "neutron stars.txt");
         //        File neutronStarIdsFile = new File(Constants.EDTRADING_BASE_DIR, "neutron stars.dat");
         //
@@ -353,6 +232,82 @@ public class EddbServiceImpl implements EddbService {
         //        }
 
         return neutronStars;
+    }
+
+    @Override
+    public Page<EddbSystem> findSystemsNear(Coord coord, float maxDistance, Pageable pageable) {
+        return this.findSystemsWithin(coord.getX() - maxDistance, coord.getX() + maxDistance, coord.getY() - maxDistance, coord.getY() + maxDistance, coord.getZ() - maxDistance, coord.getZ() + maxDistance, pageable);
+    }
+
+    @Override
+    public Page<EddbSystem> findSystemsWithin(float xmin, float xmax, float ymin, float ymax, float zmin, float zmax, Pageable pageable) {
+        return this.systemRepository.findByCoordWithin(xmin, xmax, ymin, ymax, zmin, zmax, pageable);
+    }
+
+    @Override
+    public Page<EddbBody> findBodiesNear(Coord coord, float maxDistance, Pageable pageable) {
+        return this.findBodiesWithin(coord.getX() - maxDistance, coord.getX() + maxDistance, coord.getY() - maxDistance, coord.getY() + maxDistance, coord.getZ() - maxDistance, coord.getZ() + maxDistance, pageable);
+    }
+
+    @Override
+    public Page<EddbBody> findBodiesWithin(float xmin, float xmax, float ymin, float ymax, float zmin, float zmax, Pageable pageable) {
+        return this.bodyRepository.findByCoordWithin(xmin, xmax, ymin, ymax, zmin, zmax, pageable);
+    }
+
+    @Override
+    public Page<EddbBody> findStarsNear(Coord coord, float maxDistance, Boolean isMainStar, Collection<String> starClasses, Pageable pageable) {
+        return this.findStarsWithin(coord.getX() - maxDistance, coord.getX() + maxDistance, coord.getY() - maxDistance, coord.getY() + maxDistance, coord.getZ() - maxDistance, coord.getZ() + maxDistance, isMainStar, starClasses, pageable);
+    }
+
+    @Override
+    public Page<EddbBody> findStarsWithin(float xmin, float xmax, float ymin, float ymax, float zmin, float zmax, Boolean isMainStar, Collection<String> starClasses, Pageable pageable) {
+        BoolQueryBuilder qb = QueryBuilders.boolQuery();
+        qb.must(QueryBuilders.boolQuery().should(QueryBuilders.termQuery("groupId", 1L)).should(QueryBuilders.termQuery("groupId", 2L))); // Compact star or star
+        qb.must(QueryBuilders.rangeQuery("coord.x").gte(xmin).lte(xmax));
+        qb.must(QueryBuilders.rangeQuery("coord.y").gte(ymin).lte(ymax));
+        qb.must(QueryBuilders.rangeQuery("coord.z").gte(zmin).lte(zmax));
+        if (Boolean.TRUE.equals(isMainStar)) {
+            qb.must(QueryBuilders.termQuery("isMainStar", true));
+        } else if (Boolean.FALSE.equals(isMainStar)) {
+            qb.must(QueryBuilders.termQuery("isMainStar", false));
+        }
+        if (starClasses != null && !starClasses.isEmpty()) {
+            BoolQueryBuilder starClassIn = QueryBuilders.boolQuery();
+            for (String starClass : starClasses) {
+                starClassIn.should(QueryBuilders.termQuery("starClass", starClass));
+            }
+            qb.must(starClassIn);
+        }
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbbody").withPageable(pageable).build();
+        return this.elasticsearchTemplate.queryForPage(searchQuery, EddbBody.class);
+    }
+
+    @Override
+    public Page<EddbBody> findPlanetsNear(Coord coord, float maxDistance, Boolean isTerraformingCandidate, Collection<Long> types, Pageable pageable) {
+        return this.findPlanetsWithin(coord.getX() - maxDistance, coord.getX() + maxDistance, coord.getY() - maxDistance, coord.getY() + maxDistance, coord.getZ() - maxDistance, coord.getZ() + maxDistance, isTerraformingCandidate, types, pageable);
+    }
+
+    @Override
+    public Page<EddbBody> findPlanetsWithin(float xmin, float xmax, float ymin, float ymax, float zmin, float zmax, Boolean isTerraformingCandidate, Collection<Long> types, Pageable pageable) {
+        BoolQueryBuilder qb = QueryBuilders.boolQuery();
+        qb.must(QueryBuilders.termQuery("groupId", 6L)); // Planet
+        qb.must(QueryBuilders.rangeQuery("coord.x").gte(xmin).lte(xmax));
+        qb.must(QueryBuilders.rangeQuery("coord.y").gte(ymin).lte(ymax));
+        qb.must(QueryBuilders.rangeQuery("coord.z").gte(zmin).lte(zmax));
+        if (Boolean.TRUE.equals(isTerraformingCandidate)) {
+            qb.must(QueryBuilders.termQuery("terraformingStateId", EddbBody.TERRAFORMING_STATE_ID_CANDIDATE_FOR_TERRAFORMING));
+        } else if (Boolean.FALSE.equals(isTerraformingCandidate)) {
+            qb.mustNot(QueryBuilders.termQuery("terraformingStateId", EddbBody.TERRAFORMING_STATE_ID_CANDIDATE_FOR_TERRAFORMING));
+        }
+        if (types != null && !types.isEmpty()) {
+            BoolQueryBuilder typeIn = QueryBuilders.boolQuery();
+            for (Long type : types) {
+                typeIn.should(QueryBuilders.termQuery("typeId", type));
+            }
+            qb.must(typeIn);
+        }
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbbody").withPageable(pageable).build();
+        return this.elasticsearchTemplate.queryForPage(searchQuery, EddbBody.class);
     }
 
 }

@@ -5,8 +5,6 @@ import borg.edtrading.aystar.Path;
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;
-import borg.edtrading.eddb.reader.EddbReader;
-import borg.edtrading.eddb.repositories.EddbBodyRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.gui.PathViewPanel;
 import borg.edtrading.gui.RouteViewPanel;
@@ -20,7 +18,6 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.data.domain.PageRequest;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -78,14 +75,13 @@ public class NeutronJumpApp {
 
         final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
 
-        APPCTX.getBean(EddbReader.class).loadEddbDataIntoElasticsearch();
         EddbService eddbService = APPCTX.getBean(EddbService.class);
         EddbSystemRepository eddbSystemRepository = APPCTX.getBean(EddbSystemRepository.class);
-        EddbBodyRepository eddbBodyRepository = APPCTX.getBean(EddbBodyRepository.class);
+        eddbService.updateEddbData(/* forceReindex = */ false);
 
         // Lookup source and destination
-        EddbSystem fromSystem = eddbService.searchSystemByName(fromName);
-        EddbSystem toSystem = eddbService.searchSystemByName(toName);
+        EddbSystem fromSystem = eddbService.findSystemByName(fromName);
+        EddbSystem toSystem = eddbService.findSystemByName(toName);
         logger.debug(String.format("%s → %s: %.0f Ly", fromSystem.toString(), toSystem.toString(), fromSystem.distanceTo(toSystem)));
 
         // Write a simple waypoints file
@@ -163,7 +159,7 @@ public class NeutronJumpApp {
         // Read the journal to see which systems/bodies have already been discovered
         Journal journal = new Journal(new JournalReader().readEntireJournal(Constants.JOURNAL_DIR));
 
-        Route route = Route.fromPath(sortedPaths, fuelJumpLUT, journal, eddbSystemRepository, eddbBodyRepository);
+        Route route = Route.fromPath(sortedPaths, fuelJumpLUT, journal, eddbSystemRepository, eddbService);
 
         // Write route as VoiceAttack TXT file
         FileUtils.write(new File(ROUTES_DIR, baseFilename + " Route.txt"), route.toVoiceAttackTxt(), "UTF-8");
@@ -182,17 +178,17 @@ public class NeutronJumpApp {
         private final FuelAndJumpRangeLookup fuelJumpLUT;
         private final Journal journal;
 
-        public static Route fromPath(List<Path> sortedPaths, FuelAndJumpRangeLookup fuelJumpLUT, Journal journal, EddbSystemRepository systemRepo, EddbBodyRepository bodyRepo) {
+        public static Route fromPath(List<Path> sortedPaths, FuelAndJumpRangeLookup fuelJumpLUT, Journal journal, EddbSystemRepository systemRepo, EddbService eddbService) {
             Route route = new Route(fuelJumpLUT, journal);
 
             Path prevPath = null;
             for (Path currPath : sortedPaths) {
                 if (prevPath != null) {
                     EddbSystem fromSystem = systemRepo.findOne(prevPath.getMinimizedStarSystem().getId());
-                    List<EddbBody> fromBodies = bodyRepo.findBySystemId(prevPath.getMinimizedStarSystem().getId(), new PageRequest(0, 250)).getContent();
+                    List<EddbBody> fromBodies = eddbService.findBodiesOfSystem(prevPath.getMinimizedStarSystem().getId());
 
                     EddbSystem toSystem = systemRepo.findOne(currPath.getMinimizedStarSystem().getId());
-                    List<EddbBody> toBodies = bodyRepo.findBySystemId(currPath.getMinimizedStarSystem().getId(), new PageRequest(0, 250)).getContent();
+                    List<EddbBody> toBodies = eddbService.findBodiesOfSystem(currPath.getMinimizedStarSystem().getId());
 
                     route.add(new RouteElement(route, currPath.getTotalJumps(), fromSystem, fromBodies, toSystem, toBodies, currPath.getFuelLevel(), currPath.getTravelledDistanceLy(), currPath.getRemainingDistanceLy()));
                 }
@@ -547,7 +543,7 @@ public class NeutronJumpApp {
             float stepZ = (toCoord.getZ() - fromCoord.getZ()) / waypointsNeeded;
             for (int wp = 1; wp <= waypointsNeeded; wp++) {
                 Coord coord = new Coord(fromCoord.getX() + wp * stepX, fromCoord.getY() + wp * stepY, fromCoord.getZ() + wp * stepZ);
-                EddbSystem closestSystem = eddbService.searchClosestSystemByCoord(coord);
+                EddbSystem closestSystem = eddbService.findNearestSystem(coord);
                 FileUtils.write(waypointsFile, String.format(Locale.US, "Waypoint %2d: %s\n", wp, closestSystem.getName()), "UTF-8", true);
             }
         }

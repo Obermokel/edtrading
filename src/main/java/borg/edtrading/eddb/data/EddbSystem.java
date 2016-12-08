@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldIndex;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.io.Serializable;
@@ -31,8 +32,8 @@ public class EddbSystem implements EddbEntity {
     private Float distanceFromSol = null;
 
     public Coord getCoord() {
-        if (this.coord == null) {
-            this.coord = new Coord(this.getX(), this.getY(), this.getZ());
+        if (this.coord == null && this.x != null && this.y != null && this.z != null) {
+            this.coord = new Coord(this.x, this.y, this.z);
         }
         return this.coord;
     }
@@ -42,8 +43,8 @@ public class EddbSystem implements EddbEntity {
     }
 
     public Float getDistanceFromSol() {
-        if (this.distanceFromSol == null) {
-            this.distanceFromSol = this.getCoord().distanceToSol();
+        if (this.distanceFromSol == null && this.coord != null) {
+            this.distanceFromSol = this.coord.distanceToSol();
         }
         return this.distanceFromSol;
     }
@@ -64,10 +65,13 @@ public class EddbSystem implements EddbEntity {
     private String name = null;
     @SerializedName("simbad_ref")
     private String simbadRef = null;
+    @Field(type = FieldType.Double, index = FieldIndex.no)
     @SerializedName("x")
     private Float x = null;
+    @Field(type = FieldType.Double, index = FieldIndex.no)
     @SerializedName("y")
     private Float y = null;
+    @Field(type = FieldType.Double, index = FieldIndex.no)
     @SerializedName("z")
     private Float z = null;
     @Field(type = FieldType.Long)
@@ -77,30 +81,38 @@ public class EddbSystem implements EddbEntity {
     private Boolean isPopulated = null;
     @SerializedName("government_id")
     private Long governmentId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("government")
     private String government = null;
     @SerializedName("allegiance_id")
     private Long allegianceId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("allegiance")
     private String allegiance = null;
     @SerializedName("state_id")
     private Long stateId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("state")
     private String state = null;
     @SerializedName("security_id")
     private Long securityId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("security")
     private String security = null;
     @SerializedName("primary_economy_id")
     private Long primaryEconomyId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("primary_economy")
     private String primaryEconomy = null;
     @SerializedName("reserve_type_id")
     private Long reserveTypeId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("reserve_type")
     private String reserveType = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("power")
     private String power = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("power_state")
     private String powerState = null;
     @SerializedName("needs_permit")
@@ -382,6 +394,7 @@ public class EddbSystem implements EddbEntity {
         private Long id = null;
         @SerializedName("state_id")
         private Long stateId = null;
+        @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
         @SerializedName("state")
         private String state = null;
         @SerializedName("influence")

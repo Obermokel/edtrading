@@ -2,7 +2,6 @@ TODO SidePanel:
 * Komplett auf Spring umstellen
 * Route planning und scanner in sidepanel integrieren
 * Sort scheint kaputt in der Scans table
-* Delete non-existing eddb entities
 * Rarity icon in inventory table
 * Status panel fixed/preferred sizes
 * Template matching mit masks könnte kaputt sein
@@ -24,6 +23,7 @@ TODO SidePanel:
 - Editable first discovery column
 - Rekursion in scans table!!!
 - Faction screenshot scan
+- Delete non-existing eddb entities
 
 TODO Tablet:
 left perm: system/body -- est exp data

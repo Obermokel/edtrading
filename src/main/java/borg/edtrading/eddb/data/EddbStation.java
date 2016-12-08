@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldIndex;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.math.BigDecimal;
@@ -71,6 +72,7 @@ public class EddbStation implements EddbEntity {
     private Long bodyId = null;
     @SerializedName("controlling_minor_faction_id")
     private Long controllingMinorFactionId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("max_landing_pad_size")
     private String maxLandingPadSize = null;
     @Field(type = FieldType.Double)
@@ -82,26 +84,32 @@ public class EddbStation implements EddbEntity {
     //    private List<String> economies = null;
     @SerializedName("government_id")
     private Long governmentId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("government")
     private String government = null;
     @SerializedName("allegiance_id")
     private Long allegianceId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("allegiance")
     private String allegiance = null;
     @SerializedName("state_id")
     private Long stateId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("state")
     private String state = null;
     @SerializedName("type_id")
     private Long typeId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("type")
     private String type = null;
     @SerializedName("settlement_size_id")
     private Long settlementSizeId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("settlement_size")
     private String settlementSize = null;
     @SerializedName("settlement_security_id")
     private Long settlementSecurityId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("settlement_security")
     private String settlementSecurity = null;
     @SerializedName("has_blackmarket")

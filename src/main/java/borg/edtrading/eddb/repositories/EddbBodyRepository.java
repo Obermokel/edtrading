@@ -19,15 +19,10 @@ public interface EddbBodyRepository extends ElasticsearchRepository<EddbBody, Lo
 
     Page<EddbBody> findBySystemId(Long systemId, Pageable pageable);
 
+    @Query("{\"bool\": {\"must\": [{\"range\": {\"coord.x\": {\"gte\": ?0, \"lte\": ?1}}}, {\"range\": {\"coord.y\": {\"gte\": ?2, \"lte\": ?3}}}, {\"range\": {\"coord.z\": {\"gte\": ?4, \"lte\": ?5}}}]}}]}}")
+    Page<EddbBody> findByCoordWithin(float xmin, float xmax, float ymin, float ymax, float zmin, float zmax, Pageable pageable);
+
     @Query("{\"bool\": {\"must\": [{\"nested\": {\"path\": \"materials\",\"query\": {\"bool\": {\"must\": [{\"match\": {\"materials.name\": \"?0\"}}, {\"range\": {\"materials.share\": {\"gte\": ?1}}}]}}}}, {\"range\": {\"coord.x\": {\"gte\": ?2, \"lte\": ?3}}}, {\"range\": {\"coord.y\": {\"gte\": ?4, \"lte\": ?5}}}, {\"range\": {\"coord.z\": {\"gte\": ?6, \"lte\": ?7}}}]}}]}}")
     Page<EddbBody> findByMaterialGteNearCoord(String materialsName, float materialsShare, float xmin, float xmax, float ymin, float ymax, float zmin, float zmax, Pageable pageable);
-
-    Page<EddbBody> findByIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(Boolean isMainStar, float xfrom, float xto, float yfrom, float yto, float zfrom, float zto, Pageable pageable);
-
-    Page<EddbBody> findByTypeIdAndIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(Long typeId, Boolean isMainStar, float xfrom, float xto, float yfrom, float yto, float zfrom, float zto, Pageable pageable);
-
-    Page<EddbBody> findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(Long typeId, float xfrom, float xto, float yfrom, float yto, float zfrom, float zto, Pageable pageable);
-
-    Page<EddbBody> findByTerraformingStateIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(Long terraformingStateId, float xfrom, float xto, float yfrom, float yto, float zfrom, float zto, Pageable pageable);
 
 }

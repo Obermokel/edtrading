@@ -3,6 +3,9 @@ package borg.edtrading.eddb.data;
 import com.google.gson.annotations.SerializedName;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldIndex;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 
 /**
  * EddbModule
@@ -21,10 +24,12 @@ public class EddbModule implements EddbEntity {
     private String name = null; // Only set for powerplay modules
     @SerializedName("class")
     private Integer size = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("rating")
     private String rating = null;
     @SerializedName("price")
     private Integer price = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("weapon_mode")
     private String weaponMode = null; // Fixed etc
     @SerializedName("missile_type")
@@ -35,6 +40,7 @@ public class EddbModule implements EddbEntity {
     //    private Long edId = null;
     //    @SerializedName("ed_symbol")
     //    private String edSymbol = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("ship")
     private String ship = null;
     @SerializedName("group_id")

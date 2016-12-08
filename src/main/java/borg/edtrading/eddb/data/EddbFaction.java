@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldIndex;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.util.Date;
@@ -48,14 +49,17 @@ public class EddbFaction implements EddbEntity {
     private String name = null;
     @SerializedName("government_id")
     private Long governmentId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("government")
     private String government = null;
     @SerializedName("allegiance_id")
     private Long allegianceId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("allegiance")
     private String allegiance = null;
     @SerializedName("state_id")
     private Long stateId = null;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
     @SerializedName("state")
     private String state = null;
     @SerializedName("home_system_id")

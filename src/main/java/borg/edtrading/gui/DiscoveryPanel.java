@@ -4,8 +4,6 @@ import borg.edtrading.SidePanelApp;
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;
-import borg.edtrading.eddb.repositories.EddbBodyRepository;
-import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.services.EddbService;
 import borg.edtrading.sidepanel.ScannedBody;
@@ -27,6 +25,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -150,19 +149,12 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
 
         final Coord coord = this.travelHistory.getCoord();
 
-        final EddbBodyRepository bodyRepo = this.appctx.getBean(EddbBodyRepository.class);
+        final EddbService eddbService = this.appctx.getBean(EddbService.class);
 
         EddbBody closestBlackHole = null;
         Float closestBlackHoleDistance = null;
         for (float range = 2; range <= 16384 && closestBlackHole == null; range *= 2) {
-            float xfrom = coord.getX() - range;
-            float xto = coord.getX() + range;
-            float yfrom = coord.getY() - range;
-            float yto = coord.getY() + range;
-            float zfrom = coord.getZ() - range;
-            float zto = coord.getZ() + range;
-
-            Page<EddbBody> page = bodyRepo.findByTypeIdAndIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_BLACK_HOLE, Boolean.TRUE, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            Page<EddbBody> page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("BH", "SMBH"), new PageRequest(0, 1000));
             while (page != null) {
                 List<EddbBody> bodies = page.getContent();
                 for (EddbBody body : bodies) {
@@ -173,7 +165,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                     }
                 }
                 if (page.hasNext()) {
-                    page = bodyRepo.findByTypeIdAndIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_BLACK_HOLE, Boolean.TRUE, xfrom, xto, yfrom, yto, zfrom, zto, page.nextPageable());
+                    page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("BH", "SMBH"), page.nextPageable());
                 } else {
                     page = null;
                 }
@@ -187,14 +179,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
         EddbBody closestNeutronStar = null;
         Float closestNeutronStarDistance = null;
         for (float range = 2; range <= 16384 && closestNeutronStar == null; range *= 2) {
-            float xfrom = coord.getX() - range;
-            float xto = coord.getX() + range;
-            float yfrom = coord.getY() - range;
-            float yto = coord.getY() + range;
-            float zfrom = coord.getZ() - range;
-            float zto = coord.getZ() + range;
-
-            Page<EddbBody> page = bodyRepo.findByTypeIdAndIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_NEUTRON_STAR, Boolean.TRUE, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            Page<EddbBody> page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("NS"), new PageRequest(0, 1000));
             while (page != null) {
                 List<EddbBody> bodies = page.getContent();
                 for (EddbBody body : bodies) {
@@ -205,7 +190,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                     }
                 }
                 if (page.hasNext()) {
-                    page = bodyRepo.findByTypeIdAndIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_NEUTRON_STAR, Boolean.TRUE, xfrom, xto, yfrom, yto, zfrom, zto, page.nextPageable());
+                    page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("NS"), page.nextPageable());
                 } else {
                     page = null;
                 }
@@ -219,14 +204,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
         EddbBody closestEarthLikeWorld = null;
         Float closestEarthLikeWorldDistance = null;
         for (float range = 2; range <= 16384 && closestEarthLikeWorld == null; range *= 2) {
-            float xfrom = coord.getX() - range;
-            float xto = coord.getX() + range;
-            float yfrom = coord.getY() - range;
-            float yto = coord.getY() + range;
-            float zfrom = coord.getZ() - range;
-            float zto = coord.getZ() + range;
-
-            Page<EddbBody> page = bodyRepo.findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_EARTH_LIKE_WORLD, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_EARTH_LIKE_WORLD), new PageRequest(0, 1000));
             while (page != null) {
                 List<EddbBody> bodies = page.getContent();
                 for (EddbBody body : bodies) {
@@ -239,7 +217,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                     }
                 }
                 if (page.hasNext()) {
-                    page = bodyRepo.findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_EARTH_LIKE_WORLD, xfrom, xto, yfrom, yto, zfrom, zto, page.nextPageable());
+                    page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_EARTH_LIKE_WORLD), page.nextPageable());
                 } else {
                     page = null;
                 }
@@ -253,14 +231,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
         EddbBody closestAmmoniaWorld = null;
         Float closestAmmoniaWorldDistance = null;
         for (float range = 2; range <= 16384 && closestAmmoniaWorld == null; range *= 2) {
-            float xfrom = coord.getX() - range;
-            float xto = coord.getX() + range;
-            float yfrom = coord.getY() - range;
-            float yto = coord.getY() + range;
-            float zfrom = coord.getZ() - range;
-            float zto = coord.getZ() + range;
-
-            Page<EddbBody> page = bodyRepo.findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_AMMONIA_WORLD, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_AMMONIA_WORLD), new PageRequest(0, 1000));
             while (page != null) {
                 List<EddbBody> bodies = page.getContent();
                 for (EddbBody body : bodies) {
@@ -273,7 +244,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                     }
                 }
                 if (page.hasNext()) {
-                    page = bodyRepo.findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_AMMONIA_WORLD, xfrom, xto, yfrom, yto, zfrom, zto, page.nextPageable());
+                    page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_AMMONIA_WORLD), page.nextPageable());
                 } else {
                     page = null;
                 }
@@ -287,14 +258,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
         EddbBody closestWaterWorld = null;
         Float closestWaterWorldDistance = null;
         for (float range = 2; range <= 16384 && closestWaterWorld == null; range *= 2) {
-            float xfrom = coord.getX() - range;
-            float xto = coord.getX() + range;
-            float yfrom = coord.getY() - range;
-            float yto = coord.getY() + range;
-            float zfrom = coord.getZ() - range;
-            float zto = coord.getZ() + range;
-
-            Page<EddbBody> page = bodyRepo.findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_WATER_WORLD, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_WATER_WORLD), new PageRequest(0, 1000));
             while (page != null) {
                 List<EddbBody> bodies = page.getContent();
                 for (EddbBody body : bodies) {
@@ -307,7 +271,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                     }
                 }
                 if (page.hasNext()) {
-                    page = bodyRepo.findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_WATER_WORLD, xfrom, xto, yfrom, yto, zfrom, zto, page.nextPageable());
+                    page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_WATER_WORLD), page.nextPageable());
                 } else {
                     page = null;
                 }
@@ -321,14 +285,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
         EddbBody closestTerraformable = null;
         Float closestTerraformableDistance = null;
         for (float range = 2; range <= 16384 && closestTerraformable == null; range *= 2) {
-            float xfrom = coord.getX() - range;
-            float xto = coord.getX() + range;
-            float yfrom = coord.getY() - range;
-            float yto = coord.getY() + range;
-            float zfrom = coord.getZ() - range;
-            float zto = coord.getZ() + range;
-
-            Page<EddbBody> page = bodyRepo.findByTerraformingStateIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TERRAFORMING_STATE_ID_CANDIDATE_FOR_TERRAFORMING, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ Boolean.TRUE, null, new PageRequest(0, 1000));
             while (page != null) {
                 List<EddbBody> bodies = page.getContent();
                 for (EddbBody body : bodies) {
@@ -341,7 +298,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                     }
                 }
                 if (page.hasNext()) {
-                    page = bodyRepo.findByTerraformingStateIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TERRAFORMING_STATE_ID_CANDIDATE_FOR_TERRAFORMING, xfrom, xto, yfrom, yto, zfrom, zto, page.nextPageable());
+                    page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ Boolean.TRUE, null, page.nextPageable());
                 } else {
                     page = null;
                 }
@@ -405,15 +362,16 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             ysize = zsize / 4;
             yfrom = coord.getY() - ysize / 2;
             yto = coord.getY() + ysize / 2;
-            EddbSystemRepository systemRepo = this.appctx.getBean(EddbSystemRepository.class);
-            EddbBodyRepository bodyRepo = this.appctx.getBean(EddbBodyRepository.class);
+            //            EddbSystemRepository systemRepo = this.appctx.getBean(EddbSystemRepository.class);
+            //            EddbBodyRepository bodyRepo = this.appctx.getBean(EddbBodyRepository.class);
             int psize = Math.round(this.getWidth() / 150f);
             if (psize % 2 == 0) {
                 psize++;
             }
             int poffset = (psize - 1) / 2;
+            EddbService eddbService = this.appctx.getBean(EddbService.class);
 
-            Page<EddbSystem> systems = systemRepo.findByCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 10000));
+            Page<EddbSystem> systems = eddbService.findSystemsWithin(xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 10000));
             for (EddbSystem system : systems.getContent()) {
                 Point p = this.coordToPoint(system.getCoord());
                 float dy = Math.abs(system.getCoord().getY() - coord.getY());
@@ -423,7 +381,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 g.fillRect(p.x - 1, p.y - 1, 3, 3);
             }
 
-            Page<EddbBody> mainStars = bodyRepo.findByIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(Boolean.TRUE, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 10000));
+            Page<EddbBody> mainStars = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isMainStar = */ Boolean.TRUE, /* spectralClasses = */ null, new PageRequest(0, 10000));
             for (EddbBody mainStar : mainStars.getContent()) {
                 if (StringUtils.isNotEmpty(mainStar.getSpectralClass())) {
                     Point p = this.coordToPoint(mainStar.getCoord());
@@ -460,7 +418,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 }
             }
 
-            Page<EddbBody> blackHoles = bodyRepo.findByTypeIdAndIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_BLACK_HOLE, Boolean.TRUE, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            Page<EddbBody> blackHoles = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, Boolean.TRUE, Arrays.asList("BH", "SMBH"), new PageRequest(0, 1000));
             for (EddbBody blackHole : blackHoles.getContent()) {
                 Point p = this.coordToPoint(blackHole.getCoord());
 
@@ -473,7 +431,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 g.drawString(blackHole.getName(), p.x + psize, p.y + psize / 2);
             }
 
-            Page<EddbBody> neutronStars = bodyRepo.findByTypeIdAndIsMainStarAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_NEUTRON_STAR, Boolean.TRUE, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            Page<EddbBody> neutronStars = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, Boolean.TRUE, Arrays.asList("NS"), new PageRequest(0, 1000));
             for (EddbBody neutronStar : neutronStars.getContent()) {
                 Point p = this.coordToPoint(neutronStar.getCoord());
 
@@ -486,7 +444,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 g.drawString(neutronStar.getName(), p.x + psize, p.y + psize / 2);
             }
 
-            Page<EddbBody> earthLikeWorlds = bodyRepo.findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_EARTH_LIKE_WORLD, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            Page<EddbBody> earthLikeWorlds = eddbService.findPlanetsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_EARTH_LIKE_WORLD), new PageRequest(0, 1000));
             for (EddbBody earthLikeWorld : earthLikeWorlds.getContent()) {
                 Point p = this.coordToPoint(earthLikeWorld.getCoord());
 
@@ -499,7 +457,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 g.drawString(earthLikeWorld.getName(), p.x + psize, p.y + psize / 2);
             }
 
-            Page<EddbBody> ammoniaWorlds = bodyRepo.findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_AMMONIA_WORLD, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            Page<EddbBody> ammoniaWorlds = eddbService.findPlanetsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_AMMONIA_WORLD), new PageRequest(0, 1000));
             for (EddbBody ammoniaWorld : ammoniaWorlds.getContent()) {
                 Point p = this.coordToPoint(ammoniaWorld.getCoord());
 
@@ -512,7 +470,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 g.drawString(ammoniaWorld.getName(), p.x + psize, p.y + psize / 2);
             }
 
-            Page<EddbBody> waterWorlds = bodyRepo.findByTypeIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TYPE_ID_WATER_WORLD, xfrom, xto, yfrom, yto, zfrom, zto, new PageRequest(0, 1000));
+            Page<EddbBody> waterWorlds = eddbService.findPlanetsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_WATER_WORLD), new PageRequest(0, 1000));
             for (EddbBody waterWorld : waterWorlds.getContent()) {
                 Point p = this.coordToPoint(waterWorld.getCoord());
 
@@ -525,8 +483,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 g.drawString(waterWorld.getName(), p.x + psize, p.y + psize / 2);
             }
 
-            Page<EddbBody> terraformingCandidates = bodyRepo.findByTerraformingStateIdAndCoord_xBetweenAndCoord_yBetweenAndCoord_zBetween(EddbBody.TERRAFORMING_STATE_ID_CANDIDATE_FOR_TERRAFORMING, xfrom, xto, yfrom, yto, zfrom, zto,
-                    new PageRequest(0, 1000));
+            Page<EddbBody> terraformingCandidates = eddbService.findPlanetsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isTerraformingCandidate = */ Boolean.TRUE, /* types = */ null, new PageRequest(0, 1000));
             for (EddbBody terraformingCandidate : terraformingCandidates.getContent()) {
                 Point p = this.coordToPoint(terraformingCandidate.getCoord());
 
@@ -542,11 +499,11 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             // Me
             g.setColor(Color.RED);
             try {
-                EddbSystem system = this.appctx.getBean(EddbService.class).searchSystemByName(this.travelHistory.getSystemName());
+                EddbSystem system = eddbService.findSystemByName(this.travelHistory.getSystemName());
                 if (system != null) {
-                    Page<EddbBody> bodies = bodyRepo.findBySystemId(system.getId(), new PageRequest(0, 250));
+                    List<EddbBody> bodies = eddbService.findBodiesOfSystem(system.getId());
                     g.setColor(Color.ORANGE);
-                    for (EddbBody body : bodies.getContent()) {
+                    for (EddbBody body : bodies) {
                         if (Boolean.TRUE.equals(body.getIsMainStar())) {
                             if (StringUtils.isNotEmpty(body.getSpectralClass())) {
                                 g.setColor(Color.GREEN);

@@ -2,8 +2,6 @@ package borg.edtrading;
 
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbBody.MaterialShare;
-import borg.edtrading.eddb.repositories.EddbBodyRepository;
-import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.util.MiscUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,29 +37,6 @@ public class QuickAndDirtyTests {
     public static void main(String[] args) throws Exception {
         AnnotationConfigApplicationContext appctx = new AnnotationConfigApplicationContext(Config.class);
         try {
-            EddbSystemRepository repo = appctx.getBean(EddbSystemRepository.class);
-            logger.info("Federation:   " + repo.findByAllegiance("Federation", new PageRequest(0, 10)).getTotalElements());
-            logger.info("Empire:       " + repo.findByAllegiance("Empire", new PageRequest(0, 10)).getTotalElements());
-            logger.info("Alliance:     " + repo.findByAllegiance("Alliance", new PageRequest(0, 10)).getTotalElements());
-            logger.info("Independent:  " + repo.findByAllegiance("Independent", new PageRequest(0, 10)).getTotalElements());
-            logger.info("None:         " + repo.findByAllegiance(null, new PageRequest(0, 10)).getTotalElements());
-
-            EddbBodyRepository bodyrepo = appctx.getBean(EddbBodyRepository.class);
-            logger.info("O: " + bodyrepo.findBySpectralClass("O", new PageRequest(0, 10)).getTotalElements());
-            logger.info("B: " + bodyrepo.findBySpectralClass("B", new PageRequest(0, 10)).getTotalElements());
-            logger.info("A: " + bodyrepo.findBySpectralClass("A", new PageRequest(0, 10)).getTotalElements());
-            logger.info("F: " + bodyrepo.findBySpectralClass("F", new PageRequest(0, 10)).getTotalElements());
-            logger.info("G: " + bodyrepo.findBySpectralClass("G", new PageRequest(0, 10)).getTotalElements());
-            logger.info("K: " + bodyrepo.findBySpectralClass("K", new PageRequest(0, 10)).getTotalElements());
-            logger.info("M: " + bodyrepo.findBySpectralClass("M", new PageRequest(0, 10)).getTotalElements());
-
-            float radius = 100.0f;
-            //            appctx.getBean(EddbReader.class).reindexBodies();
-            //            appctx.getBean(EddbService.class).setMissingCoords();
-            //            logger.info("x: " + bodyrepo.findByCoord_x(-1000.0, 1000.0, new PageRequest(0, 10)).getTotalElements());
-            //            logger.info("xyz: " + bodyrepo.findNearCoord(-radius, radius, -radius, radius, -radius, radius, new PageRequest(0, 10)).getTotalElements());
-            logger.info("Polonium: " + bodyrepo.findByMaterialGteNearCoord("Polonium", 0.1f, -radius, radius, -radius, radius, -radius, radius, new PageRequest(0, 10)).getTotalElements());
-
             final MutableInt total = new MutableInt(0);
             LinkedHashMap<String, Integer> nByClass = new LinkedHashMap<>();
             TreeMap<String, List<Float>> sharesByMat = new TreeMap<>();

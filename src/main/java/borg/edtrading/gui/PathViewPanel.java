@@ -105,21 +105,21 @@ public class PathViewPanel extends JPanel {
 
     private List<EddbSystem> generateReferenceSystems(EddbService eddbService, EddbSystem fromSystem, EddbSystem toSystem) {
         Set<EddbSystem> result = new HashSet<>();
-        result.add(eddbService.searchSystemByName("Sol"));
-        result.add(eddbService.searchSystemByName("Maia"));
-        result.add(eddbService.searchSystemByName("VY Canis Majoris"));
-        result.add(eddbService.searchSystemByName("Crab Pulsar"));
-        result.add(eddbService.searchSystemByName("Rho Cassiopeiae"));
-        result.add(eddbService.searchSystemByName("Colonia"));
-        result.add(eddbService.searchSystemByName("Sagittarius A*"));
-        result.add(eddbService.searchSystemByName("Beagle Point"));
+        result.add(eddbService.findSystemByName("Sol"));
+        result.add(eddbService.findSystemByName("Maia"));
+        result.add(eddbService.findSystemByName("VY Canis Majoris"));
+        result.add(eddbService.findSystemByName("Crab Pulsar"));
+        result.add(eddbService.findSystemByName("Rho Cassiopeiae"));
+        result.add(eddbService.findSystemByName("Colonia"));
+        result.add(eddbService.findSystemByName("Sagittarius A*"));
+        result.add(eddbService.findSystemByName("Beagle Point"));
         //
-        result.add(eddbService.searchSystemByName("Blu Thua AI-A c14-10"));
-        result.add(eddbService.searchSystemByName("Lagoon Sector NI-S b4-10"));
-        result.add(eddbService.searchSystemByName("Eagle Sector IR-W d1-117"));
-        result.add(eddbService.searchSystemByName("Skaudai CH-B d14-34"));
-        result.add(eddbService.searchSystemByName("Gru Hypue KS-T d3-31"));
-        result.add(eddbService.searchSystemByName("Boewnst KS-S c20-959"));
+        result.add(eddbService.findSystemByName("Blu Thua AI-A c14-10"));
+        result.add(eddbService.findSystemByName("Lagoon Sector NI-S b4-10"));
+        result.add(eddbService.findSystemByName("Eagle Sector IR-W d1-117"));
+        result.add(eddbService.findSystemByName("Skaudai CH-B d14-34"));
+        result.add(eddbService.findSystemByName("Gru Hypue KS-T d3-31"));
+        result.add(eddbService.findSystemByName("Boewnst KS-S c20-959"));
         result.remove(fromSystem);
         result.remove(toSystem);
 

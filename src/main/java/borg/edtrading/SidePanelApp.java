@@ -1,7 +1,6 @@
 package borg.edtrading;
 
 import borg.edtrading.data.Item.ItemType;
-import borg.edtrading.eddb.reader.EddbReader;
 import borg.edtrading.gui.DiscoveryPanel;
 import borg.edtrading.gui.InventoryPanel;
 import borg.edtrading.gui.JournalLogPanel;
@@ -11,6 +10,7 @@ import borg.edtrading.gui.StatusPanel;
 import borg.edtrading.gui.TransactionsPanel;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
+import borg.edtrading.services.EddbService;
 import borg.edtrading.sidepanel.GameSession;
 import borg.edtrading.sidepanel.GameSessionListener;
 import borg.edtrading.sidepanel.Inventory;
@@ -25,7 +25,6 @@ import borg.edtrading.sidepanel.TravelHistoryListener;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.BeansException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.awt.BorderLayout;
@@ -83,7 +82,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
             }
         }
 
-        APPCTX.getBean(EddbReader.class).loadEddbDataIntoElasticsearch();
+        APPCTX.getBean(EddbService.class).updateEddbData(/* forceReindex = */ false);
 
         frame = new JFrame("SidePanel");
 
@@ -154,24 +153,6 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
             frame.setLocation(300, 100);
         }
         frame.setVisible(true);
-    }
-
-    static class EddbReaderThread extends Thread {
-
-        EddbReaderThread() {
-            this.setName("EddbReaderThread");
-            this.setDaemon(true);
-        }
-
-        @Override
-        public void run() {
-            try {
-                APPCTX.getBean(EddbReader.class).loadEddbDataIntoElasticsearch();
-            } catch (BeansException | IOException e) {
-                logger.error("Failed to read EDDB data into ES", e);
-            }
-        }
-
     }
 
     @Override
