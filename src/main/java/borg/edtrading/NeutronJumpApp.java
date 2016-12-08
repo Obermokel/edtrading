@@ -2,6 +2,8 @@ package borg.edtrading;
 
 import borg.edtrading.aystar.AyStar;
 import borg.edtrading.aystar.Path;
+import borg.edtrading.cfg.Config;
+import borg.edtrading.cfg.Constants;
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;

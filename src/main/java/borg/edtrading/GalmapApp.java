@@ -5,6 +5,8 @@ import boofcv.gui.binary.VisualizeBinaryData;
 import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.Planar;
+import borg.edtrading.cfg.Config;
+import borg.edtrading.cfg.Constants;
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.services.EddbService;

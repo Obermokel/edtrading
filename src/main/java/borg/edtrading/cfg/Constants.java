@@ -1,4 +1,4 @@
-package borg.edtrading;
+package borg.edtrading.cfg;
 
 import java.io.File;
 import java.util.Arrays;

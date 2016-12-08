@@ -1,4 +1,4 @@
-package borg.edtrading;
+package borg.edtrading.cfg;
 
 import borg.edtrading.eddb.reader.EddbReader;
 import org.apache.logging.log4j.LogManager;

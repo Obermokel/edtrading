@@ -1,5 +1,6 @@
 package borg.edtrading;
 
+import borg.edtrading.cfg.Constants;
 import borg.edtrading.data.Blueprint;
 import borg.edtrading.data.Component;
 import borg.edtrading.data.Engineer;

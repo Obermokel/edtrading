@@ -1,5 +1,6 @@
 package borg.edtrading;
 
+import borg.edtrading.cfg.Constants;
 import borg.edtrading.data.Item;
 import borg.edtrading.eddb.updater.BodyUpdater;
 import borg.edtrading.eddb.updater.SystemNotFoundException;

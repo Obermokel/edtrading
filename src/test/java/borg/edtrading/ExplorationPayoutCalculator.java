@@ -1,5 +1,6 @@
 package borg.edtrading;
 
+import borg.edtrading.cfg.Constants;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.Journal;
 import borg.edtrading.journal.JournalReader;

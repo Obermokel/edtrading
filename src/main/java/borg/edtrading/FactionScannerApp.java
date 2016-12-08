@@ -1,5 +1,6 @@
 package borg.edtrading;
 
+import borg.edtrading.cfg.Constants;
 import borg.edtrading.ocr.CharacterLocator;
 import borg.edtrading.ocr.OcrExecutor;
 import borg.edtrading.ocr.OcrResult;

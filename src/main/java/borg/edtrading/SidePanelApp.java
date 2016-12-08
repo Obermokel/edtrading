@@ -1,5 +1,6 @@
 package borg.edtrading;
 
+import borg.edtrading.cfg.Config;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.gui.DiscoveryPanel;
 import borg.edtrading.gui.InventoryPanel;

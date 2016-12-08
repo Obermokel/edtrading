@@ -1,6 +1,6 @@
 package borg.edtrading.ocr.bodyscanner;
 
-import borg.edtrading.Constants;
+import borg.edtrading.cfg.Constants;
 import borg.edtrading.data.BodyInfo;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;

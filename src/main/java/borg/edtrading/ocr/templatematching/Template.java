@@ -5,7 +5,7 @@ import boofcv.alg.interpolate.TypeInterpolate;
 import boofcv.gui.image.VisualizeImageData;
 import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.image.GrayF32;
-import borg.edtrading.Constants;
+import borg.edtrading.cfg.Constants;
 import borg.edtrading.ocr.imagetransformation.Transformation;
 import borg.edtrading.ocr.screenshots.Region;
 import borg.edtrading.util.ImageUtil;

@@ -1,6 +1,6 @@
 package borg.edtrading.ocr;
 
-import borg.edtrading.Constants;
+import borg.edtrading.cfg.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

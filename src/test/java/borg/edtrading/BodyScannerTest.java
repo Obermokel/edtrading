@@ -4,6 +4,7 @@ import boofcv.core.image.ConvertImage;
 import boofcv.struct.image.GrayF32;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.ImageBase;
+import borg.edtrading.cfg.Constants;
 import borg.edtrading.ocr.bodyscanner.BodyScanner;
 import borg.edtrading.ocr.bodyscanner.BodyScannerResult;
 import borg.edtrading.ocr.imagetransformation.Transformation;

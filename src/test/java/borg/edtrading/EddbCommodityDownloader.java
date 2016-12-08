@@ -1,5 +1,6 @@
 package borg.edtrading;
 
+import borg.edtrading.cfg.Config;
 import borg.edtrading.data.Blueprint;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;

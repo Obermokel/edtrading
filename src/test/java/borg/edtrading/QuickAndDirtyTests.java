@@ -1,5 +1,7 @@
 package borg.edtrading;
 
+import borg.edtrading.cfg.Config;
+import borg.edtrading.cfg.Constants;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbBody.MaterialShare;
 import borg.edtrading.util.MiscUtil;
