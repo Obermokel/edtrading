@@ -46,8 +46,8 @@ public class GalmapApp {
 
     private static final AnnotationConfigApplicationContext APPCTX = new AnnotationConfigApplicationContext(Config.class);
 
-    static int imageSize = 16384;
-    static int psize = 11;
+    static int imageSize = 4096;
+    static int psize = 5;
     static int poffset = (psize - 1) / 2;
 
     static float xmin = 0;
@@ -69,7 +69,7 @@ public class GalmapApp {
         computeGalaxySize(allSystemCoords);
 
         writeNeutronMap(arrivalNeutronStarCoords);
-        psize = 5;
+        psize = 1;
         poffset = (psize - 1) / 2;
         writeArrivalStarMap(coordsByArrivalSpectralClass);
         writeCompleteStarMap(allSystemCoords, coordsByArrivalSpectralClass);

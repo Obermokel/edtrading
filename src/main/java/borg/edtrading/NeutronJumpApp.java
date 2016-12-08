@@ -60,7 +60,7 @@ public class NeutronJumpApp {
 
     public static void main(String[] args) throws IOException {
         final String fromName = "Sol";
-        final String toName = "Colonia";
+        final String toName = "Lagoon Sector NI-S b4-10";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
 
