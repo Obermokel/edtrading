@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -57,6 +58,8 @@ public class FactionScannerApp {
 
     /** Global instance of the HTTP transport. */
     private static HttpTransport HTTP_TRANSPORT;
+
+    private static final boolean SKIP_GOOGLE_UPDATE = false;
 
     static {
         try {
@@ -84,11 +87,14 @@ public class FactionScannerApp {
             //x=0,y=350,w=840,h=1620
 
             OcrTask ocrTask = new OcrTask(region, characterLocator, templates);
-            ocrTask.setDebugAllTextLines(true);
+            ocrTask.setDebugAlphanumTemplates(false);
+            ocrTask.setDebugAlphanumTextLines(false);
+            ocrTask.setDebugAllTemplates(false);
+            ocrTask.setDebugAllTextLines(false);
             OcrResult ocrResult = new OcrExecutor().executeOcr(ocrTask);
             ocrResult.writeDebugImages();
             updateSystemFactions(systemFactions, ocrResult);
-            String systemName = guessSystemNameByFactions(systemFactions);
+            String systemName = guessSystemNameByFactions(systemFactions, screenshotFile);
             systemFactions.setSystemName(systemName);
             SystemFactions prev = systemsByName.put(systemName, systemFactions);
             if (prev != null) {
@@ -120,10 +126,12 @@ public class FactionScannerApp {
             List<List<Object>> rows = new ArrayList<>();
             rows.add(row);
             vr.setValues(rows);
-            Append append = service.spreadsheets().values().append(spreadsheetId, tableName + "!" + columnRange, vr);
-            append.setValueInputOption("USER_ENTERED");
-            AppendValuesResponse appendResponse = append.execute();
-            System.out.println(appendResponse.toPrettyString());
+            if (!SKIP_GOOGLE_UPDATE) {
+                Append append = service.spreadsheets().values().append(spreadsheetId, tableName + "!" + columnRange, vr);
+                append.setValueInputOption("USER_ENTERED");
+                AppendValuesResponse appendResponse = append.execute();
+                System.out.println(appendResponse.toPrettyString());
+            }
         }
 
         for (String unknownFaction : unknownFactions) {
@@ -157,8 +165,9 @@ public class FactionScannerApp {
                     } else if (currentLabel == KnownLabel.FACTION) {
                         currentFaction = KnownFaction.findBestMatching(currentValue);
                         if (currentFaction == null) {
+                            logger.error(screenshotFile.getName() + ": Failed to parse '" + currentValue + "' to a faction name");
+                            //System.exit(1);
                             unknownFactions.add(currentValue);
-                            logger.warn(currentValue);
                         }
                     } else if (currentLabel != null && currentFaction != null) {
                         SystemFaction systemFaction = systemFactions.getFactions().get(currentFaction);
@@ -173,7 +182,13 @@ public class FactionScannerApp {
                         } else if (currentLabel == KnownLabel.INFLUENCE) {
                             String fixedValue = currentValue.toUpperCase().replace(" ", "").replace("%", "").replace(",", ".");
                             fixedValue = fixedValue.replace("O", "0").replace("D", "0").replace("I", "1").replace("S", "5").replace("B", "8");
-                            systemFaction.setInfluence(new BigDecimal(fixedValue.trim()));
+                            try {
+                                systemFaction.setInfluence(new BigDecimal(fixedValue.trim()));
+                            } catch (NumberFormatException e) {
+                                logger.error(screenshotFile.getName() + ": Failed to parse '" + currentValue + "' (fixed to '" + fixedValue + "') to influence of " + currentFaction);
+                                //System.exit(1);
+                                systemFaction.setInfluence(new BigDecimal("99.9"));
+                            }
                         } else if (currentLabel == KnownLabel.STATE) {
                             systemFaction.setState(State.findBestMatching(currentValue));
                         } else if (currentLabel == KnownLabel.RELATIONSHIP) {
@@ -193,22 +208,25 @@ public class FactionScannerApp {
         }
     }
 
-    private static String guessSystemNameByFactions(SystemFactions systemFactions) {
-        if (systemFactions.getFactions().containsKey(KnownFaction.INDEPENDENTS_OF_MARIDAL) || systemFactions.getFactions().containsKey(KnownFaction.JUSTICE_PARTY_OF_MARIDAL)) {
+    private static String guessSystemNameByFactions(SystemFactions systemFactions, File screenshotFile) {
+        Set<KnownFaction> factions = systemFactions.getFactions().keySet();
+        if (factions.contains(KnownFaction.INDEPENDENTS_OF_MARIDAL) || factions.contains(KnownFaction.JUSTICE_PARTY_OF_MARIDAL)) {
             return "MARIDAL";
-        } else if (systemFactions.getFactions().containsKey(KnownFaction.LP_575_38_BLUE_TRANSPORT_COMMS) || systemFactions.getFactions().containsKey(KnownFaction.LIBERALS_OF_LP_575_38)) {
+        } else if (factions.contains(KnownFaction.LP_575_38_BLUE_TRANSPORT_COMMS) || factions.contains(KnownFaction.LIBERALS_OF_LP_575_38) || factions.contains(KnownFaction.LP_575_38_ORGANISATION)) {
             return "LP 575-38";
-        } else if (systemFactions.getFactions().containsKey(KnownFaction.ALLIANCE_OF_HRISASTSHI) || systemFactions.getFactions().containsKey(KnownFaction.HRISASTSHI_CO)) {
+        } else if (factions.contains(KnownFaction.ALLIANCE_OF_HRISASTSHI) || factions.contains(KnownFaction.HRISASTSHI_CO)) {
             return "HRISASTSHI";
-        } else if (systemFactions.getFactions().containsKey(KnownFaction.PARTNERSHIP_OF_NGARU) || systemFactions.getFactions().containsKey(KnownFaction.NGARU_CRIMSON_COUNCIL)) {
+        } else if (factions.contains(KnownFaction.PARTNERSHIP_OF_NGARU) || factions.contains(KnownFaction.NGARU_CRIMSON_COUNCIL)) {
             return "NGARU";
-        } else if (systemFactions.getFactions().containsKey(KnownFaction.NEZ_PELLIRI_GANG) || systemFactions.getFactions().containsKey(KnownFaction.NEZ_PELLIRI_SILVER_GALACTIC)) {
+        } else if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) || factions.contains(KnownFaction.NEZ_PELLIRI_SILVER_GALACTIC)) {
             return "NEZ PELLIRI";
-        } else if (systemFactions.getFactions().containsKey(KnownFaction.ALLIANCE_OF_STHA_181) || systemFactions.getFactions().containsKey(KnownFaction.UNITING_NOEGIN)) {
+        } else if (factions.contains(KnownFaction.ALLIANCE_OF_STHA_181) || factions.contains(KnownFaction.UNITING_NOEGIN)) {
             return "NOEGIN";
-        } else if (systemFactions.getFactions().containsKey(KnownFaction.UZUMERU_NETCOMS_INCORPORATED) || systemFactions.getFactions().containsKey(KnownFaction.BAVARINGONI_BLUE_RATS)) {
+        } else if (factions.contains(KnownFaction.UZUMERU_NETCOMS_INCORPORATED) || factions.contains(KnownFaction.BAVARINGONI_BLUE_RATS)) {
             return "BAVARINGONI";
         } else {
+            logger.error(screenshotFile.getName() + ": I have no clue what system that is: " + factions);
+            //System.exit(1);
             return "UNKNOWN";
         }
     }
