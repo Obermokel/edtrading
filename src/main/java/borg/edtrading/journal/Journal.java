@@ -21,8 +21,6 @@ public class Journal {
     static final Logger logger = LogManager.getLogger(Journal.class);
 
     private final LinkedList<AbstractJournalEntry> entries = new LinkedList<>();
-    private final Set<String> visitedSystems = new HashSet<>();
-    private final Set<String> scannedBodies = new HashSet<>();
 
     /**
      * The caller has to take care that the entry timestamp is &gt;= the last timestamp!
@@ -65,12 +63,12 @@ public class Journal {
         }
     }
 
-    public Set<String> getVisitedSystems() {
-        return Collections.unmodifiableSet(this.visitedSystems);
+    public boolean isSystemVisited(String systemName) {
+        return false; // TODO
     }
 
-    public Set<String> getScannedBodies() {
-        return Collections.unmodifiableSet(this.scannedBodies);
+    public boolean isBodyScanned(String bodyName) {
+        return false; // TODO
     }
 
 }

@@ -378,7 +378,7 @@ public class NeutronJumpApp {
             List<EddbBody> valuableBodies = findValuableBodies(this.getToBodies());
             if (valuableBodies.size() > 0) {
                 for (EddbBody body : valuableBodies) {
-                    if (!this.getRoute().getJournal().getScannedBodies().contains(body.getName())) {
+                    if (!this.getRoute().getJournal().isBodyScanned(body.getName())) {
                         flags += "P"; // Planets
                         break;
                     }
@@ -409,8 +409,8 @@ public class NeutronJumpApp {
 
             String evenOddCss = this.getJumpNo() % 2 == 0 ? "even" : "odd";
             String neutronJumpCss = "NS".equals(this.getFromSpectralClass()) ? "neutronJump" : "normalJump";
-            String prevKnownCss = this.getRoute().getJournal().getVisitedSystems().contains(this.getFromSystem().getName()) ? " known" : "";
-            String currKnownCss = this.getRoute().getJournal().getVisitedSystems().contains(this.getToSystem().getName()) ? " known" : "";
+            String prevKnownCss = this.getRoute().getJournal().isSystemVisited(this.getFromSystem().getName()) ? " known" : "";
+            String currKnownCss = this.getRoute().getJournal().isSystemVisited(this.getToSystem().getName()) ? " known" : "";
             String flags = "";
             String notes = "";
             if (this.getDryPeriod() == DryPeriod.END) {
@@ -434,10 +434,10 @@ public class NeutronJumpApp {
             if (valuableBodies.size() > 0) {
                 int unknown = 0;
                 for (EddbBody body : valuableBodies) {
-                    if (!this.getRoute().getJournal().getScannedBodies().contains(body.getName())) {
+                    if (!this.getRoute().getJournal().isBodyScanned(body.getName())) {
                         unknown++;
                     }
-                    String knownCss = this.getRoute().getJournal().getScannedBodies().contains(body.getName()) ? "known" : "";
+                    String knownCss = this.getRoute().getJournal().isBodyScanned(body.getName()) ? "known" : "";
                     String typeCss = body.getTypeName().toLowerCase().replaceAll("\\W", "-");
                     notes += "<span class=\"valuablePlanet " + typeCss + " " + knownCss + "\">" + escapeHtml4(body.getName().replace(this.getToSystem().getName() + " ", "")) + "</span>";
                 }
