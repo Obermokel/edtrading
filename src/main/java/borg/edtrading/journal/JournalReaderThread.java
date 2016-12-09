@@ -15,7 +15,6 @@ import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -43,7 +42,7 @@ public class JournalReaderThread extends Thread {
 
         this.journalDir = journalDir;
         this.reader = new JournalReader();
-        this.journal = new Journal(Collections.emptyList());
+        this.journal = new Journal();
     }
 
     public void init() throws IOException {

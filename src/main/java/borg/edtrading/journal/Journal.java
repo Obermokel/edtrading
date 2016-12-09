@@ -1,8 +1,6 @@
 package borg.edtrading.journal;
 
 import borg.edtrading.journal.entries.AbstractJournalEntry;
-import borg.edtrading.journal.entries.exploration.ScanEntry;
-import borg.edtrading.journal.entries.location.FSDJumpEntry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -11,9 +9,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Journal
@@ -24,18 +20,9 @@ public class Journal {
 
     static final Logger logger = LogManager.getLogger(Journal.class);
 
-    private final LinkedList<AbstractJournalEntry> entries;
-    private final Set<String> visitedSystems;
-    private final Set<String> scannedBodies;
-
-    public Journal(List<AbstractJournalEntry> entries) {
-        this.entries = new LinkedList<>(entries);
-
-        Collections.sort(this.entries); // We want it sorted
-
-        this.visitedSystems = entries.stream().filter(e -> e.getEvent() == Event.FSDJump).map(e -> ((FSDJumpEntry) e).getStarSystem()).collect(Collectors.toSet());
-        this.scannedBodies = entries.stream().filter(e -> e.getEvent() == Event.Scan).map(e -> ((ScanEntry) e).getBodyName()).collect(Collectors.toSet());
-    }
+    private final LinkedList<AbstractJournalEntry> entries = new LinkedList<>();
+    private final Set<String> visitedSystems = new HashSet<>();
+    private final Set<String> scannedBodies = new HashSet<>();
 
     /**
      * The caller has to take care that the entry timestamp is &gt;= the last timestamp!

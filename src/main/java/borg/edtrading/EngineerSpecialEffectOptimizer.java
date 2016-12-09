@@ -7,7 +7,7 @@ import borg.edtrading.data.Engineer;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.journal.Journal;
-import borg.edtrading.journal.JournalReader;
+import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.sidepanel.Inventory;
 import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
@@ -53,7 +53,9 @@ public class EngineerSpecialEffectOptimizer {
         availableComponents.add(Component.POWER_DISTRIBUTOR);
         availableComponents.add(Component.LIFE_SUPPORT);
 
-        Journal journal = new Journal(new JournalReader().readEntireJournal(Constants.JOURNAL_DIR));
+        JournalReaderThread journalReaderThread = new JournalReaderThread(Constants.JOURNAL_DIR.toPath());
+        journalReaderThread.init();
+        Journal journal = journalReaderThread.getJournal();
         Inventory inventory = new Inventory("Mokel DeLorean [GPL]", journal);
 
         LinkedHashMap<Item, Integer> totalCost = new LinkedHashMap<>();

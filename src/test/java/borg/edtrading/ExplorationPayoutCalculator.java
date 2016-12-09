@@ -3,7 +3,7 @@ package borg.edtrading;
 import borg.edtrading.cfg.Constants;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.Journal;
-import borg.edtrading.journal.JournalReader;
+import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
 import borg.edtrading.journal.entries.exploration.ScanEntry;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
@@ -33,7 +33,9 @@ public class ExplorationPayoutCalculator {
     private static final boolean SAFE_CALC = true;
 
     public static void main(String[] args) throws Exception {
-        Journal journal = new Journal(new JournalReader().readEntireJournal(Constants.JOURNAL_DIR));
+        JournalReaderThread journalReaderThread = new JournalReaderThread(Constants.JOURNAL_DIR.toPath());
+        journalReaderThread.init();
+        Journal journal = journalReaderThread.getJournal();
 
         String systemName = "Sol";
         SortedMap<String, String> scannedBodyClassesByBodyName = new TreeMap<>();

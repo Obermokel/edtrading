@@ -11,7 +11,7 @@ import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.gui.PathViewPanel;
 import borg.edtrading.gui.RouteViewPanel;
 import borg.edtrading.journal.Journal;
-import borg.edtrading.journal.JournalReader;
+import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.services.EddbService;
 import borg.edtrading.util.FuelAndJumpRangeLookup;
 import org.apache.commons.io.FileUtils;
@@ -159,7 +159,9 @@ public class NeutronJumpApp {
         List<Path> sortedPaths = path.toSortedList();
 
         // Read the journal to see which systems/bodies have already been discovered
-        Journal journal = new Journal(new JournalReader().readEntireJournal(Constants.JOURNAL_DIR));
+        JournalReaderThread journalReaderThread = new JournalReaderThread(Constants.JOURNAL_DIR.toPath());
+        journalReaderThread.init();
+        Journal journal = journalReaderThread.getJournal();
 
         Route route = Route.fromPath(sortedPaths, fuelJumpLUT, journal, eddbSystemRepository, eddbService);
 
