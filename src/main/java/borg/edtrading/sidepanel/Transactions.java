@@ -2,7 +2,6 @@ package borg.edtrading.sidepanel;
 
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.JournalReaderThread;
-import borg.edtrading.journal.JournalUpdateListener;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
 import borg.edtrading.journal.entries.missions.CommunityGoalJoinEntry;
 import borg.edtrading.journal.entries.missions.CommunityGoalRewardEntry;
@@ -24,7 +23,7 @@ import java.util.stream.Collectors;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class Transactions implements JournalUpdateListener, Serializable {
+public class Transactions implements Serializable {
 
     private static final long serialVersionUID = 4164678390231078712L;
 
@@ -35,18 +34,9 @@ public class Transactions implements JournalUpdateListener, Serializable {
     private final List<TransactionsListener> listeners = new ArrayList<>();
 
     public Transactions(JournalReaderThread journalReaderThread) {
-        if (journalReaderThread != null) {
-            journalReaderThread.addListener(this);
-        }
     }
 
-    @Override
-    public void onNewJournalLine(String line) {
-        // Do nothing
-    }
-
-    @Override
-    public void onNewJournalEntry(AbstractJournalEntry entry) {
+    private void onNewJournalEntry(AbstractJournalEntry entry) {
         try {
             // TODO claims/bonds, bounties/fines
             if (entry.getEvent() == Event.MissionAccepted) {

@@ -2,7 +2,6 @@ package borg.edtrading.sidepanel;
 
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.JournalReaderThread;
-import borg.edtrading.journal.JournalUpdateListener;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
 import borg.edtrading.journal.entries.fleet.FetchRemoteModuleEntry;
 import borg.edtrading.journal.entries.fleet.ModuleBuyEntry;
@@ -33,7 +32,7 @@ import java.util.List;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class GameSession implements JournalUpdateListener, Serializable {
+public class GameSession implements Serializable {
 
     private static final long serialVersionUID = -4069666534861037328L;
 
@@ -51,9 +50,6 @@ public class GameSession implements JournalUpdateListener, Serializable {
     private final List<GameSessionListener> listeners = new ArrayList<>();
 
     public GameSession(JournalReaderThread journalReaderThread) {
-        if (journalReaderThread != null) {
-            journalReaderThread.addListener(this);
-        }
     }
 
     public String getCommander() {
@@ -136,13 +132,7 @@ public class GameSession implements JournalUpdateListener, Serializable {
         }
     }
 
-    @Override
-    public void onNewJournalLine(String line) {
-        // Do nothing
-    }
-
-    @Override
-    public void onNewJournalEntry(AbstractJournalEntry entry) {
+    private void onNewJournalEntry(AbstractJournalEntry entry) {
         try {
             if (entry.getEvent() == Event.Docked) {
                 DockedEntry e = (DockedEntry) entry;

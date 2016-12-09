@@ -3,7 +3,6 @@ package borg.edtrading.sidepanel;
 import borg.edtrading.data.Coord;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.JournalReaderThread;
-import borg.edtrading.journal.JournalUpdateListener;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
 import borg.edtrading.journal.entries.exploration.ScanEntry;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
@@ -40,7 +39,7 @@ import java.util.stream.Collectors;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class TravelHistory implements JournalUpdateListener, GameSessionListener, Serializable {
+public class TravelHistory implements GameSessionListener, Serializable {
 
     private static final long serialVersionUID = 3845858336099915390L;
 
@@ -75,9 +74,6 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
 
     public TravelHistory(JournalReaderThread journalReaderThread, GameSession gameSession) {
         this.loadAssumedFirstDiscoveries();
-        if (journalReaderThread != null) {
-            journalReaderThread.addListener(this);
-        }
         if (gameSession != null) {
             gameSession.addListener(this);
         }
@@ -337,13 +333,7 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
         }
     }
 
-    @Override
-    public void onNewJournalLine(String line) {
-        // Do nothing
-    }
-
-    @Override
-    public void onNewJournalEntry(AbstractJournalEntry entry) {
+    private void onNewJournalEntry(AbstractJournalEntry entry) {
         try {
             if (entry.getEvent() == Event.Location) {
                 LocationEntry e = (LocationEntry) entry;

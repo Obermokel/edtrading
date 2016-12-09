@@ -5,7 +5,6 @@ import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.Journal;
 import borg.edtrading.journal.JournalReaderThread;
-import borg.edtrading.journal.JournalUpdateListener;
 import borg.edtrading.journal.NameCount;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
 import borg.edtrading.journal.entries.engineer.EngineerCraftEntry;
@@ -40,7 +39,7 @@ import java.util.TreeMap;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class Inventory implements JournalUpdateListener, GameSessionListener, Serializable {
+public class Inventory implements GameSessionListener, Serializable {
 
     private static final long serialVersionUID = 8541359755696166766L;
 
@@ -60,9 +59,6 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
     private final List<InventoryListener> listeners = new ArrayList<>();
 
     public Inventory(JournalReaderThread journalReaderThread, GameSession gameSession) {
-        if (journalReaderThread != null) {
-            journalReaderThread.addListener(this);
-        }
         if (gameSession != null) {
             gameSession.addListener(this);
         }
@@ -242,13 +238,7 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         }
     }
 
-    @Override
-    public void onNewJournalLine(String line) {
-        // Do nothing
-    }
-
-    @Override
-    public void onNewJournalEntry(AbstractJournalEntry entry) {
+    private void onNewJournalEntry(AbstractJournalEntry entry) {
         try {
             if (entry.getEvent() == Event.MaterialCollected) {
                 MaterialCollectedEntry e = (MaterialCollectedEntry) entry;

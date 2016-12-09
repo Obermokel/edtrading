@@ -14,7 +14,6 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -34,7 +33,6 @@ public class JournalReaderThread extends Thread {
     private String currentFilename = null;
     private int lastProcessedLineNumber = 0;
     private Date lastProcessedTimestamp = new Date(0);
-    private final List<JournalUpdateListener> listeners = new ArrayList<>();
 
     public JournalReaderThread(Path journalDir) throws IOException {
         this.setName("JournalReaderThread");
@@ -109,13 +107,6 @@ public class JournalReaderThread extends Thread {
 
                         try {
                             String line = lines.get(lineNumber - 1);
-                            for (JournalUpdateListener listener : this.listeners) {
-                                try {
-                                    listener.onNewJournalLine(line);
-                                } catch (Exception e) {
-                                    logger.warn(listener + " failed: " + e);
-                                }
-                            }
                             AbstractJournalEntry entry = this.reader.readJournalLine(line);
 
                             if (entry != null && entry.getTimestamp().compareTo(this.lastProcessedTimestamp) >= 0) {
@@ -123,14 +114,6 @@ public class JournalReaderThread extends Thread {
 
                                 this.journal.add(entry);
                                 eventAdded = true;
-
-                                for (JournalUpdateListener listener : this.listeners) {
-                                    try {
-                                        listener.onNewJournalEntry(entry);
-                                    } catch (Exception e) {
-                                        logger.warn(listener + " failed: " + e);
-                                    }
-                                }
                             }
                         } catch (UnknownEventException e) {
                             logger.debug("Unknown event type '" + e.getEvent() + "' in line " + lineNumber + " of " + filename);
@@ -150,22 +133,6 @@ public class JournalReaderThread extends Thread {
 
     public Journal getJournal() {
         return this.journal;
-    }
-
-    public boolean addListener(JournalUpdateListener listener) {
-        if (listener == null || this.listeners.contains(listener)) {
-            return false;
-        } else {
-            return this.listeners.add(listener);
-        }
-    }
-
-    public boolean removeListener(JournalUpdateListener listener) {
-        if (listener == null) {
-            return false;
-        } else {
-            return this.listeners.remove(listener);
-        }
     }
 
 }

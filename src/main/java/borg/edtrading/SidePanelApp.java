@@ -4,7 +4,6 @@ import borg.edtrading.cfg.Config;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.gui.DiscoveryPanel;
 import borg.edtrading.gui.InventoryPanel;
-import borg.edtrading.gui.JournalLogPanel;
 import borg.edtrading.gui.ScansPanel;
 import borg.edtrading.gui.ShipyardPanel;
 import borg.edtrading.gui.StatusPanel;
@@ -38,7 +37,6 @@ import java.nio.file.Paths;
 import java.util.Locale;
 
 import javax.swing.JFrame;
-import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 
@@ -119,7 +117,6 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
         //        }
 
         // Create all panels
-        JournalLogPanel journalLogPanel = new JournalLogPanel(journalReaderThread);
         StatusPanel statusPanel = new StatusPanel(gameSession, travelHistory, inventory);
         InventoryPanel inventoryPanel = new InventoryPanel(inventory);
         TransactionsPanel transactionsPanel = new TransactionsPanel(transactions);
@@ -143,9 +140,6 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
         frame.setLayout(new BorderLayout());
         frame.add(statusPanel, BorderLayout.NORTH);
         frame.add(tabbedPane, BorderLayout.CENTER);
-        if ("Guenther".equalsIgnoreCase(Paths.get(System.getProperty("user.home")).getFileName().toString())) {
-            frame.add(new JScrollPane(journalLogPanel), BorderLayout.SOUTH);
-        }
         if (SidePanelApp.BIG_AND_BLACK) {
             frame.setSize(1800, 900);
             frame.setLocation(10, 10);
