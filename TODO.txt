@@ -1,5 +1,6 @@
 TODO SidePanel:
 * Komplett auf Spring umstellen
+* Location Klasse für Journal -> onLocationChanged
 * Route planning und scanner in sidepanel integrieren
 * Sort scheint kaputt in der Scans table
 * Rarity icon in inventory table
