@@ -4,8 +4,10 @@ import borg.edtrading.data.Coord;
 import borg.edtrading.data.Item;
 import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
+import borg.edtrading.journal.entries.engineer.EngineerCraftEntry;
 import borg.edtrading.journal.entries.exploration.ScanEntry;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
+import borg.edtrading.journal.entries.fight.DiedEntry;
 import borg.edtrading.journal.entries.fleet.FetchRemoteModuleEntry;
 import borg.edtrading.journal.entries.fleet.ModuleBuyEntry;
 import borg.edtrading.journal.entries.fleet.ModuleRetrieveEntry;
@@ -17,6 +19,14 @@ import borg.edtrading.journal.entries.fleet.ShipyardBuyEntry;
 import borg.edtrading.journal.entries.fleet.ShipyardNewEntry;
 import borg.edtrading.journal.entries.fleet.ShipyardSwapEntry;
 import borg.edtrading.journal.entries.game.LoadGameEntry;
+import borg.edtrading.journal.entries.inventory.BuyDronesEntry;
+import borg.edtrading.journal.entries.inventory.CollectCargoEntry;
+import borg.edtrading.journal.entries.inventory.EjectCargoEntry;
+import borg.edtrading.journal.entries.inventory.MaterialCollectedEntry;
+import borg.edtrading.journal.entries.inventory.MaterialDiscardedEntry;
+import borg.edtrading.journal.entries.inventory.MiningRefinedEntry;
+import borg.edtrading.journal.entries.inventory.SellDronesEntry;
+import borg.edtrading.journal.entries.inventory.SynthesisEntry;
 import borg.edtrading.journal.entries.location.DockedEntry;
 import borg.edtrading.journal.entries.location.FSDJumpEntry;
 import borg.edtrading.journal.entries.location.LiftoffEntry;
@@ -25,6 +35,10 @@ import borg.edtrading.journal.entries.location.SupercruiseEntryEntry;
 import borg.edtrading.journal.entries.location.SupercruiseExitEntry;
 import borg.edtrading.journal.entries.location.TouchdownEntry;
 import borg.edtrading.journal.entries.location.UndockedEntry;
+import borg.edtrading.journal.entries.missions.MissionAcceptedEntry;
+import borg.edtrading.journal.entries.missions.MissionCompletedEntry;
+import borg.edtrading.journal.entries.starport.MarketBuyEntry;
+import borg.edtrading.journal.entries.starport.MarketSellEntry;
 import borg.edtrading.journal.entries.starport.RefuelAllEntry;
 import borg.edtrading.journal.entries.travel.FuelScoopEntry;
 import borg.edtrading.journal.entries.travel.JetConeBoostEntry;
@@ -84,7 +98,6 @@ public class Journal {
     private String security = null;
     private boolean inSupercruise = false;
     private boolean landed = true;
-    private float fuelLevel = 0;
     private float boostLevel = 1;
 
     private String commander = null;
@@ -264,6 +277,58 @@ public class Journal {
         }
     }
 
+    public int getCapacity(ItemType type) {
+        if (type == ItemType.DATA) {
+            return 500;
+        } else if (type == ItemType.ELEMENT || type == ItemType.MANUFACTURED) {
+            return 1000;
+        } else if (type == ItemType.COMMODITY || type == ItemType.DRONES) {
+            return this.getCargoCapacity();
+        } else {
+            return 0;
+        }
+    }
+
+    public int getTotal(ItemType type) {
+        int size = 0;
+        for (String name : this.getNames(type)) {
+            size += this.getHave(name);
+        }
+        return size;
+    }
+
+    public int getHave(String name) {
+        return this.haveByName.get(this.getCommander()).getOrDefault(name, 0);
+    }
+
+    /**
+     * -100% = Useless weight...<br>
+     * 0% = Normal stuff<br>
+     * +100% = WANT IT!!!
+     */
+    public float getPriority(String name) {
+        return this.priorityByName.get(this.getCommander()).getOrDefault(name, 0f);
+    }
+
+    public int getSurplus(String name) {
+        return this.surplusByName.get(this.getCommander()).getOrDefault(name, 0);
+    }
+
+    public int getRequired(String name) {
+        return this.requiredByName.get(this.getCommander()).getOrDefault(name, 0);
+    }
+
+    public synchronized List<String> getNames(ItemType type) {
+        List<String> names = new ArrayList<>();
+        for (String name : this.haveByName.get(this.getCommander()).keySet()) {
+            ItemType guessedType = guessType(name);
+            if (guessedType == type) {
+                names.add(name);
+            }
+        }
+        return names;
+    }
+
     public synchronized void reset(String name, int count, ItemType type) {
         String guessedName = guessName(name, type);
 
@@ -399,61 +464,223 @@ public class Journal {
 
             // Process
             try {
-                if (entry.getEvent() == Event.Location) {
-                    this.handleLocationEntry((LocationEntry) entry);
-                } else if (entry.getEvent() == Event.FSDJump) {
-                    this.handleFSDJumpEntry((FSDJumpEntry) entry);
-                } else if (entry.getEvent() == Event.FuelScoop) {
-                    this.handleFuelScoopEntry((FuelScoopEntry) entry);
-                } else if (entry.getEvent() == Event.JetConeBoost) {
-                    this.handleJetConeBoostEntry((JetConeBoostEntry) entry);
-                } else if (entry.getEvent() == Event.RefuelAll) {
-                    this.handleRefuelAllEntry((RefuelAllEntry) entry);
-                } else if (entry.getEvent() == Event.SupercruiseEntry) {
-                    this.handleSupercruiseEntryEntry((SupercruiseEntryEntry) entry);
-                } else if (entry.getEvent() == Event.SupercruiseExit) {
-                    this.handleSupercruiseExitEntry((SupercruiseExitEntry) entry);
-                } else if (entry.getEvent() == Event.Touchdown) {
-                    this.handleTouchdownEntry((TouchdownEntry) entry);
-                } else if (entry.getEvent() == Event.Liftoff) {
-                    this.handleLiftoffEntry((LiftoffEntry) entry);
-                } else if (entry.getEvent() == Event.Docked) {
-                    this.handleDockedEntry((DockedEntry) entry);
-                } else if (entry.getEvent() == Event.Undocked) {
-                    this.handleUndockedEntry((UndockedEntry) entry);
-                } else if (entry.getEvent() == Event.Scan) {
-                    this.handleScanEntry((ScanEntry) entry);
-                } else if (entry.getEvent() == Event.SellExplorationData) {
-                    this.handleSellExplorationDataEntry((SellExplorationDataEntry) entry);
-                } else if (entry.getEvent() == Event.ModuleBuy) {
-                    this.handleModuleBuyEntry((ModuleBuyEntry) entry);
-                } else if (entry.getEvent() == Event.ModuleSell) {
-                    this.handleModuleSellEntry((ModuleSellEntry) entry);
-                } else if (entry.getEvent() == Event.ModuleSellRemote) {
-                    this.handleModuleSellRemoteEntry((ModuleSellRemoteEntry) entry);
-                } else if (entry.getEvent() == Event.FetchRemoteModule) {
-                    this.handleFetchRemoteModuleEntry((FetchRemoteModuleEntry) entry);
-                } else if (entry.getEvent() == Event.ModuleRetrieve) {
-                    this.handleModuleRetrieveEntry((ModuleRetrieveEntry) entry);
-                } else if (entry.getEvent() == Event.ModuleStore) {
-                    this.handleModuleStoreEntry((ModuleStoreEntry) entry);
-                } else if (entry.getEvent() == Event.ModuleSwap) {
-                    this.handleModuleSwapEntry((ModuleSwapEntry) entry);
-                } else if (entry.getEvent() == Event.ShipyardBuy) {
-                    this.handleShipyardBuyEntry((ShipyardBuyEntry) entry); // Has only shipType and buyPrice :-( ShipyardNew has the shipID...
-                } else if (entry.getEvent() == Event.ShipyardNew) {
-                    this.handleShipyardNewEntry((ShipyardNewEntry) entry);
-                } else if (entry.getEvent() == Event.ShipyardSwap) {
-                    this.handleShipyardSwapEntry((ShipyardSwapEntry) entry);
-                } else if (entry.getEvent() == Event.LoadGame) {
-                    this.handleLoadGameEntry((LoadGameEntry) entry);
-                } else {
-                    logger.warn("Is " + entry.getEvent() + " really meaningless?");
+                switch (entry.getEvent()) {
+                    case MaterialCollected:
+                        this.handleMaterialCollectedEntry((MaterialCollectedEntry) entry);
+                        break;
+                    case MaterialDiscarded:
+                        this.handleMaterialDiscardedEntry((MaterialDiscardedEntry) entry);
+                        break;
+                    case CollectCargo:
+                        this.handleCollectCargoEntry((CollectCargoEntry) entry);
+                        break;
+                    case EjectCargo:
+                        this.handleEjectCargoEntry((EjectCargoEntry) entry);
+                        break;
+                    case MarketBuy:
+                        this.handleMarketBuyEntry((MarketBuyEntry) entry);
+                        break;
+                    case MarketSell:
+                        this.handleMarketSellEntry((MarketSellEntry) entry);
+                        break;
+                    case BuyDrones:
+                        this.handleBuyDronesEntry((BuyDronesEntry) entry);
+                        break;
+                    case SellDrones:
+                        this.handleSellDronesEntry((SellDronesEntry) entry);
+                        break;
+                    case MiningRefined:
+                        this.handleMiningRefinedEntry((MiningRefinedEntry) entry);
+                        break;
+                    case Location:
+                        this.handleLocationEntry((LocationEntry) entry);
+                        break;
+                    case FSDJump:
+                        this.handleFSDJumpEntry((FSDJumpEntry) entry);
+                        break;
+                    case FuelScoop:
+                        this.handleFuelScoopEntry((FuelScoopEntry) entry);
+                        break;
+                    case JetConeBoost:
+                        this.handleJetConeBoostEntry((JetConeBoostEntry) entry);
+                        break;
+                    case RefuelAll:
+                        this.handleRefuelAllEntry((RefuelAllEntry) entry);
+                        break;
+                    case SupercruiseEntry:
+                        this.handleSupercruiseEntryEntry((SupercruiseEntryEntry) entry);
+                        break;
+                    case SupercruiseExit:
+                        this.handleSupercruiseExitEntry((SupercruiseExitEntry) entry);
+                        break;
+                    case Touchdown:
+                        this.handleTouchdownEntry((TouchdownEntry) entry);
+                        break;
+                    case Liftoff:
+                        this.handleLiftoffEntry((LiftoffEntry) entry);
+                        break;
+                    case Docked:
+                        this.handleDockedEntry((DockedEntry) entry);
+                        break;
+                    case Undocked:
+                        this.handleUndockedEntry((UndockedEntry) entry);
+                        break;
+                    case Scan:
+                        this.handleScanEntry((ScanEntry) entry);
+                        break;
+                    case SellExplorationData:
+                        this.handleSellExplorationDataEntry((SellExplorationDataEntry) entry);
+                        break;
+                    case ModuleBuy:
+                        this.handleModuleBuyEntry((ModuleBuyEntry) entry);
+                        break;
+                    case ModuleSell:
+                        this.handleModuleSellEntry((ModuleSellEntry) entry);
+                        break;
+                    case ModuleSellRemote:
+                        this.handleModuleSellRemoteEntry((ModuleSellRemoteEntry) entry);
+                        break;
+                    case FetchRemoteModule:
+                        this.handleFetchRemoteModuleEntry((FetchRemoteModuleEntry) entry);
+                        break;
+                    case ModuleRetrieve:
+                        this.handleModuleRetrieveEntry((ModuleRetrieveEntry) entry);
+                        break;
+                    case ModuleStore:
+                        this.handleModuleStoreEntry((ModuleStoreEntry) entry);
+                        break;
+                    case ModuleSwap:
+                        this.handleModuleSwapEntry((ModuleSwapEntry) entry);
+                        break;
+                    case ShipyardBuy:
+                        this.handleShipyardBuyEntry((ShipyardBuyEntry) entry); // Has only shipType and buyPrice :-( ShipyardNew has the shipID...
+                        break;
+                    case ShipyardNew:
+                        this.handleShipyardNewEntry((ShipyardNewEntry) entry);
+                        break;
+                    case ShipyardSwap:
+                        this.handleShipyardSwapEntry((ShipyardSwapEntry) entry);
+                        break;
+                    case MissionAccepted:
+                        this.handleMissionAcceptedEntry((MissionAcceptedEntry) entry);
+                        break;
+                    case MissionCompleted:
+                        this.handleMissionCompletedEntry((MissionCompletedEntry) entry);
+                        break;
+                    case EngineerCraft:
+                        this.handleEngineerCraftEntry((EngineerCraftEntry) entry);
+                        break;
+                    case Synthesis:
+                        this.handleSynthesisEntry((SynthesisEntry) entry);
+                        break;
+                    case LoadGame:
+                        this.handleLoadGameEntry((LoadGameEntry) entry);
+                        break;
+                    case Died:
+                        this.handleDiedEntry((DiedEntry) entry);
+                        break;
+                    default:
+                        logger.warn("Is " + entry.getEvent() + " really meaningless?");
+                        break;
                 }
             } catch (Exception e) {
                 logger.error("Failed to handle " + entry, e);
             }
         }
+    }
+
+    private void handleSynthesisEntry(SynthesisEntry e) {
+        if (e.getMaterials() != null) {
+            for (String name : e.getMaterials().keySet()) {
+                this.spent(name, e.getMaterials().get(name), null);
+            }
+        }
+    }
+
+    private void handleEngineerCraftEntry(EngineerCraftEntry e) {
+        if (e.getIngredients() != null) {
+            for (String name : e.getIngredients().keySet()) {
+                this.spent(name, e.getIngredients().get(name), null);
+            }
+        }
+    }
+
+    private void handleMissionCompletedEntry(MissionCompletedEntry e) {
+        if (e.getCommodityReward() != null) {
+            for (NameCount nc : e.getCommodityReward()) {
+                this.collected(nc.getName(), nc.getCount(), null);
+            }
+        }
+        if (StringUtils.isNotEmpty(e.getCommodity()) && e.getCount() != null) {
+            if (e.getName().startsWith("Mission_Delivery")) {
+                // We have successfully delivered the commodity which was provided to us.
+                String journalName = e.getCommodity().replace("$", "").replace("_Name;", "");
+                this.discarded(journalName, e.getCount(), ItemType.COMMODITY);
+            } else if (e.getName().startsWith("Mission_Collect")) {
+                // We have successfully collected and delivered the desired commodity.
+                String journalName = e.getCommodity().replace("$", "").replace("_Name;", "");
+                this.discarded(journalName, e.getCount(), ItemType.COMMODITY);
+            } else {
+                logger.warn("Unknown mission completed type '" + e.getName() + "' which seems to have taken " + e.getCount() + "x " + e.getCommodityLocalized() + " from us");
+            }
+        }
+    }
+
+    private void handleMissionAcceptedEntry(MissionAcceptedEntry e) {
+        if (StringUtils.isNotEmpty(e.getCommodity()) && e.getCount() != null) {
+            if (e.getName().startsWith("Mission_Delivery")) {
+                // We have been provided with the commodity in order to deliver it somewhere.
+                String journalName = e.getCommodity().replace("$", "").replace("_Name;", "");
+                this.collected(journalName, e.getCount(), ItemType.COMMODITY);
+            } else if (e.getName().startsWith("Mission_Collect")) {
+                // Nothing has happened yet. We have to collect the commodity from somewhere.
+            } else {
+                logger.warn("Unknown mission accepted type '" + e.getName() + "' which seems to have given us " + e.getCount() + "x " + e.getCommodityLocalized());
+            }
+        }
+    }
+
+    private void handleDiedEntry(DiedEntry e) {
+        this.reset(Item.DRONES.getName(), 0, ItemType.DRONES);
+        for (String name : this.getNames(ItemType.COMMODITY)) {
+            this.reset(name, 0, ItemType.COMMODITY);
+        }
+    }
+
+    private void handleMaterialCollectedEntry(MaterialCollectedEntry e) {
+        this.collected(e.getName(), e.getCount(), null);
+    }
+
+    private void handleMaterialDiscardedEntry(MaterialDiscardedEntry e) {
+        this.discarded(e.getName(), e.getCount(), null);
+    }
+
+    private void handleCollectCargoEntry(CollectCargoEntry e) {
+        this.collected(e.getType(), 1, ItemType.COMMODITY);
+    }
+
+    private void handleEjectCargoEntry(EjectCargoEntry e) {
+        this.discarded(e.getType(), e.getCount(), ItemType.COMMODITY);
+    }
+
+    private void handleMarketBuyEntry(MarketBuyEntry e) {
+        this.collected(e.getType(), e.getCount(), ItemType.COMMODITY);
+    }
+
+    private void handleMarketSellEntry(MarketSellEntry e) {
+        this.spent(e.getType(), e.getCount(), ItemType.COMMODITY);
+    }
+
+    private void handleBuyDronesEntry(BuyDronesEntry e) {
+        this.collected(e.getType(), e.getCount(), ItemType.DRONES);
+    }
+
+    private void handleSellDronesEntry(SellDronesEntry e) {
+        this.discarded(e.getType(), e.getCount(), ItemType.DRONES);
+    }
+
+    private void handleMiningRefinedEntry(MiningRefinedEntry e) {
+        this.collected(e.getTypeLocalized(), 1, ItemType.COMMODITY);
     }
 
     private void handleModuleBuyEntry(ModuleBuyEntry e) {
@@ -561,6 +788,7 @@ public class Journal {
                 logger.warn(listener + " failed: " + ex);
             }
         }
+        this.reset(Item.DRONES.getName(), 0, ItemType.DRONES);
     }
 
     private void handleShipyardNewEntry(ShipyardNewEntry e) {
@@ -585,6 +813,7 @@ public class Journal {
                 logger.warn(listener + " failed: " + ex);
             }
         }
+        this.reset(Item.DRONES.getName(), 0, ItemType.DRONES);
     }
 
     private void handleShipyardSwapEntry(ShipyardSwapEntry e) {
@@ -604,6 +833,7 @@ public class Journal {
                 logger.warn(listener + " failed: " + ex);
             }
         }
+        this.reset(Item.DRONES.getName(), 0, ItemType.DRONES);
     }
 
     private void handleLoadGameEntry(LoadGameEntry e) {
@@ -799,9 +1029,6 @@ public class Journal {
         if (Math.abs(this.getFuelCapacity() - this.getFuelLevel()) <= 2f) {
             this.setFuelLevel(this.getFuelCapacity()); // Assume fully refueled if close to max. There is always some inprecision due to fuel ticking down by time or launching fuel transfer drones.
         }
-        if (this.currentShip != null) {
-            this.currentShip.setFuelLevel(this.getFuelLevel());
-        }
         for (JournalListener listener : this.listeners) {
             try {
                 listener.onFuelLevelChanged(this.getFuelLevel());
@@ -824,9 +1051,6 @@ public class Journal {
 
     private void handleFuelScoopEntry(FuelScoopEntry e) {
         this.setFuelLevel(MiscUtil.getAsFloat(e.getTotal(), 0f));
-        if (this.currentShip != null) {
-            this.currentShip.setFuelLevel(this.getFuelLevel());
-        }
         for (JournalListener listener : this.listeners) {
             try {
                 listener.onFuelLevelChanged(this.getFuelLevel());
@@ -859,9 +1083,6 @@ public class Journal {
         }
         this.visitedSystems.addLast(visitedSystem);
         this.visitedSystemNames.add(visitedSystem.getSystemName());
-        if (this.currentShip != null) {
-            this.currentShip.setFuelLevel(this.getFuelLevel());
-        }
         for (JournalListener listener : this.listeners) {
             try {
                 listener.onLocationChanged(true);
@@ -1055,12 +1276,18 @@ public class Journal {
         this.landed = landed;
     }
 
+    public int getFuelCapacity() {
+        return this.currentShipLoadout == null ? 0 : MiscUtil.getAsInt(this.currentShipLoadout.getFuelCapacity(), 0);
+    }
+
     public float getFuelLevel() {
-        return this.fuelLevel;
+        return this.currentShipLoadout == null ? 0f : MiscUtil.getAsFloat(this.currentShipLoadout.getFuelLevel(), 0f);
     }
 
     public void setFuelLevel(float fuelLevel) {
-        this.fuelLevel = fuelLevel;
+        if (this.currentShipLoadout != null) {
+            this.currentShipLoadout.setFuelLevel(fuelLevel);
+        }
     }
 
     public float getBoostLevel() {

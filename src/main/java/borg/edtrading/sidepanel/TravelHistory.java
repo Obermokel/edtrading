@@ -2,7 +2,6 @@ package borg.edtrading.sidepanel;
 
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
-import borg.edtrading.util.MiscUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,57 +60,58 @@ public class TravelHistory implements GameSessionListener, Serializable {
     }
 
     public LinkedList<VisitedSystem> getVisitedSystems() {
-        return this.visitedSystems;
+        //        return this.visitedSystems;
+        return null;
     }
 
     public void setToAssumedFirstDiscovery(String bodyName) {
-        if (bodyName != null) {
-            if (this.assumedFirstDiscoveries.add(bodyName)) {
-                this.saveAssumedFirstDiscoveries();
-
-                for (int i = this.visitedSystems.size() - 1; i >= 0; i--) {
-                    VisitedSystem visitedSystem = this.visitedSystems.get(i);
-                    for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
-                        if (scannedBody.getBodyName().equals(bodyName)) {
-                            scannedBody.setToFirstDiscovered();
-                            for (TravelHistoryListener listener : this.listeners) {
-                                try {
-                                    listener.onLocationChanged();
-                                } catch (Exception ex) {
-                                    logger.warn(listener + " failed: " + ex);
-                                }
-                            }
-                            return;
-                        }
-                    }
-                }
-            }
-        }
+        //        if (bodyName != null) {
+        //            if (this.assumedFirstDiscoveries.add(bodyName)) {
+        //                this.saveAssumedFirstDiscoveries();
+        //
+        //                for (int i = this.visitedSystems.size() - 1; i >= 0; i--) {
+        //                    VisitedSystem visitedSystem = this.visitedSystems.get(i);
+        //                    for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
+        //                        if (scannedBody.getBodyName().equals(bodyName)) {
+        //                            scannedBody.setToFirstDiscovered();
+        //                            for (TravelHistoryListener listener : this.listeners) {
+        //                                try {
+        //                                    listener.onLocationChanged();
+        //                                } catch (Exception ex) {
+        //                                    logger.warn(listener + " failed: " + ex);
+        //                                }
+        //                            }
+        //                            return;
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //        }
     }
 
     public void unsetAssumedFirstDiscovery(String bodyName) {
-        if (bodyName != null) {
-            if (this.assumedFirstDiscoveries.remove(bodyName)) {
-                this.saveAssumedFirstDiscoveries();
-
-                for (int i = this.visitedSystems.size() - 1; i >= 0; i--) {
-                    VisitedSystem visitedSystem = this.visitedSystems.get(i);
-                    for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
-                        if (scannedBody.getBodyName().equals(bodyName)) {
-                            scannedBody.setToNotFirstDiscovered();
-                            for (TravelHistoryListener listener : this.listeners) {
-                                try {
-                                    listener.onLocationChanged();
-                                } catch (Exception ex) {
-                                    logger.warn(listener + " failed: " + ex);
-                                }
-                            }
-                            return;
-                        }
-                    }
-                }
-            }
-        }
+        //        if (bodyName != null) {
+        //            if (this.assumedFirstDiscoveries.remove(bodyName)) {
+        //                this.saveAssumedFirstDiscoveries();
+        //
+        //                for (int i = this.visitedSystems.size() - 1; i >= 0; i--) {
+        //                    VisitedSystem visitedSystem = this.visitedSystems.get(i);
+        //                    for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
+        //                        if (scannedBody.getBodyName().equals(bodyName)) {
+        //                            scannedBody.setToNotFirstDiscovered();
+        //                            for (TravelHistoryListener listener : this.listeners) {
+        //                                try {
+        //                                    listener.onLocationChanged();
+        //                                } catch (Exception ex) {
+        //                                    logger.warn(listener + " failed: " + ex);
+        //                                }
+        //                            }
+        //                            return;
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //        }
     }
 
     public void saveAssumedFirstDiscoveries() {
@@ -148,38 +148,38 @@ public class TravelHistory implements GameSessionListener, Serializable {
 
     @Override
     public void onGameLoaded(String commander, String gameMode, String group, ShipLoadout ship) {
-        if (ship == null) {
-            this.setFuelCapacity(0);
-            this.setFuelLevel(0);
-            this.currentShip = null;
-        } else {
-            this.setFuelCapacity(ship.getFuelCapacity());
-            this.setFuelLevel(MiscUtil.getAsFloat(ship.getFuelLevel(), 0f));
-            this.currentShip = ship;
-        }
+        //        if (ship == null) {
+        //            this.setFuelCapacity(0);
+        //            this.setFuelLevel(0);
+        //            this.currentShip = null;
+        //        } else {
+        //            this.setFuelCapacity(ship.getFuelCapacity());
+        //            this.setFuelLevel(MiscUtil.getAsFloat(ship.getFuelLevel(), 0f));
+        //            this.currentShip = ship;
+        //        }
     }
 
     @Override
     public void onShipModuleChanged(String slot, ShipModule oldModule, ShipModule newModule) {
-        if (oldModule != null && oldModule.getFuelCapacity() != null) {
-            this.setFuelCapacity(this.getFuelCapacity() - oldModule.getFuelCapacity());
-        }
-        if (newModule != null && newModule.getFuelCapacity() != null) {
-            this.setFuelCapacity(this.getFuelCapacity() + newModule.getFuelCapacity());
-        }
+        //        if (oldModule != null && oldModule.getFuelCapacity() != null) {
+        //            this.setFuelCapacity(this.getFuelCapacity() - oldModule.getFuelCapacity());
+        //        }
+        //        if (newModule != null && newModule.getFuelCapacity() != null) {
+        //            this.setFuelCapacity(this.getFuelCapacity() + newModule.getFuelCapacity());
+        //        }
     }
 
     @Override
     public void onShipChanged(ShipLoadout oldShip, ShipLoadout newShip) {
-        if (newShip == null) {
-            this.setFuelCapacity(0);
-            this.setFuelLevel(0);
-            this.currentShip = null;
-        } else {
-            this.setFuelCapacity(newShip.getFuelCapacity());
-            this.setFuelLevel(MiscUtil.getAsFloat(newShip.getFuelLevel(), 0f));
-            this.currentShip = newShip;
-        }
+        //        if (newShip == null) {
+        //            this.setFuelCapacity(0);
+        //            this.setFuelLevel(0);
+        //            this.currentShip = null;
+        //        } else {
+        //            this.setFuelCapacity(newShip.getFuelCapacity());
+        //            this.setFuelLevel(MiscUtil.getAsFloat(newShip.getFuelLevel(), 0f));
+        //            this.currentShip = newShip;
+        //        }
     }
 
 }

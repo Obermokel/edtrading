@@ -1,10 +1,13 @@
 package borg.edtrading.gui;
 
 import borg.edtrading.SidePanelApp;
+import borg.edtrading.data.Item.ItemType;
+import borg.edtrading.journal.Journal;
+import borg.edtrading.journal.JournalListener;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.sidepanel.ScannedBody;
-import borg.edtrading.sidepanel.TravelHistory;
-import borg.edtrading.sidepanel.TravelHistoryListener;
+import borg.edtrading.sidepanel.ShipLoadout;
+import borg.edtrading.sidepanel.ShipModule;
 import borg.edtrading.sidepanel.VisitedSystem;
 import borg.edtrading.util.MiscUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -40,22 +43,22 @@ import javax.swing.table.DefaultTableCellRenderer;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class ScansPanel extends JPanel implements TravelHistoryListener, TableModelListener {
+public class ScansPanel extends JPanel implements JournalListener, TableModelListener {
 
     private static final long serialVersionUID = -4409093032216648613L;
 
     static final Logger logger = LogManager.getLogger(ScansPanel.class);
 
-    private final TravelHistory travelHistory;
+    private final Journal journal;
 
     private ScansTableModel tableModel = null;
 
-    public ScansPanel(TravelHistory travelHistory) {
-        this.travelHistory = travelHistory;
+    public ScansPanel(Journal journal) {
+        this.journal = journal;
 
         //this.setLayout(new FlowLayout(FlowLayout.LEFT));
         this.setLayout(new BorderLayout());
-        this.tableModel = new ScansTableModel(travelHistory);
+        this.tableModel = new ScansTableModel(journal);
         this.tableModel.addTableModelListener(this);
         JTable table = new JTable(tableModel);
         if (SidePanelApp.BIG_AND_BLACK) {
@@ -89,29 +92,19 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
         JScrollPane scrollPane = new JScrollPane(table);
         this.add(scrollPane, BorderLayout.CENTER);
 
-        travelHistory.addListener(this);
+        journal.addListener(this);
     }
 
     @Override
     public void tableChanged(TableModelEvent e) {
         if (e.getColumn() == 10) {
-            this.tableModel.refresh(this.travelHistory);
+            this.tableModel.refresh(this.journal);
         }
     }
 
     @Override
-    public void onSystemChanged() {
-        // Do nothing
-    }
-
-    @Override
-    public void onLocationChanged() {
-        // Do nothing
-    }
-
-    @Override
     public void onBodyScanned(ScannedBody scannedBody) {
-        this.tableModel.refresh(this.travelHistory);
+        this.tableModel.refresh(this.journal);
     }
 
     @Override
@@ -121,7 +114,7 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
 
     @Override
     public void onExplorationDataSold(SellExplorationDataEntry journalEntry) {
-        this.tableModel.refresh(this.travelHistory);
+        this.tableModel.refresh(this.journal);
     }
 
     public static class ScansTableModel extends AbstractTableModel {
@@ -129,23 +122,23 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
         private static final long serialVersionUID = -8604700804393478706L;
 
         private final LinkedList<ScansTableRow> rows = new LinkedList<>();
-        private TravelHistory travelHistory = null;
+        private Journal journal = null;
 
-        public ScansTableModel(TravelHistory travelHistory) {
-            for (int idxSystem = travelHistory.getVisitedSystems().size() - 1; idxSystem >= 0; idxSystem--) {
-                VisitedSystem vs = travelHistory.getVisitedSystems().get(idxSystem);
+        public ScansTableModel(Journal journal) {
+            for (int idxSystem = journal.getVisitedSystems().size() - 1; idxSystem >= 0; idxSystem--) {
+                VisitedSystem vs = journal.getVisitedSystems().get(idxSystem);
                 for (int idxBody = vs.getScannedBodies().size() - 1; idxBody >= 0; idxBody--) {
                     ScannedBody sb = vs.getScannedBodies().get(idxBody);
                     this.rows.addLast(new ScansTableRow(sb));
                 }
             }
-            this.travelHistory = travelHistory;
+            this.journal = journal;
         }
 
-        public void refresh(TravelHistory travelHistory) {
+        public void refresh(Journal journal) {
             boolean upToDate = false;
-            for (int idxSystem = travelHistory.getVisitedSystems().size() - 1; !upToDate && idxSystem >= 0; idxSystem--) {
-                VisitedSystem vs = travelHistory.getVisitedSystems().get(idxSystem);
+            for (int idxSystem = journal.getVisitedSystems().size() - 1; !upToDate && idxSystem >= 0; idxSystem--) {
+                VisitedSystem vs = journal.getVisitedSystems().get(idxSystem);
                 for (int idxBody = vs.getScannedBodies().size() - 1; !upToDate && idxBody >= 0; idxBody--) {
                     ScannedBody sb = vs.getScannedBodies().get(idxBody);
                     if (this.rows.isEmpty() || sb.getTimestamp().after(this.rows.getFirst().getTimestamp())) {
@@ -155,7 +148,7 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
                     }
                 }
             }
-            this.travelHistory = travelHistory;
+            this.journal = journal;
 
             this.fireTableDataChanged();
         }
@@ -189,9 +182,9 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if (columnIndex == 10) {
                 if (MiscUtil.getAsBoolean(aValue)) {
-                    this.travelHistory.setToAssumedFirstDiscovery(this.lookupScannedBody(rowIndex).getBodyName());
+                    this.journal.setToAssumedFirstDiscovery(this.lookupScannedBody(rowIndex).getBodyName());
                 } else {
-                    this.travelHistory.unsetAssumedFirstDiscovery(this.lookupScannedBody(rowIndex).getBodyName());
+                    this.journal.unsetAssumedFirstDiscovery(this.lookupScannedBody(rowIndex).getBodyName());
                 }
                 this.fireTableCellUpdated(rowIndex, columnIndex);
             }
@@ -208,8 +201,8 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
 
         ScannedBody lookupScannedBody(String bodyName) {
             if (StringUtils.isNotEmpty(bodyName)) {
-                for (int idxSystem = travelHistory.getVisitedSystems().size() - 1; idxSystem >= 0; idxSystem--) {
-                    VisitedSystem vs = travelHistory.getVisitedSystems().get(idxSystem);
+                for (int idxSystem = journal.getVisitedSystems().size() - 1; idxSystem >= 0; idxSystem--) {
+                    VisitedSystem vs = journal.getVisitedSystems().get(idxSystem);
                     for (int idxBody = vs.getScannedBodies().size() - 1; idxBody >= 0; idxBody--) {
                         ScannedBody sb = vs.getScannedBodies().get(idxBody);
                         if (sb.getBodyName().equals(bodyName)) {
@@ -472,6 +465,54 @@ public class ScansPanel extends JPanel implements TravelHistoryListener, TableMo
             }
             return comp;
         }
+
+    }
+
+    @Override
+    public void onGameLoaded(String commander, String gameMode, String group, ShipLoadout currentShipLoadout) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onLocationChanged(boolean systemChanged) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onShipModuleChanged(String slot, ShipModule oldModule, ShipModule newModule) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onShipChanged(ShipLoadout oldLoadout, ShipLoadout currentShipLoadout) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onInventoryReset(ItemType type, String name, int count) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onInventoryCollected(ItemType type, String name, int count) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onInventoryDiscarded(ItemType type, String name, int count) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onInventorySpent(ItemType type, String name, int count) {
+        // TODO Auto-generated method stub
 
     }
 

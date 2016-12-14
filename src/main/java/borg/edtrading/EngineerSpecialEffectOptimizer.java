@@ -122,7 +122,7 @@ public class EngineerSpecialEffectOptimizer {
     private static void doCraft(Blueprint blueprint, Inventory inventory, Map<Item, Integer> totalCost) {
         Map<Item, Integer> ingredients = blueprint.getIngredients();
         for (Item item : ingredients.keySet()) {
-            inventory.spent(item.getName(), ingredients.get(item), item.getType());
+            // FIXME inventory.spent(item.getName(), ingredients.get(item), item.getType());
             totalCost.put(item, totalCost.getOrDefault(item, 0) + ingredients.get(item));
         }
     }

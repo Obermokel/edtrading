@@ -3,16 +3,12 @@ package borg.edtrading.gui;
 import borg.edtrading.SidePanelApp;
 import borg.edtrading.data.Coord;
 import borg.edtrading.data.Item.ItemType;
+import borg.edtrading.journal.Journal;
+import borg.edtrading.journal.JournalListener;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
-import borg.edtrading.sidepanel.GameSession;
-import borg.edtrading.sidepanel.GameSessionListener;
-import borg.edtrading.sidepanel.Inventory;
-import borg.edtrading.sidepanel.InventoryListener;
 import borg.edtrading.sidepanel.ScannedBody;
 import borg.edtrading.sidepanel.ShipLoadout;
 import borg.edtrading.sidepanel.ShipModule;
-import borg.edtrading.sidepanel.TravelHistory;
-import borg.edtrading.sidepanel.TravelHistoryListener;
 import borg.edtrading.util.FuelAndJumpRangeLookup;
 import borg.edtrading.util.MiscUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -37,15 +33,13 @@ import javax.swing.Timer;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class StatusPanel extends JPanel implements GameSessionListener, TravelHistoryListener, InventoryListener {
+public class StatusPanel extends JPanel implements JournalListener {
 
     private static final long serialVersionUID = -712826465072375525L;
 
     static final Logger logger = LogManager.getLogger(StatusPanel.class);
 
-    private final GameSession gameSession;
-    private final TravelHistory travelHistory;
-    private final Inventory inventory;
+    private final Journal journal;
 
     private JLabel locationLabel = new JLabel("System / Body");
     private JLabel factionAndAllegianceLabel = new JLabel("Faction (Allegiance)");
@@ -66,10 +60,8 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
     private Timer matsTimer = null;
     private Timer fuelTimer = null;
 
-    public StatusPanel(GameSession gameSession, TravelHistory travelHistory, Inventory inventory) {
-        this.gameSession = gameSession;
-        this.travelHistory = travelHistory;
-        this.inventory = inventory;
+    public StatusPanel(Journal journal) {
+        this.journal = journal;
 
         this.fuelTimer = new Timer(10, this.fuelLabel);
         this.fuelTimer.setRepeats(true);
@@ -137,9 +129,7 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
         this.updatePanel();
 
         // Listen
-        gameSession.addListener(this);
-        travelHistory.addListener(this);
-        inventory.addListener(this);
+        journal.addListener(this);
     }
 
     @Override
@@ -158,12 +148,7 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
     }
 
     @Override
-    public void onSystemChanged() {
-        //this.updatePanel();
-    }
-
-    @Override
-    public void onLocationChanged() {
+    public void onLocationChanged(boolean systemChanged) {
         this.updatePanel();
     }
 
@@ -203,39 +188,39 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
     }
 
     private void updatePanel() {
-        if (StringUtils.isEmpty(this.travelHistory.getBodyName())) {
-            this.locationLabel.setText(String.format(Locale.US, "%s", this.travelHistory.getSystemName()));
+        if (StringUtils.isEmpty(this.journal.getBodyName())) {
+            this.locationLabel.setText(String.format(Locale.US, "%s", this.journal.getSystemName()));
         } else {
-            this.locationLabel.setText(String.format(Locale.US, "%s / %s", this.travelHistory.getSystemName(), this.travelHistory.getBodyName()));
+            this.locationLabel.setText(String.format(Locale.US, "%s / %s", this.journal.getSystemName(), this.journal.getBodyName()));
         }
-        if (StringUtils.isEmpty(this.travelHistory.getFaction()) || "None".equals(this.travelHistory.getFaction())) {
+        if (StringUtils.isEmpty(this.journal.getFaction()) || "None".equals(this.journal.getFaction())) {
             this.factionAndAllegianceLabel.setText("No faction");
         } else {
-            this.factionAndAllegianceLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getFaction(), this.travelHistory.getAllegiance()));
+            this.factionAndAllegianceLabel.setText(String.format(Locale.US, "%s (%s)", this.journal.getFaction(), this.journal.getAllegiance()));
         }
-        if (StringUtils.isEmpty(this.travelHistory.getEconomy()) || "None".equals(this.travelHistory.getEconomy())) {
+        if (StringUtils.isEmpty(this.journal.getEconomy()) || "None".equals(this.journal.getEconomy())) {
             this.economyAndStateLabel.setText("No economy");
-        } else if (StringUtils.isEmpty(this.travelHistory.getState()) || "None".equals(this.travelHistory.getState())) {
-            this.economyAndStateLabel.setText(String.format(Locale.US, "%s", this.travelHistory.getEconomy()));
+        } else if (StringUtils.isEmpty(this.journal.getState()) || "None".equals(this.journal.getState())) {
+            this.economyAndStateLabel.setText(String.format(Locale.US, "%s", this.journal.getEconomy()));
         } else {
-            this.economyAndStateLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getEconomy(), this.travelHistory.getState()));
+            this.economyAndStateLabel.setText(String.format(Locale.US, "%s (%s)", this.journal.getEconomy(), this.journal.getState()));
         }
-        if (StringUtils.isEmpty(this.travelHistory.getGovernment()) || "None".equals(this.travelHistory.getGovernment())) {
+        if (StringUtils.isEmpty(this.journal.getGovernment()) || "None".equals(this.journal.getGovernment())) {
             this.governmentAndSecurityLabel.setText("No government");
         } else {
-            this.governmentAndSecurityLabel.setText(String.format(Locale.US, "%s (%s)", this.travelHistory.getGovernment(), this.travelHistory.getSecurity()));
+            this.governmentAndSecurityLabel.setText(String.format(Locale.US, "%s (%s)", this.journal.getGovernment(), this.journal.getSecurity()));
         }
 
-        if (this.gameSession.getCurrentShipLoadout() != null) {
-            if (StringUtils.isNotEmpty(this.gameSession.getCurrentShipLoadout().getShipName())) {
-                this.shipNameLabel.setText(this.gameSession.getCurrentShipLoadout().getShipName());
+        if (this.journal.getCurrentShipLoadout() != null) {
+            if (StringUtils.isNotEmpty(this.journal.getCurrentShipLoadout().getShipName())) {
+                this.shipNameLabel.setText(this.journal.getCurrentShipLoadout().getShipName());
             } else {
-                this.shipNameLabel.setText(this.gameSession.getCurrentShipLoadout().getShipType());
+                this.shipNameLabel.setText(this.journal.getCurrentShipLoadout().getShipType());
             }
         }
 
-        int totalData = this.inventory.getTotal(ItemType.DATA);
-        int capacityData = this.inventory.getCapacity(ItemType.DATA);
+        int totalData = this.journal.getTotal(ItemType.DATA);
+        int capacityData = this.journal.getCapacity(ItemType.DATA);
         float percentData = (float) totalData / (float) capacityData;
         this.dataLabel.setText(String.format(Locale.US, "Data: %d", totalData));
         if (percentData >= 0.9f) {
@@ -255,8 +240,8 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
             this.dataLabel.setForeground(Color.GRAY);
         }
 
-        int totalMats = this.inventory.getTotal(ItemType.ELEMENT) + this.inventory.getTotal(ItemType.MANUFACTURED);
-        int capacityMats = this.inventory.getCapacity(ItemType.ELEMENT);
+        int totalMats = this.journal.getTotal(ItemType.ELEMENT) + this.journal.getTotal(ItemType.MANUFACTURED);
+        int capacityMats = this.journal.getCapacity(ItemType.ELEMENT);
         float percentMats = (float) totalMats / (float) capacityMats;
         this.matsLabel.setText(String.format(Locale.US, "Mats: %d", totalMats));
         if (percentMats >= 0.9f) {
@@ -276,8 +261,8 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
             this.matsLabel.setForeground(Color.GRAY);
         }
 
-        int totalCargo = this.inventory.getTotal(ItemType.COMMODITY); // This does not include drones
-        int capacityCargo = Math.max(totalCargo, this.inventory.getCapacity(ItemType.COMMODITY));
+        int totalCargo = this.journal.getTotal(ItemType.COMMODITY); // This does not include drones
+        int capacityCargo = Math.max(totalCargo, this.journal.getCapacity(ItemType.COMMODITY));
         float percentCargo = (float) totalCargo / (float) capacityCargo;
         this.cargoLabel.setText(String.format(Locale.US, "Cargo: %dt", totalCargo));
         if (percentCargo >= 1.0f) {
@@ -290,13 +275,13 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
             this.cargoLabel.setForeground(Color.LIGHT_GRAY); // Use light gray (better visibility) if s.th. is loaded.
         }
 
-        this.distanceFromSolLabel.setText(String.format(Locale.US, "Sol: %.0f Ly", new Coord(0, 0, 0).distanceTo(this.travelHistory.getCoord())));
-        float totalFuel = this.travelHistory.getFuelLevel();
-        float capacityFuel = Math.max(totalFuel, this.travelHistory.getFuelCapacity());
+        this.distanceFromSolLabel.setText(String.format(Locale.US, "Sol: %.0f Ly", new Coord(0, 0, 0).distanceTo(this.journal.getCoord())));
+        float totalFuel = this.journal.getFuelLevel();
+        float capacityFuel = Math.max(totalFuel, this.journal.getFuelCapacity());
         float percentFuel = totalFuel / capacityFuel;
         float maxFuelPerJump = 1f;
-        if (this.gameSession.getCurrentShipLoadout() != null && this.gameSession.getCurrentShipLoadout().getMaxFuelPerJump() != null) {
-            maxFuelPerJump = this.gameSession.getCurrentShipLoadout().getMaxFuelPerJump();
+        if (this.journal.getCurrentShipLoadout() != null && this.journal.getCurrentShipLoadout().getMaxFuelPerJump() != null) {
+            maxFuelPerJump = this.journal.getCurrentShipLoadout().getMaxFuelPerJump();
         }
         float percentMaxFuelPerJump = totalFuel / maxFuelPerJump;
         this.fuelLabel.setText(String.format(Locale.US, "Fuel: %.0ft", totalFuel));
@@ -317,12 +302,12 @@ public class StatusPanel extends JPanel implements GameSessionListener, TravelHi
             this.fuelLabel.setForeground(Color.GRAY);
         }
 
-        float minJumpRange = MiscUtil.getAsFloat(this.gameSession.getCurrentShipLoadout().getFullTankJumpRange(), 1.0f);
-        float maxJumpRange = MiscUtil.getAsFloat(this.gameSession.getCurrentShipLoadout().getOptTankJumpRange(), 1.0f);
+        float minJumpRange = MiscUtil.getAsFloat(this.journal.getCurrentShipLoadout().getFullTankJumpRange(), 1.0f);
+        float maxJumpRange = MiscUtil.getAsFloat(this.journal.getCurrentShipLoadout().getOptTankJumpRange(), 1.0f);
         float currentJumpRange = FuelAndJumpRangeLookup.estimateCurrentJumpRange(totalFuel, (int) capacityFuel, maxFuelPerJump, minJumpRange, maxJumpRange);
-        currentJumpRange *= this.travelHistory.getBoostLevel();
+        currentJumpRange *= this.journal.getBoostLevel();
         this.jumpLabel.setText(String.format(Locale.US, "Jump: %.2f Ly", currentJumpRange));
-        int explPayout = this.travelHistory.estimateRemainingExplorationPayout();
+        int explPayout = this.journal.estimateRemainingExplorationPayout();
         this.explLabel.setText(String.format(Locale.US, "Expl: %,d CR", explPayout));
         if (explPayout >= 1000000) {
             this.explLabel.setForeground(Color.RED);

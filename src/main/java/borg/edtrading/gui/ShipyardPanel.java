@@ -1,7 +1,10 @@
 package borg.edtrading.gui;
 
-import borg.edtrading.sidepanel.GameSession;
-import borg.edtrading.sidepanel.GameSessionListener;
+import borg.edtrading.data.Item.ItemType;
+import borg.edtrading.journal.Journal;
+import borg.edtrading.journal.JournalListener;
+import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
+import borg.edtrading.sidepanel.ScannedBody;
 import borg.edtrading.sidepanel.ShipLoadout;
 import borg.edtrading.sidepanel.ShipModule;
 import borg.edtrading.util.MiscUtil;
@@ -29,13 +32,13 @@ import javax.swing.JTextField;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class ShipyardPanel extends JPanel implements GameSessionListener, ActionListener {
+public class ShipyardPanel extends JPanel implements JournalListener, ActionListener {
 
     private static final long serialVersionUID = 5950728889096883891L;
 
     static final Logger logger = LogManager.getLogger(ShipyardPanel.class);
 
-    private final GameSession gameSession;
+    private final Journal journal;
 
     private JLabel lblShipID = new JLabel();
     private JLabel lblShipType = new JLabel();
@@ -46,38 +49,10 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
     private JTextField txtMaxFuelJumpRange = new JTextField(4);
     private JPanel shipLoadoutPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 5));
 
-    //    private JLabel coreArmourLabel = new JLabel();
-    //    private JLabel coreArmourValue = new JLabel();
-    //    private JLabel coreArmourPrice = new JLabel();
-    //    private JLabel corePowerPlantLabel = new JLabel();
-    //    private JLabel corePowerPlantValue = new JLabel();
-    //    private JLabel corePowerPlantPrice = new JLabel();
-    //
-    //    private JLabel optSlot0Label = new JLabel();
-    //    private JLabel optSlot0Value = new JLabel();
-    //    private JLabel optSlot0Price = new JLabel();
-    //    private JLabel optSlot1Label = new JLabel();
-    //    private JLabel optSlot1Value = new JLabel();
-    //    private JLabel optSlot1Price = new JLabel();
-    //
-    //    private JLabel hptSlot0Label = new JLabel();
-    //    private JLabel hptSlot0Value = new JLabel();
-    //    private JLabel hptSlot0Price = new JLabel();
-    //    private JLabel hptSlot1Label = new JLabel();
-    //    private JLabel hptSlot1Value = new JLabel();
-    //    private JLabel hptSlot1Price = new JLabel();
-    //
-    //    private JLabel utilSlot0Label = new JLabel();
-    //    private JLabel utilSlot0Value = new JLabel();
-    //    private JLabel utilSlot0Price = new JLabel();
-    //    private JLabel utilSlot1Label = new JLabel();
-    //    private JLabel utilSlot1Value = new JLabel();
-    //    private JLabel utilSlot1Price = new JLabel();
-
     private JButton btnSave = new JButton("Save");
 
-    public ShipyardPanel(GameSession gameSession) {
-        this.gameSession = gameSession;
+    public ShipyardPanel(Journal journal) {
+        this.journal = journal;
 
         this.btnSave.addActionListener(this);
 
@@ -99,7 +74,7 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
         this.add(bottomPanel, BorderLayout.SOUTH);
 
         this.updatePanel();
-        gameSession.addListener(this);
+        journal.addListener(this);
     }
 
     private JPanel createCoreInternalsPanel(ShipLoadout lo) {
@@ -230,7 +205,7 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
     }
 
     private void updatePanel() {
-        ShipLoadout lo = this.gameSession.getCurrentShipLoadout();
+        ShipLoadout lo = this.journal.getCurrentShipLoadout();
         if (lo != null) {
             this.lblShipID.setText("#" + lo.getShipID());
             this.lblShipType.setText("(" + lo.getShipType() + ")");
@@ -254,7 +229,7 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == this.btnSave) {
-            ShipLoadout lo = this.gameSession.getCurrentShipLoadout();
+            ShipLoadout lo = this.journal.getCurrentShipLoadout();
             if (lo != null) {
                 try {
                     lo.setShipName(this.txtShipName.getText());
@@ -262,12 +237,60 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
                     lo.setMaxFuelPerJump(MiscUtil.getAsFloat(this.txtMaxFuelPerJump.getText(), 0.0f));
                     lo.setOptTankJumpRange(MiscUtil.getAsFloat(this.txtOptFuelJumpRange.getText(), 0.0f));
                     lo.setFullTankJumpRange(MiscUtil.getAsFloat(this.txtMaxFuelJumpRange.getText(), 0.0f));
-                    this.gameSession.saveShipLoadout(this.gameSession.getCommander(), lo);
+                    this.journal.saveShipLoadout(this.journal.getCommander(), lo);
                 } catch (Exception ex) {
                     logger.error("Failed to save " + lo, ex);
                 }
             }
         }
+    }
+
+    @Override
+    public void onLocationChanged(boolean systemChanged) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onFuelLevelChanged(float currentFuelLevel) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onBodyScanned(ScannedBody scannedBody) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onExplorationDataSold(SellExplorationDataEntry e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onInventoryReset(ItemType type, String name, int count) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onInventoryCollected(ItemType type, String name, int count) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onInventoryDiscarded(ItemType type, String name, int count) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onInventorySpent(ItemType type, String name, int count) {
+        // TODO Auto-generated method stub
+
     }
 
 }

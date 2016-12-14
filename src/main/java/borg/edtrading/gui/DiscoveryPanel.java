@@ -2,13 +2,16 @@ package borg.edtrading.gui;
 
 import borg.edtrading.SidePanelApp;
 import borg.edtrading.data.Coord;
+import borg.edtrading.data.Item.ItemType;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.journal.Journal;
+import borg.edtrading.journal.JournalListener;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.services.EddbService;
 import borg.edtrading.sidepanel.ScannedBody;
-import borg.edtrading.sidepanel.TravelHistory;
-import borg.edtrading.sidepanel.TravelHistoryListener;
+import borg.edtrading.sidepanel.ShipLoadout;
+import borg.edtrading.sidepanel.ShipModule;
 import borg.edtrading.sidepanel.VisitedSystem;
 import borg.edtrading.util.StarUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -40,14 +43,14 @@ import javax.swing.JTextField;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
+public class DiscoveryPanel extends JPanel implements JournalListener {
 
     private static final long serialVersionUID = 2933866499279397227L;
 
     static final Logger logger = LogManager.getLogger(DiscoveryPanel.class);
 
     private ApplicationContext appctx = null;
-    private TravelHistory travelHistory = null;
+    private Journal journal = null;
 
     private JTextField txtClosestBlackHoleName = new JTextField(30);
     private JLabel lblClosestBlackHoleDistance = new JLabel();
@@ -64,12 +67,12 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
 
     private Area area = null;
 
-    public DiscoveryPanel(ApplicationContext appctx, TravelHistory travelHistory) {
+    public DiscoveryPanel(ApplicationContext appctx, Journal journal) {
         this.setLayout(new BorderLayout());
 
         this.appctx = appctx;
-        this.travelHistory = travelHistory;
-        travelHistory.addListener(this);
+        this.journal = journal;
+        journal.addListener(this);
 
         Box box = new Box(BoxLayout.Y_AXIS);
         Font font = new Font("Sans Serif", Font.BOLD, 18);
@@ -111,7 +114,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
         dummyPanel.add(new JLabel(""), BorderLayout.CENTER);
         this.add(dummyPanel, BorderLayout.WEST);
 
-        this.area = new Area(appctx, travelHistory);
+        this.area = new Area(appctx, journal);
         this.add(this.area, BorderLayout.CENTER);
 
         this.updatePanel();
@@ -325,7 +328,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
         private static final long serialVersionUID = 8383226308842901529L;
 
         private ApplicationContext appctx = null;
-        private TravelHistory travelHistory = null;
+        private Journal journal = null;
         private float xsize = 100f;
         private float xfrom = 0f - xsize;
         private float xto = 0f + xsize;
@@ -336,9 +339,9 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
         private float zfrom = 0f - zsize;
         private float zto = 0f + zsize;
 
-        public Area(ApplicationContext appctx, TravelHistory travelHistory) {
+        public Area(ApplicationContext appctx, Journal journal) {
             this.appctx = appctx;
-            this.travelHistory = travelHistory;
+            this.journal = journal;
         }
 
         @Override
@@ -349,7 +352,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             g.setColor(new Color(20, 20, 25));
             g.fillRect(0, 0, this.getWidth(), this.getHeight());
 
-            Coord coord = this.travelHistory.getCoord();
+            Coord coord = this.journal.getCoord();
             //zsize = ((float) this.getHeight() / (float) this.getWidth()) * xsize;
             zsize = 2 * 150f;
             zfrom = coord.getZ() - zsize / 2;
@@ -394,8 +397,8 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 }
             }
 
-            for (int i = this.travelHistory.getVisitedSystems().size() - 1; i >= 0 && i >= this.travelHistory.getVisitedSystems().size() - 1000; i--) {
-                VisitedSystem visitedSystem = this.travelHistory.getVisitedSystems().get(i);
+            for (int i = this.journal.getVisitedSystems().size() - 1; i >= 0 && i >= this.journal.getVisitedSystems().size() - 1000; i--) {
+                VisitedSystem visitedSystem = this.journal.getVisitedSystems().get(i);
 
                 Point p = this.coordToPoint(visitedSystem.getCoord());
                 float dy = Math.abs(visitedSystem.getCoord().getY() - coord.getY());
@@ -426,7 +429,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
                 g.setColor(new Color(0, 0, 0));
                 g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
-                g.setColor(this.travelHistory.isScanned(blackHole.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+                g.setColor(this.journal.isScanned(blackHole.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
                 g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
                 g.drawString(blackHole.getName(), p.x + psize, p.y + psize / 2);
             }
@@ -439,7 +442,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
                 g.setColor(new Color(255, 255, 255));
                 g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
-                g.setColor(this.travelHistory.isScanned(neutronStar.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+                g.setColor(this.journal.isScanned(neutronStar.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
                 g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
                 g.drawString(neutronStar.getName(), p.x + psize, p.y + psize / 2);
             }
@@ -452,7 +455,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
                 g.setColor(new Color(40, 180, 0));
                 g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
-                g.setColor(this.travelHistory.isScanned(earthLikeWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+                g.setColor(this.journal.isScanned(earthLikeWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
                 g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
                 g.drawString(earthLikeWorld.getName(), p.x + psize, p.y + psize / 2);
             }
@@ -465,7 +468,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
                 g.setColor(new Color(120, 120, 0));
                 g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
-                g.setColor(this.travelHistory.isScanned(ammoniaWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+                g.setColor(this.journal.isScanned(ammoniaWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
                 g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
                 g.drawString(ammoniaWorld.getName(), p.x + psize, p.y + psize / 2);
             }
@@ -478,7 +481,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
                 g.setColor(new Color(0, 0, 80));
                 g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
-                g.setColor(this.travelHistory.isScanned(waterWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+                g.setColor(this.journal.isScanned(waterWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
                 g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
                 g.drawString(waterWorld.getName(), p.x + psize, p.y + psize / 2);
             }
@@ -491,7 +494,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
                 g.setColor(new Color(200, 120, 50));
                 g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
-                g.setColor(this.travelHistory.isScanned(terraformingCandidate.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+                g.setColor(this.journal.isScanned(terraformingCandidate.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
                 g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
                 g.drawString(terraformingCandidate.getName(), p.x + psize, p.y + psize / 2);
             }
@@ -499,7 +502,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             // Me
             g.setColor(Color.RED);
             try {
-                EddbSystem system = eddbService.findSystemByName(this.travelHistory.getSystemName());
+                EddbSystem system = eddbService.findSystemByName(this.journal.getSystemName());
                 if (system != null) {
                     List<EddbBody> bodies = eddbService.findBodiesOfSystem(system.getId());
                     g.setColor(Color.ORANGE);
@@ -513,11 +516,11 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                     }
                 }
             } catch (BeansException e) {
-                logger.error("Failed to find current system '" + this.travelHistory.getSystemName() + "'", e);
+                logger.error("Failed to find current system '" + this.journal.getSystemName() + "'", e);
             }
             if (!g.getColor().equals(Color.GREEN)) {
-                for (int i = this.travelHistory.getVisitedSystems().size() - 1; !g.getColor().equals(Color.GREEN) && i >= 0 && i >= this.travelHistory.getVisitedSystems().size() - 1000; i--) {
-                    VisitedSystem visitedSystem = this.travelHistory.getVisitedSystems().get(i);
+                for (int i = this.journal.getVisitedSystems().size() - 1; !g.getColor().equals(Color.GREEN) && i >= 0 && i >= this.journal.getVisitedSystems().size() - 1000; i--) {
+                    VisitedSystem visitedSystem = this.journal.getVisitedSystems().get(i);
                     if (visitedSystem.getCoord().distanceTo(coord) <= 0.01f) {
                         for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
                             if (scannedBody.getDistanceFromArrivalLS() != null && scannedBody.getDistanceFromArrivalLS().floatValue() == 0f) {
@@ -539,6 +542,54 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
 
             return new Point(Math.round(xPercent * this.getWidth()), Math.round(yPercent * this.getHeight()));
         }
+
+    }
+
+    @Override
+    public void onGameLoaded(String commander, String gameMode, String group, ShipLoadout currentShipLoadout) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onLocationChanged(boolean systemChanged) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onShipModuleChanged(String slot, ShipModule oldModule, ShipModule newModule) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onShipChanged(ShipLoadout oldLoadout, ShipLoadout currentShipLoadout) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onInventoryReset(ItemType type, String name, int count) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onInventoryCollected(ItemType type, String name, int count) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onInventoryDiscarded(ItemType type, String name, int count) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void onInventorySpent(ItemType type, String name, int count) {
+        // TODO Auto-generated method stub
 
     }
 
