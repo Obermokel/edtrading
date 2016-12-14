@@ -210,15 +210,15 @@ public class PathViewPanel extends JPanel {
 
     private Point coordToPoint(Coord coord) {
         float xPercent = (coord.getX() - this.xmin) / this.sizeXZ;
-        float yPercent = 1.0f - ((coord.getZ() - this.zmin) / this.sizeXZ);
-        float zPercent = 1.0f - ((coord.getY() - this.ymin) / this.sizeY);
+        float zPercent = 1.0f - ((coord.getZ() - this.zmin) / this.sizeXZ);
+        float yPercent = 1.0f - ((coord.getY() - this.ymin) / this.sizeY);
 
         if ("Top view".equals(this.viewName)) {
-            return new Point(Math.round(xPercent * this.getWidth()), Math.round(yPercent * this.getHeight()));
-        } else if ("Left view".equals(this.viewName)) {
-            return new Point(Math.round(yPercent * this.getWidth()), Math.round(zPercent * this.getHeight()));
-        } else if ("Front view".equals(this.viewName)) {
             return new Point(Math.round(xPercent * this.getWidth()), Math.round(zPercent * this.getHeight()));
+        } else if ("Left view".equals(this.viewName)) {
+            return new Point(Math.round(zPercent * this.getWidth()), Math.round(yPercent * this.getHeight()));
+        } else if ("Front view".equals(this.viewName)) {
+            return new Point(Math.round(xPercent * this.getWidth()), Math.round(yPercent * this.getHeight()));
         } else {
             return null;
         }

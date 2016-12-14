@@ -2,6 +2,7 @@ package borg.edtrading;
 
 import boofcv.alg.misc.ImageMiscOps;
 import boofcv.gui.binary.VisualizeBinaryData;
+import boofcv.gui.image.VisualizeImageData;
 import boofcv.io.image.ConvertBufferedImage;
 import boofcv.struct.image.GrayU8;
 import boofcv.struct.image.Planar;
@@ -46,8 +47,9 @@ public class GalmapApp {
 
     private static final AnnotationConfigApplicationContext APPCTX = new AnnotationConfigApplicationContext(Config.class);
 
-    static int imageSize = 4096;
-    static int psize = 5;
+    static int imageSize = 4096; // Top view, x/z
+    static int imageHeight = 512; // Side view, y
+    static int psize = 51;
     static int poffset = (psize - 1) / 2;
 
     static float xmin = 0;
@@ -90,13 +92,33 @@ public class GalmapApp {
         ImageMiscOps.fill(gray, 0);
         for (Coord c : arrivalNeutronStarCoords) {
             Point p = coordToPoint(c);
-            if (psize <= 1) {
+            if (psize <= 1 && gray.isInBounds(p.x, p.y)) {
                 gray.unsafe_set(p.x, p.y, 1);
             } else {
                 ImageMiscOps.fillRectangle(gray, 1, p.x - poffset, p.y - poffset, psize, psize);
             }
         }
         ImageIO.write(VisualizeBinaryData.renderBinary(gray, false, null), "png", new File(Constants.TEMP_DIR, "galmap neutron.png"));
+
+        psize = ((psize - 1) / 5) + 1;
+        poffset = (psize - 1) / 2;
+        gray = new GrayU8(imageSize, imageHeight);
+        ImageMiscOps.fill(gray, 0);
+        for (Coord c : arrivalNeutronStarCoords) {
+            Point p = coordToPointFromLeft(c);
+            for (int y = p.y - poffset; y <= p.y + poffset; y++) {
+                for (int x = p.x - poffset; x <= p.x + poffset; x++) {
+                    if (gray.isInBounds(x, y)) {
+                        gray.unsafe_set(x, y, Math.min(255, gray.get(x, y) + 32));
+                    }
+                }
+            }
+        }
+        int minus1000Line = coordToPointFromLeft(new Coord(0f, -1000f, 0f)).y;
+        ImageMiscOps.fillRectangle(gray, 255, 0, minus1000Line, gray.width, 1);
+        int solX = coordToPointFromLeft(new Coord(0f, 0f, 0f)).x;
+        ImageMiscOps.fillRectangle(gray, 255, solX, 0, 1, gray.height);
+        ImageIO.write(VisualizeImageData.grayMagnitude(gray, null, -1), "png", new File(Constants.TEMP_DIR, "galmap neutron left.png"));
     }
 
     private static void writeArrivalStarMap(Map<String, List<Coord>> coordsByArrivalSpectralClass) throws IOException {
@@ -118,7 +140,7 @@ public class GalmapApp {
             for (Coord c : coordsByArrivalSpectralClass.get(spectralClass)) {
                 Point p = coordToPoint(c);
                 float alpha = 1;//coordToAlpha(c);
-                if (psize <= 1) {
+                if (psize <= 1 && planar.isInBounds(p.x, p.y)) {
                     planar.getBand(0).unsafe_set(p.x, p.y, Math.round(r * alpha));
                     planar.getBand(1).unsafe_set(p.x, p.y, Math.round(g * alpha));
                     planar.getBand(2).unsafe_set(p.x, p.y, Math.round(b * alpha));
@@ -148,7 +170,7 @@ public class GalmapApp {
         for (Coord c : allSystemCoords) {
             Point p = coordToPoint(c);
             float alpha = 1;//coordToAlpha(c);
-            if (psize <= 1) {
+            if (psize <= 1 && planar.isInBounds(p.x, p.y)) {
                 planar.getBand(0).unsafe_set(p.x, p.y, Math.round(80 * alpha));
                 planar.getBand(1).unsafe_set(p.x, p.y, Math.round(80 * alpha));
                 planar.getBand(2).unsafe_set(p.x, p.y, Math.round(80 * alpha));
@@ -166,7 +188,7 @@ public class GalmapApp {
             for (Coord c : coordsByArrivalSpectralClass.get(spectralClass)) {
                 Point p = coordToPoint(c);
                 float alpha = 1;//coordToAlpha(c);
-                if (psize <= 1) {
+                if (psize <= 1 && planar.isInBounds(p.x, p.y)) {
                     planar.getBand(0).unsafe_set(p.x, p.y, Math.round(r * alpha));
                     planar.getBand(1).unsafe_set(p.x, p.y, Math.round(g * alpha));
                     planar.getBand(2).unsafe_set(p.x, p.y, Math.round(b * alpha));
@@ -197,8 +219,19 @@ public class GalmapApp {
         ymax += 100;
         zmin -= 100;
         zmax += 100;
+        xmin = -12000;
+        xmax = 12000;
+        zmin = -2000;
+        zmax = 22000;
+        ymin = -2000;
+        ymax = 2000;
+        //        xmin = -10000;
+        //        xmax = 10000;
+        //        zmin = -10000;
+        //        zmax = 10000;
         galaxySize = Math.max(xmax - xmin, zmax - zmin);
         galaxyHeight = ymax - ymin;
+        imageHeight = Math.round(imageSize / galaxySize * galaxyHeight);
         logger.debug(String.format(Locale.US, "x: %.0f .. %.0f = %.0f Ly", xmin, xmax, xmax - xmin));
         logger.debug(String.format(Locale.US, "z: %.0f .. %.0f = %.0f Ly", zmin, zmax, zmax - zmin));
         logger.debug(String.format(Locale.US, "galaxy size:    %.0f Ly", galaxySize));
@@ -210,6 +243,12 @@ public class GalmapApp {
         float xPercent = (coord.getX() - xmin) / galaxySize;
         float zPercent = 1.0f - ((coord.getZ() - zmin) / galaxySize);
         return new Point(Math.round(xPercent * imageSize), Math.round(zPercent * imageSize));
+    }
+
+    private static Point coordToPointFromLeft(Coord coord) {
+        float yPercent = 1.0f - ((coord.getY() - ymin) / galaxyHeight);
+        float zPercent = 1.0f - ((coord.getZ() - zmin) / galaxySize);
+        return new Point(Math.round(zPercent * imageSize), Math.round(yPercent * imageHeight));
     }
 
     private static float coordToAlpha(Coord coord) {
