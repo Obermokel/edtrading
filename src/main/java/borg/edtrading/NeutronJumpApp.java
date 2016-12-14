@@ -60,7 +60,7 @@ public class NeutronJumpApp {
 
     public static void main(String[] args) throws IOException {
         final String fromName = "Sol";
-        final String toName = "Lagoon Sector NI-S b4-10";
+        final String toName = "Colonia";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
 
@@ -69,11 +69,18 @@ public class NeutronJumpApp {
         //        final float maxFuelPerJump = 8.32f;
         //        final float jumpRangeFuelFull = 46.06f;
         //        final float jumpRangeFuelOpt = 47.60f;
+
         // Beluga
         final int maxFuelTons = 128;
         final float maxFuelPerJump = 13.33f;
-        final float jumpRangeFuelFull = 30.15f;
-        final float jumpRangeFuelOpt = 32.29f;
+        final float jumpRangeFuelFull = 28.97f;
+        final float jumpRangeFuelOpt = 30.95f;
+
+        //        // Type-9 Heavy
+        //        final int maxFuelTons = 64;
+        //        final float maxFuelPerJump = 8.00f;
+        //        final float jumpRangeFuelFull = 20.40f;
+        //        final float jumpRangeFuelOpt = 21.14f;
 
         final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
 
