@@ -55,6 +55,7 @@ public class ScannedBody implements Serializable {
       PAYOUTS.put("High metal content body (Terraformable)", (50638+47257+41831+43757)/4);//50638+47257+41831+43757
       PAYOUTS.put(            "Water world (Terraformable)", (65490+63184+65222)/3);//65490+63184+65222
 
+      PAYOUTS.put(                  "Helium rich gas giant", 1000);
       PAYOUTS.put(      "Gas giant with ammonia based life", 1871);//1871
       PAYOUTS.put(        "Gas giant with water based life", 2063);//2063
       PAYOUTS.put(             "Sudarsky class I gas giant", (2613+4268)/2);//2613+4268

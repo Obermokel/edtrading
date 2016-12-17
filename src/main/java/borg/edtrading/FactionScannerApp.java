@@ -220,7 +220,7 @@ public class FactionScannerApp {
             return "NGARU";
         } else if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) || factions.contains(KnownFaction.NEZ_PELLIRI_SILVER_GALACTIC)) {
             return "NEZ PELLIRI";
-        } else if (factions.contains(KnownFaction.ALLIANCE_OF_STHA_181) || factions.contains(KnownFaction.UNITING_NOEGIN)) {
+        } else if (factions.contains(KnownFaction.ALLIANCE_OF_STHA_181) || factions.contains(KnownFaction.UNITING_NOEGIN) || factions.contains(KnownFaction.NOEGIN_PURPLE_BOYS)) {
             return "NOEGIN";
         } else if (factions.contains(KnownFaction.UZUMERU_NETCOMS_INCORPORATED) || factions.contains(KnownFaction.BAVARINGONI_BLUE_RATS)) {
             return "BAVARINGONI";
