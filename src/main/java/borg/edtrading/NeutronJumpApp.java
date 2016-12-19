@@ -59,8 +59,8 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        final String fromName = "Eagle Sector IR-W d1-117";
-        final String toName = "Skaudai CH-B d14-34";
+        final String fromName = "Skaudai CH-B d14-34";
+        final String toName = "Colonia";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
 
@@ -70,17 +70,17 @@ public class NeutronJumpApp {
         //        final float jumpRangeFuelFull = 46.06f;
         //        final float jumpRangeFuelOpt = 47.60f;
 
-        // Beluga
-        final int maxFuelTons = 128;
-        final float maxFuelPerJump = 13.33f;
-        final float jumpRangeFuelFull = 28.97f;
-        final float jumpRangeFuelOpt = 30.95f;
+        //        // Beluga
+        //        final int maxFuelTons = 128;
+        //        final float maxFuelPerJump = 13.33f;
+        //        final float jumpRangeFuelFull = 28.97f;
+        //        final float jumpRangeFuelOpt = 30.95f;
 
-        //        // Type-9 Heavy
-        //        final int maxFuelTons = 64;
-        //        final float maxFuelPerJump = 8.00f;
-        //        final float jumpRangeFuelFull = 20.40f;
-        //        final float jumpRangeFuelOpt = 21.14f;
+        // Type-9 Heavy
+        final int maxFuelTons = 64;
+        final float maxFuelPerJump = 8.00f;
+        final float jumpRangeFuelFull = 20.40f;
+        final float jumpRangeFuelOpt = 21.14f;
 
         final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
 
