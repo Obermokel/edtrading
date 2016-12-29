@@ -163,8 +163,12 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
         for (String slotKey : slotKeys) {
             String slot = "Size " + slotKey.substring(slotKey.length() - 1);
             ShipModule module = lo.getModulesBySlot().get(slotKey);
-            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
-            row++;
+            try {
+                this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+                row++;
+            } catch (Exception e) {
+                logger.error("Failed to update " + slotKey + " with " + module, e);
+            }
         }
         return panel;
     }
@@ -176,8 +180,12 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
         for (String slotKey : slotKeys) {
             String slot = slotKey.substring(0, slotKey.indexOf("Hardpoint")) + " " + slotKey.substring(slotKey.length() - 1);
             ShipModule module = lo.getModulesBySlot().get(slotKey);
-            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
-            row++;
+            try {
+                this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+                row++;
+            } catch (Exception e) {
+                logger.error("Failed to update " + slotKey + " with " + module, e);
+            }
         }
         return panel;
     }
@@ -189,8 +197,12 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
         for (String slotKey : slotKeys) {
             String slot = "Utility " + slotKey.substring(slotKey.length() - 1);
             ShipModule module = lo.getModulesBySlot().get(slotKey);
-            this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
-            row++;
+            try {
+                this.addGridRow(panel, row, new JLabel(slot), new JLabel(module.getName()), new JLabel(String.format(Locale.US, "%,d CR", module.getBuyPrice())));
+                row++;
+            } catch (Exception e) {
+                logger.error("Failed to update " + slotKey + " with " + module, e);
+            }
         }
         return panel;
     }
