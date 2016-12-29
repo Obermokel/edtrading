@@ -25,50 +25,50 @@ public class ScannedBody implements Serializable {
     public static final Map<String, Integer> PAYOUTS = new HashMap<>();
     static {
       //@formatter:off
-      PAYOUTS.put(                                "Class O", 3962);//3962
-      PAYOUTS.put(                                "Class B", (3490+3329+3307+3055)/4);//3490+3329+3307+3055
-      PAYOUTS.put(                                "Class A", (2985+2954)/2);//2985+2954
-      PAYOUTS.put(                                "Class F", (2935+2933+2953)/3);//2935+2933+2953
-      PAYOUTS.put(                                "Class G", (2920+2920+2921+2917)/4);//2920+2920+2921+2917
-      PAYOUTS.put(                                "Class K", (2904+2912+2917)/3);//2904+2912+2917
+      PAYOUTS.put(                                "Class O", 3962);
+      PAYOUTS.put(                                "Class B", 3062);//okay
+      PAYOUTS.put(                                "Class A", 2950);//okay
+      PAYOUTS.put(                                "Class F", 2938);//okay
+      PAYOUTS.put(                                "Class G", 2918);//okay
+      PAYOUTS.put(                                "Class K", 2910);//okay
       PAYOUTS.put(                       "Class K_RedGiant", 2900);
       PAYOUTS.put(                    "Class K_OrangeGiant", 2900);
-      PAYOUTS.put(                                "Class M", (2898+2897+2895+2893)/4);//2898+2897+2895+2893
+      PAYOUTS.put(                                "Class M", 2894);//okay
       PAYOUTS.put(                       "Class M_RedGiant", 2900);
-      PAYOUTS.put(                               "Class WC", 2911);//2911
-      PAYOUTS.put(                                "Class C", 2902);//2902
-      PAYOUTS.put(                                "Class L", 2889);//2889
-      PAYOUTS.put(                                "Class Y", 2882);//2882
-      PAYOUTS.put(                                "Class T", (2883+2884)/2);//2883+2884
-      PAYOUTS.put(                              "Class TTS", (2900+2882)/2);//2900+2882
+      PAYOUTS.put(                               "Class WC", 2911);
+      PAYOUTS.put(                                "Class C", 2902);
+      PAYOUTS.put(                                "Class L", 2886);//okay
+      PAYOUTS.put(                                "Class Y", 2880);//okay
+      PAYOUTS.put(                                "Class T", 2882);//okay
+      PAYOUTS.put(                              "Class TTS", 2884);
 
-      PAYOUTS.put(                                "Class N", (44087+44044+43765+43357)/4);//44087+44044+43765+43357
-      PAYOUTS.put(                                "Class H", (44721+45177+45367)/3);//44721+45177+45367
-      PAYOUTS.put(                               "Class DA", (27370+27020)/2);//27370+27020
+      PAYOUTS.put(                                "Class N", (44087+44044+43765+43357)/4);
+      PAYOUTS.put(                                "Class H", (44721+45177+45367)/3);
+      PAYOUTS.put(                               "Class DA", (27370+27020)/2);
       PAYOUTS.put(                               "Class DB", 27000);
-      PAYOUTS.put(                               "Class DC", 27017);//27017
+      PAYOUTS.put(                               "Class DC", 27017);
 
-      PAYOUTS.put(                          "Ammonia world", 48802);//48802
-      PAYOUTS.put(                         "Earthlike body", (71874+65997)/2);//71874+65997
-      PAYOUTS.put(                            "Water world", (32881+33112)/2);//32881+33112
-      PAYOUTS.put(                            "Water giant", 1519);//1519
-      PAYOUTS.put("High metal content body (Terraformable)", (50638+47257+41831+43757)/4);//50638+47257+41831+43757
-      PAYOUTS.put(            "Water world (Terraformable)", (65490+63184+65222)/3);//65490+63184+65222
+      PAYOUTS.put(                          "Ammonia world", 45518);
+      PAYOUTS.put(                         "Earthlike body", 72148);
+      PAYOUTS.put(                            "Water world", 30630);//okay
+      PAYOUTS.put(                            "Water giant", 1519);
+      PAYOUTS.put("High metal content body (Terraformable)", (50638+47257+41831+43757)/4);
+      PAYOUTS.put(            "Water world (Terraformable)", 63110);//okay
 
-      PAYOUTS.put(                  "Helium rich gas giant", (1467+2119+2733)/3);//1467+2119+2733
-      PAYOUTS.put(      "Gas giant with ammonia based life", 1871);//1871
-      PAYOUTS.put(        "Gas giant with water based life", 2063);//2063
-      PAYOUTS.put(             "Sudarsky class I gas giant", (2613+4268)/2);//2613+4268
-      PAYOUTS.put(            "Sudarsky class II gas giant", 12888);//12888
-      PAYOUTS.put(           "Sudarsky class III gas giant", (1819+1393)/2);//1819+1393
-      PAYOUTS.put(            "Sudarsky class IV gas giant", (2831+2748)/2);//2831+2748
-      PAYOUTS.put(             "Sudarsky class V gas giant", 1865);//1865
+      PAYOUTS.put(                  "Helium rich gas giant", (1467+2119+2733)/3);
+      PAYOUTS.put(      "Gas giant with ammonia based life", 1850);//okay
+      PAYOUTS.put(        "Gas giant with water based life", 2072);//okay
+      PAYOUTS.put(             "Sudarsky class I gas giant", 3572);//okay
+      PAYOUTS.put(            "Sudarsky class II gas giant", 13608);//okay
+      PAYOUTS.put(           "Sudarsky class III gas giant", 2348);
+      PAYOUTS.put(            "Sudarsky class IV gas giant", 2812);
+      PAYOUTS.put(             "Sudarsky class V gas giant", 1865);
 
-      PAYOUTS.put(                "High metal content body", (6532+7567+5222)/3);//6532+7567+5222
-      PAYOUTS.put(                               "Icy body", (925+1117+1155+902)/4);//925+1117+1155+902
-      PAYOUTS.put(                        "Metal rich body", (12981+9241+12835)/3);//12981+9241+12835
-      PAYOUTS.put(                             "Rocky body", (888+865)/2);//888+865
-      PAYOUTS.put(                         "Rocky ice body", 1072);//1072
+      PAYOUTS.put(                "High metal content body", 6822);//okay
+      PAYOUTS.put(                               "Icy body", 1128);
+      PAYOUTS.put(                        "Metal rich body", 13044);
+      PAYOUTS.put(                             "Rocky body", 818);
+      PAYOUTS.put(                         "Rocky ice body", 1098);
       //@formatter:on
     }
 
