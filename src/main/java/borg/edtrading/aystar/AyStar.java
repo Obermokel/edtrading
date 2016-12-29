@@ -30,20 +30,24 @@ public class AyStar {
 
     private MinimizedStarSystem goal = null;
     private PriorityQueue<Path> open = null;
+    private Map<Long, Path> openBySystem = null;
     private Set<Long> closed = null;
     private Set<Long> neutronStarIDs = null;
     private List<MinimizedStarSystem> starSystemsWithNeutronStars = null;
     private Map<Coord, List<MinimizedStarSystem>> starSystemsWithScoopableStarsBySector = null;
     private FuelAndJumpRangeLookup fuelJumpLUT = null;
     private float maxTotalDistanceLy = 0;
+    private float maxJumpRangeBoosted = 0;
     private Path closestToGoalSoFar = null;
 
     public void initialize(EddbSystem source, EddbSystem goal, Set<MinimizedStarSystem> minimizedNeutronStarSystems, Set<MinimizedStarSystem> minimizedScoopableStarSystems, FuelAndJumpRangeLookup fuelJumpLUT) {
         if (!minimizedNeutronStarSystems.contains(new MinimizedStarSystem(goal)) && !minimizedScoopableStarSystems.contains(new MinimizedStarSystem(goal))) {
             throw new IllegalArgumentException("goal not in useable star systems");
         } else {
+            this.maxJumpRangeBoosted = 4f * fuelJumpLUT.getJumpRangeFuelOpt();
             this.goal = new MinimizedStarSystem(goal);
-            this.open = new PriorityQueue<>(new LeastJumpsComparator(source.distanceTo(goal), fuelJumpLUT.getJumpRangeFuelOpt()));
+            this.open = new PriorityQueue<>(new LeastJumpsComparator(source.distanceTo(goal), this.maxJumpRangeBoosted));
+            this.openBySystem = new HashMap<>();
             this.closed = new HashSet<>();
             this.neutronStarIDs = minimizedNeutronStarSystems.stream().map(ss -> ss.getId()).collect(Collectors.toSet());
             this.starSystemsWithNeutronStars = minimizedNeutronStarSystems.stream().collect(Collectors.toList());
@@ -60,6 +64,11 @@ public class AyStar {
         while (this.open.size() > 0) {
             Path path = this.open.poll();
 
+            if (path.getMinimizedStarSystem().equals(this.goal)) {
+                // We reached our destination
+                return path;
+            }
+
             if (this.closed.contains(path.getMinimizedStarSystem().getId())) {
                 // We already found a better path
                 continue;
@@ -73,73 +82,51 @@ public class AyStar {
                 this.closestToGoalSoFar = path;
             }
 
-            if (this.closed.size() % 10000 == 0) {
-                // Periodic cleanup. Open queue may still contain systems which in the meantime have been reached. Remove those as they are now useless.
-                Path[] temp = this.open.toArray(new Path[this.open.size()]);
-                this.open.clear();
-                for (Path p : temp) {
-                    if (!this.closed.contains(p.getMinimizedStarSystem().getId())) {
-                        this.open.offer(p);
-                    }
-                }
-                logger.debug("Reduced open queue from " + temp.length + " to " + this.open.size() + " entries");
-
-                if (logger.isTraceEnabled()) {
-                    logger.trace(String.format("Open: %,15d / Closed: %,15d || Closest so far: %s with %d jump(s), %.0fly travelled, %.0fly remaining", this.open.size(), this.closed.size(), this.closestToGoalSoFar.getMinimizedStarSystem().toString(),
-                            this.closestToGoalSoFar.getTotalJumps(), this.closestToGoalSoFar.getTravelledDistanceLy(), this.closestToGoalSoFar.getRemainingDistanceLy()));
-                }
-            }
-
-            if (path.getMinimizedStarSystem().equals(this.goal)) {
-                // We reached our destination
-                return path;
-            }
+            //            if (this.closed.size() % 10000 == 0) {
+            //                // Periodic cleanup. Open queue may still contain systems which in the meantime have been reached. Remove those as they are now useless.
+            //                Path[] temp = this.open.toArray(new Path[this.open.size()]);
+            //                this.open.clear();
+            //                for (Path p : temp) {
+            //                    if (!this.closed.contains(p.getMinimizedStarSystem().getId())) {
+            //                        this.open.offer(p);
+            //                    }
+            //                }
+            //                logger.debug("Reduced open queue from " + temp.length + " to " + this.open.size() + " entries");
+            //
+            //                if (logger.isTraceEnabled()) {
+            //                    logger.trace(String.format("Open: %,15d / Closed: %,15d || Closest so far: %s with %d jump(s), %.0fly travelled, %.0fly remaining", this.open.size(), this.closed.size(), this.closestToGoalSoFar.getMinimizedStarSystem().toString(),
+            //                            this.closestToGoalSoFar.getTotalJumps(), this.closestToGoalSoFar.getTravelledDistanceLy(), this.closestToGoalSoFar.getRemainingDistanceLy()));
+            //                }
+            //            }
 
             List<MinimizedStarSystem> neighbours = this.findNeighbours(path);
 
             final float boostValue = this.neutronStarIDs.contains(path.getMinimizedStarSystem().getId()) ? 4.0f : 1.0f;
             for (int i = 0; i < neighbours.size(); i++) {
                 MinimizedStarSystem neighbour = neighbours.get(i);
-                if (!this.closed.contains(neighbour.getId())) {
-                    float remainingDistanceLy = neighbour.distanceTo(this.goal);
-                    float extraTravelledDistanceLy = path.getMinimizedStarSystem().distanceTo(neighbour);
-                    float fuelLevel = this.fuelJumpLUT.getMaxFuelTons(); // Scoop until full by default
-                    if (this.neutronStarIDs.contains(neighbour.getId())) {
-                        fuelLevel = path.getFuelLevel() - this.fuelJumpLUT.lookupFuelUsage(extraTravelledDistanceLy / boostValue, path.getFuelLevel()); // Subtract from prev
-                    }
-                    Path newPath = new Path(path, neighbour, remainingDistanceLy, extraTravelledDistanceLy, fuelLevel);
-                    if (newPath.getTravelledDistanceLy() + newPath.getRemainingDistanceLy() <= this.maxTotalDistanceLy) {
+                float remainingDistanceLy = neighbour.distanceTo(this.goal);
+                float extraTravelledDistanceLy = path.getMinimizedStarSystem().distanceTo(neighbour);
+                float fuelLevel = this.fuelJumpLUT.getMaxFuelTons(); // Scoop until full by default
+                if (this.neutronStarIDs.contains(neighbour.getId())) {
+                    fuelLevel = path.getFuelLevel() - this.fuelJumpLUT.lookupFuelUsage(extraTravelledDistanceLy / boostValue, path.getFuelLevel()); // Subtract from prev
+                }
+                Path newPath = new Path(path, neighbour, remainingDistanceLy, extraTravelledDistanceLy, fuelLevel);
+                if (newPath.getTravelledDistanceLy() + newPath.getRemainingDistanceLy() <= this.maxTotalDistanceLy) {
+                    Path oldPath = this.openBySystem.get(newPath.getMinimizedStarSystem().getId());
+                    if (oldPath == null) {
                         this.open.offer(newPath);
+                        this.openBySystem.put(newPath.getMinimizedStarSystem().getId(), newPath);
+                    } else {
+                        int totalJumpsOldPath = oldPath.getTotalJumps() + (int) (oldPath.getRemainingDistanceLy() / this.maxJumpRangeBoosted);
+                        int totalJumpsNewPath = newPath.getTotalJumps() + (int) (newPath.getRemainingDistanceLy() / this.maxJumpRangeBoosted);
+                        if (totalJumpsNewPath < totalJumpsOldPath) {
+                            this.open.remove(oldPath);
+                            this.open.offer(newPath);
+                            this.openBySystem.put(newPath.getMinimizedStarSystem().getId(), newPath);
+                        }
                     }
                 }
             }
-
-            //            final int maxOpenSize = 1000000;
-            //            if (this.open.size() > maxOpenSize) {
-            //                int prevSize = this.open.size();
-            //                final float removeIfRemainingAbove = this.closestToGoalSoFar.getRemainingDistanceLy() + 10 * this.fuelJumpLUT.getJumpRangeFuelOpt();
-            //                List<Path> tempDist = new ArrayList<>(maxOpenSize / 2);
-            //                List<Path> tempSize = new ArrayList<>(maxOpenSize / 2);
-            //                while (this.open.size() > 0) {
-            //                    Path p = this.open.poll();
-            //                    if (p.getRemainingDistanceLy() < removeIfRemainingAbove) {
-            //                        tempDist.add(p);
-            //                    }
-            //                    if (tempSize.size() < maxOpenSize / 2) {
-            //                        tempSize.add(p);
-            //                    }
-            //                }
-            //                //this.open.clear();
-            //                if (tempDist.size() < tempSize.size()) {
-            //                    logger.info("Shrinked open queue from " + prevSize + " to " + tempDist.size() + " by using distance. Using count would have left " + tempSize.size() + " elements. Closest dist to goal = "
-            //                            + String.format(Locale.US, "%.0f Ly", this.closestToGoalSoFar.getRemainingDistanceLy()));
-            //                    this.open.addAll(tempDist);
-            //                } else {
-            //                    logger.info("Shrinked open queue from " + prevSize + " to " + tempSize.size() + " by using count. Using distance would have left " + tempDist.size() + " elements. Closest dist to goal = "
-            //                            + String.format(Locale.US, "%.0f Ly", this.closestToGoalSoFar.getRemainingDistanceLy()));
-            //                    this.open.addAll(tempSize);
-            //                }
-            //            }
 
             if (this.closed.size() % 1000 == 0) {
                 return this.closestToGoalSoFar;
@@ -174,15 +161,19 @@ public class AyStar {
         List<MinimizedStarSystem> systemsInRange = new ArrayList<>(scoopableSystemsInCloseSectors.size());
         for (int i = 0; i < scoopableSystemsInCloseSectors.size(); i++) {
             MinimizedStarSystem s = scoopableSystemsInCloseSectors.get(i);
-            if (s.distanceTo(currentStarSystem) <= currentJumpRange) {
-                systemsInRange.add(s);
+            if (!this.closed.contains(s.getId())) {
+                if (s.distanceTo(currentStarSystem) <= currentJumpRange) {
+                    systemsInRange.add(s);
+                }
             }
         }
         if (!mustScoop) {
             for (int i = 0; i < this.starSystemsWithNeutronStars.size(); i++) {
                 MinimizedStarSystem s = this.starSystemsWithNeutronStars.get(i);
-                if (s.distanceTo(currentStarSystem) <= currentJumpRange) {
-                    systemsInRange.add(s);
+                if (!this.closed.contains(s.getId())) {
+                    if (s.distanceTo(currentStarSystem) <= currentJumpRange) {
+                        systemsInRange.add(s);
+                    }
                 }
             }
         }

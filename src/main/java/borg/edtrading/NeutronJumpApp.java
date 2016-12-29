@@ -60,7 +60,7 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        final String fromName = "Drojeae CX-B d13-4";
+        final String fromName = "Colonia";
         final String toName = "Sol";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
