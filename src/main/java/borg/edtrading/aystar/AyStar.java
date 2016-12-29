@@ -38,16 +38,16 @@ public class AyStar {
     private float maxTotalDistanceLy = 0;
     private Path closestToGoalSoFar = null;
 
-    public void initialize(EddbSystem source, EddbSystem goal, Collection<EddbSystem> starSystemsWithNeutronStars, Collection<EddbSystem> starSystemsWithScoopableStars, FuelAndJumpRangeLookup fuelJumpLUT) {
-        if (!starSystemsWithNeutronStars.contains(goal) && !starSystemsWithScoopableStars.contains(goal)) {
+    public void initialize(EddbSystem source, EddbSystem goal, Set<MinimizedStarSystem> minimizedNeutronStarSystems, Set<MinimizedStarSystem> minimizedScoopableStarSystems, FuelAndJumpRangeLookup fuelJumpLUT) {
+        if (!minimizedNeutronStarSystems.contains(new MinimizedStarSystem(goal)) && !minimizedScoopableStarSystems.contains(new MinimizedStarSystem(goal))) {
             throw new IllegalArgumentException("goal not in useable star systems");
         } else {
             this.goal = new MinimizedStarSystem(goal);
             this.open = new PriorityQueue<>(new LeastJumpsComparator(source.distanceTo(goal), fuelJumpLUT.getJumpRangeFuelOpt()));
             this.closed = new HashSet<>();
-            this.neutronStarIDs = starSystemsWithNeutronStars.stream().map(ss -> ss.getId()).collect(Collectors.toSet());
-            this.starSystemsWithNeutronStars = starSystemsWithNeutronStars.stream().map(ss -> new MinimizedStarSystem(ss)).collect(Collectors.toList());
-            this.starSystemsWithScoopableStarsBySector = mapBySector(starSystemsWithScoopableStars.stream().map(ss -> new MinimizedStarSystem(ss)).collect(Collectors.toList()));
+            this.neutronStarIDs = minimizedNeutronStarSystems.stream().map(ss -> ss.getId()).collect(Collectors.toSet());
+            this.starSystemsWithNeutronStars = minimizedNeutronStarSystems.stream().collect(Collectors.toList());
+            this.starSystemsWithScoopableStarsBySector = mapBySector(minimizedScoopableStarSystems);
             this.fuelJumpLUT = fuelJumpLUT;
             this.maxTotalDistanceLy = 1.5f * source.distanceTo(goal);
             this.closestToGoalSoFar = null;

@@ -1,6 +1,7 @@
 package borg.edtrading;
 
 import borg.edtrading.aystar.AyStar;
+import borg.edtrading.aystar.MinimizedStarSystem;
 import borg.edtrading.aystar.Path;
 import borg.edtrading.cfg.Config;
 import borg.edtrading.cfg.Constants;
@@ -59,13 +60,13 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        final String fromName = "Skaudai CH-B d14-34";
-        final String toName = "Colonia";
+        final String fromName = "Drojeae CX-B d13-4";
+        final String toName = "Sol";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
 
         //        // Anaconda
-        //        final int maxFuelTons = 32;
+        //        final int maxFuelTons = 64;
         //        final float maxFuelPerJump = 8.32f;
         //        final float jumpRangeFuelFull = 46.06f;
         //        final float jumpRangeFuelOpt = 47.60f;
@@ -76,11 +77,17 @@ public class NeutronJumpApp {
         //        final float jumpRangeFuelFull = 28.97f;
         //        final float jumpRangeFuelOpt = 30.95f;
 
+        //        // Type-9 Heavy
+        //        final int maxFuelTons = 64;
+        //        final float maxFuelPerJump = 8.00f;
+        //        final float jumpRangeFuelFull = 27.18f;
+        //        final float jumpRangeFuelOpt = 28.51f;
+
         // Type-9 Heavy
-        final int maxFuelTons = 64;
+        final int maxFuelTons = 80;
         final float maxFuelPerJump = 8.00f;
-        final float jumpRangeFuelFull = 20.40f;
-        final float jumpRangeFuelOpt = 21.14f;
+        final float jumpRangeFuelFull = 26.96f;
+        final float jumpRangeFuelOpt = 28.66f;
 
         final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
 
@@ -98,17 +105,11 @@ public class NeutronJumpApp {
         writeWaypointsFile(fromSystem, toSystem, eddbService);
 
         // Try to find a route
-        Map<String, List<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
-        List<EddbSystem> starSystemsWithNeutronStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, "NS").parallelStream().map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toList());
-        Set<EddbSystem> starSystemsWithUnscoopableStars = eddbService.removeStarsOfSpectralClasses(arrivalStarsBySpectralClass, Constants.SCOOPABLE_SPECTRAL_CLASSES.toArray(new String[0])).parallelStream()
-                .map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toSet());
-        Set<EddbSystem> starSystemsWithScoopableStars = new HashSet<>(eddbService.loadAllSystems());
-        starSystemsWithScoopableStars.removeAll(starSystemsWithUnscoopableStars);
-        //        List<EddbSystem> starSystemsWithScoopableStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, Constants.SCOOPABLE_SPECTRAL_CLASSES.toArray(new String[0])).parallelStream()
-        //                .map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toList());
-        starSystemsWithScoopableStars.add(fromSystem);
-        starSystemsWithScoopableStars.add(toSystem);
-        logger.debug("Total known neutron stars: " + starSystemsWithNeutronStars.size());
+        Set<MinimizedStarSystem> minimizedNeutronStarSystems = loadMinimizedNeutronStarSystems(eddbService, eddbSystemRepository);
+        Set<MinimizedStarSystem> minimizedScoopableStarSystems = loadMinimizedScoopableStarSystems(eddbService, eddbSystemRepository);
+        minimizedNeutronStarSystems.add(new MinimizedStarSystem(fromSystem));
+        minimizedNeutronStarSystems.add(new MinimizedStarSystem(toSystem));
+        logger.debug("Total known neutron stars: " + minimizedNeutronStarSystems.size());
 
         JFrame frame = new JFrame("Route");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -142,7 +143,7 @@ public class NeutronJumpApp {
         frame.pack();
 
         AyStar ayStar = new AyStar();
-        ayStar.initialize(fromSystem, toSystem, starSystemsWithNeutronStars, starSystemsWithScoopableStars, fuelJumpLUT);
+        ayStar.initialize(fromSystem, toSystem, minimizedNeutronStarSystems, minimizedScoopableStarSystems, fuelJumpLUT);
         final long start = System.currentTimeMillis();
         Path path = null;
         while ((path = ayStar.findPath()) != null && !path.getMinimizedStarSystem().getId().equals(toSystem.getId())) {
@@ -175,8 +176,23 @@ public class NeutronJumpApp {
 
         // Write route as human readable HTML file
         Date eddbDumpDate = new Date(new File(System.getProperty("user.home"), ".eddbdata/systems.csv").lastModified());
-        int nKnownArrivalNeutronStars = starSystemsWithNeutronStars.size();
+        int nKnownArrivalNeutronStars = minimizedNeutronStarSystems.size();
         FileUtils.write(new File(ROUTES_DIR, baseFilename + " Route.html"), route.toHumanReadableHtml(eddbDumpDate, nKnownArrivalNeutronStars), "UTF-8");
+    }
+
+    private static Set<MinimizedStarSystem> loadMinimizedNeutronStarSystems(EddbService eddbService, EddbSystemRepository eddbSystemRepository) {
+        Map<String, List<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
+        List<EddbSystem> starSystemsWithNeutronStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, "NS").parallelStream().map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toList());
+        return starSystemsWithNeutronStars.stream().map(ss -> new MinimizedStarSystem(ss)).collect(Collectors.toSet());
+    }
+
+    private static Set<MinimizedStarSystem> loadMinimizedScoopableStarSystems(EddbService eddbService, EddbSystemRepository eddbSystemRepository) {
+        Map<String, List<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
+        Set<EddbSystem> starSystemsWithUnscoopableStars = eddbService.removeStarsOfSpectralClasses(arrivalStarsBySpectralClass, Constants.SCOOPABLE_SPECTRAL_CLASSES.toArray(new String[0])).parallelStream()
+                .map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toSet());
+        Set<EddbSystem> starSystemsWithScoopableStars = new HashSet<>(eddbService.loadAllSystems());
+        starSystemsWithScoopableStars.removeAll(starSystemsWithUnscoopableStars);
+        return starSystemsWithScoopableStars.stream().map(ss -> new MinimizedStarSystem(ss)).collect(Collectors.toSet());
     }
 
     public static class Route implements Serializable {
@@ -443,7 +459,7 @@ public class NeutronJumpApp {
                         unknown++;
                     }
                     String knownCss = this.getRoute().getJournal().getScannedBodies().contains(body.getName()) ? "known" : "";
-                    String typeCss = body.getTypeName().toLowerCase().replaceAll("\\W", "-");
+                    String typeCss = body.getTypeName() == null ? "" : body.getTypeName().toLowerCase().replaceAll("\\W", "-");
                     notes += "<span class=\"valuablePlanet " + typeCss + " " + knownCss + "\">" + escapeHtml4(body.getName().replace(this.getToSystem().getName() + " ", "")) + "</span>";
                 }
                 if (unknown > 0) {
