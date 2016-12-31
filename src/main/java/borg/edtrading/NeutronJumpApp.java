@@ -60,8 +60,8 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        final String fromName = "Colonia";
-        final String toName = "Sol";
+        final String fromName = "Sol";
+        final String toName = "Colonia";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
 
@@ -86,8 +86,8 @@ public class NeutronJumpApp {
         // Type-9 Heavy
         final int maxFuelTons = 80;
         final float maxFuelPerJump = 8.00f;
-        final float jumpRangeFuelFull = 26.96f;
-        final float jumpRangeFuelOpt = 28.66f;
+        final float jumpRangeFuelFull = 20.82f;
+        final float jumpRangeFuelOpt = 21.78f;
 
         final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
 
@@ -107,8 +107,8 @@ public class NeutronJumpApp {
         // Try to find a route
         Set<MinimizedStarSystem> minimizedNeutronStarSystems = loadMinimizedNeutronStarSystems(eddbService, eddbSystemRepository);
         Set<MinimizedStarSystem> minimizedScoopableStarSystems = loadMinimizedScoopableStarSystems(eddbService, eddbSystemRepository);
-        minimizedNeutronStarSystems.add(new MinimizedStarSystem(fromSystem));
-        minimizedNeutronStarSystems.add(new MinimizedStarSystem(toSystem));
+        minimizedScoopableStarSystems.add(new MinimizedStarSystem(fromSystem));
+        minimizedScoopableStarSystems.add(new MinimizedStarSystem(toSystem));
         logger.debug("Total known neutron stars: " + minimizedNeutronStarSystems.size());
 
         JFrame frame = new JFrame("Route");
