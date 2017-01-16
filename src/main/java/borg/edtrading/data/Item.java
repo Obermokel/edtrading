@@ -344,7 +344,7 @@ public enum Item {
     JADEITE                                           ("Jadeite"                                         , "jadeite"                                         , ItemType.COMMODITY       , "Minerals"               , 0),
     LEPIDOLITE                                        ("Lepidolite"                                      , "lepidolite"                                      , ItemType.COMMODITY       , "Minerals"               , 0),
     LITHIUM_HYDROXIDE                                 ("Lithium Hydroxide"                               , "lithiumhydroxide"                                , ItemType.COMMODITY       , "Minerals"               , 0),
-    LOW_TEMPERATURE_DIAMONDS                          ("Low Temperature Diamonds"                        , "lowtemperaturediamonds"                          , ItemType.COMMODITY       , "Minerals"               , 0),
+    LOW_TEMPERATURE_DIAMONDS                          ("Low Temperature Diamonds"                        , "lowtemperaturediamond"                           , ItemType.COMMODITY       , "Minerals"               , 0),
     METHANE_CLATHRATE                                 ("Methane Clathrate"                               , "methaneclathrate"                                , ItemType.COMMODITY       , "Minerals"               , 0),
     METHANOL_MONOHYDRATE_CRYSTALS                     ("Methanol Monohydrate Crystals"                   , "methanolmonohydratecrystals"                     , ItemType.COMMODITY       , "Minerals"               , 0),
     MOISSANITE                                        ("Moissanite"                                      , "moissanite"                                      , ItemType.COMMODITY       , "Minerals"               , 0),
