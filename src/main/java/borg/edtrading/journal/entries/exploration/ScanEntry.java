@@ -41,6 +41,7 @@ public class ScanEntry extends AbstractJournalEntry {
     private final Float surfacePressure;
     private final Boolean landable;
     private final String atmosphere;
+    private final String atmosphereType;
     private final String volcanism;
     private final Map<String, Float> materials;
 
@@ -70,6 +71,7 @@ public class ScanEntry extends AbstractJournalEntry {
         this.surfacePressure = this.readFloat(data, "SurfacePressure");
         this.landable = this.readBoolean(data, "Landable");
         this.atmosphere = this.readString(data, "Atmosphere");
+        this.atmosphereType = this.readString(data, "AtmosphereType");
         this.volcanism = this.readString(data, "Volcanism");
         this.materials = this.readPercentages(data, "Materials");
     }
@@ -164,6 +166,10 @@ public class ScanEntry extends AbstractJournalEntry {
 
     public String getAtmosphere() {
         return this.atmosphere;
+    }
+
+    public String getAtmosphereType() {
+        return this.atmosphereType;
     }
 
     public String getVolcanism() {
