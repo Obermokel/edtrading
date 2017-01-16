@@ -329,7 +329,9 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
             } else if (entry.getEvent() == Event.Died) {
                 this.reset(Item.DRONES.getName(), 0, ItemType.DRONES);
                 for (String name : this.getNames(ItemType.COMMODITY)) {
-                    this.reset(name, 0, ItemType.COMMODITY);
+                    if (this.getHave(name) > 0) {
+                        this.reset(name, 0, ItemType.COMMODITY);
+                    }
                 }
             }
         } catch (Exception e) {
