@@ -41,11 +41,15 @@ public class ScannedBody implements Serializable {
       PAYOUTS.put(                                "Class Y", 2880);//okay
       PAYOUTS.put(                                "Class T", 2882);//okay
       PAYOUTS.put(                              "Class TTS", 2884);
+      PAYOUTS.put(                             "Class AeBe", 3074);
+      PAYOUTS.put(                               "Class MS", 3000);//TODO
+      PAYOUTS.put(                               "Class CN", 3000);//TODO
 
       PAYOUTS.put(                                "Class N", (44087+44044+43765+43357)/4);
       PAYOUTS.put(                                "Class H", (44721+45177+45367)/3);
       PAYOUTS.put(                               "Class DA", (27370+27020)/2);
       PAYOUTS.put(                               "Class DB", 27000);
+      PAYOUTS.put(                              "Class DAB", 27000);
       PAYOUTS.put(                               "Class DC", 27017);
 
       PAYOUTS.put(                          "Ammonia world", 45518);
