@@ -16,7 +16,7 @@ public abstract class StarUtil {
 
     public static Color spectralClassToColor(String spectralClass) {
         if (spectralClass == null || spectralClass.isEmpty()) {
-            return new Color(255, 0, 255);
+            return new Color(80, 80, 80);
         } else if ("O".equals(spectralClass)) {
             return new Color(207, 218, 235);
         } else if ("B".equals(spectralClass)) {

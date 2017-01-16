@@ -9,6 +9,8 @@ import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
+import borg.edtrading.gui.MapCreator;
+import borg.edtrading.gui.MapCreator.MapView;
 import borg.edtrading.gui.PathViewPanel;
 import borg.edtrading.gui.RouteViewPanel;
 import borg.edtrading.journal.Journal;
@@ -16,29 +18,42 @@ import borg.edtrading.journal.JournalReader;
 import borg.edtrading.services.EddbService;
 import borg.edtrading.util.FuelAndJumpRangeLookup;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.SearchQuery;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
 import static org.apache.commons.lang3.StringEscapeUtils.*;
@@ -60,7 +75,7 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        final String fromName = "Colonia";
+        final String fromName = "Byoomao IS-K d8-4828";
         final String toName = "Sagittarius A*";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
@@ -184,21 +199,69 @@ public class NeutronJumpApp {
         Date eddbDumpDate = new Date(new File(System.getProperty("user.home"), ".eddbdata/systems.csv").lastModified());
         int nKnownArrivalNeutronStars = minimizedNeutronStarSystems.size();
         FileUtils.write(new File(ROUTES_DIR, baseFilename + " Route.html"), route.toHumanReadableHtml(eddbDumpDate, nKnownArrivalNeutronStars), "UTF-8");
+
+        BufferedImage map = createMapImage(route, eddbService, MapView.TOP);
+        ImageIO.write(map, "png", new File(ROUTES_DIR, baseFilename + " map top.png"));
+        map = createMapImage(route, eddbService, MapView.LEFT);
+        ImageIO.write(map, "png", new File(ROUTES_DIR, baseFilename + " map left.png"));
+        map = createMapImage(route, eddbService, MapView.FRONT);
+        ImageIO.write(map, "png", new File(ROUTES_DIR, baseFilename + " map front.png"));
     }
 
-    private static Set<MinimizedStarSystem> loadMinimizedNeutronStarSystems(EddbService eddbService, EddbSystemRepository eddbSystemRepository) {
-        Map<String, List<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
-        List<EddbSystem> starSystemsWithNeutronStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, "NS").parallelStream().map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toList());
-        return starSystemsWithNeutronStars.stream().map(ss -> new MinimizedStarSystem(ss)).collect(Collectors.toSet());
+    private static Set<MinimizedStarSystem> loadMinimizedNeutronStarSystems(EddbService eddbService, EddbSystemRepository eddbSystemRepository) throws IOException {
+        File csvFile = new File(System.getProperty("user.home"), ".eddbdata/systems.csv");
+        File serFile = new File(System.getProperty("user.home"), ".eddbdata/MinimizedNeutronStarSystems.ser");
+
+        if (serFile.exists() && serFile.lastModified() > csvFile.lastModified()) {
+            return SerializationUtils.deserialize(new FileInputStream(serFile));
+        } else {
+            Map<String, List<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
+            List<EddbSystem> starSystemsWithNeutronStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, "NS").parallelStream().map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toList());
+            HashSet<MinimizedStarSystem> result = new HashSet<>(starSystemsWithNeutronStars.size());
+            ListIterator<EddbSystem> it = starSystemsWithNeutronStars.listIterator();
+            while (it.hasNext()) {
+                result.add(new MinimizedStarSystem(it.next()));
+                it.remove();
+            }
+            SerializationUtils.serialize(result, new FileOutputStream(serFile));
+            return result;
+        }
     }
 
-    private static Set<MinimizedStarSystem> loadMinimizedScoopableStarSystems(EddbService eddbService, EddbSystemRepository eddbSystemRepository) {
-        Map<String, List<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
-        Set<EddbSystem> starSystemsWithUnscoopableStars = eddbService.removeStarsOfSpectralClasses(arrivalStarsBySpectralClass, Constants.SCOOPABLE_SPECTRAL_CLASSES.toArray(new String[0])).parallelStream()
-                .map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toSet());
-        Set<EddbSystem> starSystemsWithScoopableStars = new HashSet<>(eddbService.loadAllSystems());
-        starSystemsWithScoopableStars.removeAll(starSystemsWithUnscoopableStars);
-        return starSystemsWithScoopableStars.stream().map(ss -> new MinimizedStarSystem(ss)).collect(Collectors.toSet());
+    private static Set<MinimizedStarSystem> loadMinimizedScoopableStarSystems(EddbService eddbService, EddbSystemRepository eddbSystemRepository) throws IOException {
+        File csvFile = new File(System.getProperty("user.home"), ".eddbdata/systems.csv");
+        File serFile = new File(System.getProperty("user.home"), ".eddbdata/MinimizedScoopableStarSystems.ser");
+
+        if (serFile.exists() && serFile.lastModified() > csvFile.lastModified()) {
+            return SerializationUtils.deserialize(new FileInputStream(serFile));
+        } else {
+            Set<Long> starSystemsWithUnscoopableStars = eddbService.removeStarsOfSpectralClasses(eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true), Constants.SCOOPABLE_SPECTRAL_CLASSES.toArray(new String[0])).parallelStream()
+                    .map(b -> b.getSystemId()).collect(Collectors.toSet());
+
+            ElasticsearchTemplate elasticsearchTemplate = APPCTX.getBean(ElasticsearchTemplate.class);
+            SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices("eddbsystem").withPageable(new PageRequest(0, 1000)).build();
+            int count = (int) elasticsearchTemplate.count(searchQuery);
+            logger.debug("Found " + count + " systems");
+            HashSet<MinimizedStarSystem> result = new HashSet<>(count);
+            String scrollId = elasticsearchTemplate.scan(searchQuery, 1000, false);
+            boolean hasRecords = true;
+            while (hasRecords) {
+                Page<EddbSystem> page = elasticsearchTemplate.scroll(scrollId, 5000, EddbSystem.class);
+                if (page.hasContent()) {
+                    for (EddbSystem system : page.getContent()) {
+                        if (!starSystemsWithUnscoopableStars.contains(system.getId())) {
+                            result.add(new MinimizedStarSystem(system));
+                        }
+                    }
+                } else {
+                    hasRecords = false;
+                }
+            }
+            elasticsearchTemplate.clearScroll(scrollId);
+
+            SerializationUtils.serialize(result, new FileOutputStream(serFile));
+            return result;
+        }
     }
 
     public static class Route implements Serializable {
@@ -820,6 +883,62 @@ public class NeutronJumpApp {
             }
         }
         return result;
+    }
+
+    private static BufferedImage createMapImage(Route route, EddbService eddbService, MapView view) {
+        // Determine size
+        float border = 250f;
+        float xfrom = route.getElements().get(0).getFromSystem().getCoord().getX();
+        float xto = route.getElements().get(0).getFromSystem().getCoord().getX();
+        float yfrom = route.getElements().get(0).getFromSystem().getCoord().getY();
+        float yto = route.getElements().get(0).getFromSystem().getCoord().getY();
+        float zfrom = route.getElements().get(0).getFromSystem().getCoord().getZ();
+        float zto = route.getElements().get(0).getFromSystem().getCoord().getZ();
+        for (RouteElement re : route.getElements()) {
+            xfrom = Math.min(xfrom, re.getToSystem().getCoord().getX());
+            xto = Math.max(xto, re.getToSystem().getCoord().getX());
+            yfrom = Math.min(yfrom, re.getToSystem().getCoord().getY());
+            yto = Math.max(yto, re.getToSystem().getCoord().getY());
+            zfrom = Math.min(zfrom, re.getToSystem().getCoord().getZ());
+            zto = Math.max(zto, re.getToSystem().getCoord().getZ());
+        }
+        xfrom -= border;
+        xto += border;
+        yfrom -= border;
+        yto += border;
+        zfrom -= border;
+        zto += border;
+
+        // Prepare map
+        MapCreator mapCreator = new MapCreator(xfrom, xto, yfrom, yto, zfrom, zto, view, 8192);
+        mapCreator.prepare();
+
+        // Draw known but unused neutron stars
+        Page<EddbBody> page = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, true, Arrays.asList("NS"), new PageRequest(0, 1000));
+        while (page != null) {
+            List<EddbBody> neutronStars = page.getContent();
+            for (EddbBody ns : neutronStars) {
+                mapCreator.drawStar(ns.getCoord(), "NS", null);
+            }
+            if (page.hasNext()) {
+                page = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, true, Arrays.asList("NS"), page.nextPageable());
+            } else {
+                page = null;
+            }
+        }
+
+        // Draw paths
+        for (RouteElement re : route.getElements()) {
+            mapCreator.drawPath(re.getFromSystem().getCoord(), re.getToSystem().getCoord(), null);
+        }
+
+        // Draw stars
+        for (RouteElement re : route.getElements()) {
+            mapCreator.drawStar(re.getToSystem().getCoord(), re.getToSpectralClass(), re.getToSystem().getName());
+        }
+
+        // Return the finished map
+        return mapCreator.finish();
     }
 
 }
