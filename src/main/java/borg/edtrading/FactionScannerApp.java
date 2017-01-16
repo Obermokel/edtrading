@@ -218,9 +218,10 @@ public class FactionScannerApp {
             return "HRISASTSHI";
         } else if (factions.contains(KnownFaction.PARTNERSHIP_OF_NGARU) || factions.contains(KnownFaction.NGARU_CRIMSON_COUNCIL)) {
             return "NGARU";
-        } else if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) || factions.contains(KnownFaction.NEZ_PELLIRI_SILVER_GALACTIC)) {
+        } else if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) || factions.contains(KnownFaction.NEZ_PELLIRI_SILVER_GALACTIC) || factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
             return "NEZ PELLIRI";
-        } else if (factions.contains(KnownFaction.ALLIANCE_OF_STHA_181) || factions.contains(KnownFaction.UNITING_NOEGIN) || factions.contains(KnownFaction.NOEGIN_PURPLE_BOYS)) {
+        } else if (factions.contains(KnownFaction.ALLIANCE_OF_STHA_181) || factions.contains(KnownFaction.UNITING_NOEGIN) || factions.contains(KnownFaction.NOEGIN_PURPLE_BOYS)
+                || (factions.contains(KnownFaction.NGARU_SERVICES) && factions.contains(KnownFaction.JEN_ELABOG_FUTURE))) {
             return "NOEGIN";
         } else if (factions.contains(KnownFaction.UZUMERU_NETCOMS_INCORPORATED) || factions.contains(KnownFaction.BAVARINGONI_BLUE_RATS)) {
             return "BAVARINGONI";
@@ -639,7 +640,9 @@ public class FactionScannerApp {
         UNITED_LP_575_38_MOVEMENT("UNITED LP 575-38 MOVEMENT"),
         UNITING_NOEGIN("UNITING NOEGIN"),
         UZUMERU_NETCOMS_INCORPORATED("UZUMERU NETCOMS INCORPORATED"),
-        V1703_AQUILAE_NATURAL_LIMITED("V1703 AQUILAE NATURAL LIMITED");
+        V1703_AQUILAE_NATURAL_LIMITED("V1703 AQUILAE NATURAL LIMITED"),
+        PARTNERSHIP_OF_ROSS_193("PARTNERSHIP OF ROSS 193"), // Ngaru
+        LHS_3564_CONSERVATIVES("LHS 3564 CONSERVATIVES"); // Nez Pelliri
         //@formatter:on
 
         private final String name;
