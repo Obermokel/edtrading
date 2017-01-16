@@ -60,8 +60,8 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        final String fromName = "Sol";
-        final String toName = "Colonia";
+        final String fromName = "Colonia";
+        final String toName = "Sagittarius A*";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
 
@@ -71,11 +71,11 @@ public class NeutronJumpApp {
         //        final float jumpRangeFuelFull = 46.06f;
         //        final float jumpRangeFuelOpt = 47.60f;
 
-        //        // Beluga
-        //        final int maxFuelTons = 128;
-        //        final float maxFuelPerJump = 13.33f;
-        //        final float jumpRangeFuelFull = 28.97f;
-        //        final float jumpRangeFuelOpt = 30.95f;
+        // Beluga
+        final int maxFuelTons = 128;
+        final float maxFuelPerJump = 13.33f;
+        final float jumpRangeFuelFull = 32.60f;
+        final float jumpRangeFuelOpt = 35.12f;
 
         //        // Type-9 Heavy
         //        final int maxFuelTons = 64;
@@ -83,11 +83,17 @@ public class NeutronJumpApp {
         //        final float jumpRangeFuelFull = 27.18f;
         //        final float jumpRangeFuelOpt = 28.51f;
 
-        // Type-9 Heavy
-        final int maxFuelTons = 80;
-        final float maxFuelPerJump = 8.00f;
-        final float jumpRangeFuelFull = 20.82f;
-        final float jumpRangeFuelOpt = 21.78f;
+        //        // Type-9 Heavy
+        //        final int maxFuelTons = 80;
+        //        final float maxFuelPerJump = 8.00f;
+        //        final float jumpRangeFuelFull = 20.32f;
+        //        final float jumpRangeFuelOpt = 21.28f;
+
+        //        // Asp Fanturi
+        //        final int maxFuelTons = 40;
+        //        final float maxFuelPerJump = 5.08f;
+        //        final float jumpRangeFuelFull = 42.02f;
+        //        final float jumpRangeFuelOpt = 45.72f;
 
         final FuelAndJumpRangeLookup fuelJumpLUT = new FuelAndJumpRangeLookup(maxFuelTons, maxFuelPerJump, jumpRangeFuelFull, jumpRangeFuelOpt);
 
