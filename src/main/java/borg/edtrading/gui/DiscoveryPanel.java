@@ -399,7 +399,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
 
                 Point p = this.coordToPoint(visitedSystem.getCoord());
                 float dy = Math.abs(visitedSystem.getCoord().getY() - coord.getY());
-                if (dy <= 25f) {
+                if (dy <= (ysize / 2)) {
                     int alpha = 255 - Math.round((dy / (ysize / 2)) * 255);
 
                     g.setColor(new Color(80, 80, 80, alpha));
