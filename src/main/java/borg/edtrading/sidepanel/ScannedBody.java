@@ -25,8 +25,8 @@ public class ScannedBody implements Serializable {
     public static final Map<String, Integer> PAYOUTS = new HashMap<>();
     static {
       //@formatter:off
-      PAYOUTS.put(                                "Class O", 3962);
-      PAYOUTS.put(                                "Class B", 3062);//okay
+      PAYOUTS.put(                                "Class O", 3968);
+      PAYOUTS.put(                                "Class B", 3060);//okay
       PAYOUTS.put(                                "Class A", 2950);//okay
       PAYOUTS.put(                                "Class F", 2938);//okay
       PAYOUTS.put(                                "Class G", 2918);//okay
@@ -40,25 +40,26 @@ public class ScannedBody implements Serializable {
       PAYOUTS.put(                                "Class L", 2886);//okay
       PAYOUTS.put(                                "Class Y", 2880);//okay
       PAYOUTS.put(                                "Class T", 2882);//okay
-      PAYOUTS.put(                              "Class TTS", 2884);
-      PAYOUTS.put(                             "Class AeBe", 3074);
-      PAYOUTS.put(                               "Class MS", 3000);//TODO
-      PAYOUTS.put(                               "Class CN", 3000);//TODO
-      PAYOUTS.put(                                "Class S", 3000);//TODO
+      PAYOUTS.put(                              "Class TTS", 2904);
+      PAYOUTS.put(                             "Class AeBe", 3112);
+      PAYOUTS.put(                               "Class MS", 2924);
+      PAYOUTS.put(                               "Class CN", 2922);
+      PAYOUTS.put(                                "Class S", 2928);
 
-      PAYOUTS.put(                                "Class N", (44087+44044+43765+43357)/4);
-      PAYOUTS.put(                                "Class H", (44721+45177+45367)/3);
-      PAYOUTS.put(            "Class SupermassiveBlackHole", 750000);
-      PAYOUTS.put(                               "Class DA", (27370+27020)/2);
-      PAYOUTS.put(                               "Class DB", 27000);
-      PAYOUTS.put(                              "Class DAB", 27000);
+      PAYOUTS.put(                                "Class N", 43446);
+      PAYOUTS.put(                                "Class H", 44948);
+      PAYOUTS.put(            "Class SupermassiveBlackHole", 628318);
+      PAYOUTS.put(                               "Class DA", 27146);
+      PAYOUTS.put(                               "Class DB", 27156);
+      PAYOUTS.put(                              "Class DAB", 27106);
+      PAYOUTS.put(                              "Class DAV", 27148);
       PAYOUTS.put(                               "Class DC", 27017);
 
-      PAYOUTS.put(                          "Ammonia world", 45518);
+      PAYOUTS.put(                          "Ammonia world", 40734);
       PAYOUTS.put(                         "Earthlike body", 72148);
       PAYOUTS.put(                            "Water world", 30630);//okay
       PAYOUTS.put(                            "Water giant", 1519);
-      PAYOUTS.put("High metal content body (Terraformable)", (50638+47257+41831+43757)/4);
+      PAYOUTS.put("High metal content body (Terraformable)", 45568);
       PAYOUTS.put(            "Water world (Terraformable)", 63110);//okay
 
       PAYOUTS.put(                  "Helium rich gas giant", (1467+2119+2733)/3);
@@ -67,13 +68,14 @@ public class ScannedBody implements Serializable {
       PAYOUTS.put(             "Sudarsky class I gas giant", 3572);//okay
       PAYOUTS.put(            "Sudarsky class II gas giant", 13608);//okay
       PAYOUTS.put(           "Sudarsky class III gas giant", 2348);
-      PAYOUTS.put(            "Sudarsky class IV gas giant", 2812);
+      PAYOUTS.put(            "Sudarsky class IV gas giant", 2804);
       PAYOUTS.put(             "Sudarsky class V gas giant", 1865);
 
       PAYOUTS.put(                "High metal content body", 6822);//okay
       PAYOUTS.put(                               "Icy body", 1128);
-      PAYOUTS.put(                        "Metal rich body", 13044);
-      PAYOUTS.put(                             "Rocky body", 818);
+      PAYOUTS.put(                        "Metal rich body", 12556);
+      PAYOUTS.put(                             "Rocky body", 836);
+      PAYOUTS.put(             "Rocky body (Terraformable)", 36782);
       PAYOUTS.put(                         "Rocky ice body", 1098);
       //@formatter:on
     }
