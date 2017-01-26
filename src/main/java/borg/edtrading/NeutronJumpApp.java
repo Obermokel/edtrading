@@ -75,7 +75,7 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        final String fromName = "Byoomao IS-K d8-4828";
+        final String fromName = "Colonia";
         final String toName = "Sagittarius A*";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
@@ -914,17 +914,21 @@ public class NeutronJumpApp {
         mapCreator.prepare();
 
         // Draw known but unused neutron stars
-        Page<EddbBody> page = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, true, Arrays.asList("NS"), new PageRequest(0, 1000));
-        while (page != null) {
-            List<EddbBody> neutronStars = page.getContent();
-            for (EddbBody ns : neutronStars) {
-                mapCreator.drawStar(ns.getCoord(), "NS", null);
+        try {
+            Page<EddbBody> page = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, true, Arrays.asList("NS"), new PageRequest(0, 1000));
+            while (page != null) {
+                List<EddbBody> neutronStars = page.getContent();
+                for (EddbBody ns : neutronStars) {
+                    mapCreator.drawStar(ns.getCoord(), "NS", null);
+                }
+                if (page.hasNext()) {
+                    page = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, true, Arrays.asList("NS"), page.nextPageable());
+                } else {
+                    page = null;
+                }
             }
-            if (page.hasNext()) {
-                page = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, true, Arrays.asList("NS"), page.nextPageable());
-            } else {
-                page = null;
-            }
+        } catch (Exception e) {
+            logger.error("Failed to draw unused star", e);
         }
 
         // Draw paths
