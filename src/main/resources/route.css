@@ -15,6 +15,13 @@ h3 {
     font-size: 10pt;
 }
 
+.known {
+    text-decoration: line-through;
+}
+.notes span {
+    margin-left: 12pt;
+}
+
 table {
     border-collapse: collapse;
 }
@@ -35,7 +42,6 @@ tr.odd td {
 
 td.notes {
     background-color: #ffffff !important;
-    width: 400px;
 }
 
 td.jumpNo, td.distance {
@@ -68,7 +74,7 @@ tr.neutronJump td.jumpDistance {
 }
 
 td.starClass {
-    background-color: #ff4040 !important;
+    background-color: #ff40cc !important;
     text-align: center;
 }
 
