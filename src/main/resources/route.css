@@ -54,6 +54,10 @@ th.distance, td.distance {
     text-align: left !important;
 }
 
+tr.firstDiscovered td.jumpDistance {
+	color: red;
+}
+
 th, td {
     padding: 1px 6px;
     white-space: nowrap;

@@ -75,22 +75,22 @@ public class NeutronJumpApp {
     // Colonia, VY Canis Majoris, Crab Pulsar, Hen 2-23, Skaude AA-A h294, Sagittarius A*, Choomuia UI-K d8-4692
 
     public static void main(String[] args) throws IOException {
-        final String fromName = "Colonia";
-        final String toName = "Sagittarius A*";
+        final String fromName = "Toluku";
+        final String toName = "Colonia";
         //        final String fromName = "Sol";
         //        final String toName = "Sagittarius A*";
 
-        //        // Anaconda
-        //        final int maxFuelTons = 64;
-        //        final float maxFuelPerJump = 8.32f;
-        //        final float jumpRangeFuelFull = 46.06f;
-        //        final float jumpRangeFuelOpt = 47.60f;
+        // Anaconda
+        final int maxFuelTons = 64;
+        final float maxFuelPerJump = 8.32f;
+        final float jumpRangeFuelFull = 55.00f;
+        final float jumpRangeFuelOpt = 58.00f;
 
-        // Beluga
-        final int maxFuelTons = 128;
-        final float maxFuelPerJump = 13.33f;
-        final float jumpRangeFuelFull = 32.60f;
-        final float jumpRangeFuelOpt = 35.12f;
+        //        // Beluga
+        //        final int maxFuelTons = 128;
+        //        final float maxFuelPerJump = 13.33f;
+        //        final float jumpRangeFuelFull = 32.60f;
+        //        final float jumpRangeFuelOpt = 35.12f;
 
         //        // Type-9 Heavy
         //        final int maxFuelTons = 64;
@@ -499,6 +499,7 @@ public class NeutronJumpApp {
 
             String evenOddCss = this.getJumpNo() % 2 == 0 ? "even" : "odd";
             String neutronJumpCss = "NS".equals(this.getFromSpectralClass()) ? "neutronJump" : "normalJump";
+            String firstDiscoveredCss = this.getFromStar() != null && this.getRoute().getJournal().getFirstDiscoveries().contains(this.getFromStar().getName()) ? " firstDiscovered" : "";
             String prevKnownCss = this.getRoute().getJournal().getVisitedSystems().contains(this.getFromSystem().getName()) ? " known" : "";
             String currKnownCss = this.getRoute().getJournal().getVisitedSystems().contains(this.getToSystem().getName()) ? " known" : "";
             String flags = "";
@@ -536,7 +537,7 @@ public class NeutronJumpApp {
                 }
             }
 
-            html.append("<tr class=\"" + evenOddCss + " " + neutronJumpCss + "\">");
+            html.append("<tr class=\"" + evenOddCss + " " + neutronJumpCss + " " + firstDiscoveredCss + "\">");
             html.append("<td class=\"numeric jumpNo\">" + this.getJumpNo() + "</td>");
             html.append("<td class=\"starName " + prevKnownCss + "\">" + escapeHtml4(this.getFromSystem().getName()) + "</td>");
             html.append("<td class=\"starClass spectralClass-" + this.getFromSpectralClass() + "\">" + this.getFromSpectralClass() + "</td>");

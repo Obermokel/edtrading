@@ -2,6 +2,7 @@ package borg.edtrading.journal;
 
 import borg.edtrading.journal.entries.AbstractJournalEntry;
 import borg.edtrading.journal.entries.exploration.ScanEntry;
+import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.journal.entries.location.FSDJumpEntry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,6 +28,7 @@ public class Journal {
     private final LinkedList<AbstractJournalEntry> entries;
     private final Set<String> visitedSystems;
     private final Set<String> scannedBodies;
+    private final Set<String> firstDiscoveries;
 
     public Journal(List<AbstractJournalEntry> entries) {
         this.entries = new LinkedList<>(entries);
@@ -35,6 +37,13 @@ public class Journal {
 
         this.visitedSystems = entries.stream().filter(e -> e.getEvent() == Event.FSDJump).map(e -> ((FSDJumpEntry) e).getStarSystem()).collect(Collectors.toSet());
         this.scannedBodies = entries.stream().filter(e -> e.getEvent() == Event.Scan).map(e -> ((ScanEntry) e).getBodyName()).collect(Collectors.toSet());
+        this.firstDiscoveries = new HashSet();
+        entries.stream().filter(e -> e.getEvent() == Event.SellExplorationData).forEach(e -> {
+            SellExplorationDataEntry sed = (SellExplorationDataEntry) e;
+            if (sed.getDiscovered() != null) {
+                this.firstDiscoveries.addAll(sed.getDiscovered());
+            }
+        });
     }
 
     /**
@@ -84,6 +93,10 @@ public class Journal {
 
     public Set<String> getScannedBodies() {
         return Collections.unmodifiableSet(this.scannedBodies);
+    }
+
+    public Set<String> getFirstDiscoveries() {
+        return this.firstDiscoveries;
     }
 
 }
