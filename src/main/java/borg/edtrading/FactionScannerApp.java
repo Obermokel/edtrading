@@ -1,6 +1,8 @@
 package borg.edtrading;
 
 import borg.edtrading.cfg.Constants;
+import borg.edtrading.google.GoogleSpreadsheet;
+import borg.edtrading.google.GoogleTable;
 import borg.edtrading.ocr.CharacterLocator;
 import borg.edtrading.ocr.OcrExecutor;
 import borg.edtrading.ocr.OcrResult;
@@ -10,16 +12,8 @@ import borg.edtrading.ocr.screenshots.Region;
 import borg.edtrading.ocr.screenshots.Screenshot;
 import borg.edtrading.ocr.templatematching.Template;
 import borg.edtrading.util.MiscUtil;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.sheets.v4.Sheets;
-import com.google.api.services.sheets.v4.Sheets.Spreadsheets.Values.Append;
-import com.google.api.services.sheets.v4.SheetsScopes;
-import com.google.api.services.sheets.v4.model.AppendValuesResponse;
-import com.google.api.services.sheets.v4.model.ValueRange;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,22 +21,17 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * FactionScannerApp
@@ -53,91 +42,172 @@ public class FactionScannerApp {
 
     static final Logger logger = LogManager.getLogger(FactionScannerApp.class);
 
-    /** Global instance of the JSON factory. */
-    private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+    //    private static final boolean SKIP_GOOGLE_UPDATE = false;
 
-    /** Global instance of the HTTP transport. */
-    private static HttpTransport HTTP_TRANSPORT;
+    private static final String spreadsheetId = "1z5USvjTp_htXdsd2o3qrm6DUgL7tlGmHoB8Xh51Fms0";
 
-    private static final boolean SKIP_GOOGLE_UPDATE = false;
+    private static CharacterLocator characterLocator = null;
+    private static List<Template> templates = null;
 
-    static {
-        try {
-            HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        } catch (Throwable t) {
-            t.printStackTrace();
-            System.exit(1);
+    public static void main(String[] args) throws IOException {
+        characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
+        templates = Template.fromFolder("BodyScanner");
+
+        while (!Thread.interrupted()) {
+            processUploadedScreenshots();
+
+            // TODO Check all screenshots, remember last date
+
+            try {
+                Thread.sleep(10000L);
+            } catch (InterruptedException e) {
+                break;
+            }
         }
     }
 
-    static SortedSet<String> unknownFactions = new TreeSet<>();
+    private static void processUploadedScreenshots() {
+        File uploadDir = new File(Constants.FACTION_SCREENSHOTS_DIR, "upload");
+        File doneDir = new File(Constants.FACTION_SCREENSHOTS_DIR, "done");
+        File errorDir = new File(Constants.FACTION_SCREENSHOTS_DIR, "error");
 
-    public static void main(String[] args) throws IOException, ParseException {
-        List<File> screenshotFiles = FactionScannerApp.selectAllScreenshots();
-
-        CharacterLocator characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
-        List<Template> templates = Template.fromFolder("BodyScanner");
-
-        SortedMap<String, SystemFactions> systemsByName = new TreeMap<>();
+        List<File> screenshotFiles = FactionScannerApp.selectAllScreenshots(uploadDir);
         for (File screenshotFile : screenshotFiles) {
-            SystemFactions systemFactions = new SystemFactions("FAKE");
-
-            Screenshot screenshot = Screenshot.loadFromFile(screenshotFile, 3840, 2160, null);
-            Region region = screenshot.getAsRegion();
-            //x=0,y=350,w=840,h=1620
-
-            OcrTask ocrTask = new OcrTask(region, characterLocator, templates);
-            ocrTask.setDebugAlphanumTemplates(false);
-            ocrTask.setDebugAlphanumTextLines(false);
-            ocrTask.setDebugAllTemplates(false);
-            ocrTask.setDebugAllTextLines(false);
-            OcrResult ocrResult = new OcrExecutor().executeOcr(ocrTask);
-            ocrResult.writeDebugImages();
-            updateSystemFactions(systemFactions, ocrResult);
-            String systemName = guessSystemNameByFactions(systemFactions, screenshotFile);
-            systemFactions.setSystemName(systemName);
-            SystemFactions prev = systemsByName.put(systemName, systemFactions);
-            if (prev != null) {
-                systemFactions.mergeWith(prev);
+            try {
+                processScreenshotFile(screenshotFile);
+                logger.info("Successfully scanned " + screenshotFile);
+                FileUtils.moveFileToDirectory(screenshotFile, doneDir, true);
+            } catch (Exception e1) {
+                if (System.currentTimeMillis() - screenshotFile.lastModified() < 60000L) {
+                    logger.warn("Failed to process " + screenshotFile + ": " + e1);
+                } else {
+                    logger.error("Moving unparseable screenshot to error dir: " + screenshotFile);
+                    try {
+                        FileUtils.moveFileToDirectory(screenshotFile, errorDir, true);
+                    } catch (IOException e2) {
+                        logger.error("Failed to move " + screenshotFile + " to " + errorDir, e2);
+                    }
+                }
             }
-        }
-
-        Sheets service = getSheetsService();
-        String spreadsheetId = "1z5USvjTp_htXdsd2o3qrm6DUgL7tlGmHoB8Xh51Fms0";
-        for (SystemFactions systemFactions : systemsByName.values()) {
-            List<Object> row = new ArrayList<>();
-            String tableName = "INFLUENCE_" + systemFactions.getSystemName().toUpperCase().replace(" ", "_").replace("-", "_");
-            String columnRange = "A:" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(systemFactions.getFactions().size());
-            row.add(new SimpleDateFormat("dd.MM.yyyy").format(systemFactions.getDate()));
-
-            System.out.println("==== " + systemFactions.getSystemName() + " ====");
-            System.out.println("---- " + systemFactions.getControllingFaction() + " ----");
-            for (KnownFaction faction : systemFactions.getFactions().keySet()) {
-                System.out.println("* " + faction.getName());
-                SystemFaction systemFaction = systemFactions.getFactions().get(faction);
-                System.out.println("Government:    " + systemFaction.getGovernment());
-                System.out.println("Allegiance:    " + systemFaction.getAllegiance());
-                System.out.println("Influence:     " + systemFaction.getInfluence());
-                System.out.println("State:         " + systemFaction.getState());
-                System.out.println("Relationship:  " + systemFaction.getRelationship());
-                row.add(String.format(Locale.GERMANY, "%.1f%%", systemFaction.getInfluence()));
-            }
-            ValueRange vr = new ValueRange();
-            List<List<Object>> rows = new ArrayList<>();
-            rows.add(row);
-            vr.setValues(rows);
-            if (!SKIP_GOOGLE_UPDATE) {
-                Append append = service.spreadsheets().values().append(spreadsheetId, tableName + "!" + columnRange, vr);
-                append.setValueInputOption("USER_ENTERED");
-                AppendValuesResponse appendResponse = append.execute();
-                System.out.println(appendResponse.toPrettyString());
-            }
-        }
-
-        for (String unknownFaction : unknownFactions) {
-            System.out.println(unknownFaction);
         }
     }
+
+    private static void processScreenshotFile(File screenshotFile) throws IOException, ParseException {
+        Screenshot screenshot = Screenshot.loadFromFile(screenshotFile, 3840, 2160, null);
+        Region region = screenshot.getAsRegion(); //x=0,y=350,w=840,h=1620
+
+        OcrTask ocrTask = new OcrTask(region, characterLocator, templates);
+        //            ocrTask.setDebugAlphanumTemplates(false);
+        //            ocrTask.setDebugAlphanumTextLines(false);
+        //            ocrTask.setDebugAllTemplates(false);
+        //            ocrTask.setDebugAllTextLines(false);
+        OcrResult ocrResult = new OcrExecutor().executeOcr(ocrTask);
+        //            ocrResult.writeDebugImages();
+
+        SystemFactions systemFactions = new SystemFactions("FAKE SYSTEM");
+        updateSystemFactions(systemFactions, ocrResult);
+        systemFactions.setSystemName(guessSystemNameByFactions(systemFactions, screenshotFile));
+
+        String tableName = "INFLUENCE_" + systemFactions.getSystemName().toUpperCase().replaceAll("\\W", "_");
+        String date = new SimpleDateFormat("dd.MM.yyyy").format(systemFactions.getDate());
+        GoogleSpreadsheet gplInfAndState = new GoogleSpreadsheet(spreadsheetId, tableName);
+        GoogleTable tbl = gplInfAndState.getTable(tableName);
+        if (tbl == null) {
+            throw new RuntimeException("Table '" + tableName + "' not found");
+        } else {
+            for (KnownFaction faction : systemFactions.getFactions().keySet()) {
+                if (systemFactions.getFactions().get(faction).getInfluence() != null) {
+                    String factionName = faction.getName();
+                    String influence = String.format(Locale.GERMANY, "%.1f%%", systemFactions.getFactions().get(faction).getInfluence());
+
+                    int colIdx = tbl.getColumnIndex(factionName);
+                    if (colIdx < 0) {
+                        logger.info("Adding column '" + factionName + "' to table '" + tableName + "'");
+                        colIdx = tbl.addColumn(factionName);
+                    }
+                    int rowIdx = tbl.getRowIndex(date);
+                    if (rowIdx < 0) {
+                        logger.info("Adding row '" + date + "' to table '" + tableName + "'");
+                        rowIdx = tbl.addRow(date);
+                    }
+                    String existingValue = tbl.getCellValue(rowIdx, colIdx);
+                    if (StringUtils.isNotEmpty(existingValue)) {
+                        logger.warn("Overwriting " + existingValue + " with " + influence + " for " + factionName + " (" + date + ")");
+                    }
+                    tbl.setCellValue(rowIdx, colIdx, influence);
+                }
+            }
+        }
+    }
+
+    //    static SortedSet<String> unknownFactions = new TreeSet<>();
+    //
+    //    public static void main(String[] args) throws IOException, ParseException {
+    //        List<File> screenshotFiles = FactionScannerApp.selectAllScreenshots();
+    //
+    //        CharacterLocator characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
+    //        List<Template> templates = Template.fromFolder("BodyScanner");
+    //
+    //        SortedMap<String, SystemFactions> systemsByName = new TreeMap<>();
+    //        for (File screenshotFile : screenshotFiles) {
+    //            SystemFactions systemFactions = new SystemFactions("FAKE");
+    //
+    //            Screenshot screenshot = Screenshot.loadFromFile(screenshotFile, 3840, 2160, null);
+    //            Region region = screenshot.getAsRegion();
+    //            //x=0,y=350,w=840,h=1620
+    //
+    //            OcrTask ocrTask = new OcrTask(region, characterLocator, templates);
+    //            ocrTask.setDebugAlphanumTemplates(false);
+    //            ocrTask.setDebugAlphanumTextLines(false);
+    //            ocrTask.setDebugAllTemplates(false);
+    //            ocrTask.setDebugAllTextLines(false);
+    //            OcrResult ocrResult = new OcrExecutor().executeOcr(ocrTask);
+    //            ocrResult.writeDebugImages();
+    //            updateSystemFactions(systemFactions, ocrResult);
+    //            String systemName = guessSystemNameByFactions(systemFactions, screenshotFile);
+    //            systemFactions.setSystemName(systemName);
+    //            SystemFactions prev = systemsByName.put(systemName, systemFactions);
+    //            if (prev != null) {
+    //                systemFactions.mergeWith(prev);
+    //            }
+    //        }
+    //
+    //        Sheets service = getSheetsService();
+    //        String spreadsheetId = "1z5USvjTp_htXdsd2o3qrm6DUgL7tlGmHoB8Xh51Fms0";
+    //        for (SystemFactions systemFactions : systemsByName.values()) {
+    //            List<Object> row = new ArrayList<>();
+    //            String tableName = "INFLUENCE_" + systemFactions.getSystemName().toUpperCase().replace(" ", "_").replace("-", "_");
+    //            String columnRange = "A:" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(systemFactions.getFactions().size());
+    //            row.add(new SimpleDateFormat("dd.MM.yyyy").format(systemFactions.getDate()));
+    //
+    //            System.out.println("==== " + systemFactions.getSystemName() + " ====");
+    //            System.out.println("---- " + systemFactions.getControllingFaction() + " ----");
+    //            for (KnownFaction faction : systemFactions.getFactions().keySet()) {
+    //                System.out.println("* " + faction.getName());
+    //                SystemFaction systemFaction = systemFactions.getFactions().get(faction);
+    //                System.out.println("Government:    " + systemFaction.getGovernment());
+    //                System.out.println("Allegiance:    " + systemFaction.getAllegiance());
+    //                System.out.println("Influence:     " + systemFaction.getInfluence());
+    //                System.out.println("State:         " + systemFaction.getState());
+    //                System.out.println("Relationship:  " + systemFaction.getRelationship());
+    //                row.add(String.format(Locale.GERMANY, "%.1f%%", systemFaction.getInfluence()));
+    //            }
+    //            ValueRange vr = new ValueRange();
+    //            List<List<Object>> rows = new ArrayList<>();
+    //            rows.add(row);
+    //            vr.setValues(rows);
+    //            if (!SKIP_GOOGLE_UPDATE) {
+    //                Append append = service.spreadsheets().values().append(spreadsheetId, tableName + "!" + columnRange, vr);
+    //                append.setValueInputOption("USER_ENTERED");
+    //                AppendValuesResponse appendResponse = append.execute();
+    //                System.out.println(appendResponse.toPrettyString());
+    //            }
+    //        }
+    //        service.spreadsheets().get("").setIncludeGridData(true).execute().getSheets().get(0).getData().get(0).getRowData();
+    //        for (String unknownFaction : unknownFactions) {
+    //            System.out.println(unknownFaction);
+    //        }
+    //    }
 
     private static void updateSystemFactions(SystemFactions systemFactions, OcrResult ocrResult) throws ParseException {
         File screenshotFile = ocrResult.getOcrTask().getScreenshotRegion().getScreenshot().getFile();
@@ -165,9 +235,9 @@ public class FactionScannerApp {
                     } else if (currentLabel == KnownLabel.FACTION) {
                         currentFaction = KnownFaction.findBestMatching(currentValue);
                         if (currentFaction == null) {
-                            logger.error(screenshotFile.getName() + ": Failed to parse '" + currentValue + "' to a faction name");
+                            throw new RuntimeException(screenshotFile.getName() + ": Failed to parse '" + currentValue + "' to a faction name");
                             //System.exit(1);
-                            unknownFactions.add(currentValue);
+                            //unknownFactions.add(currentValue);
                         }
                     } else if (currentLabel != null && currentFaction != null) {
                         SystemFaction systemFaction = systemFactions.getFactions().get(currentFaction);
@@ -185,9 +255,9 @@ public class FactionScannerApp {
                             try {
                                 systemFaction.setInfluence(new BigDecimal(fixedValue.trim()));
                             } catch (NumberFormatException e) {
-                                logger.error(screenshotFile.getName() + ": Failed to parse '" + currentValue + "' (fixed to '" + fixedValue + "') to influence of " + currentFaction);
+                                throw new RuntimeException(screenshotFile.getName() + ": Failed to parse '" + currentValue + "' (fixed to '" + fixedValue + "') to influence of " + currentFaction);
                                 //System.exit(1);
-                                systemFaction.setInfluence(new BigDecimal("99.9"));
+                                //systemFaction.setInfluence(new BigDecimal("99.9"));
                             }
                         } else if (currentLabel == KnownLabel.STATE) {
                             systemFaction.setState(State.findBestMatching(currentValue));
@@ -226,30 +296,24 @@ public class FactionScannerApp {
         } else if (factions.contains(KnownFaction.UZUMERU_NETCOMS_INCORPORATED) || factions.contains(KnownFaction.BAVARINGONI_BLUE_RATS)) {
             return "BAVARINGONI";
         } else {
-            logger.error(screenshotFile.getName() + ": I have no clue what system that is: " + factions);
+            throw new RuntimeException(screenshotFile.getName() + ": I have no clue what system that is: " + factions);
             //System.exit(1);
-            return "UNKNOWN";
+            //return "UNKNOWN";
         }
     }
 
-    public static Sheets getSheetsService() throws IOException {
-        InputStream in = FactionScannerApp.class.getResourceAsStream("/My Project-90e11e4da361.json");
-        GoogleCredential credential = GoogleCredential.fromStream(in).createScoped(Collections.singleton(SheetsScopes.SPREADSHEETS));
-        return new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential).setApplicationName("GPL Faction Scanner").build();
-    }
+    //    static List<File> selectSpecificScreenshot(String filename) {
+    //        return Arrays.asList(new File(Constants.FACTION_SCREENSHOTS_DIR, filename));
+    //    }
 
-    static List<File> selectSpecificScreenshot(String filename) {
-        return Arrays.asList(new File(Constants.FACTION_SCREENSHOTS_DIR, filename));
-    }
+    //    static List<File> selectRandomScreenshot(File uploadDir) {
+    //        List<File> all = selectAllScreenshots(uploadDir);
+    //        Collections.shuffle(all);
+    //        return all.subList(0, 1);
+    //    }
 
-    static List<File> selectRandomScreenshot() {
-        List<File> all = selectAllScreenshots();
-        Collections.shuffle(all);
-        return all.subList(0, 1);
-    }
-
-    static List<File> selectAllScreenshots() {
-        File[] fileArray = Constants.FACTION_SCREENSHOTS_DIR.listFiles(new FileFilter() {
+    static List<File> selectAllScreenshots(File uploadDir) {
+        File[] fileArray = uploadDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File f) {
                 return f.getName().endsWith(".png");
