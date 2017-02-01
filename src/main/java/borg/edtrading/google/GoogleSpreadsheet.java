@@ -61,14 +61,14 @@ public class GoogleSpreadsheet {
     }
 
     private Sheets createSheetsService() throws IOException {
-        logger.debug("Creating service");
+        logger.trace("Creating service");
         InputStream in = GoogleSpreadsheet.class.getResourceAsStream("/My Project-90e11e4da361.json");
         GoogleCredential credential = GoogleCredential.fromStream(in).createScoped(Collections.singleton(SheetsScopes.SPREADSHEETS));
         return new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential).setApplicationName("GPL Faction Scanner").build();
     }
 
     private List<GoogleTable> readTables(List<String> ranges) throws IOException {
-        logger.debug("Reading tables");
+        logger.trace("Reading tables");
         List<GoogleTable> tables = new ArrayList<>();
         //Spreadsheet spreadsheet = this.sheetsService.spreadsheets().get(this.spreadsheetId).setIncludeGridData(true).execute();
         Get get = this.sheetsService.spreadsheets().get(this.spreadsheetId).setIncludeGridData(true);

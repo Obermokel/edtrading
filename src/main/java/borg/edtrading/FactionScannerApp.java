@@ -12,6 +12,7 @@ import borg.edtrading.ocr.screenshots.Region;
 import borg.edtrading.ocr.screenshots.Screenshot;
 import borg.edtrading.ocr.templatematching.Template;
 import borg.edtrading.util.MiscUtil;
+import org.apache.commons.io.FileExistsException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -81,9 +82,11 @@ public class FactionScannerApp {
                 if (System.currentTimeMillis() - screenshotFile.lastModified() < 60000L) {
                     logger.warn("Failed to process " + screenshotFile + ": " + e1);
                 } else {
-                    logger.error("Moving unparseable screenshot to error dir: " + screenshotFile);
+                    logger.error("Moving unparseable screenshot to error dir: " + screenshotFile, e1);
                     try {
                         FileUtils.moveFileToDirectory(screenshotFile, errorDir, true);
+                    } catch (FileExistsException e2) {
+                        screenshotFile.delete();
                     } catch (IOException e2) {
                         logger.error("Failed to move " + screenshotFile + " to " + errorDir, e2);
                     }
@@ -97,12 +100,12 @@ public class FactionScannerApp {
         Region region = screenshot.getAsRegion(); //x=0,y=350,w=840,h=1620
 
         OcrTask ocrTask = new OcrTask(region, characterLocator, templates);
-        //            ocrTask.setDebugAlphanumTemplates(false);
-        //            ocrTask.setDebugAlphanumTextLines(false);
-        //            ocrTask.setDebugAllTemplates(false);
-        //            ocrTask.setDebugAllTextLines(false);
+        ocrTask.setDebugAlphanumTemplates(true);
+        ocrTask.setDebugAlphanumTextLines(true);
+        ocrTask.setDebugAllTemplates(true);
+        ocrTask.setDebugAllTextLines(true);
         OcrResult ocrResult = new OcrExecutor().executeOcr(ocrTask);
-        //            ocrResult.writeDebugImages();
+        ocrResult.writeDebugImages();
 
         SystemFactions systemFactions = new SystemFactions("FAKE SYSTEM");
         updateSystemFactions(systemFactions, ocrResult);
@@ -226,6 +229,9 @@ public class FactionScannerApp {
         KnownLabel currentLabel = null;
         String currentValue = null;
         for (TextLine tl : ocrResult.getTextLines()) {
+            if (tl.getxInScreenshot() >= 850) {
+                continue; // Too far right, not part of the left info panel
+            }
             String text = tl.toText().replace("→", " ").trim();
             if (text.contains(":")) {
                 // New label starts here. Current value is finished.
@@ -280,25 +286,41 @@ public class FactionScannerApp {
 
     private static String guessSystemNameByFactions(SystemFactions systemFactions, File screenshotFile) {
         Set<KnownFaction> factions = systemFactions.getFactions().keySet();
+        List<String> possibleSystemNames = new ArrayList<>();
+
         if (factions.contains(KnownFaction.INDEPENDENTS_OF_MARIDAL) || factions.contains(KnownFaction.JUSTICE_PARTY_OF_MARIDAL)) {
-            return "MARIDAL";
-        } else if (factions.contains(KnownFaction.LP_575_38_BLUE_TRANSPORT_COMMS) || factions.contains(KnownFaction.LIBERALS_OF_LP_575_38) || factions.contains(KnownFaction.LP_575_38_ORGANISATION)) {
-            return "LP 575-38";
-        } else if (factions.contains(KnownFaction.ALLIANCE_OF_HRISASTSHI) || factions.contains(KnownFaction.HRISASTSHI_CO)) {
-            return "HRISASTSHI";
-        } else if (factions.contains(KnownFaction.PARTNERSHIP_OF_NGARU) || factions.contains(KnownFaction.NGARU_CRIMSON_COUNCIL)) {
-            return "NGARU";
-        } else if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) || factions.contains(KnownFaction.NEZ_PELLIRI_SILVER_GALACTIC) || factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
-            return "NEZ PELLIRI";
-        } else if (factions.contains(KnownFaction.ALLIANCE_OF_STHA_181) || factions.contains(KnownFaction.UNITING_NOEGIN) || factions.contains(KnownFaction.NOEGIN_PURPLE_BOYS)
-                || (factions.contains(KnownFaction.NGARU_SERVICES) && factions.contains(KnownFaction.JEN_ELABOG_FUTURE))) {
-            return "NOEGIN";
-        } else if (factions.contains(KnownFaction.UZUMERU_NETCOMS_INCORPORATED) || factions.contains(KnownFaction.BAVARINGONI_BLUE_RATS)) {
-            return "BAVARINGONI";
-        } else {
+            possibleSystemNames.add("MARIDAL");
+        }
+        if (factions.contains(KnownFaction.LP_575_38_BLUE_TRANSPORT_COMMS) || factions.contains(KnownFaction.LIBERALS_OF_LP_575_38) || factions.contains(KnownFaction.LP_575_38_ORGANISATION)) {
+            possibleSystemNames.add("LP 575-38");
+        }
+        if (factions.contains(KnownFaction.ALLIANCE_OF_HRISASTSHI) || factions.contains(KnownFaction.HRISASTSHI_CO) || factions.contains(KnownFaction.HRISASTSHI_JET_BOYS)) {
+            possibleSystemNames.add("HRISASTSHI");
+        }
+        if (factions.contains(KnownFaction.PEOPLE_S_MIKINN_LIBERALS) || factions.contains(KnownFaction.MOB_OF_MIKINN)) {
+            possibleSystemNames.add("MIKINN");
+        }
+        if (factions.contains(KnownFaction.PARTNERSHIP_OF_NGARU) || factions.contains(KnownFaction.NGARU_CRIMSON_COUNCIL)) {
+            possibleSystemNames.add("NGARU");
+        } else if (factions.contains(KnownFaction.NGARU_SERVICES) && factions.contains(KnownFaction.PARTNERSHIP_OF_ROSS_193)) {
+            possibleSystemNames.add("NGARU");
+        }
+        if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) || factions.contains(KnownFaction.NEZ_PELLIRI_SILVER_GALACTIC) || factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
+            possibleSystemNames.add("NEZ PELLIRI");
+        }
+        if (factions.contains(KnownFaction.ALLIANCE_OF_STHA_181) || factions.contains(KnownFaction.UNITING_NOEGIN) || factions.contains(KnownFaction.NOEGIN_PURPLE_BOYS)) {
+            possibleSystemNames.add("NOEGIN");
+        }
+        if (factions.contains(KnownFaction.UZUMERU_NETCOMS_INCORPORATED) || factions.contains(KnownFaction.BAVARINGONI_BLUE_RATS)) {
+            possibleSystemNames.add("BAVARINGONI");
+        }
+
+        if (possibleSystemNames.isEmpty()) {
             throw new RuntimeException(screenshotFile.getName() + ": I have no clue what system that is: " + factions);
-            //System.exit(1);
-            //return "UNKNOWN";
+        } else if (possibleSystemNames.size() > 1) {
+            throw new RuntimeException(screenshotFile.getName() + ": I am not sure what system that is: " + possibleSystemNames);
+        } else {
+            return possibleSystemNames.get(0);
         }
     }
 
@@ -669,8 +691,6 @@ public class FactionScannerApp {
     public static enum KnownFaction {
 
         //@formatter:off
-        GERMAN_PILOT_LOUNGE("GERMAN PILOT LOUNGE"),
-
         ALLIANCE_OF_STHA_181("ALLIANCE OF STHA 181"),
         ALLIANCE_OF_HRISASTSHI("ALLIANCE OF HRISASTSHI"),
         BAVARINGONI_BLUE_RATS("BAVARINGONI BLUE RATS"),
@@ -706,7 +726,13 @@ public class FactionScannerApp {
         UZUMERU_NETCOMS_INCORPORATED("UZUMERU NETCOMS INCORPORATED"),
         V1703_AQUILAE_NATURAL_LIMITED("V1703 AQUILAE NATURAL LIMITED"),
         PARTNERSHIP_OF_ROSS_193("PARTNERSHIP OF ROSS 193"), // Ngaru
-        LHS_3564_CONSERVATIVES("LHS 3564 CONSERVATIVES"); // Nez Pelliri
+        LHS_3564_CONSERVATIVES("LHS 3564 CONSERVATIVES"), // Nez Pelliri
+        PEOPLE_S_MIKINN_LIBERALS("PEOPLE'S MIKINN LIBERALS"), // Mikinn
+        _51_AQUILAE_SILVER_PUBLIC_INC("51 AQUILAE SILVER PUBLIC INC"), // Mikinn
+        MOB_OF_MIKINN("MOB OF MIKINN"), // Mikinn
+        BUREAU_OF_MIKINN_LEAGUE("BUREAU OF MIKINN LEAGUE"), // Mikinn
+        MIKINN_GOLD_FEDERAL_INDUSTRIES("MIKINN GOLD FEDERAL INDUSTRIES"), // Mikinn
+        GERMAN_PILOT_LOUNGE("GERMAN PILOT LOUNGE");
         //@formatter:on
 
         private final String name;
