@@ -300,6 +300,9 @@ public class FactionScannerApp {
         if (factions.contains(KnownFaction.PEOPLE_S_MIKINN_LIBERALS) || factions.contains(KnownFaction.MOB_OF_MIKINN)) {
             possibleSystemNames.add("MIKINN");
         }
+        if (factions.contains(KnownFaction.EARLS_OF_LP_635_46) || factions.contains(KnownFaction.NEW_LP_635_46_CONFEDERATION)) {
+            possibleSystemNames.add("LP 635-46");
+        }
         if (factions.contains(KnownFaction.PARTNERSHIP_OF_NGARU) || factions.contains(KnownFaction.NGARU_CRIMSON_COUNCIL)) {
             possibleSystemNames.add("NGARU");
         } else if (factions.contains(KnownFaction.NGARU_SERVICES) && factions.contains(KnownFaction.PARTNERSHIP_OF_ROSS_193)) {
@@ -731,7 +734,9 @@ public class FactionScannerApp {
         _51_AQUILAE_SILVER_PUBLIC_INC("51 AQUILAE SILVER PUBLIC INC"), // Mikinn
         MOB_OF_MIKINN("MOB OF MIKINN"), // Mikinn
         BUREAU_OF_MIKINN_LEAGUE("BUREAU OF MIKINN LEAGUE"), // Mikinn
-        MIKINN_GOLD_FEDERAL_INDUSTRIES("MIKINN GOLD FEDERAL INDUSTRIES"), // Mikinn
+        LP_635_46_GOLD_POWER_NETWORK("LP 635-46 GOLD POWER NETWORK"), // LP 635-46
+        LP_635_46_SYSTEMS("LP 635-46 SYSTEMS"), // LP 635-46
+        EARLS_OF_LP_635_46("EARLS OF LP 635-46"), // LP 635-46
         GERMAN_PILOT_LOUNGE("GERMAN PILOT LOUNGE");
         //@formatter:on
 
