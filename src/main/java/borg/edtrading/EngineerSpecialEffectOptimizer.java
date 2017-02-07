@@ -33,10 +33,7 @@ public class EngineerSpecialEffectOptimizer {
         // This is what we want to have, and how many.
         // Assumes the engineer is currently unlocked at lvl 5.
         LinkedHashMap<Blueprint, Integer> wantHave = new LinkedHashMap<>();
-        wantHave.put(Blueprint.MULTICANNON___OVERCHARGED_WEAPON___GRADE_5, 1);
-        wantHave.put(Blueprint.CANNON___STURDY_MOUNT___GRADE_5, 1);
-        wantHave.put(Blueprint.PULSE_LASER___RAPID_FIRE_MODIFICATION___GRADE_5, 4);
-        wantHave.put(Blueprint.PLASMA_ACCELERATOR___OVERCHARGED_WEAPON___GRADE_5, 1);
+        wantHave.put(Blueprint.MULTICANNON___OVERCHARGED_WEAPON___GRADE_5, 4);
 
         // How many attempts to make at grade 5.
         int numGrade5Rolls = 3;

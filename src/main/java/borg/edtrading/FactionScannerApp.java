@@ -19,6 +19,10 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -33,6 +37,8 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import javax.imageio.ImageIO;
 
 /**
  * FactionScannerApp
@@ -79,12 +85,24 @@ public class FactionScannerApp {
                 logger.info("Successfully scanned " + screenshotFile);
                 FileUtils.moveFileToDirectory(screenshotFile, doneDir, true);
             } catch (Exception e1) {
-                if (System.currentTimeMillis() - screenshotFile.lastModified() < 60000L) {
+                if (System.currentTimeMillis() - screenshotFile.lastModified() < 600000L) {
                     logger.warn("Failed to process " + screenshotFile + ": " + e1);
                 } else {
                     logger.error("Moving unparseable screenshot to error dir: " + screenshotFile, e1);
                     try {
                         FileUtils.moveFileToDirectory(screenshotFile, errorDir, true);
+                        if (e1 instanceof FactionScanException) {
+                            FactionScanException fse = (FactionScanException) e1;
+                            if (StringUtils.isNotEmpty(fse.getReasonCode()) && fse.getOcrResult() != null && fse.getOcrResult().getAllTextLinesDebugImage() != null) {
+                                BufferedImage debugImage = fse.getOcrResult().getAllTextLinesDebugImage();
+                                Graphics2D g = debugImage.createGraphics();
+                                g.setFont(new Font("Tahoma", Font.BOLD, 32));
+                                g.setColor(Color.RED);
+                                g.drawString(fse.getReasonMessage(), 1000, 100);
+                                g.dispose();
+                                ImageIO.write(debugImage, "PNG", new File(errorDir, screenshotFile.getName().replace(".png", " " + fse.getReasonCode() + ".png")));
+                            }
+                        }
                     } catch (FileExistsException e2) {
                         screenshotFile.delete();
                     } catch (IOException e2) {
@@ -100,23 +118,24 @@ public class FactionScannerApp {
         Region region = screenshot.getAsRegion(); //x=0,y=350,w=840,h=1620
 
         OcrTask ocrTask = new OcrTask(region, characterLocator, templates);
-        ocrTask.setDebugAlphanumTemplates(true);
-        ocrTask.setDebugAlphanumTextLines(true);
-        ocrTask.setDebugAllTemplates(true);
+        //        ocrTask.setDebugAlphanumTemplates(true);
+        //        ocrTask.setDebugAlphanumTextLines(true);
+        //        ocrTask.setDebugAllTemplates(true);
         ocrTask.setDebugAllTextLines(true);
         OcrResult ocrResult = new OcrExecutor().executeOcr(ocrTask);
-        ocrResult.writeDebugImages();
+        //        ocrResult.writeDebugImages();
 
         SystemFactions systemFactions = new SystemFactions("FAKE SYSTEM");
         updateSystemFactions(systemFactions, ocrResult);
-        systemFactions.setSystemName(guessSystemNameByFactions(systemFactions, screenshotFile));
+        systemFactions.setSystemName(guessSystemNameByFactions(systemFactions, screenshotFile, ocrResult));
 
         String tableName = "INFLUENCE_" + systemFactions.getSystemName().toUpperCase().replaceAll("\\W", "_");
         String date = new SimpleDateFormat("dd.MM.yyyy").format(systemFactions.getDate());
         GoogleSpreadsheet gplInfAndState = new GoogleSpreadsheet(spreadsheetId, tableName);
         GoogleTable tbl = gplInfAndState.getTable(tableName);
         if (tbl == null) {
-            throw new RuntimeException("Table '" + tableName + "' not found");
+            throw new FactionScanException("TABLE NOT FOUND", "Table '" + tableName + "' not found in Google sheet", ocrResult);
+            //throw new RuntimeException("Table '" + tableName + "' not found");
         } else {
             for (KnownFaction faction : systemFactions.getFactions().keySet()) {
                 if (systemFactions.getFactions().get(faction).getInfluence() != null) {
@@ -220,6 +239,8 @@ public class FactionScannerApp {
         }
         if (DateUtils.toCalendar(date).get(Calendar.HOUR_OF_DAY) >= 20) {
             date = DateUtils.addDays(DateUtils.truncate(date, Calendar.DATE), 1); // Treat as next day already (BGS should have been updated)
+        } else if (DateUtils.toCalendar(date).get(Calendar.HOUR_OF_DAY) >= 19 && DateUtils.toCalendar(date).get(Calendar.MINUTE) >= 30) {
+            date = DateUtils.addDays(DateUtils.truncate(date, Calendar.DATE), 1); // Treat as next day already (BGS should have been updated)
         } else {
             date = DateUtils.truncate(date, Calendar.DATE);
         }
@@ -233,6 +254,9 @@ public class FactionScannerApp {
                 continue; // Too far right, not part of the left info panel
             }
             String text = tl.toText().replace("→", " ").trim();
+            if ("BACK".equals(text) || "EXIT".equals(text)) {
+                text = text + ": " + text;
+            }
             if (text.contains(":")) {
                 // New label starts here. Current value is finished.
                 if (currentValue != null) {
@@ -241,7 +265,7 @@ public class FactionScannerApp {
                     } else if (currentLabel == KnownLabel.FACTION) {
                         currentFaction = KnownFaction.findBestMatching(currentValue);
                         if (currentFaction == null) {
-                            throw new RuntimeException(screenshotFile.getName() + ": Failed to parse '" + currentValue + "' to a faction name");
+                            throw new FactionScanException("FACTION UNKNOWN", "Failed to parse '" + currentValue + "' to a faction name", ocrResult);
                             //System.exit(1);
                             //unknownFactions.add(currentValue);
                         }
@@ -261,7 +285,7 @@ public class FactionScannerApp {
                             try {
                                 systemFaction.setInfluence(new BigDecimal(fixedValue.trim()));
                             } catch (NumberFormatException e) {
-                                throw new RuntimeException(screenshotFile.getName() + ": Failed to parse '" + currentValue + "' (fixed to '" + fixedValue + "') to influence of " + currentFaction);
+                                throw new FactionScanException("INFLUENCE UNKNOWN", "Failed to parse '" + currentValue + "' (fixed to '" + fixedValue + "') to influence of " + currentFaction, ocrResult);
                                 //System.exit(1);
                                 //systemFaction.setInfluence(new BigDecimal("99.9"));
                             }
@@ -284,9 +308,11 @@ public class FactionScannerApp {
         }
     }
 
-    private static String guessSystemNameByFactions(SystemFactions systemFactions, File screenshotFile) {
+    private static String guessSystemNameByFactions(SystemFactions systemFactions, File screenshotFile, OcrResult ocrResult) {
         Set<KnownFaction> factions = systemFactions.getFactions().keySet();
         List<String> possibleSystemNames = new ArrayList<>();
+
+        // NEZ_PELLIRI_GANG: Nez Pelliri && LP 635-46
 
         if (factions.contains(KnownFaction.INDEPENDENTS_OF_MARIDAL) || factions.contains(KnownFaction.JUSTICE_PARTY_OF_MARIDAL)) {
             possibleSystemNames.add("MARIDAL");
@@ -300,7 +326,9 @@ public class FactionScannerApp {
         if (factions.contains(KnownFaction.PEOPLE_S_MIKINN_LIBERALS) || factions.contains(KnownFaction.MOB_OF_MIKINN)) {
             possibleSystemNames.add("MIKINN");
         }
-        if (factions.contains(KnownFaction.EARLS_OF_LP_635_46) || factions.contains(KnownFaction.NEW_LP_635_46_CONFEDERATION)) {
+        if (factions.contains(KnownFaction.EARLS_OF_LP_635_46)) {
+            possibleSystemNames.add("LP 635-46");
+        } else if (factions.contains(KnownFaction.NEW_LP_635_46_CONFEDERATION) && factions.contains(KnownFaction.LP_635_46_GOLD_POWER_NETWORK)) {
             possibleSystemNames.add("LP 635-46");
         }
         if (factions.contains(KnownFaction.PARTNERSHIP_OF_NGARU) || factions.contains(KnownFaction.NGARU_CRIMSON_COUNCIL)) {
@@ -308,7 +336,9 @@ public class FactionScannerApp {
         } else if (factions.contains(KnownFaction.NGARU_SERVICES) && factions.contains(KnownFaction.PARTNERSHIP_OF_ROSS_193)) {
             possibleSystemNames.add("NGARU");
         }
-        if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) || factions.contains(KnownFaction.NEZ_PELLIRI_SILVER_GALACTIC) || factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
+        if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) && factions.contains(KnownFaction.NEZ_PELLIRI_SILVER_GALACTIC)) {
+            possibleSystemNames.add("NEZ PELLIRI");
+        } else if (factions.contains(KnownFaction.NEZ_PELLIRI_DOMINION) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
             possibleSystemNames.add("NEZ PELLIRI");
         }
         if (factions.contains(KnownFaction.ALLIANCE_OF_STHA_181) || factions.contains(KnownFaction.UNITING_NOEGIN) || factions.contains(KnownFaction.NOEGIN_PURPLE_BOYS)) {
@@ -319,9 +349,9 @@ public class FactionScannerApp {
         }
 
         if (possibleSystemNames.isEmpty()) {
-            throw new RuntimeException(screenshotFile.getName() + ": I have no clue what system that is: " + factions);
+            throw new FactionScanException("SYSTEM UNKNOWN", "I cannot tell the system name from the scanned factions: " + factions, ocrResult);
         } else if (possibleSystemNames.size() > 1) {
-            throw new RuntimeException(screenshotFile.getName() + ": I am not sure what system that is: " + possibleSystemNames);
+            throw new FactionScanException("SYSTEM AMBIGUOUS", "The scanned factions are present in more than one system: " + possibleSystemNames, ocrResult);
         } else {
             return possibleSystemNames.get(0);
         }
@@ -662,7 +692,9 @@ public class FactionScannerApp {
         ALLEGIANCE("ALLEGIANCE"),
         INFLUENCE("INFLUENCE"),
         STATE("STATE"),
-        RELATIONSHIP("RELATIONSHIP");
+        RELATIONSHIP("RELATIONSHIP"),
+        BACK("BACK"),
+        EXIT("EXIT");
         //@formatter:on
 
         private final String name;
@@ -734,9 +766,11 @@ public class FactionScannerApp {
         _51_AQUILAE_SILVER_PUBLIC_INC("51 AQUILAE SILVER PUBLIC INC"), // Mikinn
         MOB_OF_MIKINN("MOB OF MIKINN"), // Mikinn
         BUREAU_OF_MIKINN_LEAGUE("BUREAU OF MIKINN LEAGUE"), // Mikinn
+        MIKINN_GOLD_FEDERAL_INDUSTRIES("MIKINN GOLD FEDERAL INDUSTRIES"), // Mikinn
         LP_635_46_GOLD_POWER_NETWORK("LP 635-46 GOLD POWER NETWORK"), // LP 635-46
         LP_635_46_SYSTEMS("LP 635-46 SYSTEMS"), // LP 635-46
         EARLS_OF_LP_635_46("EARLS OF LP 635-46"), // LP 635-46
+        LHS_3564_SYSTEMS("LHS 3564 SYSTEMS"), // LP 635-46
         GERMAN_PILOT_LOUNGE("GERMAN PILOT LOUNGE");
         //@formatter:on
 
@@ -762,6 +796,44 @@ public class FactionScannerApp {
 
         public String getName() {
             return this.name;
+        }
+
+    }
+
+    public static class FactionScanException extends RuntimeException {
+
+        private static final long serialVersionUID = -373760834141110883L;
+
+        private final String reasonCode;
+        private final String reasonMessage;
+        private final OcrResult ocrResult;
+
+        public FactionScanException(String reasonCode, String reasonMessage, OcrResult ocrResult) {
+            super(reasonMessage);
+
+            this.reasonCode = reasonCode;
+            this.reasonMessage = reasonMessage;
+            this.ocrResult = ocrResult;
+        }
+
+        public FactionScanException(String reasonCode, String reasonMessage, OcrResult ocrResult, Throwable cause) {
+            super(reasonMessage, cause);
+
+            this.reasonCode = reasonCode;
+            this.reasonMessage = reasonMessage;
+            this.ocrResult = ocrResult;
+        }
+
+        public String getReasonCode() {
+            return this.reasonCode;
+        }
+
+        public String getReasonMessage() {
+            return this.reasonMessage;
+        }
+
+        public OcrResult getOcrResult() {
+            return this.ocrResult;
         }
 
     }
