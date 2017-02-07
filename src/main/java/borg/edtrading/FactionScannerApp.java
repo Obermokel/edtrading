@@ -81,9 +81,9 @@ public class FactionScannerApp {
         List<File> screenshotFiles = FactionScannerApp.selectAllScreenshots(uploadDir);
         for (File screenshotFile : screenshotFiles) {
             try {
-                processScreenshotFile(screenshotFile);
+                SystemFactions systemFactions = processScreenshotFile(screenshotFile);
                 logger.info("Successfully scanned " + screenshotFile);
-                FileUtils.moveFileToDirectory(screenshotFile, doneDir, true);
+                FileUtils.moveFileToDirectory(screenshotFile, new File(doneDir, systemFactions.getSystemName()), true);
             } catch (Exception e1) {
                 if (System.currentTimeMillis() - screenshotFile.lastModified() < 600000L) {
                     logger.warn("Failed to process " + screenshotFile + ": " + e1);
@@ -113,7 +113,7 @@ public class FactionScannerApp {
         }
     }
 
-    private static void processScreenshotFile(File screenshotFile) throws IOException, ParseException {
+    private static SystemFactions processScreenshotFile(File screenshotFile) throws IOException, ParseException {
         Screenshot screenshot = Screenshot.loadFromFile(screenshotFile, 3840, 2160, null);
         Region region = screenshot.getAsRegion(); //x=0,y=350,w=840,h=1620
 
@@ -160,6 +160,8 @@ public class FactionScannerApp {
                 }
             }
         }
+
+        return systemFactions;
     }
 
     //    static SortedSet<String> unknownFactions = new TreeSet<>();
