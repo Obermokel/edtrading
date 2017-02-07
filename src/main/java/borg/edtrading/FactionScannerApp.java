@@ -264,7 +264,7 @@ public class FactionScannerApp {
                         systemFactions.setControllingFaction(KnownFaction.findBestMatching(currentValue));
                     } else if (currentLabel == KnownLabel.FACTION) {
                         currentFaction = KnownFaction.findBestMatching(currentValue);
-                        if (currentFaction == null) {
+                        if (currentFaction == null && systemFactions.getFactions().size() < 3) {
                             throw new FactionScanException("FACTION UNKNOWN", "Failed to parse '" + currentValue + "' to a faction name", ocrResult);
                             //System.exit(1);
                             //unknownFactions.add(currentValue);
@@ -325,10 +325,20 @@ public class FactionScannerApp {
         }
         if (factions.contains(KnownFaction.PEOPLE_S_MIKINN_LIBERALS) || factions.contains(KnownFaction.MOB_OF_MIKINN)) {
             possibleSystemNames.add("MIKINN");
+        } else if (factions.contains(KnownFaction.BUREAU_OF_MIKINN_LEAGUE) && factions.contains(KnownFaction.MIKINN_GOLD_FEDERAL_INDUSTRIES)) {
+            possibleSystemNames.add("MIKINN");
+        } else if (factions.contains(KnownFaction._51_AQUILAE_SILVER_PUBLIC_INC) && factions.contains(KnownFaction.MIKINN_GOLD_FEDERAL_INDUSTRIES)) {
+            possibleSystemNames.add("MIKINN");
+        } else if (factions.contains(KnownFaction._51_AQUILAE_SILVER_PUBLIC_INC) && factions.contains(KnownFaction.BUREAU_OF_MIKINN_LEAGUE)) {
+            possibleSystemNames.add("MIKINN");
         }
         if (factions.contains(KnownFaction.EARLS_OF_LP_635_46)) {
             possibleSystemNames.add("LP 635-46");
         } else if (factions.contains(KnownFaction.NEW_LP_635_46_CONFEDERATION) && factions.contains(KnownFaction.LP_635_46_GOLD_POWER_NETWORK)) {
+            possibleSystemNames.add("LP 635-46");
+        } else if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
+            possibleSystemNames.add("LP 635-46");
+        } else if (factions.contains(KnownFaction.NEW_LP_635_46_CONFEDERATION) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
             possibleSystemNames.add("LP 635-46");
         }
         if (factions.contains(KnownFaction.PARTNERSHIP_OF_NGARU) || factions.contains(KnownFaction.NGARU_CRIMSON_COUNCIL)) {
@@ -339,6 +349,8 @@ public class FactionScannerApp {
         if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) && factions.contains(KnownFaction.NEZ_PELLIRI_SILVER_GALACTIC)) {
             possibleSystemNames.add("NEZ PELLIRI");
         } else if (factions.contains(KnownFaction.NEZ_PELLIRI_DOMINION) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
+            possibleSystemNames.add("NEZ PELLIRI");
+        } else if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
             possibleSystemNames.add("NEZ PELLIRI");
         }
         if (factions.contains(KnownFaction.ALLIANCE_OF_STHA_181) || factions.contains(KnownFaction.UNITING_NOEGIN) || factions.contains(KnownFaction.NOEGIN_PURPLE_BOYS)) {
@@ -351,6 +363,15 @@ public class FactionScannerApp {
         if (possibleSystemNames.isEmpty()) {
             throw new FactionScanException("SYSTEM UNKNOWN", "I cannot tell the system name from the scanned factions: " + factions, ocrResult);
         } else if (possibleSystemNames.size() > 1) {
+            if (possibleSystemNames.size() == 2 && possibleSystemNames.contains("NEZ PELLIRI") && possibleSystemNames.contains("LP 635-46")) {
+                if (factions.contains(KnownFaction.GERMAN_PILOT_LOUNGE) && systemFactions.getFactions().get(KnownFaction.GERMAN_PILOT_LOUNGE).getInfluence() != null) {
+                    if (systemFactions.getFactions().get(KnownFaction.GERMAN_PILOT_LOUNGE).getInfluence().doubleValue() >= 40) {
+                        return "NEZ PELLIRI";
+                    } else {
+                        return "LP 635-46";
+                    }
+                }
+            }
             throw new FactionScanException("SYSTEM AMBIGUOUS", "The scanned factions are present in more than one system: " + possibleSystemNames, ocrResult);
         } else {
             return possibleSystemNames.get(0);
