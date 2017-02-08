@@ -336,6 +336,12 @@ public class FactionScannerApp {
         }
         if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) && factions.contains(KnownFaction.EARLS_OF_LP_635_46) && factions.contains(KnownFaction.LHS_3564_SYSTEMS)) {
             possibleSystemNames.add("LP 635-46");
+        } else if (factions.contains(KnownFaction.NEW_LP_635_46_CONFEDERATION) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES) && factions.contains(KnownFaction.LP_635_46_GOLD_POWER_NETWORK)) {
+            possibleSystemNames.add("LP 635-46");
+        } else if (factions.contains(KnownFaction.LP_635_46_GOLD_POWER_NETWORK) && factions.contains(KnownFaction.EARLS_OF_LP_635_46) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
+            possibleSystemNames.add("LP 635-46");
+        } else if (factions.contains(KnownFaction.LP_635_46_GOLD_POWER_NETWORK) && factions.contains(KnownFaction.NEZ_PELLIRI_GANG) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
+            possibleSystemNames.add("LP 635-46");
         }
         if (factions.contains(KnownFaction.PARTNERSHIP_OF_NGARU) || factions.contains(KnownFaction.NGARU_CRIMSON_COUNCIL)) {
             possibleSystemNames.add("NGARU");
@@ -343,6 +349,8 @@ public class FactionScannerApp {
             possibleSystemNames.add("NGARU");
         }
         if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) && factions.contains(KnownFaction.NEZ_PELLIRI_DOMINION) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
+            possibleSystemNames.add("NEZ PELLIRI");
+        } else if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) && factions.contains(KnownFaction.NEZ_PELLIRI_SILVER_GALACTIC) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
             possibleSystemNames.add("NEZ PELLIRI");
         }
         if (factions.contains(KnownFaction.ALLIANCE_OF_STHA_181) || factions.contains(KnownFaction.UNITING_NOEGIN) || factions.contains(KnownFaction.NOEGIN_PURPLE_BOYS)) {
