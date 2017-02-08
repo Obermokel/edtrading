@@ -37,6 +37,8 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 
@@ -127,7 +129,10 @@ public class FactionScannerApp {
 
         SystemFactions systemFactions = new SystemFactions("FAKE SYSTEM");
         updateSystemFactions(systemFactions, ocrResult);
-        systemFactions.setSystemName(guessSystemNameByFactions(systemFactions, screenshotFile, ocrResult));
+        updateDateAndSystemFromFilename(systemFactions, screenshotFile);
+        if (StringUtils.isEmpty(systemFactions.getSystemName())) {
+            systemFactions.setSystemName(guessSystemNameByFactions(systemFactions, screenshotFile, ocrResult));
+        }
 
         String tableName = "INFLUENCE_" + systemFactions.getSystemName().toUpperCase().replaceAll("\\W", "_");
         String date = new SimpleDateFormat("dd.MM.yyyy").format(systemFactions.getDate());
@@ -162,6 +167,22 @@ public class FactionScannerApp {
         }
 
         return systemFactions;
+    }
+
+    private static void updateDateAndSystemFromFilename(SystemFactions systemFactions, File screenshotFile) throws ParseException {
+        // Date
+        Pattern p = Pattern.compile(".*(\\d{4}\\-\\d{2}\\-\\d{2}).*");
+        Matcher m = p.matcher(screenshotFile.getName());
+        if (m.matches()) {
+            systemFactions.setDate(new SimpleDateFormat("yyyy-MM-dd").parse(m.group(1)));
+        }
+
+        // System name
+        p = Pattern.compile(".*_\\d{2}_([^_]+)_\\d{2}\\.png");
+        m = p.matcher(screenshotFile.getName());
+        if (m.matches()) {
+            systemFactions.setSystemName(m.group(1).toUpperCase());
+        }
     }
 
     //    static SortedSet<String> unknownFactions = new TreeSet<>();
