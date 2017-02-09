@@ -30,6 +30,7 @@ import borg.edtrading.journal.entries.fleet.ModuleStoreEntry;
 import borg.edtrading.journal.entries.fleet.ModuleSwapEntry;
 import borg.edtrading.journal.entries.fleet.ShipyardBuyEntry;
 import borg.edtrading.journal.entries.fleet.ShipyardNewEntry;
+import borg.edtrading.journal.entries.fleet.ShipyardSellEntry;
 import borg.edtrading.journal.entries.fleet.ShipyardSwapEntry;
 import borg.edtrading.journal.entries.fleet.ShipyardTransferEntry;
 import borg.edtrading.journal.entries.game.FileheaderEntry;
@@ -61,6 +62,7 @@ import borg.edtrading.journal.entries.location.UndockedEntry;
 import borg.edtrading.journal.entries.missions.CommunityGoalJoinEntry;
 import borg.edtrading.journal.entries.missions.CommunityGoalRewardEntry;
 import borg.edtrading.journal.entries.missions.DataScannedEntry;
+import borg.edtrading.journal.entries.missions.MissionAbandonedEntry;
 import borg.edtrading.journal.entries.missions.MissionAcceptedEntry;
 import borg.edtrading.journal.entries.missions.MissionCompletedEntry;
 import borg.edtrading.journal.entries.missions.MissionFailedEntry;
@@ -72,6 +74,7 @@ import borg.edtrading.journal.entries.slf.DockFighterEntry;
 import borg.edtrading.journal.entries.slf.LaunchFighterEntry;
 import borg.edtrading.journal.entries.slf.VehicleSwitchEntry;
 import borg.edtrading.journal.entries.srv.DatalinkScanEntry;
+import borg.edtrading.journal.entries.srv.DatalinkVoucherEntry;
 import borg.edtrading.journal.entries.srv.DockSRVEntry;
 import borg.edtrading.journal.entries.srv.LaunchSRVEntry;
 import borg.edtrading.journal.entries.starport.BuyAmmoEntry;
@@ -250,6 +253,8 @@ public class JournalReader {
                     return new CrewHireEntry(timestamp, event, data);
                 case DatalinkScan:
                     return new DatalinkScanEntry(timestamp, event, data);
+                case DatalinkVoucher:
+                    return new DatalinkVoucherEntry(timestamp, event, data);
                 case DataScanned:
                     return new DataScannedEntry(timestamp, event, data);
                 case Died:
@@ -320,6 +325,8 @@ public class JournalReader {
                     return new MaterialDiscoveredEntry(timestamp, event, data);
                 case MiningRefined:
                     return new MiningRefinedEntry(timestamp, event, data);
+                case MissionAbandoned:
+                    return new MissionAbandonedEntry(timestamp, event, data);
                 case MissionAccepted:
                     return new MissionAcceptedEntry(timestamp, event, data);
                 case MissionCompleted:
@@ -392,6 +399,8 @@ public class JournalReader {
                     return new ShipyardNewEntry(timestamp, event, data);
                 case ShipyardTransfer:
                     return new ShipyardTransferEntry(timestamp, event, data);
+                case ShipyardSell:
+                    return new ShipyardSellEntry(timestamp, event, data);
                 case ShipyardSwap:
                     return new ShipyardSwapEntry(timestamp, event, data);
                 case SupercruiseEntry:
