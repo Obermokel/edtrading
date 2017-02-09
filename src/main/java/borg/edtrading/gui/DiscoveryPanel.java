@@ -497,16 +497,16 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             }
 
             // Me
-            g.setColor(Color.RED);
+            g.setColor(Color.RED); // Unknown on EDDB
             try {
                 EddbSystem system = eddbService.findSystemByName(this.travelHistory.getSystemName());
                 if (system != null) {
+                    g.setColor(Color.ORANGE); // Coords known on EDDB
                     List<EddbBody> bodies = eddbService.findBodiesOfSystem(system.getId());
-                    g.setColor(Color.ORANGE);
                     for (EddbBody body : bodies) {
                         if (Boolean.TRUE.equals(body.getIsMainStar())) {
-                            if (StringUtils.isNotEmpty(body.getSpectralClass())) {
-                                g.setColor(Color.GREEN);
+                            if (StringUtils.isNotEmpty(body.getStarClass())) {
+                                g.setColor(Color.GREEN); // Main star spectral class known on EDDB
                             }
                             break;
                         }
