@@ -286,6 +286,8 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
                         this.collected(journalName, e.getCount(), ItemType.COMMODITY);
                     } else if (e.getName().startsWith("Mission_Collect")) {
                         // Nothing has happened yet. We have to collect the commodity from somewhere.
+                    } else if (e.getName().startsWith("Mission_Passenger") || e.getName().startsWith("Mission_Sightseeing")) {
+                        // Ignore passengers asking for cargo
                     } else {
                         logger.warn("Unknown mission accepted type '" + e.getName() + "' which seems to have given us " + e.getCount() + "x " + e.getCommodityLocalized());
                     }
@@ -306,6 +308,8 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
                         // We have successfully collected and delivered the desired commodity.
                         String journalName = e.getCommodity().replace("$", "").replace("_Name;", "");
                         this.discarded(journalName, e.getCount(), ItemType.COMMODITY);
+                    } else if (e.getName().startsWith("Mission_Passenger") || e.getName().startsWith("Mission_Sightseeing")) {
+                        // Ignore passengers asking for cargo
                     } else {
                         logger.warn("Unknown mission completed type '" + e.getName() + "' which seems to have taken " + e.getCount() + "x " + e.getCommodityLocalized() + " from us");
                     }
