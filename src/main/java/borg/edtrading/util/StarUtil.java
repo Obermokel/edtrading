@@ -37,14 +37,22 @@ public abstract class StarUtil {
             return new Color(144, 14, 45);
         } else if ("T".equals(spectralClass)) {
             return new Color(72, 8, 41);
+        } else if ("MS".equals(spectralClass)) {
+            return new Color(229, 129, 62);
         } else if ("TTS".equals(spectralClass)) {
             return new Color(239, 217, 90);
+        } else if ("AeBe".equals(spectralClass)) {
+            return new Color(247, 244, 101);
         } else if ("N".equals(spectralClass) || "NS".equals(spectralClass)) {
             return new Color(224, 224, 255);
         } else if ("H".equals(spectralClass) || "BH".equals(spectralClass) || "SMBH".equals(spectralClass)) {
             return new Color(0, 0, 0);
         } else if (spectralClass.startsWith("D")) {
             return new Color(224, 212, 224); // White dwarf
+        } else if (spectralClass.startsWith("C")) {
+            return new Color(219, 203, 26); // Carbon star
+        } else if (spectralClass.startsWith("W")) {
+            return new Color(166, 214, 219); // Wolf Rayet star
         } else {
             logger.warn("Unknown spectral class '" + spectralClass + "'");
             return new Color(255, 0, 255);
