@@ -130,7 +130,7 @@ public class FactionScannerApp {
         SystemFactions systemFactions = new SystemFactions("FAKE SYSTEM");
         updateSystemFactions(systemFactions, ocrResult);
         updateDateAndSystemFromFilename(systemFactions, screenshotFile);
-        if (StringUtils.isEmpty(systemFactions.getSystemName())) {
+        if (StringUtils.isEmpty(systemFactions.getSystemName()) || "FAKE SYSTEM".equals(systemFactions.getSystemName())) {
             systemFactions.setSystemName(guessSystemNameByFactions(systemFactions, screenshotFile, ocrResult));
         }
 
