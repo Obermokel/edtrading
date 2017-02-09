@@ -64,6 +64,10 @@ import borg.edtrading.journal.entries.missions.DataScannedEntry;
 import borg.edtrading.journal.entries.missions.MissionAcceptedEntry;
 import borg.edtrading.journal.entries.missions.MissionCompletedEntry;
 import borg.edtrading.journal.entries.missions.MissionFailedEntry;
+import borg.edtrading.journal.entries.powerplay.PowerplayJoinEntry;
+import borg.edtrading.journal.entries.powerplay.PowerplayLeaveEntry;
+import borg.edtrading.journal.entries.powerplay.PowerplaySalaryEntry;
+import borg.edtrading.journal.entries.powerplay.PowerplayVoucherEntry;
 import borg.edtrading.journal.entries.slf.DockFighterEntry;
 import borg.edtrading.journal.entries.slf.LaunchFighterEntry;
 import borg.edtrading.journal.entries.slf.VehicleSwitchEntry;
@@ -338,6 +342,14 @@ public class JournalReader {
                     return new PayFinesEntry(timestamp, event, data);
                 case PayLegacyFines:
                     return new PayLegacyFinesEntry(timestamp, event, data);
+                case PowerplayJoin:
+                    return new PowerplayJoinEntry(timestamp, event, data);
+                case PowerplayLeave:
+                    return new PowerplayLeaveEntry(timestamp, event, data);
+                case PowerplaySalary:
+                    return new PowerplaySalaryEntry(timestamp, event, data);
+                case PowerplayVoucher:
+                    return new PowerplayVoucherEntry(timestamp, event, data);
                 case Progress:
                     return new ProgressEntry(timestamp, event, data);
                 case Promotion:
