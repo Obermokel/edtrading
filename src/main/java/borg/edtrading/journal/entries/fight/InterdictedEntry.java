@@ -20,6 +20,8 @@ public class InterdictedEntry extends AbstractJournalEntry {
     private final String interdictorLocalized;
     private final Boolean isPlayer;
     private final String faction;
+    private final String power;
+    private final Integer combatRank;
 
     public InterdictedEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -29,6 +31,8 @@ public class InterdictedEntry extends AbstractJournalEntry {
         this.interdictorLocalized = this.readString(data, "Interdictor_Localised");
         this.isPlayer = this.readBoolean(data, "IsPlayer");
         this.faction = this.readString(data, "Faction");
+        this.power = this.readString(data, "Power");
+        this.combatRank = this.readInt(data, "CombatRank");
     }
 
     public Boolean getSubmitted() {
@@ -49,6 +53,14 @@ public class InterdictedEntry extends AbstractJournalEntry {
 
     public String getFaction() {
         return this.faction;
+    }
+
+    public String getPower() {
+        return this.power;
+    }
+
+    public Integer getCombatRank() {
+        return this.combatRank;
     }
 
 }

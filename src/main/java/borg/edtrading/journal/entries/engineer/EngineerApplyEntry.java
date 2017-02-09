@@ -18,6 +18,7 @@ public class EngineerApplyEntry extends AbstractJournalEntry {
     private final String engineer;
     private final String blueprint;
     private final Integer level;
+    private final String override;
 
     public EngineerApplyEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -25,6 +26,7 @@ public class EngineerApplyEntry extends AbstractJournalEntry {
         this.engineer = this.readString(data, "Engineer");
         this.blueprint = this.readString(data, "Blueprint");
         this.level = this.readInt(data, "Level");
+        this.override = this.readString(data, "Override");
     }
 
     public String getEngineer() {
@@ -37,6 +39,10 @@ public class EngineerApplyEntry extends AbstractJournalEntry {
 
     public Integer getLevel() {
         return this.level;
+    }
+
+    public String getOverride() {
+        return this.override;
     }
 
 }

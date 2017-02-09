@@ -17,12 +17,14 @@ public class HullDamageEntry extends AbstractJournalEntry {
 
     private final Float health;
     private final Boolean playerPilot;
+    private final Boolean fighter;
 
     public HullDamageEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
 
         this.health = this.readFloat(data, "Health");
         this.playerPilot = this.readBoolean(data, "PlayerPilot");
+        this.fighter = this.readBoolean(data, "Fighter");
     }
 
     public Float getHealth() {
@@ -31,6 +33,10 @@ public class HullDamageEntry extends AbstractJournalEntry {
 
     public Boolean getPlayerPilot() {
         return this.playerPilot;
+    }
+
+    public Boolean getFighter() {
+        return this.fighter;
     }
 
 }

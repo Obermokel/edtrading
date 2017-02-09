@@ -20,6 +20,8 @@ public class MarketSellEntry extends AbstractJournalEntry {
     private final Integer sellPrice;
     private final Integer totalSale;
     private final Integer avgPricePaid;
+    private final Boolean stolenGoods;
+    private final Boolean blackMarket;
 
     public MarketSellEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -29,6 +31,8 @@ public class MarketSellEntry extends AbstractJournalEntry {
         this.sellPrice = this.readInt(data, "SellPrice");
         this.totalSale = this.readInt(data, "TotalSale");
         this.avgPricePaid = this.readInt(data, "AvgPricePaid");
+        this.stolenGoods = this.readBoolean(data, "StolenGoods");
+        this.blackMarket = this.readBoolean(data, "BlackMarket");
     }
 
     public String getType() {
@@ -49,6 +53,14 @@ public class MarketSellEntry extends AbstractJournalEntry {
 
     public Integer getAvgPricePaid() {
         return this.avgPricePaid;
+    }
+
+    public Boolean getStolenGoods() {
+        return this.stolenGoods;
+    }
+
+    public Boolean getBlackMarket() {
+        return this.blackMarket;
     }
 
 }

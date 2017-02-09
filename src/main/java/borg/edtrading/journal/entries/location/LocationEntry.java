@@ -6,6 +6,7 @@ import borg.edtrading.journal.entries.AbstractJournalEntry;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * LocationEntry
@@ -32,6 +33,8 @@ public class LocationEntry extends AbstractJournalEntry {
     private final String systemSecurityLocalized;
     private final String systemFaction;
     private final String factionState;
+    private final List<String> powers;
+    private final String powerplayState;
 
     public LocationEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -52,6 +55,8 @@ public class LocationEntry extends AbstractJournalEntry {
         this.systemSecurityLocalized = data.containsKey("Security_Localised") ? this.readString(data, "Security_Localised") : this.readString(data, "SystemSecurity_Localised");
         this.systemFaction = data.containsKey("Faction") ? this.readString(data, "Faction") : this.readString(data, "SystemFaction");
         this.factionState = this.readString(data, "FactionState");
+        this.powers = this.readList(data, "Powers", String.class);
+        this.powerplayState = this.readString(data, "PowerplayState");
     }
 
     public Boolean getDocked() {
@@ -116,6 +121,14 @@ public class LocationEntry extends AbstractJournalEntry {
 
     public String getFactionState() {
         return this.factionState;
+    }
+
+    public List<String> getPowers() {
+        return this.powers;
+    }
+
+    public String getPowerplayState() {
+        return this.powerplayState;
     }
 
 }

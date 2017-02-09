@@ -24,6 +24,10 @@ public class BountyEntry extends AbstractJournalEntry {
     private final Integer totalReward;
     private final List<BountyReward> rewards;
     private final Integer sharedWithOthers;
+    private final String target;
+    private final String faction;
+    private final String factionLocalized;
+    private final Integer reward;
 
     public BountyEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -32,6 +36,10 @@ public class BountyEntry extends AbstractJournalEntry {
         this.totalReward = this.readInt(data, "TotalReward");
         this.rewards = this.readRewards(data, "Rewards");
         this.sharedWithOthers = this.readInt(data, "SharedWithOthers");
+        this.target = this.readString(data, "Target");
+        this.faction = this.readString(data, "Faction");
+        this.factionLocalized = this.readString(data, "Faction_Localised");
+        this.reward = this.readInt(data, "Reward");
     }
 
     private List<BountyReward> readRewards(LinkedHashMap<String, Object> data, String name) {
@@ -58,6 +66,22 @@ public class BountyEntry extends AbstractJournalEntry {
 
     public Integer getSharedWithOthers() {
         return this.sharedWithOthers;
+    }
+
+    public String getTarget() {
+        return this.target;
+    }
+
+    public String getFaction() {
+        return this.faction;
+    }
+
+    public String getFactionLocalized() {
+        return this.factionLocalized;
+    }
+
+    public Integer getReward() {
+        return this.reward;
     }
 
     public static class BountyReward implements Serializable {

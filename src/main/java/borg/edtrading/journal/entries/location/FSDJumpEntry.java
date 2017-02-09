@@ -6,6 +6,7 @@ import borg.edtrading.journal.entries.AbstractJournalEntry;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * Jumping from one system to another
@@ -31,6 +32,8 @@ public class FSDJumpEntry extends AbstractJournalEntry {
     private final Float fuelUsed;
     private final Float fuelLevel;
     private final Float boostUsed;
+    private final List<String> powers;
+    private final String powerplayState;
 
     public FSDJumpEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -50,6 +53,8 @@ public class FSDJumpEntry extends AbstractJournalEntry {
         this.fuelUsed = this.readFloat(data, "FuelUsed");
         this.fuelLevel = this.readFloat(data, "FuelLevel");
         this.boostUsed = this.readFloat(data, "BoostUsed");
+        this.powers = this.readList(data, "Powers", String.class);
+        this.powerplayState = this.readString(data, "PowerplayState");
     }
 
     /**
@@ -125,6 +130,14 @@ public class FSDJumpEntry extends AbstractJournalEntry {
      */
     public Float getBoostUsed() {
         return this.boostUsed;
+    }
+
+    public List<String> getPowers() {
+        return this.powers;
+    }
+
+    public String getPowerplayState() {
+        return this.powerplayState;
     }
 
 }

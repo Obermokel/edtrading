@@ -27,6 +27,7 @@ public class DockedEntry extends AbstractJournalEntry {
     private final String systemSecurity;
     private final String systemSecurityLocalized;
     private final String factionState;
+    private final Boolean cockpitBreach;
 
     public DockedEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -43,6 +44,7 @@ public class DockedEntry extends AbstractJournalEntry {
         this.systemSecurity = data.containsKey("Security") ? this.readString(data, "Security") : this.readString(data, "SystemSecurity");
         this.systemSecurityLocalized = data.containsKey("Security_Localised") ? this.readString(data, "Security_Localised") : this.readString(data, "SystemSecurity_Localised");
         this.factionState = this.readString(data, "FactionState");
+        this.cockpitBreach = this.readBoolean(data, "CockpitBreach");
     }
 
     public String getStarSystem() {
@@ -91,6 +93,10 @@ public class DockedEntry extends AbstractJournalEntry {
 
     public String getFactionState() {
         return this.factionState;
+    }
+
+    public Boolean getCockpitBreach() {
+        return this.cockpitBreach;
     }
 
 }
