@@ -123,7 +123,7 @@ public class MapCreator {
                 int a = this.coordToAlpha(coord);
                 Color c = StarUtil.spectralClassToColor(starClass);
 
-                int psize = 49;
+                int psize = 3;
                 this.g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), a));
                 this.g.fillOval(p.x - (psize - 1) / 2, p.y - (psize - 1) / 2, psize, psize);
 

@@ -37,11 +37,11 @@ public abstract class StarUtil {
             return new Color(144, 14, 45);
         } else if ("T".equals(spectralClass)) {
             return new Color(72, 8, 41);
-        } else if ("MS".equals(spectralClass)) {
+        } else if ("MS".equals(spectralClass) || "S".equals(spectralClass)) {
             return new Color(229, 129, 62);
         } else if ("TTS".equals(spectralClass)) {
             return new Color(239, 217, 90);
-        } else if ("AeBe".equals(spectralClass)) {
+        } else if ("AeBe".equals(spectralClass) || "AEBE".equals(spectralClass)) {
             return new Color(247, 244, 101);
         } else if ("N".equals(spectralClass) || "NS".equals(spectralClass)) {
             return new Color(224, 224, 255);
