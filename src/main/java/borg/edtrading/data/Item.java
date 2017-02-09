@@ -130,6 +130,12 @@ public enum Item {
     UNTYPICAL_SHIELD_SCANS                            ("Untypical Shield Scans"                          , "shielddensityreports"                            , ItemType.DATA            , 0),
     UNUSUAL_ENCRYPTED_FILES                           ("Unusual Encrypted Files"                         , "encryptedfiles"                                  , ItemType.DATA            , -2),
 
+    ANCIENT_BIOLOGICAL_DATA                           ("Ancient Biological Data"                         , "ancientbiologicaldata"                           , ItemType.DATA            , 0),
+    ANCIENT_CULTURAL_DATA                             ("Ancient Cultural Data"                           , "ancientculturaldata"                             , ItemType.DATA            , 0),
+    ANCIENT_HISTORICAL_DATA                           ("Ancient Historical Data"                         , "ancienthistoricaldata"                           , ItemType.DATA            , 0),
+    ANCIENT_LANGUAGE_DATA                             ("Ancient Language Data"                           , "ancientlanguagedata"                             , ItemType.DATA            , 0),
+    ANCIENT_TECHNOLOGICAL_DATA                        ("Ancient Technological Data"                      , "ancienttechnologicaldata"                        , ItemType.DATA            , 0),
+
     // COMMODITIES
     EXPLOSIVES                                        ("Explosives"                                      , "explosives"                                      , ItemType.COMMODITY       , "Chemicals"              , 0),
     HIP_ORGANOPHOSPHATES                              ("HIP Organophosphates"                            , "hiporganophosphates"                             , ItemType.COMMODITY       , "Chemicals"              , 2),
@@ -370,6 +376,7 @@ public enum Item {
     GALACTIC_TRAVEL_GUIDE                             ("Galactic Travel Guide"                           , "galactictravelguide"                             , ItemType.COMMODITY       , "Salvage"                , 0),
     GEOLOGICAL_SAMPLES                                ("Geological Samples"                              , "geologicalsamples"                               , ItemType.COMMODITY       , "Salvage"                , 0),
     HOSTAGE                                           ("Hostage"                                         , "hostage"                                         , ItemType.COMMODITY       , "Salvage"                , 0),
+    LARGE_EXPLORATION_DATA_CASH                       ("Large Exploration Data Cash"                     , "largeexplorationdatacash"                        , ItemType.COMMODITY       , "Salvage"                , 0),
     MILITARY_INTELLIGENCE                             ("Military Intelligence"                           , "militaryintelligence"                            , ItemType.COMMODITY       , "Salvage"                , 0),
     MILITARY_PLANS                                    ("Military Plans"                                  , "militaryplans"                                   , ItemType.COMMODITY       , "Salvage"                , 0),
     MYSTERIOUS_IDOL                                   ("Mysterious Idol"                                 , "mysteriousidol"                                  , ItemType.COMMODITY       , "Salvage"                , 0),
@@ -394,6 +401,7 @@ public enum Item {
     UNKNOWN_ARTEFACT                                  ("Unknown Artefact"                                , "unknownartefact"                                 , ItemType.COMMODITY       , "Salvage"                , 0),
     UNKNOWN_PROBE                                     ("Unknown Probe"                                   , "unknownprobe"                                    , ItemType.COMMODITY       , "Salvage"                , 0),
     UNSTABLE_DATA_CORE                                ("Unstable Data Core"                              , "unstabledatacore"                                , ItemType.COMMODITY       , "Salvage"                , 0),
+    WRECKAGE_COMPONENTS                               ("Wreckage Components"                             , "wreckagecomponents"                              , ItemType.COMMODITY       , "Salvage"                , 0),
     IMPERIAL_SLAVES                                   ("Imperial Slaves"                                 , "imperialslaves"                                  , ItemType.COMMODITY       , "Slavery"                , 0),
     MASTER_CHEFS                                      ("Master Chefs"                                    , "masterchefs"                                     , ItemType.COMMODITY       , "Slavery"                , 2),
     SLAVES                                            ("Slaves"                                          , "slaves"                                          , ItemType.COMMODITY       , "Slavery"                , 0),
@@ -443,6 +451,13 @@ public enum Item {
     NONLETHAL_WEAPONS                                 ("Non-lethal Weapons"                              , "nonlethalweapons"                                , ItemType.COMMODITY       , "Weapons"                , 0),
     PERSONAL_WEAPONS                                  ("Personal Weapons"                                , "personalweapons"                                 , ItemType.COMMODITY       , "Weapons"                , 0),
     REACTIVE_ARMOUR                                   ("Reactive Armour"                                 , "reactivearmour"                                  , ItemType.COMMODITY       , "Weapons"                , 0),
+
+    ANCIENT_CASKET                                    ("Ancient Casket"                                  , "ancientcasket"                                   , ItemType.COMMODITY       , "Ancient"                , 0),
+    ANCIENT_ORB                                       ("Ancient Orb"                                     , "ancientorb"                                      , ItemType.COMMODITY       , "Ancient"                , 0),
+    ANCIENT_RELIC                                     ("Ancient Relic"                                   , "ancientrelic"                                    , ItemType.COMMODITY       , "Ancient"                , 0),
+    ANCIENT_TABLET                                    ("Ancient Tablet"                                  , "ancienttablet"                                   , ItemType.COMMODITY       , "Ancient"                , 0),
+    ANCIENT_TOTEM                                     ("Ancient Totem"                                   , "ancienttotem"                                    , ItemType.COMMODITY       , "Ancient"                , 0),
+    ANCIENT_URN                                       ("Ancient Urn"                                     , "ancienturn"                                      , ItemType.COMMODITY       , "Ancient"                , 0),
 
     DRONES("DRONES", "drones", ItemType.DRONES, 0);
     //@formatter:on
