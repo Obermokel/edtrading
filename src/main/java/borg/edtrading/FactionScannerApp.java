@@ -171,11 +171,22 @@ public class FactionScannerApp {
 
     private static void updateDateAndSystemFromFilename(SystemFactions systemFactions, File screenshotFile) throws ParseException {
         // Date
-        Pattern p = Pattern.compile(".*(\\d{4}\\-\\d{2}\\-\\d{2}).*");
+        Date date = new Date(screenshotFile.lastModified());
+        Pattern p = Pattern.compile(".*(\\d{4}\\-\\d{2}\\-\\d{2} \\d{2}\\-\\d{2}\\-\\d{2}).*");
         Matcher m = p.matcher(screenshotFile.getName());
         if (m.matches()) {
-            systemFactions.setDate(new SimpleDateFormat("yyyy-MM-dd").parse(m.group(1)));
+            date = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss").parse(m.group(1));
+        } else {
+            p = Pattern.compile(".*(\\d{4}\\-\\d{2}\\-\\d{2}).*");
+            m = p.matcher(screenshotFile.getName());
+            if (m.matches()) {
+                date = new SimpleDateFormat("yyyy-MM-dd").parse(m.group(1));
+            }
         }
+        if (DateUtils.toCalendar(date).get(Calendar.HOUR_OF_DAY) >= 20) {
+            date = DateUtils.addDays(DateUtils.truncate(date, Calendar.DATE), 1); // Treat as next day already (BGS should have been updated)
+        }
+        systemFactions.setDate(DateUtils.truncate(date, Calendar.DATE));
 
         // System name
         p = Pattern.compile(".*_\\d{2}_([^_]+)_\\d{2}\\.png");
