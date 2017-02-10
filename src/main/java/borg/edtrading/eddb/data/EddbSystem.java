@@ -57,6 +57,9 @@ public class EddbSystem implements EddbEntity {
     @SerializedName("id")
     private Long id = null;
     @Field(type = FieldType.Date)
+    @SerializedName("created_at")
+    private Date createdAt = null;
+    @Field(type = FieldType.Date)
     @SerializedName("updated_at")
     private Date updatedAt = null;
     @SerializedName("edsm_id")
@@ -164,6 +167,14 @@ public class EddbSystem implements EddbEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Date getCreatedAt() {
+        return this.createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 
     public Date getUpdatedAt() {
