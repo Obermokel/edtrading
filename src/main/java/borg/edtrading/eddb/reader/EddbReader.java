@@ -25,7 +25,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -251,10 +251,12 @@ public class EddbReader {
     }
 
     private void enrichEddbData() {
-        QueryBuilder qb = QueryBuilders.boolQuery().mustNot(QueryBuilders.existsQuery("coord"));
+        BoolQueryBuilder qb = QueryBuilders.boolQuery();
+        qb.must(QueryBuilders.matchAllQuery());
+        qb.mustNot(QueryBuilders.existsQuery("coord.x"));
 
         logger.debug("Setting body coords...");
-        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbbody").withTypes("eddbbody").withPageable(new PageRequest(0, 1000)).build();
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices("eddbbody").withQuery(qb).withPageable(new PageRequest(0, 1000)).build();
         String scrollId = esTemplate.scan(searchQuery, 1000, false);
         boolean hasRecords = true;
         while (hasRecords) {
@@ -276,7 +278,7 @@ public class EddbReader {
         esTemplate.clearScroll(scrollId);
 
         logger.debug("Setting station coords...");
-        searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbstation").withTypes("eddbstation").withPageable(new PageRequest(0, 1000)).build();
+        searchQuery = new NativeSearchQueryBuilder().withIndices("eddbstation").withQuery(qb).withPageable(new PageRequest(0, 1000)).build();
         scrollId = esTemplate.scan(searchQuery, 1000, false);
         hasRecords = true;
         while (hasRecords) {
@@ -297,7 +299,7 @@ public class EddbReader {
         esTemplate.clearScroll(scrollId);
 
         logger.debug("Setting faction home coords...");
-        searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbfaction").withTypes("eddbfaction").withPageable(new PageRequest(0, 1000)).build();
+        searchQuery = new NativeSearchQueryBuilder().withIndices("eddbfaction").withQuery(qb).withPageable(new PageRequest(0, 1000)).build();
         scrollId = esTemplate.scan(searchQuery, 1000, false);
         hasRecords = true;
         while (hasRecords) {
@@ -318,7 +320,7 @@ public class EddbReader {
         esTemplate.clearScroll(scrollId);
 
         logger.debug("Setting market entry coords...");
-        searchQuery = new NativeSearchQueryBuilder().withQuery(qb).withIndices("eddbmarketentry").withTypes("eddbmarketentry").withPageable(new PageRequest(0, 1000)).build();
+        searchQuery = new NativeSearchQueryBuilder().withIndices("eddbmarketentry").withQuery(qb).withPageable(new PageRequest(0, 1000)).build();
         scrollId = esTemplate.scan(searchQuery, 1000, false);
         hasRecords = true;
         while (hasRecords) {
