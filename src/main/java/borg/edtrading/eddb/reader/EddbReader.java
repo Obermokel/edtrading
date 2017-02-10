@@ -8,6 +8,7 @@ import borg.edtrading.eddb.data.EddbMarketEntry;
 import borg.edtrading.eddb.data.EddbModule;
 import borg.edtrading.eddb.data.EddbStation;
 import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.eddb.data.EdsmSystem;
 import borg.edtrading.eddb.repositories.EddbBodyRepository;
 import borg.edtrading.eddb.repositories.EddbCommodityRepository;
 import borg.edtrading.eddb.repositories.EddbFactionRepository;
@@ -50,9 +51,11 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
@@ -198,6 +201,9 @@ public class EddbReader {
             Set<Long> currentEntityIds = this.readCsvFileIntoRepo(systemsFile, new EddbSystemCsvRecordParser(), this.systemRepo);
             currentEntityIds.addAll(this.readJsonFileIntoRepo(systemsPopulatedFile, EddbSystem.class, this.systemRepo));
             this.deleteOldEntities("eddbsystem", EddbSystem.class, currentEntityIds);
+            File edsmFile = new File(BASE_DIR, "systemsWithCoordinates.json");
+            this.downloadIfUpdated("https://www.edsm.net/dump/systemsWithCoordinates.json", edsmFile);
+            this.setSystemCreatedDates(edsmFile);
         }
         File bodiesFile = new File(BASE_DIR, "bodies.jsonl");
         boolean bodiesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/bodies.jsonl", bodiesFile);
@@ -220,6 +226,52 @@ public class EddbReader {
         this.enrichEddbData();
         long end = System.currentTimeMillis();
         logger.info("Downloaded data in " + DurationFormatUtils.formatDuration(end - start, "H:mm:ss"));
+    }
+
+    private void setSystemCreatedDates(File edsmFile) throws IOException {
+        logger.debug("Setting system created dates");
+
+        //@formatter:off
+        final Gson gson = new GsonBuilder()
+                //.registerTypeAdapter(Date.class, new SecondsSinceEpochDeserializer())
+                //.registerTypeAdapter(Boolean.class, new BooleanDigitDeserializer())
+                .setDateFormat("yyyy-MM-dd HH:mm:ss")
+                .serializeNulls()
+                .setPrettyPrinting()
+                .create();
+        //@formatter:on
+
+        Map<Long, EdsmSystem> edsmSystemsById = new HashMap<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(edsmFile), "UTF-8"))) {
+            EdsmSystem[] entities = (EdsmSystem[]) gson.fromJson(reader, Array.newInstance(EdsmSystem.class, 0).getClass());
+            for (EdsmSystem entity : entities) {
+                edsmSystemsById.put(entity.getId(), entity);
+            }
+        }
+
+        BoolQueryBuilder qb = QueryBuilders.boolQuery();
+        qb.must(QueryBuilders.matchAllQuery());
+        qb.mustNot(QueryBuilders.existsQuery("createdAt"));
+
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices("eddbsystem").withQuery(qb).withPageable(new PageRequest(0, 1000)).build();
+        String scrollId = esTemplate.scan(searchQuery, 1000, false);
+        boolean hasRecords = true;
+        while (hasRecords) {
+            Page<EddbSystem> page = esTemplate.scroll(scrollId, 5000, EddbSystem.class);
+            if (page.hasContent()) {
+                List<EddbSystem> eddbSystems = page.getContent();
+                eddbSystems.parallelStream().forEach(eddbSystem -> {
+                    EdsmSystem edsmSystem = edsmSystemsById.get(eddbSystem.getEdsmId());
+                    if (edsmSystem != null) {
+                        eddbSystem.setCreatedAt(edsmSystem.getCreatedAt());
+                    }
+                });
+                systemRepo.save(eddbSystems);
+            } else {
+                hasRecords = false;
+            }
+        }
+        esTemplate.clearScroll(scrollId);
     }
 
     private <T extends EddbEntity> void deleteOldEntities(String index, Class<T> type, Set<Long> currentEntityIds) {

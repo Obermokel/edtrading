@@ -174,13 +174,13 @@ public class MapCreator {
     private int coordToAlpha(Coord coord) {
         if (MapView.TOP.equals(this.view)) {
             float dy = Math.abs(coord.getY() - (this.yfrom + (this.ysize / 2f)));
-            return 255 - Math.round((dy / (this.ysize / 2f)) * 127);
+            return 128 - Math.round((dy / (this.ysize / 2f)) * 127);
         } else if (MapView.LEFT.equals(this.view)) {
             float dx = Math.abs(coord.getX() - (this.xfrom + (this.xsize / 2f)));
-            return 255 - Math.round((dx / (this.xsize / 2f)) * 127);
+            return 128 - Math.round((dx / (this.xsize / 2f)) * 127);
         } else if (MapView.FRONT.equals(this.view)) {
             float dz = Math.abs(coord.getZ() - (this.zfrom + (this.zsize / 2f)));
-            return 255 - Math.round((dz / (this.zsize / 2f)) * 127);
+            return 128 - Math.round((dz / (this.zsize / 2f)) * 127);
         } else {
             return 0;
         }

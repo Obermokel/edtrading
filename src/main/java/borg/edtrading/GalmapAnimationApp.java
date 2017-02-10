@@ -6,6 +6,9 @@ import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;
 import borg.edtrading.gui.MapCreator;
 import borg.edtrading.gui.MapCreator.MapView;
+import borg.edtrading.services.EddbService;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,9 +24,13 @@ import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.SearchQuery;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,28 +51,41 @@ public class GalmapAnimationApp {
     private static final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
     public static void main(String[] args) throws Exception {
-        //Date yesterday = DateUtils.addDays(DateUtils.truncate(new Date(), Calendar.DATE), -1);
-        Date yesterday = df.parse("2016-01-01");
+        APPCTX.getBean(EddbService.class).updateEddbData(false);
+
+        Date today = DateUtils.truncate(new Date(), Calendar.DATE);
+        Date date = df.parse("2015-05-13"); // Where EDSM starts
         //Date date = df.parse("2016-09-18"); // Where EDDB starts
-        Date date = df.parse("2014-12-06");
+        // Barnacles:                   2016-01-15
+        // Distant worlds:              2016-01-14 .. 2016-06-05
+        // Patch 2.1 Engineers:         2016-05-26
+        // Crab Nebula Expedition:      2016-06-11 .. 2016-07-18
+        // Jaques discovered:           2016-06-29
+        // August Exodus:               2016-07-24 .. 2016-10-04
+        // ???
+        // Patch 2.2 neutron jumps:     2016-10-25
+        // Children of Raxxla:          2016-11-17 .. 2016-12-01
+        // CEI & CCC:                   2016-Dec
+        // Thargoid hyperdictions:      2017-01-06
+        // Distant stars:               2017-01-15 .. 2017-01-29
+        // Ancient ruins puzzle:        2017-01-10 .. 2017-Feb
+        //Date date = df.parse("2017-02-08");
         ElasticsearchTemplate elasticsearchTemplate = APPCTX.getBean(ElasticsearchTemplate.class);
         Map<Long, EddbBody> mainStarsBySystem = findMainStarsBySystem(elasticsearchTemplate);
 
-        while (date.before(yesterday)) {
+        File statsCsvFile = new File(Constants.TEMP_DIR, "stats.csv");
+        FileUtils.write(statsCsvFile, "Datum;Systeme;Hauptsterne\r\n", "ISO-8859-1", false);
+        while (date.before(today)) {
             System.out.print(df.format(date) + ": ");
+            int nSystems = 0;
+            int nMainStars = 0;
 
             MapCreator mapCreator = new MapCreator(-43000, 41000, -3333, 3333, -18000, 66000, MapView.TOP, 4096);
             mapCreator.prepare();
 
             BoolQueryBuilder qb = QueryBuilders.boolQuery();
-            try {
-                long maxSystemId = estimateNumSystems(date);
-                qb.must(QueryBuilders.rangeQuery("id").lte(maxSystemId));
-                qb.must(QueryBuilders.rangeQuery("coord.y").from(-3333.0).to(3333.0));
-            } catch (Exception e1) {
-                qb.must(QueryBuilders.rangeQuery("updatedAt").lte(date.getTime()));
-                qb.must(QueryBuilders.rangeQuery("coord.y").from(-3333.0).to(3333.0));
-            }
+            qb.must(QueryBuilders.rangeQuery("createdAt").lte(date.getTime()));
+            qb.must(QueryBuilders.rangeQuery("coord.y").from(-3333.0).to(3333.0));
             SortBuilder sb = SortBuilders.fieldSort("coord.y").order(SortOrder.ASC);
             SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices("eddbsystem").withQuery(qb).withSort(sb).withPageable(new PageRequest(0, 1000)).build();
             String scrollId = elasticsearchTemplate.scan(searchQuery, 1000, false);
@@ -77,18 +97,6 @@ public class GalmapAnimationApp {
                     for (EddbSystem system : page.getContent()) {
                         String starClass = null;
                         try {
-                            //                            CriteriaQuery cq = new CriteriaQuery(Criteria.where("systemId").is(system.getId()).and(Criteria.where("createdAt").lessThanEqual(date.getTime())).and(Criteria.where("isMainStar").is(true)));
-                            //                            EddbBody mainStar = elasticsearchTemplate.queryForObject(cq, EddbBody.class);
-                            //                            starClass = mainStar == null ? null : mainStar.getStarClass();
-
-                            //                            List<EddbBody> bodies = bodyRepository.findBySystemId(system.getId(), new PageRequest(0, 999)).getContent();
-                            //                            for (EddbBody body : bodies) {
-                            //                                if (Boolean.TRUE.equals(body.getIsMainStar()) && body.getCreatedAt() != null && body.getCreatedAt().compareTo(date) <= 0) {
-                            //                                    starClass = body.getStarClass();
-                            //                                    break;
-                            //                                }
-                            //                            }
-
                             EddbBody mainStar = mainStarsBySystem.get(system.getId());
                             if (mainStar != null && mainStar.getCreatedAt() != null && mainStar.getCreatedAt().compareTo(date) <= 0) {
                                 starClass = mainStar.getStarClass();
@@ -98,6 +106,11 @@ public class GalmapAnimationApp {
                         }
 
                         mapCreator.drawStar(system.getCoord(), starClass, null);
+
+                        nSystems++;
+                        if (StringUtils.isNotEmpty(starClass)) {
+                            nMainStars++;
+                        }
                     }
                 } else {
                     hasRecords = false;
@@ -106,46 +119,17 @@ public class GalmapAnimationApp {
             elasticsearchTemplate.clearScroll(scrollId);
 
             BufferedImage mapImage = mapCreator.finish();
-            //            Graphics2D g = mapImage.createGraphics();
-            //            g.setFont(new Font("Consolas", Font.BOLD, 256));
-            //            g.setColor(Color.WHITE);
-            //            g.drawString(df.format(date), 50, 300);
-            //            g.dispose();
+            Graphics2D g = mapImage.createGraphics();
+            g.setFont(new Font("Consolas", Font.BOLD, 256));
+            g.setColor(Color.WHITE);
+            g.drawString(df.format(date), 50, 250);
+            g.dispose();
             ImageIO.write(mapImage, "png", new File(Constants.TEMP_DIR, "Map " + df.format(date) + ".png"));
 
             date = DateUtils.addDays(date, 1);
 
             System.out.println();
-        }
-    }
-
-    private static long estimateNumSystems(Date at) throws Exception {
-        // 2016-01-01: 200,000
-        // 2016-09-18: 1,862,019
-        Date maxDate = df.parse("2016-09-18"); // ~1,862,000 systems (EDDB start)
-        //                       2016-06-29    // ~640,000 systems (Jaques Station discovered)
-        Date refDate = df.parse("2016-01-01"); // ~200,000 systems (wild guess!)
-        Date minDate = df.parse("2014-12-06"); // Release date for PC
-        if (at.after(maxDate)) {
-            throw new RuntimeException(at + " is after max date of " + maxDate);
-        } else if (at.before(minDate)) {
-            throw new RuntimeException(at + " is before min date of " + minDate);
-        } else if (at.before(refDate)) {
-            long millis = refDate.getTime() - at.getTime();
-            long days = millis / DateUtils.MILLIS_PER_DAY;
-            double numSystems = 200000.0;
-            for (long l = 0; l < days; l++) {
-                numSystems /= 1.009748;
-            }
-            return Math.round(numSystems);
-        } else {
-            long millis = at.getTime() - refDate.getTime();
-            long days = millis / DateUtils.MILLIS_PER_DAY;
-            double numSystems = 200000.0;
-            for (long l = 0; l < days; l++) {
-                numSystems *= 1.009748;
-            }
-            return Math.round(numSystems);
+            FileUtils.write(statsCsvFile, new SimpleDateFormat("dd.MM.yyyy").format(date) + ";" + nSystems + ";" + nMainStars + "\r\n", "ISO-8859-1", true);
         }
     }
 
