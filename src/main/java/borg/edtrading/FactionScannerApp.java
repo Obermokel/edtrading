@@ -59,10 +59,11 @@ public class FactionScannerApp {
     private static List<Template> templates = null;
 
     public static void main(String[] args) throws IOException {
-        characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
-        templates = Template.fromFolder("BodyScanner");
 
         while (!Thread.interrupted()) {
+            characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
+            templates = Template.fromFolder("BodyScanner");
+
             processUploadedScreenshots();
 
             // TODO Check all screenshots, remember last date
@@ -85,7 +86,12 @@ public class FactionScannerApp {
             try {
                 SystemFactions systemFactions = processScreenshotFile(screenshotFile);
                 logger.info("Successfully scanned " + screenshotFile);
-                FileUtils.moveFileToDirectory(screenshotFile, new File(doneDir, systemFactions.getSystemName()), true);
+                File destDir = new File(doneDir, systemFactions.getSystemName());
+                File destFile = new File(destDir, screenshotFile.getName());
+                if (destFile.exists()) {
+                    destFile.delete();
+                }
+                FileUtils.moveFileToDirectory(screenshotFile, destDir, true);
             } catch (Exception e1) {
                 if (System.currentTimeMillis() - screenshotFile.lastModified() < 600000L) {
                     logger.warn("Failed to process " + screenshotFile + ": " + e1);
