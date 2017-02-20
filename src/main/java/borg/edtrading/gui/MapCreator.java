@@ -116,14 +116,28 @@ public class MapCreator {
         return this.i;
     }
 
+    public void drawString(Coord coord, String text, Color color, Font font) {
+        if (coord != null && StringUtils.isNotEmpty(text) && color != null && font != null) {
+            Point p = this.coordToPoint(coord);
+            if (p.x >= 0 && p.x < this.width && p.y >= 0 && p.y < this.height) {
+                this.g.setColor(color);
+                this.g.setFont(font);
+                this.g.drawString(text, p.x, p.y + font.getSize() / 2);
+            }
+        }
+    }
+
     public void drawStar(Coord coord, String starClass, String name) {
+        this.drawStar(coord, starClass, name, 3, 128, 127);
+    }
+
+    public void drawStar(Coord coord, String starClass, String name, int psize, int alphaRange, int minAlpha) {
         if (coord != null) {
             Point p = this.coordToPoint(coord);
             if (p.x >= 0 && p.x < this.width && p.y >= 0 && p.y < this.height) {
-                int a = this.coordToAlpha(coord);
+                int a = this.coordToAlpha(coord, alphaRange, minAlpha);
                 Color c = StarUtil.spectralClassToColor(starClass);
 
-                int psize = 3;
                 this.g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), a));
                 this.g.fillOval(p.x - (psize - 1) / 2, p.y - (psize - 1) / 2, psize, psize);
 
@@ -155,6 +169,21 @@ public class MapCreator {
         return this.height;
     }
 
+    public Coord pointToCoord(Point p) {
+        float xPercent = (float) p.x / (float) this.width;
+        float yPercent = (float) p.y / (float) this.height;
+
+        if (MapView.TOP.equals(this.view)) {
+            return new Coord(this.xfrom + xPercent * this.xsize, 0f, this.zto - yPercent * this.zsize);
+        } else if (MapView.LEFT.equals(this.view)) {
+            return new Coord(0f, this.yto - yPercent * this.ysize, this.zto - xPercent * this.zsize);
+        } else if (MapView.FRONT.equals(this.view)) {
+            return new Coord(this.xfrom + xPercent * this.xsize, this.yto - yPercent * this.ysize, 0f);
+        } else {
+            return null;
+        }
+    }
+
     private Point coordToPoint(Coord coord) {
         float xPercent = (coord.getX() - this.xfrom) / this.xsize;
         float yPercent = 1.0f - ((coord.getY() - this.yfrom) / this.ysize);
@@ -171,18 +200,36 @@ public class MapCreator {
         }
     }
 
-    private int coordToAlpha(Coord coord) {
-        if (MapView.TOP.equals(this.view)) {
-            float dy = Math.abs(coord.getY() - (this.yfrom + (this.ysize / 2f)));
-            return 128 - Math.round((dy / (this.ysize / 2f)) * 127);
-        } else if (MapView.LEFT.equals(this.view)) {
-            float dx = Math.abs(coord.getX() - (this.xfrom + (this.xsize / 2f)));
-            return 128 - Math.round((dx / (this.xsize / 2f)) * 127);
-        } else if (MapView.FRONT.equals(this.view)) {
-            float dz = Math.abs(coord.getZ() - (this.zfrom + (this.zsize / 2f)));
-            return 128 - Math.round((dz / (this.zsize / 2f)) * 127);
+    /**
+     * @param coord
+     * @param alphaRange
+     *      How much alpha can vary. 255 for full range, 128 for half etc.
+     * @param minAlpha
+     *      Min alpha. 0 means transparent, 128 means half solid/transparent. minAlpha+alphaRange must be <= 255.
+     * @return
+     */
+    private int coordToAlpha(Coord coord, int alphaRange, int minAlpha) {
+        // 255=solid
+        // 0=transparent
+        if (minAlpha + alphaRange > 255) {
+            throw new IllegalArgumentException("minAlpha(" + minAlpha + ") + alphaRange(" + alphaRange + ") > 255");
+        } else if (alphaRange < 0 || alphaRange > 255) {
+            throw new IllegalArgumentException("alphaRange(" + alphaRange + ") must be between 0 and 255");
+        } else if (minAlpha < 0 || minAlpha > 255) {
+            throw new IllegalArgumentException("minAlpha(" + minAlpha + ") must be between 0 and 255");
         } else {
-            return 0;
+            if (MapView.TOP.equals(this.view)) {
+                float dy = Math.abs(coord.getY() - (this.yfrom + (this.ysize / 2f)));
+                return minAlpha - Math.round((dy / (this.ysize / 2f)) * alphaRange);
+            } else if (MapView.LEFT.equals(this.view)) {
+                float dx = Math.abs(coord.getX() - (this.xfrom + (this.xsize / 2f)));
+                return minAlpha - Math.round((dx / (this.xsize / 2f)) * alphaRange);
+            } else if (MapView.FRONT.equals(this.view)) {
+                float dz = Math.abs(coord.getZ() - (this.zfrom + (this.zsize / 2f)));
+                return minAlpha - Math.round((dz / (this.zsize / 2f)) * alphaRange);
+            } else {
+                return 0;
+            }
         }
     }
 
