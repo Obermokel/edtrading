@@ -326,13 +326,13 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
 
         private ApplicationContext appctx = null;
         private TravelHistory travelHistory = null;
-        private float xsize = 100f;
+        private float xsize = 25f;
         private float xfrom = 0f - xsize;
         private float xto = 0f + xsize;
         private float ysize = 25f;
         private float yfrom = 0f - ysize;
         private float yto = 0f + ysize;
-        private float zsize = 100f;
+        private float zsize = 25f;
         private float zfrom = 0f - zsize;
         private float zto = 0f + zsize;
 
@@ -351,7 +351,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
 
             Coord coord = this.travelHistory.getCoord();
             //zsize = ((float) this.getHeight() / (float) this.getWidth()) * xsize;
-            zsize = 2 * 150f;
+            zsize = 2 * 100f;
             zfrom = coord.getZ() - zsize / 2;
             zto = coord.getZ() + zsize / 2;
             //xsize = 2 * 160f;
@@ -359,7 +359,8 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             xfrom = coord.getX() - xsize / 2;
             xto = coord.getX() + xsize / 2;
             //ysize = xsize / 4;
-            ysize = zsize / 4;
+            //ysize = zsize / 4;
+            ysize = Math.min(xsize, zsize);
             yfrom = coord.getY() - ysize / 2;
             yto = coord.getY() + ysize / 2;
             //            EddbSystemRepository systemRepo = this.appctx.getBean(EddbSystemRepository.class);
@@ -418,83 +419,83 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
                 }
             }
 
-            Page<EddbBody> blackHoles = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, Boolean.TRUE, Arrays.asList("BH", "SMBH"), new PageRequest(0, 1000));
-            for (EddbBody blackHole : blackHoles.getContent()) {
-                Point p = this.coordToPoint(blackHole.getCoord());
-
-                g.setColor(new Color(80, 80, 80));
-                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
-                g.setColor(new Color(0, 0, 0));
-                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
-                g.setColor(this.travelHistory.isScanned(blackHole.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
-                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
-                g.drawString(blackHole.getName(), p.x + psize, p.y + psize / 2);
-            }
-
-            Page<EddbBody> neutronStars = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, Boolean.TRUE, Arrays.asList("NS"), new PageRequest(0, 1000));
-            for (EddbBody neutronStar : neutronStars.getContent()) {
-                Point p = this.coordToPoint(neutronStar.getCoord());
-
-                g.setColor(new Color(0, 0, 160));
-                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
-                g.setColor(new Color(255, 255, 255));
-                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
-                g.setColor(this.travelHistory.isScanned(neutronStar.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
-                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
-                g.drawString(neutronStar.getName(), p.x + psize, p.y + psize / 2);
-            }
-
-            Page<EddbBody> earthLikeWorlds = eddbService.findPlanetsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_EARTH_LIKE_WORLD), new PageRequest(0, 1000));
-            for (EddbBody earthLikeWorld : earthLikeWorlds.getContent()) {
-                Point p = this.coordToPoint(earthLikeWorld.getCoord());
-
-                g.setColor(new Color(0, 40, 120));
-                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
-                g.setColor(new Color(40, 180, 0));
-                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
-                g.setColor(this.travelHistory.isScanned(earthLikeWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
-                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
-                g.drawString(earthLikeWorld.getName(), p.x + psize, p.y + psize / 2);
-            }
-
-            Page<EddbBody> ammoniaWorlds = eddbService.findPlanetsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_AMMONIA_WORLD), new PageRequest(0, 1000));
-            for (EddbBody ammoniaWorld : ammoniaWorlds.getContent()) {
-                Point p = this.coordToPoint(ammoniaWorld.getCoord());
-
-                g.setColor(new Color(140, 140, 40));
-                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
-                g.setColor(new Color(120, 120, 0));
-                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
-                g.setColor(this.travelHistory.isScanned(ammoniaWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
-                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
-                g.drawString(ammoniaWorld.getName(), p.x + psize, p.y + psize / 2);
-            }
-
-            Page<EddbBody> waterWorlds = eddbService.findPlanetsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_WATER_WORLD), new PageRequest(0, 1000));
-            for (EddbBody waterWorld : waterWorlds.getContent()) {
-                Point p = this.coordToPoint(waterWorld.getCoord());
-
-                g.setColor(new Color(0, 0, 120));
-                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
-                g.setColor(new Color(0, 0, 80));
-                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
-                g.setColor(this.travelHistory.isScanned(waterWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
-                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
-                g.drawString(waterWorld.getName(), p.x + psize, p.y + psize / 2);
-            }
-
-            Page<EddbBody> terraformingCandidates = eddbService.findPlanetsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isTerraformingCandidate = */ Boolean.TRUE, /* types = */ null, new PageRequest(0, 1000));
-            for (EddbBody terraformingCandidate : terraformingCandidates.getContent()) {
-                Point p = this.coordToPoint(terraformingCandidate.getCoord());
-
-                g.setColor(new Color(0, 160, 20));
-                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
-                g.setColor(new Color(200, 120, 50));
-                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
-                g.setColor(this.travelHistory.isScanned(terraformingCandidate.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
-                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
-                g.drawString(terraformingCandidate.getName(), p.x + psize, p.y + psize / 2);
-            }
+            //            Page<EddbBody> blackHoles = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, Boolean.TRUE, Arrays.asList("BH", "SMBH"), new PageRequest(0, 1000));
+            //            for (EddbBody blackHole : blackHoles.getContent()) {
+            //                Point p = this.coordToPoint(blackHole.getCoord());
+            //
+            //                g.setColor(new Color(80, 80, 80));
+            //                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
+            //                g.setColor(new Color(0, 0, 0));
+            //                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
+            //                g.setColor(this.travelHistory.isScanned(blackHole.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+            //                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+            //                g.drawString(blackHole.getName(), p.x + psize, p.y + psize / 2);
+            //            }
+            //
+            //            Page<EddbBody> neutronStars = eddbService.findStarsWithin(xfrom, xto, yfrom, yto, zfrom, zto, Boolean.TRUE, Arrays.asList("NS"), new PageRequest(0, 1000));
+            //            for (EddbBody neutronStar : neutronStars.getContent()) {
+            //                Point p = this.coordToPoint(neutronStar.getCoord());
+            //
+            //                g.setColor(new Color(0, 0, 160));
+            //                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
+            //                g.setColor(new Color(255, 255, 255));
+            //                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
+            //                g.setColor(this.travelHistory.isScanned(neutronStar.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+            //                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+            //                g.drawString(neutronStar.getName(), p.x + psize, p.y + psize / 2);
+            //            }
+            //
+            //            Page<EddbBody> earthLikeWorlds = eddbService.findPlanetsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_EARTH_LIKE_WORLD), new PageRequest(0, 1000));
+            //            for (EddbBody earthLikeWorld : earthLikeWorlds.getContent()) {
+            //                Point p = this.coordToPoint(earthLikeWorld.getCoord());
+            //
+            //                g.setColor(new Color(0, 40, 120));
+            //                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
+            //                g.setColor(new Color(40, 180, 0));
+            //                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
+            //                g.setColor(this.travelHistory.isScanned(earthLikeWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+            //                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+            //                g.drawString(earthLikeWorld.getName(), p.x + psize, p.y + psize / 2);
+            //            }
+            //
+            //            Page<EddbBody> ammoniaWorlds = eddbService.findPlanetsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_AMMONIA_WORLD), new PageRequest(0, 1000));
+            //            for (EddbBody ammoniaWorld : ammoniaWorlds.getContent()) {
+            //                Point p = this.coordToPoint(ammoniaWorld.getCoord());
+            //
+            //                g.setColor(new Color(140, 140, 40));
+            //                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
+            //                g.setColor(new Color(120, 120, 0));
+            //                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
+            //                g.setColor(this.travelHistory.isScanned(ammoniaWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+            //                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+            //                g.drawString(ammoniaWorld.getName(), p.x + psize, p.y + psize / 2);
+            //            }
+            //
+            //            Page<EddbBody> waterWorlds = eddbService.findPlanetsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_WATER_WORLD), new PageRequest(0, 1000));
+            //            for (EddbBody waterWorld : waterWorlds.getContent()) {
+            //                Point p = this.coordToPoint(waterWorld.getCoord());
+            //
+            //                g.setColor(new Color(0, 0, 120));
+            //                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
+            //                g.setColor(new Color(0, 0, 80));
+            //                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
+            //                g.setColor(this.travelHistory.isScanned(waterWorld.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+            //                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+            //                g.drawString(waterWorld.getName(), p.x + psize, p.y + psize / 2);
+            //            }
+            //
+            //            Page<EddbBody> terraformingCandidates = eddbService.findPlanetsWithin(xfrom, xto, yfrom, yto, zfrom, zto, /* isTerraformingCandidate = */ Boolean.TRUE, /* types = */ null, new PageRequest(0, 1000));
+            //            for (EddbBody terraformingCandidate : terraformingCandidates.getContent()) {
+            //                Point p = this.coordToPoint(terraformingCandidate.getCoord());
+            //
+            //                g.setColor(new Color(0, 160, 20));
+            //                g.fillOval(p.x - poffset, p.y - poffset, psize, psize);
+            //                g.setColor(new Color(200, 120, 50));
+            //                g.fillOval((p.x - poffset) + 1, (p.y - poffset) + 1, psize - 2, psize - 2);
+            //                g.setColor(this.travelHistory.isScanned(terraformingCandidate.getName()) ? Color.DARK_GRAY : Color.LIGHT_GRAY);
+            //                g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+            //                g.drawString(terraformingCandidate.getName(), p.x + psize, p.y + psize / 2);
+            //            }
 
             // Me
             g.setColor(Color.RED); // Unknown on EDDB
