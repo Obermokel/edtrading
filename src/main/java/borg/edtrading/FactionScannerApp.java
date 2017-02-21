@@ -126,12 +126,12 @@ public class FactionScannerApp {
         Region region = screenshot.getAsRegion(); //x=0,y=350,w=840,h=1620
 
         OcrTask ocrTask = new OcrTask(region, characterLocator, templates);
-        ocrTask.setDebugAlphanumTemplates(true);
+        //        ocrTask.setDebugAlphanumTemplates(true);
         //        ocrTask.setDebugAlphanumTextLines(true);
         //        ocrTask.setDebugAllTemplates(true);
         ocrTask.setDebugAllTextLines(true);
         OcrResult ocrResult = new OcrExecutor().executeOcr(ocrTask);
-        ocrResult.writeDebugImages();
+        //        ocrResult.writeDebugImages();
 
         SystemFactions systemFactions = new SystemFactions("FAKE SYSTEM");
         updateSystemFactions(systemFactions, ocrResult);
