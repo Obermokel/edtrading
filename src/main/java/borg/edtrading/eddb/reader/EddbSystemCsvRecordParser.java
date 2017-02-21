@@ -1,9 +1,12 @@
 package borg.edtrading.eddb.reader;
 
 import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.eddb.data.EdsmSystem;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.Map;
 
 /**
  * EddbSystemCsvRecordParser
@@ -14,13 +17,19 @@ public class EddbSystemCsvRecordParser implements CSVRecordParser<EddbSystem> {
 
     static final Logger logger = LogManager.getLogger(EddbSystemCsvRecordParser.class);
 
+    private final Map<Long, EdsmSystem> edsmSystemsById;
+
+    public EddbSystemCsvRecordParser(Map<Long, EdsmSystem> edsmSystemsById) {
+        this.edsmSystemsById = edsmSystemsById;
+    }
+
     @Override
     public EddbSystem parse(CSVRecord record) {
         EddbSystem result = new EddbSystem();
 
         result.setId(CSVHelper.getAsLong(record.get("id")));
-        result.setUpdatedAt(CSVHelper.getAsDate(record.get("updated_at")));
         result.setEdsmId(CSVHelper.getAsLong(record.get("edsm_id")));
+        result.setUpdatedAt(CSVHelper.getAsDate(record.get("updated_at")));
         result.setName(CSVHelper.getAsString(record.get("name")));
         result.setSimbadRef(CSVHelper.getAsString(record.get("simbad_ref")));
         result.setX(CSVHelper.getAsFloat(record.get("x")));
@@ -45,6 +54,9 @@ public class EddbSystemCsvRecordParser implements CSVRecordParser<EddbSystem> {
         result.setNeedsPermit(CSVHelper.getAsBoolean(record.get("needs_permit")));
         result.setControllingMinorFactionId(CSVHelper.getAsLong(record.get("controlling_minor_faction_id")));
         result.setControllingMinorFaction(CSVHelper.getAsString(record.get("controlling_minor_faction")));
+
+        EdsmSystem edsmSystem = this.edsmSystemsById.get(result.getEdsmId());
+        result.setCreatedAt(edsmSystem == null ? result.getUpdatedAt() : edsmSystem.getCreatedAt());
 
         return result;
     }

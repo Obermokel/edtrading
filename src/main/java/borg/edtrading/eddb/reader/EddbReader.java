@@ -198,12 +198,12 @@ public class EddbReader {
         boolean systemsUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/systems.csv", systemsFile);
         boolean systemsPopulatedUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/systems_populated.jsonl", systemsPopulatedFile);
         if (systemsUpdated || systemsPopulatedUpdated || forceReindex || this.systemRepo.count() <= 0) {
-            Set<Long> currentEntityIds = this.readCsvFileIntoRepo(systemsFile, new EddbSystemCsvRecordParser(), this.systemRepo);
-            currentEntityIds.addAll(this.readJsonFileIntoRepo(systemsPopulatedFile, EddbSystem.class, this.systemRepo));
-            this.deleteOldEntities("eddbsystem", EddbSystem.class, currentEntityIds);
             File edsmFile = new File(BASE_DIR, "systemsWithCoordinates.json");
             this.downloadIfUpdated("https://www.edsm.net/dump/systemsWithCoordinates.json", edsmFile);
-            this.setSystemCreatedDates(edsmFile);
+            Map<Long, EdsmSystem> edsmSystemsById = this.loadEdsmSystemsById(edsmFile);
+            Set<Long> currentEntityIds = this.readCsvFileIntoRepo(systemsFile, new EddbSystemCsvRecordParser(edsmSystemsById), this.systemRepo);
+            currentEntityIds.addAll(this.readJsonFileIntoRepo(systemsPopulatedFile, EddbSystem.class, this.systemRepo));
+            this.deleteOldEntities("eddbsystem", EddbSystem.class, currentEntityIds);
         }
         File bodiesFile = new File(BASE_DIR, "bodies.jsonl");
         boolean bodiesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/bodies.jsonl", bodiesFile);
@@ -228,7 +228,7 @@ public class EddbReader {
         logger.info("Downloaded data in " + DurationFormatUtils.formatDuration(end - start, "H:mm:ss"));
     }
 
-    private void setSystemCreatedDates(File edsmFile) throws IOException {
+    private Map<Long, EdsmSystem> loadEdsmSystemsById(File edsmFile) throws IOException {
         logger.debug("Setting system created dates");
 
         //@formatter:off
@@ -249,29 +249,7 @@ public class EddbReader {
             }
         }
 
-        BoolQueryBuilder qb = QueryBuilders.boolQuery();
-        qb.must(QueryBuilders.matchAllQuery());
-        qb.mustNot(QueryBuilders.existsQuery("createdAt"));
-
-        SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices("eddbsystem").withQuery(qb).withPageable(new PageRequest(0, 1000)).build();
-        String scrollId = esTemplate.scan(searchQuery, 1000, false);
-        boolean hasRecords = true;
-        while (hasRecords) {
-            Page<EddbSystem> page = esTemplate.scroll(scrollId, 5000, EddbSystem.class);
-            if (page.hasContent()) {
-                List<EddbSystem> eddbSystems = page.getContent();
-                eddbSystems.parallelStream().forEach(eddbSystem -> {
-                    EdsmSystem edsmSystem = edsmSystemsById.get(eddbSystem.getEdsmId());
-                    if (edsmSystem != null) {
-                        eddbSystem.setCreatedAt(edsmSystem.getCreatedAt());
-                    }
-                });
-                systemRepo.save(eddbSystems);
-            } else {
-                hasRecords = false;
-            }
-        }
-        esTemplate.clearScroll(scrollId);
+        return edsmSystemsById;
     }
 
     private <T extends EddbEntity> void deleteOldEntities(String index, Class<T> type, Set<Long> currentEntityIds) {
