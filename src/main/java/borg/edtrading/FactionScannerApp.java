@@ -126,12 +126,12 @@ public class FactionScannerApp {
         Region region = screenshot.getAsRegion(); //x=0,y=350,w=840,h=1620
 
         OcrTask ocrTask = new OcrTask(region, characterLocator, templates);
-        //        ocrTask.setDebugAlphanumTemplates(true);
+        ocrTask.setDebugAlphanumTemplates(true);
         //        ocrTask.setDebugAlphanumTextLines(true);
         //        ocrTask.setDebugAllTemplates(true);
         ocrTask.setDebugAllTextLines(true);
         OcrResult ocrResult = new OcrExecutor().executeOcr(ocrTask);
-        //        ocrResult.writeDebugImages();
+        ocrResult.writeDebugImages();
 
         SystemFactions systemFactions = new SystemFactions("FAKE SYSTEM");
         updateSystemFactions(systemFactions, ocrResult);
@@ -300,9 +300,9 @@ public class FactionScannerApp {
             if (text.contains(":")) {
                 // New label starts here. Current value is finished.
                 if (currentValue != null) {
-                    if (currentLabel == KnownLabel.CONTROLLING_FACTION) {
+                    if (currentLabel == KnownLabel.CONTROLLING_FACTION || currentLabel == KnownLabel.KONTROLLIERENDE_FRAKTION) {
                         systemFactions.setControllingFaction(KnownFaction.findBestMatching(currentValue));
-                    } else if (currentLabel == KnownLabel.FACTION) {
+                    } else if (currentLabel == KnownLabel.FACTION || currentLabel == KnownLabel.FRAKTION) {
                         currentFaction = KnownFaction.findBestMatching(currentValue);
                         if (currentFaction == null && systemFactions.getFactions().size() < 3) {
                             throw new FactionScanException("FACTION UNKNOWN", "Failed to parse '" + currentValue + "' to a faction name", ocrResult);
@@ -315,11 +315,11 @@ public class FactionScannerApp {
                             systemFaction = new SystemFaction(currentFaction);
                             systemFactions.getFactions().put(currentFaction, systemFaction);
                         }
-                        if (currentLabel == KnownLabel.GOVERNMENT) {
+                        if (currentLabel == KnownLabel.GOVERNMENT || currentLabel == KnownLabel.REGIERUNG) {
                             systemFaction.setGovernment(Government.findBestMatching(currentValue));
-                        } else if (currentLabel == KnownLabel.ALLEGIANCE) {
+                        } else if (currentLabel == KnownLabel.ALLEGIANCE || currentLabel == KnownLabel.ZUGEHOERIGKEIT) {
                             systemFaction.setAllegiance(Allegiance.findBestMatching(currentValue));
-                        } else if (currentLabel == KnownLabel.INFLUENCE) {
+                        } else if (currentLabel == KnownLabel.INFLUENCE || currentLabel == KnownLabel.EINFLUSS) {
                             String fixedValue = currentValue.toUpperCase().replace(" ", "").replace("%", "").replace(",", ".");
                             fixedValue = fixedValue.replace("O", "0").replace("D", "0").replace("I", "1").replace("S", "5").replace("B", "8");
                             try {
@@ -329,9 +329,9 @@ public class FactionScannerApp {
                                 //System.exit(1);
                                 //systemFaction.setInfluence(new BigDecimal("99.9"));
                             }
-                        } else if (currentLabel == KnownLabel.STATE) {
+                        } else if (currentLabel == KnownLabel.STATE || currentLabel == KnownLabel.ZUSTAND) {
                             systemFaction.setState(State.findBestMatching(currentValue));
-                        } else if (currentLabel == KnownLabel.RELATIONSHIP) {
+                        } else if (currentLabel == KnownLabel.RELATIONSHIP || currentLabel == KnownLabel.BEZIEHUNG) {
                             systemFaction.setRelationship(Relationship.findBestMatching(currentValue));
                         }
                     }
@@ -596,7 +596,22 @@ public class FactionScannerApp {
         PRISON_COLONY("PRISON COLONY"),
         THEOCRACY("THEOCRACY"),
         WORKSHOP("WORKSHOP"),
-        NONE("NONE");
+        NONE("NONE"),
+
+        ANARCHIE("ANARCHIE"),
+        KOMMUNISMUS("KOMMUNISMUS"),
+        KONFOEDERATION("KONFÖDERATION"),
+        KONZERNPOLITIK("KONZERNPOLITIK"),
+        KOOPERATIVE("KOOPERATIVE"),
+        DEMOKRATIE("DEMOKRATIE"),
+        DIKTATUR("DIKTATUR"),
+        FEUDALSYSTEM("FEUDALSYSTEM"),
+        IMPERIUM("IMPERIUM"),
+        PATRONAT("PATRONAT"),
+        STRAEFLINGSKOLONIE("STRÄFLINGSKOLONIE"),
+        GOTTESSTAAT("GOTTESSTAAT"),
+        WERKSTATT("WERKSTATT"),
+        LEER("LEER");
         //@formatter:on
 
         private final String name;
@@ -632,7 +647,13 @@ public class FactionScannerApp {
         EMPIRE("EMPIRE"),
         FEDERATION("FEDERATION"),
         INDEPENDENT("INDEPENDENT"),
-        NONE("NONE");
+        NONE("NONE"),
+
+        ALLIANZ("ALLIANZ"),
+        IMPERIUM("IMPERIUM"),
+        FOEDERATION("FÖDERATION"),
+        UNABHAENGIG("UNABHÄNGIG"),
+        LEER("LEER");
         //@formatter:on
 
         private final String name;
@@ -676,7 +697,21 @@ public class FactionScannerApp {
         WAR("WAR"),
         NONE("NONE"),
         RETREAT("RETREAT"),
-        INVESTMENT("INVESTMENT");
+        INVESTMENT("INVESTMENT"),
+
+        AUFSCHWUNG("AUFSCHWUNG"),
+        KRISE("KRISE"),
+        HUNGERSNOT("HUNGERSNOT"),
+        UNRUHEN("UNRUHEN"),
+        BUERGERKRIEG("BÜRGERKRIEG"),
+        WAHLEN("WAHLEN"),
+        //EXPANSION("EXPANSION"),
+        ABRIEGELUNG("ABRIEGELUNG"),
+        AUSBRUCH("AUSBRUCH"),
+        KRIEG("KRIEG"),
+        LEER("N/V"),
+        PLEITE("PLEITE"),
+        INVESTITION("INVESTITION");
         //@formatter:on
 
         private final String name;
@@ -713,7 +748,14 @@ public class FactionScannerApp {
         NEUTRAL("NEUTRAL"),
         CORDIAL("CORDIAL"),
         FRIENDLY("FRIENDLY"),
-        ALLIED("ALLIED");
+        ALLIED("ALLIED"),
+
+        FEINDLICH("FEINDLICH"),
+        NICHT_WOHLGESINNT("NICHT WOHLGESINNT"),
+        //NEUTRAL("NEUTRAL"),
+        HERZLICH("HERZLICH"),
+        WOHLGESINNT("WOHLGESINNT"),
+        VERBUENDET("VERBÜNDET");
         //@formatter:on
 
         private final String name;
@@ -753,7 +795,17 @@ public class FactionScannerApp {
         STATE("STATE"),
         RELATIONSHIP("RELATIONSHIP"),
         BACK("BACK"),
-        EXIT("EXIT");
+        EXIT("EXIT"),
+
+        KONTROLLIERENDE_FRAKTION("KONTROLLIERENDE FRAKTION"),
+        FRAKTION("FRAKTION"),
+        REGIERUNG("REGIERUNG"),
+        ZUGEHOERIGKEIT("ZUGEHÖRIGKEIT"),
+        EINFLUSS("EINFLUSS"),
+        ZUSTAND("ZUSTAND"),
+        BEZIEHUNG("BEZIEHUNG"),
+        ZURUECK("ZURÜCK"),
+        VERLASSEN("VERLASSEN");
         //@formatter:on
 
         private final String name;
