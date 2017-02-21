@@ -7,6 +7,8 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldIndex;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
+import java.util.Date;
+
 /**
  * EddbModule
  *
@@ -87,6 +89,11 @@ public class EddbModule implements EddbEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    @Override
+    public Date getUpdatedAt() {
+        return null;
     }
 
     public String getName() {
@@ -237,6 +244,11 @@ public class EddbModule implements EddbEntity {
 
         public void setId(Long id) {
             this.id = id;
+        }
+
+        @Override
+        public Date getUpdatedAt() {
+            return null;
         }
 
         public String getName() {

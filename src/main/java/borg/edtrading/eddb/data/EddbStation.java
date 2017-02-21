@@ -191,6 +191,7 @@ public class EddbStation implements EddbEntity {
         this.id = id;
     }
 
+    @Override
     public Date getUpdatedAt() {
         return this.updatedAt;
     }

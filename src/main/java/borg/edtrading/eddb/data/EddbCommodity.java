@@ -4,6 +4,8 @@ import com.google.gson.annotations.SerializedName;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 
+import java.util.Date;
+
 /**
  * EddbCommodity
  *
@@ -67,6 +69,11 @@ public class EddbCommodity implements EddbEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    @Override
+    public Date getUpdatedAt() {
+        return null;
     }
 
     public String getName() {
@@ -157,6 +164,11 @@ public class EddbCommodity implements EddbEntity {
 
         public void setId(Long id) {
             this.id = id;
+        }
+
+        @Override
+        public Date getUpdatedAt() {
+            return null;
         }
 
         public String getName() {

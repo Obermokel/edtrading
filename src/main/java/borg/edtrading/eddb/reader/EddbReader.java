@@ -31,6 +31,9 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.NullHandling;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.SearchQuery;
@@ -178,19 +181,21 @@ public class EddbReader {
         File commoditiesFile = new File(BASE_DIR, "commodities.json");
         boolean commoditiesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/commodities.json", commoditiesFile);
         if (commoditiesUpdated || forceReindex || this.commodityRepo.count() <= 0) {
-            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(commoditiesFile, EddbCommodity.class, this.commodityRepo);
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(null, commoditiesFile, EddbCommodity.class, this.commodityRepo);
             this.deleteOldEntities("eddbcommodity", EddbCommodity.class, currentEntityIds);
         }
         File modulesFile = new File(BASE_DIR, "modules.json");
         boolean modulesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/modules.json", modulesFile);
         if (modulesUpdated || forceReindex || this.moduleRepo.count() <= 0) {
-            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(modulesFile, EddbModule.class, this.moduleRepo);
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(null, modulesFile, EddbModule.class, this.moduleRepo);
             this.deleteOldEntities("eddbmodule", EddbModule.class, currentEntityIds);
         }
         File marketEntriesFile = new File(BASE_DIR, "listings.csv");
         boolean marketEntriesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/listings.csv", marketEntriesFile);
         if (marketEntriesUpdated || forceReindex || this.marketEntryRepo.count() <= 0) {
-            Set<Long> currentEntityIds = this.readCsvFileIntoRepo(marketEntriesFile, new EddbMarketEntryCsvRecordParser(), this.marketEntryRepo);
+            Page<EddbMarketEntry> first = this.marketEntryRepo.findAll(new PageRequest(0, 1, new Sort(new Sort.Order(Direction.DESC, "updatedAt", NullHandling.NULLS_LAST))));
+            Date lastUpdate = first == null || first.getTotalElements() < 1 ? null : first.getContent().get(0).getUpdatedAt();
+            Set<Long> currentEntityIds = this.readCsvFileIntoRepo(lastUpdate, marketEntriesFile, new EddbMarketEntryCsvRecordParser(), this.marketEntryRepo);
             this.deleteOldEntities("eddbmarketentry", EddbMarketEntry.class, currentEntityIds);
         }
         File systemsFile = new File(BASE_DIR, "systems.csv");
@@ -198,29 +203,37 @@ public class EddbReader {
         boolean systemsUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/systems.csv", systemsFile);
         boolean systemsPopulatedUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/systems_populated.jsonl", systemsPopulatedFile);
         if (systemsUpdated || systemsPopulatedUpdated || forceReindex || this.systemRepo.count() <= 0) {
+            Page<EddbSystem> first = this.systemRepo.findAll(new PageRequest(0, 1, new Sort(new Sort.Order(Direction.DESC, "updatedAt", NullHandling.NULLS_LAST))));
+            Date lastUpdate = first == null || first.getTotalElements() < 1 ? null : first.getContent().get(0).getUpdatedAt();
             File edsmFile = new File(BASE_DIR, "systemsWithCoordinates.json");
             this.downloadIfUpdated("https://www.edsm.net/dump/systemsWithCoordinates.json", edsmFile);
             Map<Long, EdsmSystem> edsmSystemsById = this.loadEdsmSystemsById(edsmFile);
-            Set<Long> currentEntityIds = this.readCsvFileIntoRepo(systemsFile, new EddbSystemCsvRecordParser(edsmSystemsById), this.systemRepo);
-            currentEntityIds.addAll(this.readJsonFileIntoRepo(systemsPopulatedFile, EddbSystem.class, this.systemRepo));
+            Set<Long> currentEntityIds = this.readCsvFileIntoRepo(lastUpdate, systemsFile, new EddbSystemCsvRecordParser(edsmSystemsById), this.systemRepo);
+            currentEntityIds.addAll(this.readJsonFileIntoRepo(lastUpdate, systemsPopulatedFile, EddbSystem.class, this.systemRepo));
             this.deleteOldEntities("eddbsystem", EddbSystem.class, currentEntityIds);
         }
         File bodiesFile = new File(BASE_DIR, "bodies.jsonl");
         boolean bodiesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/bodies.jsonl", bodiesFile);
         if (bodiesUpdated || forceReindex || this.bodyRepo.count() <= 0) {
-            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(bodiesFile, EddbBody.class, this.bodyRepo);
+            Page<EddbBody> first = this.bodyRepo.findAll(new PageRequest(0, 1, new Sort(new Sort.Order(Direction.DESC, "updatedAt", NullHandling.NULLS_LAST))));
+            Date lastUpdate = first == null || first.getTotalElements() < 1 ? null : first.getContent().get(0).getUpdatedAt();
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(lastUpdate, bodiesFile, EddbBody.class, this.bodyRepo);
             this.deleteOldEntities("eddbbody", EddbBody.class, currentEntityIds);
         }
         File stationsFile = new File(BASE_DIR, "stations.jsonl");
         boolean stationsUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/stations.jsonl", stationsFile);
         if (stationsUpdated || forceReindex || this.stationRepo.count() <= 0) {
-            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(stationsFile, EddbStation.class, this.stationRepo);
+            Page<EddbStation> first = this.stationRepo.findAll(new PageRequest(0, 1, new Sort(new Sort.Order(Direction.DESC, "updatedAt", NullHandling.NULLS_LAST))));
+            Date lastUpdate = first == null || first.getTotalElements() < 1 ? null : first.getContent().get(0).getUpdatedAt();
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(lastUpdate, stationsFile, EddbStation.class, this.stationRepo);
             this.deleteOldEntities("eddbstation", EddbStation.class, currentEntityIds);
         }
         File factionsFile = new File(BASE_DIR, "factions.jsonl");
         boolean factionsUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/factions.jsonl", factionsFile);
         if (factionsUpdated || forceReindex || this.factionRepo.count() <= 0) {
-            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(factionsFile, EddbFaction.class, this.factionRepo);
+            Page<EddbFaction> first = this.factionRepo.findAll(new PageRequest(0, 1, new Sort(new Sort.Order(Direction.DESC, "updatedAt", NullHandling.NULLS_LAST))));
+            Date lastUpdate = first == null || first.getTotalElements() < 1 ? null : first.getContent().get(0).getUpdatedAt();
+            Set<Long> currentEntityIds = this.readJsonFileIntoRepo(lastUpdate, factionsFile, EddbFaction.class, this.factionRepo);
             this.deleteOldEntities("eddbfaction", EddbFaction.class, currentEntityIds);
         }
         this.enrichEddbData();
@@ -229,7 +242,7 @@ public class EddbReader {
     }
 
     private Map<Long, EdsmSystem> loadEdsmSystemsById(File edsmFile) throws IOException {
-        logger.debug("Setting system created dates");
+        logger.debug("Reading " + edsmFile.getName());
 
         //@formatter:off
         final Gson gson = new GsonBuilder()
@@ -371,7 +384,7 @@ public class EddbReader {
         esTemplate.clearScroll(scrollId);
     }
 
-    private <T extends EddbEntity> Set<Long> readCsvFileIntoRepo(File file, CSVRecordParser<T> csvRecordParser, ElasticsearchRepository<T, Long> repo) throws IOException {
+    private <T extends EddbEntity> Set<Long> readCsvFileIntoRepo(Date lastUpdate, File file, CSVRecordParser<T> csvRecordParser, ElasticsearchRepository<T, Long> repo) throws IOException {
         Set<Long> savedEntityIds = new HashSet<>();
 
         final DateFormat dfEta = new SimpleDateFormat("MMM dd @ HH:mm", Locale.US);
@@ -386,7 +399,12 @@ public class EddbReader {
             int n = 0;
             List<T> batch = new ArrayList<>(batchSize);
             for (CSVRecord record : records) {
-                batch.add(csvRecordParser.parse(record));
+                T parsed = csvRecordParser.parse(record);
+                if (lastUpdate == null || parsed.getUpdatedAt() == null || parsed.getUpdatedAt().after(lastUpdate)) {
+                    batch.add(parsed);
+                } else {
+                    savedEntityIds.add(parsed.getId());
+                }
                 if (batch.size() >= batchSize) {
                     for (T entity : repo.save(batch)) {
                         savedEntityIds.add(entity.getId());
@@ -412,7 +430,7 @@ public class EddbReader {
         return savedEntityIds;
     }
 
-    private <T extends EddbEntity> Set<Long> readJsonFileIntoRepo(File file, Class<T> type, ElasticsearchRepository<T, Long> repo) throws IOException {
+    private <T extends EddbEntity> Set<Long> readJsonFileIntoRepo(Date lastUpdate, File file, Class<T> type, ElasticsearchRepository<T, Long> repo) throws IOException {
         Set<Long> savedEntityIds = new HashSet<>();
 
         final DateFormat dfEta = new SimpleDateFormat("MMM dd @ HH:mm", Locale.US);
@@ -438,7 +456,12 @@ public class EddbReader {
                 String line = reader.readLine();
                 while (line != null) {
                     try {
-                        batch.add(gson.fromJson(line, type));
+                        T parsed = gson.fromJson(line, type);
+                        if (lastUpdate == null || parsed.getUpdatedAt() == null || parsed.getUpdatedAt().after(lastUpdate)) {
+                            batch.add(parsed);
+                        } else {
+                            savedEntityIds.add(parsed.getId());
+                        }
                         if (batch.size() >= batchSize) {
                             for (T entity : repo.save(batch)) {
                                 savedEntityIds.add(entity.getId());
@@ -470,7 +493,11 @@ public class EddbReader {
                 int n = 0;
                 List<T> batch = new ArrayList<>(batchSize);
                 for (T loadedEntity : entities) {
-                    batch.add(loadedEntity);
+                    if (lastUpdate == null || loadedEntity.getUpdatedAt() == null || loadedEntity.getUpdatedAt().after(lastUpdate)) {
+                        batch.add(loadedEntity);
+                    } else {
+                        savedEntityIds.add(loadedEntity.getId());
+                    }
                     if (batch.size() >= batchSize) {
                         for (T entity : repo.save(batch)) {
                             savedEntityIds.add(entity.getId());

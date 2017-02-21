@@ -34,7 +34,7 @@ public class EddbMarketEntry implements EddbEntity {
     private Long id = null;
     @Field(type = FieldType.Date)
     @SerializedName("collected_at")
-    private Date collectedAt = null;
+    private Date updatedAt = null;
     @SerializedName("station_id")
     private Long stationId = null;
     @SerializedName("commodity_id")
@@ -89,12 +89,13 @@ public class EddbMarketEntry implements EddbEntity {
         this.id = id;
     }
 
-    public Date getCollectedAt() {
-        return this.collectedAt;
+    @Override
+    public Date getUpdatedAt() {
+        return this.updatedAt;
     }
 
-    public void setCollectedAt(Date collectedAt) {
-        this.collectedAt = collectedAt;
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public Long getStationId() {

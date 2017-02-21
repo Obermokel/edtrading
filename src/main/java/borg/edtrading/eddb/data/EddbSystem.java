@@ -177,6 +177,7 @@ public class EddbSystem implements EddbEntity {
         this.createdAt = createdAt;
     }
 
+    @Override
     public Date getUpdatedAt() {
         return this.updatedAt;
     }

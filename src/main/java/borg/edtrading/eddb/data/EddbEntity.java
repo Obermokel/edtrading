@@ -1,6 +1,7 @@
 package borg.edtrading.eddb.data;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * EddbEntity
@@ -10,5 +11,7 @@ import java.io.Serializable;
 public interface EddbEntity extends Serializable {
 
     Long getId();
+
+    Date getUpdatedAt();
 
 }

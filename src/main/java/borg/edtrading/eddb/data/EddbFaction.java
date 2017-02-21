@@ -108,6 +108,7 @@ public class EddbFaction implements EddbEntity {
         this.id = id;
     }
 
+    @Override
     public Date getUpdatedAt() {
         return this.updatedAt;
     }

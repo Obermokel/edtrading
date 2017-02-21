@@ -25,7 +25,7 @@ public class EddbMarketEntryCsvRecordParser implements CSVRecordParser<EddbMarke
         result.setBuyPrice(CSVHelper.getAsInt(record.get("buy_price")));
         result.setDemand(CSVHelper.getAsInt(record.get("demand")));
         result.setSellPrice(CSVHelper.getAsInt(record.get("sell_price")));
-        result.setCollectedAt(CSVHelper.getAsDate(record.get("collected_at")));
+        result.setUpdatedAt(CSVHelper.getAsDate(record.get("collected_at")));
 
         return result;
     }

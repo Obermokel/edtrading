@@ -258,6 +258,7 @@ public class EddbBody implements EddbEntity {
         this.createdAt = createdAt;
     }
 
+    @Override
     public Date getUpdatedAt() {
         return this.updatedAt;
     }
@@ -723,6 +724,7 @@ public class EddbBody implements EddbEntity {
             this.createdAt = createdAt;
         }
 
+        @Override
         public Date getUpdatedAt() {
             return this.updatedAt;
         }
