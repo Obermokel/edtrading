@@ -84,5 +84,10 @@
             <artifactId>google-api-services-sheets</artifactId>
             <version>v4-rev38-1.22.0</version>
         </dependency>
+        <dependency>
+          <groupId>org.zeromq</groupId>
+          <artifactId>jeromq</artifactId>
+          <version>0.3.6</version>
+        </dependency>
     </dependencies>
 </project>

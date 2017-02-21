@@ -1,5 +1,6 @@
 package borg.edtrading.journal.entries.exploration;
 
+import borg.edtrading.data.Coord;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.RingData;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
@@ -18,6 +19,8 @@ public class ScanEntry extends AbstractJournalEntry {
 
     private static final long serialVersionUID = 2391971591810270978L;
 
+    private final String starSystem;
+    private final Coord starPos;
     private final String bodyName;
     private final Float distanceFromArrivalLS;
     private final String starType;
@@ -48,6 +51,8 @@ public class ScanEntry extends AbstractJournalEntry {
     public ScanEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
 
+        this.starSystem = this.readString(data, "StarSystem");
+        this.starPos = this.readCoord(data, "StarPos");
         this.bodyName = this.readString(data, "BodyName");
         this.distanceFromArrivalLS = this.readFloat(data, "DistanceFromArrivalLS");
         this.starType = this.readString(data, "StarType");
@@ -74,6 +79,14 @@ public class ScanEntry extends AbstractJournalEntry {
         this.atmosphereType = this.readString(data, "AtmosphereType");
         this.volcanism = this.readString(data, "Volcanism");
         this.materials = this.readPercentages(data, "Materials");
+    }
+
+    public String getStarSystem() {
+        return this.starSystem;
+    }
+
+    public Coord getStarPos() {
+        return this.starPos;
     }
 
     public String getBodyName() {

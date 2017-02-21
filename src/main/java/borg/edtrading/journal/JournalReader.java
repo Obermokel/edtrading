@@ -207,7 +207,7 @@ public class JournalReader {
     /**
      * @return Can return <code>null</code>
      */
-    private AbstractJournalEntry readJournalData(LinkedHashMap<String, Object> data) throws UnknownEventException {
+    public AbstractJournalEntry readJournalData(LinkedHashMap<String, Object> data) throws UnknownEventException {
         if (data == null || data.isEmpty()) {
             return null;
         } else {

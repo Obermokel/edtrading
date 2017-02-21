@@ -4,6 +4,7 @@ import borg.edtrading.SidePanelApp;
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.eddn.EddnListener;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.services.EddbService;
 import borg.edtrading.sidepanel.ScannedBody;
@@ -26,6 +27,8 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -40,7 +43,7 @@ import javax.swing.JTextField;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
+public class DiscoveryPanel extends JPanel implements TravelHistoryListener, EddnListener {
 
     private static final long serialVersionUID = 2933866499279397227L;
 
@@ -320,9 +323,17 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
         // Do nothing
     }
 
-    public static class Area extends JPanel {
+    @Override
+    public void onCommanderLocation(Date timestamp, String commanderName, String systemName, Coord systemCoords) {
+        this.area.onCommanderLocation(timestamp, commanderName, systemName, systemCoords);
+        this.area.repaint();
+    }
+
+    public static class Area extends JPanel implements EddnListener {
 
         private static final long serialVersionUID = 8383226308842901529L;
+
+        private LinkedHashMap<String, Coord> commanderLocations = new LinkedHashMap<>(10000);
 
         private ApplicationContext appctx = null;
         private TravelHistory travelHistory = null;
@@ -339,6 +350,11 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
         public Area(ApplicationContext appctx, TravelHistory travelHistory) {
             this.appctx = appctx;
             this.travelHistory = travelHistory;
+        }
+
+        @Override
+        public void onCommanderLocation(Date timestamp, String commanderName, String systemName, Coord systemCoords) {
+            this.commanderLocations.put(commanderName, systemCoords);
         }
 
         @Override
@@ -532,6 +548,14 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener {
             }
             Point p = this.coordToPoint(coord);
             g.fillRect(p.x - poffset, p.y - poffset, psize, psize);
+
+            g.setColor(Color.CYAN);
+            g.setFont(new Font("Sans Serif", Font.PLAIN, 12));
+            for (String commanderName : this.commanderLocations.keySet()) {
+                p = this.coordToPoint(this.commanderLocations.get(commanderName));
+                g.fillRect(p.x - poffset, p.y - poffset, psize, psize);
+                g.drawString(commanderName, p.x, p.y);
+            }
         }
 
         private Point coordToPoint(Coord coord) {
