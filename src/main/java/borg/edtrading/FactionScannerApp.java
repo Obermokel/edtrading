@@ -208,7 +208,7 @@ public class FactionScannerApp {
                         systemFactions.setControllingFaction(KnownFaction.findBestMatching(currentValue));
                     } else if (currentLabel == KnownLabel.FACTION || currentLabel == KnownLabel.FRAKTION) {
                         currentFaction = KnownFaction.findBestMatching(currentValue);
-                        if (currentFaction == null && systemFactions.getFactions().size() < 3) {
+                        if (currentFaction == null && systemFactions.getFactions().size() < 2) {
                             throw new FactionScanException("FACTION UNKNOWN", "Failed to parse '" + currentValue + "' to a faction name", ocrResult);
                             //System.exit(1);
                             //unknownFactions.add(currentValue);
