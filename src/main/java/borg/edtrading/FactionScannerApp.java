@@ -195,7 +195,7 @@ public class FactionScannerApp {
         systemFactions.setDate(DateUtils.truncate(date, Calendar.DATE));
 
         // System name
-        p = Pattern.compile(".*_\\d{2}_([^_]+)_\\d{2}\\.png");
+        p = Pattern.compile(".*_\\d+_([^_]+)_\\d+\\.png");
         m = p.matcher(screenshotFile.getName());
         if (m.matches()) {
             systemFactions.setSystemName(m.group(1).toUpperCase());
