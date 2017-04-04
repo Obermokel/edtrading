@@ -34,7 +34,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -136,9 +135,6 @@ public class FactionScannerApp {
         SystemFactions systemFactions = new SystemFactions("FAKE SYSTEM");
         updateSystemFactions(systemFactions, ocrResult);
         updateDateAndSystemFromFilename(systemFactions, screenshotFile);
-        if (StringUtils.isEmpty(systemFactions.getSystemName()) || "FAKE SYSTEM".equals(systemFactions.getSystemName())) {
-            systemFactions.setSystemName(guessSystemNameByFactions(systemFactions, screenshotFile, ocrResult));
-        }
 
         String tableName = "INFLUENCE_" + systemFactions.getSystemName().toUpperCase().replaceAll("\\W", "_");
         String date = new SimpleDateFormat("dd.MM.yyyy").format(systemFactions.getDate());
@@ -178,19 +174,10 @@ public class FactionScannerApp {
     private static void updateDateAndSystemFromFilename(SystemFactions systemFactions, File screenshotFile) throws ParseException {
         // Date
         Date date = new Date(screenshotFile.lastModified());
-        Pattern p = Pattern.compile(".*(\\d{4}\\-\\d{2}\\-\\d{2} \\d{2}\\-\\d{2}\\-\\d{2}).*");
+        Pattern p = Pattern.compile("(\\d{4}\\-\\d{2}\\-\\d{2})_.*");
         Matcher m = p.matcher(screenshotFile.getName());
         if (m.matches()) {
-            date = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss").parse(m.group(1));
-        } else {
-            p = Pattern.compile(".*(\\d{4}\\-\\d{2}\\-\\d{2}).*");
-            m = p.matcher(screenshotFile.getName());
-            if (m.matches()) {
-                date = new SimpleDateFormat("yyyy-MM-dd").parse(m.group(1));
-            }
-        }
-        if (DateUtils.toCalendar(date).get(Calendar.HOUR_OF_DAY) >= 20) {
-            date = DateUtils.addDays(DateUtils.truncate(date, Calendar.DATE), 1); // Treat as next day already (BGS should have been updated)
+            date = new SimpleDateFormat("yyyy-MM-dd").parse(m.group(1));
         }
         systemFactions.setDate(DateUtils.truncate(date, Calendar.DATE));
 
@@ -202,90 +189,7 @@ public class FactionScannerApp {
         }
     }
 
-    //    static SortedSet<String> unknownFactions = new TreeSet<>();
-    //
-    //    public static void main(String[] args) throws IOException, ParseException {
-    //        List<File> screenshotFiles = FactionScannerApp.selectAllScreenshots();
-    //
-    //        CharacterLocator characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
-    //        List<Template> templates = Template.fromFolder("BodyScanner");
-    //
-    //        SortedMap<String, SystemFactions> systemsByName = new TreeMap<>();
-    //        for (File screenshotFile : screenshotFiles) {
-    //            SystemFactions systemFactions = new SystemFactions("FAKE");
-    //
-    //            Screenshot screenshot = Screenshot.loadFromFile(screenshotFile, 3840, 2160, null);
-    //            Region region = screenshot.getAsRegion();
-    //            //x=0,y=350,w=840,h=1620
-    //
-    //            OcrTask ocrTask = new OcrTask(region, characterLocator, templates);
-    //            ocrTask.setDebugAlphanumTemplates(false);
-    //            ocrTask.setDebugAlphanumTextLines(false);
-    //            ocrTask.setDebugAllTemplates(false);
-    //            ocrTask.setDebugAllTextLines(false);
-    //            OcrResult ocrResult = new OcrExecutor().executeOcr(ocrTask);
-    //            ocrResult.writeDebugImages();
-    //            updateSystemFactions(systemFactions, ocrResult);
-    //            String systemName = guessSystemNameByFactions(systemFactions, screenshotFile);
-    //            systemFactions.setSystemName(systemName);
-    //            SystemFactions prev = systemsByName.put(systemName, systemFactions);
-    //            if (prev != null) {
-    //                systemFactions.mergeWith(prev);
-    //            }
-    //        }
-    //
-    //        Sheets service = getSheetsService();
-    //        String spreadsheetId = "1z5USvjTp_htXdsd2o3qrm6DUgL7tlGmHoB8Xh51Fms0";
-    //        for (SystemFactions systemFactions : systemsByName.values()) {
-    //            List<Object> row = new ArrayList<>();
-    //            String tableName = "INFLUENCE_" + systemFactions.getSystemName().toUpperCase().replace(" ", "_").replace("-", "_");
-    //            String columnRange = "A:" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(systemFactions.getFactions().size());
-    //            row.add(new SimpleDateFormat("dd.MM.yyyy").format(systemFactions.getDate()));
-    //
-    //            System.out.println("==== " + systemFactions.getSystemName() + " ====");
-    //            System.out.println("---- " + systemFactions.getControllingFaction() + " ----");
-    //            for (KnownFaction faction : systemFactions.getFactions().keySet()) {
-    //                System.out.println("* " + faction.getName());
-    //                SystemFaction systemFaction = systemFactions.getFactions().get(faction);
-    //                System.out.println("Government:    " + systemFaction.getGovernment());
-    //                System.out.println("Allegiance:    " + systemFaction.getAllegiance());
-    //                System.out.println("Influence:     " + systemFaction.getInfluence());
-    //                System.out.println("State:         " + systemFaction.getState());
-    //                System.out.println("Relationship:  " + systemFaction.getRelationship());
-    //                row.add(String.format(Locale.GERMANY, "%.1f%%", systemFaction.getInfluence()));
-    //            }
-    //            ValueRange vr = new ValueRange();
-    //            List<List<Object>> rows = new ArrayList<>();
-    //            rows.add(row);
-    //            vr.setValues(rows);
-    //            if (!SKIP_GOOGLE_UPDATE) {
-    //                Append append = service.spreadsheets().values().append(spreadsheetId, tableName + "!" + columnRange, vr);
-    //                append.setValueInputOption("USER_ENTERED");
-    //                AppendValuesResponse appendResponse = append.execute();
-    //                System.out.println(appendResponse.toPrettyString());
-    //            }
-    //        }
-    //        service.spreadsheets().get("").setIncludeGridData(true).execute().getSheets().get(0).getData().get(0).getRowData();
-    //        for (String unknownFaction : unknownFactions) {
-    //            System.out.println(unknownFaction);
-    //        }
-    //    }
-
     private static void updateSystemFactions(SystemFactions systemFactions, OcrResult ocrResult) throws ParseException {
-        File screenshotFile = ocrResult.getOcrTask().getScreenshotRegion().getScreenshot().getFile();
-        Date date = new Date(screenshotFile.lastModified());
-        if (screenshotFile.getName().matches("\\d{4}\\-\\d{2}\\-\\d{2} \\d{2}\\-\\d{2}\\-\\d{2} .+")) {
-            date = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss").parse(screenshotFile.getName().substring(0, "0000-00-00 00-00-00".length()));
-        }
-        if (DateUtils.toCalendar(date).get(Calendar.HOUR_OF_DAY) >= 20) {
-            date = DateUtils.addDays(DateUtils.truncate(date, Calendar.DATE), 1); // Treat as next day already (BGS should have been updated)
-        } else if (DateUtils.toCalendar(date).get(Calendar.HOUR_OF_DAY) >= 19 && DateUtils.toCalendar(date).get(Calendar.MINUTE) >= 30) {
-            date = DateUtils.addDays(DateUtils.truncate(date, Calendar.DATE), 1); // Treat as next day already (BGS should have been updated)
-        } else {
-            date = DateUtils.truncate(date, Calendar.DATE);
-        }
-        systemFactions.setDate(date);
-
         KnownFaction currentFaction = null;
         KnownLabel currentLabel = null;
         String currentValue = null;
@@ -345,74 +249,6 @@ public class FactionScannerApp {
             } else {
                 currentValue = currentValue + " " + text;
             }
-        }
-    }
-
-    private static String guessSystemNameByFactions(SystemFactions systemFactions, File screenshotFile, OcrResult ocrResult) {
-        Set<KnownFaction> factions = systemFactions.getFactions().keySet();
-        List<String> possibleSystemNames = new ArrayList<>();
-
-        // NEZ_PELLIRI_GANG: Nez Pelliri && LP 635-46
-
-        if (factions.contains(KnownFaction.INDEPENDENTS_OF_MARIDAL) || factions.contains(KnownFaction.JUSTICE_PARTY_OF_MARIDAL)) {
-            possibleSystemNames.add("MARIDAL");
-        }
-        if (factions.contains(KnownFaction.LP_575_38_BLUE_TRANSPORT_COMMS) || factions.contains(KnownFaction.LIBERALS_OF_LP_575_38) || factions.contains(KnownFaction.LP_575_38_ORGANISATION)) {
-            possibleSystemNames.add("LP 575-38");
-        }
-        if (factions.contains(KnownFaction.ALLIANCE_OF_HRISASTSHI) || factions.contains(KnownFaction.HRISASTSHI_CO) || factions.contains(KnownFaction.HRISASTSHI_JET_BOYS)) {
-            possibleSystemNames.add("HRISASTSHI");
-        }
-        if (factions.contains(KnownFaction.PEOPLE_S_MIKINN_LIBERALS) || factions.contains(KnownFaction.MOB_OF_MIKINN)) {
-            possibleSystemNames.add("MIKINN");
-        } else if (factions.contains(KnownFaction.BUREAU_OF_MIKINN_LEAGUE) && factions.contains(KnownFaction.MIKINN_GOLD_FEDERAL_INDUSTRIES)) {
-            possibleSystemNames.add("MIKINN");
-        } else if (factions.contains(KnownFaction._51_AQUILAE_SILVER_PUBLIC_INC) && factions.contains(KnownFaction.MIKINN_GOLD_FEDERAL_INDUSTRIES)) {
-            possibleSystemNames.add("MIKINN");
-        } else if (factions.contains(KnownFaction._51_AQUILAE_SILVER_PUBLIC_INC) && factions.contains(KnownFaction.BUREAU_OF_MIKINN_LEAGUE)) {
-            possibleSystemNames.add("MIKINN");
-        }
-        if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) && factions.contains(KnownFaction.EARLS_OF_LP_635_46) && factions.contains(KnownFaction.LHS_3564_SYSTEMS)) {
-            possibleSystemNames.add("LP 635-46");
-        } else if (factions.contains(KnownFaction.NEW_LP_635_46_CONFEDERATION) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES) && factions.contains(KnownFaction.LP_635_46_GOLD_POWER_NETWORK)) {
-            possibleSystemNames.add("LP 635-46");
-        } else if (factions.contains(KnownFaction.LP_635_46_GOLD_POWER_NETWORK) && factions.contains(KnownFaction.EARLS_OF_LP_635_46) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
-            possibleSystemNames.add("LP 635-46");
-        } else if (factions.contains(KnownFaction.LP_635_46_GOLD_POWER_NETWORK) && factions.contains(KnownFaction.NEZ_PELLIRI_GANG) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
-            possibleSystemNames.add("LP 635-46");
-        }
-        if (factions.contains(KnownFaction.PARTNERSHIP_OF_NGARU) || factions.contains(KnownFaction.NGARU_CRIMSON_COUNCIL)) {
-            possibleSystemNames.add("NGARU");
-        } else if (factions.contains(KnownFaction.NGARU_SERVICES) && factions.contains(KnownFaction.PARTNERSHIP_OF_ROSS_193)) {
-            possibleSystemNames.add("NGARU");
-        }
-        if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) && factions.contains(KnownFaction.NEZ_PELLIRI_DOMINION) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
-            possibleSystemNames.add("NEZ PELLIRI");
-        } else if (factions.contains(KnownFaction.NEZ_PELLIRI_GANG) && factions.contains(KnownFaction.NEZ_PELLIRI_SILVER_GALACTIC) && factions.contains(KnownFaction.LHS_3564_CONSERVATIVES)) {
-            possibleSystemNames.add("NEZ PELLIRI");
-        }
-        if (factions.contains(KnownFaction.ALLIANCE_OF_STHA_181) || factions.contains(KnownFaction.UNITING_NOEGIN) || factions.contains(KnownFaction.NOEGIN_PURPLE_BOYS)) {
-            possibleSystemNames.add("NOEGIN");
-        }
-        if (factions.contains(KnownFaction.UZUMERU_NETCOMS_INCORPORATED) || factions.contains(KnownFaction.BAVARINGONI_BLUE_RATS)) {
-            possibleSystemNames.add("BAVARINGONI");
-        }
-
-        if (possibleSystemNames.isEmpty()) {
-            throw new FactionScanException("SYSTEM UNKNOWN", "I cannot tell the system name from the scanned factions: " + factions, ocrResult);
-        } else if (possibleSystemNames.size() > 1) {
-            //            if (possibleSystemNames.size() == 2 && possibleSystemNames.contains("NEZ PELLIRI") && possibleSystemNames.contains("LP 635-46")) {
-            //                if (factions.contains(KnownFaction.GERMAN_PILOT_LOUNGE) && systemFactions.getFactions().get(KnownFaction.GERMAN_PILOT_LOUNGE).getInfluence() != null) {
-            //                    if (systemFactions.getFactions().get(KnownFaction.GERMAN_PILOT_LOUNGE).getInfluence().doubleValue() >= 40) {
-            //                        return "NEZ PELLIRI";
-            //                    } else {
-            //                        return "LP 635-46";
-            //                    }
-            //                }
-            //            }
-            throw new FactionScanException("SYSTEM AMBIGUOUS", "The scanned factions are present in more than one system: " + possibleSystemNames, ocrResult);
-        } else {
-            return possibleSystemNames.get(0);
         }
     }
 
