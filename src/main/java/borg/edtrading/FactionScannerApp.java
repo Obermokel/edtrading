@@ -30,7 +30,9 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -204,9 +206,9 @@ public class FactionScannerApp {
             if (text.contains(":")) {
                 // New label starts here. Current value is finished.
                 if (currentValue != null) {
-                    if (currentLabel == KnownLabel.CONTROLLING_FACTION || currentLabel == KnownLabel.KONTROLLIERENDE_FRAKTION) {
+                    if (currentLabel == KnownLabel.CONTROLLING_FACTION) {
                         systemFactions.setControllingFaction(KnownFaction.findBestMatching(currentValue));
-                    } else if (currentLabel == KnownLabel.FACTION || currentLabel == KnownLabel.FRAKTION) {
+                    } else if (currentLabel == KnownLabel.FACTION) {
                         currentFaction = KnownFaction.findBestMatching(currentValue);
                         if (currentFaction == null && systemFactions.getFactions().size() < 2) {
                             throw new FactionScanException("FACTION UNKNOWN", "Failed to parse '" + currentValue + "' to a faction name", ocrResult);
@@ -219,11 +221,11 @@ public class FactionScannerApp {
                             systemFaction = new SystemFaction(currentFaction);
                             systemFactions.getFactions().put(currentFaction, systemFaction);
                         }
-                        if (currentLabel == KnownLabel.GOVERNMENT || currentLabel == KnownLabel.REGIERUNG) {
+                        if (currentLabel == KnownLabel.GOVERNMENT) {
                             systemFaction.setGovernment(Government.findBestMatching(currentValue));
-                        } else if (currentLabel == KnownLabel.ALLEGIANCE || currentLabel == KnownLabel.ZUGEHOERIGKEIT) {
+                        } else if (currentLabel == KnownLabel.ALLEGIANCE) {
                             systemFaction.setAllegiance(Allegiance.findBestMatching(currentValue));
-                        } else if (currentLabel == KnownLabel.INFLUENCE || currentLabel == KnownLabel.EINFLUSS) {
+                        } else if (currentLabel == KnownLabel.INFLUENCE) {
                             String fixedValue = currentValue.toUpperCase().replace(" ", "").replace("%", "").replace(",", ".");
                             fixedValue = fixedValue.replace("O", "0").replace("D", "0").replace("I", "1").replace("S", "5").replace("B", "8");
                             try {
@@ -233,9 +235,9 @@ public class FactionScannerApp {
                                 //System.exit(1);
                                 //systemFaction.setInfluence(new BigDecimal("99.9"));
                             }
-                        } else if (currentLabel == KnownLabel.STATE || currentLabel == KnownLabel.ZUSTAND) {
+                        } else if (currentLabel == KnownLabel.STATE) {
                             systemFaction.setState(State.findBestMatching(currentValue));
-                        } else if (currentLabel == KnownLabel.RELATIONSHIP || currentLabel == KnownLabel.BEZIEHUNG) {
+                        } else if (currentLabel == KnownLabel.RELATIONSHIP) {
                             systemFaction.setRelationship(Relationship.findBestMatching(currentValue));
                         }
                     }
@@ -419,41 +421,28 @@ public class FactionScannerApp {
     public static enum Government {
 
         //@formatter:off
-        ANARCHY("ANARCHY"),
-        COMMUNISM("COMMUNISM"),
-        CONFEDERACY("CONFEDERACY"),
-        CORPORATE("CORPORATE"),
-        COOPERATIVE("COOPERATIVE"),
-        DEMOCRACY("DEMOCRACY"),
-        DICTATORSHIP("DICTATORSHIP"),
-        FEUDAL("FEUDAL"),
-        IMPERIAL("IMPERIAL"),
-        PATRONAGE("PATRONAGE"),
-        PRISON_COLONY("PRISON COLONY"),
-        THEOCRACY("THEOCRACY"),
-        WORKSHOP("WORKSHOP"),
-        NONE("NONE"),
-
-        ANARCHIE("ANARCHIE"),
-        KOMMUNISMUS("KOMMUNISMUS"),
-        KONFOEDERATION("KONFÖDERATION"),
-        KONZERNPOLITIK("KONZERNPOLITIK"),
-        KOOPERATIVE("KOOPERATIVE"),
-        DEMOKRATIE("DEMOKRATIE"),
-        DIKTATUR("DIKTATUR"),
-        FEUDALSYSTEM("FEUDALSYSTEM"),
-        IMPERIUM("IMPERIUM"),
-        PATRONAT("PATRONAT"),
-        STRAEFLINGSKOLONIE("STRÄFLINGSKOLONIE"),
-        GOTTESSTAAT("GOTTESSTAAT"),
-        WERKSTATT("WERKSTATT"),
-        LEER("LEER");
+        ANARCHY("ANARCHY", "ANARCHIE"),
+        COMMUNISM("COMMUNISM", "KOMMUNISMUS"),
+        CONFEDERACY("CONFEDERACY", "KONFÖDERATION"),
+        CORPORATE("CORPORATE", "KONZERNPOLITIK"),
+        COOPERATIVE("COOPERATIVE", "KOOPERATIVE"),
+        DEMOCRACY("DEMOCRACY", "DEMOKRATIE"),
+        DICTATORSHIP("DICTATORSHIP", "DIKTATUR"),
+        FEUDAL("FEUDAL", "FEUDALSYSTEM"),
+        IMPERIAL("IMPERIAL", "IMPERIUM"),
+        PATRONAGE("PATRONAGE", "PATRONAT"),
+        PRISON_COLONY("PRISON COLONY", "STRÄFLINGSKOLONIE"),
+        THEOCRACY("THEOCRACY", "GOTTESSTAAT"),
+        WORKSHOP("WORKSHOP", "WERKSTATT"),
+        NONE("NONE", "LEER");
         //@formatter:on
 
         private final String name;
+        private final List<String> otherNames;
 
-        private Government(String name) {
+        private Government(String name, String... otherNames) {
             this.name = name;
+            this.otherNames = otherNames == null || otherNames.length <= 0 ? Collections.emptyList() : Arrays.asList(otherNames);
         }
 
         public static Government findBestMatching(String name) {
@@ -466,6 +455,13 @@ public class FactionScannerApp {
                     best = e;
                     bestError = error;
                 }
+                for (String otherName : e.getOtherNames()) {
+                    error = MiscUtil.levenshteinError(otherName, fixedName);
+                    if (error <= 0.25f && error < bestError) {
+                        best = e;
+                        bestError = error;
+                    }
+                }
             }
             return best;
         }
@@ -474,28 +470,28 @@ public class FactionScannerApp {
             return this.name;
         }
 
+        public List<String> getOtherNames() {
+            return this.otherNames;
+        }
+
     }
 
     public static enum Allegiance {
 
         //@formatter:off
-        ALLIANCE("ALLIANCE"),
-        EMPIRE("EMPIRE"),
-        FEDERATION("FEDERATION"),
-        INDEPENDENT("INDEPENDENT"),
-        NONE("NONE"),
-
-        ALLIANZ("ALLIANZ"),
-        IMPERIUM("IMPERIUM"),
-        FOEDERATION("FÖDERATION"),
-        UNABHAENGIG("UNABHÄNGIG"),
-        LEER("LEER");
+        ALLIANCE("ALLIANCE", "ALLIANZ"),
+        EMPIRE("EMPIRE", "IMPERIUM"),
+        FEDERATION("FEDERATION", "FÖDERATION"),
+        INDEPENDENT("INDEPENDENT", "UNABHÄNGIG"),
+        NONE("NONE", "LEER");
         //@formatter:on
 
         private final String name;
+        private final List<String> otherNames;
 
-        private Allegiance(String name) {
+        private Allegiance(String name, String... otherNames) {
             this.name = name;
+            this.otherNames = otherNames == null || otherNames.length <= 0 ? Collections.emptyList() : Arrays.asList(otherNames);
         }
 
         public static Allegiance findBestMatching(String name) {
@@ -508,6 +504,13 @@ public class FactionScannerApp {
                     best = e;
                     bestError = error;
                 }
+                for (String otherName : e.getOtherNames()) {
+                    error = MiscUtil.levenshteinError(otherName, fixedName);
+                    if (error <= 0.25f && error < bestError) {
+                        best = e;
+                        bestError = error;
+                    }
+                }
             }
             return best;
         }
@@ -516,44 +519,36 @@ public class FactionScannerApp {
             return this.name;
         }
 
+        public List<String> getOtherNames() {
+            return this.otherNames;
+        }
+
     }
 
     public static enum State {
 
         //@formatter:off
-        BOOM("BOOM"),
-        BUST("BUST"),
-        FAMINE("FAMINE"),
-        CIVIL_UNREST("CIVIL UNREST"),
-        CIVIL_WAR("CIVIL WAR"),
-        ELECTION("ELECTION"),
+        BOOM("BOOM", "AUFSCHWUNG"),
+        BUST("BUST", "KRISE"),
+        FAMINE("FAMINE", "HUNGERSNOT"),
+        CIVIL_UNREST("CIVIL UNREST", "UNRUHEN"),
+        CIVIL_WAR("CIVIL WAR", "BÜRGERKRIEG"),
+        ELECTION("ELECTION", "WAHLEN"),
         EXPANSION("EXPANSION"),
-        LOCKDOWN("LOCKDOWN"),
-        OUTBREAK("OUTBREAK"),
-        WAR("WAR"),
-        NONE("NONE"),
-        RETREAT("RETREAT"),
-        INVESTMENT("INVESTMENT"),
-
-        AUFSCHWUNG("AUFSCHWUNG"),
-        KRISE("KRISE"),
-        HUNGERSNOT("HUNGERSNOT"),
-        UNRUHEN("UNRUHEN"),
-        BUERGERKRIEG("BÜRGERKRIEG"),
-        WAHLEN("WAHLEN"),
-        //EXPANSION("EXPANSION"),
-        ABRIEGELUNG("ABRIEGELUNG"),
-        AUSBRUCH("AUSBRUCH"),
-        KRIEG("KRIEG"),
-        LEER("N/V"),
-        PLEITE("PLEITE"),
-        INVESTITION("INVESTITION");
+        LOCKDOWN("LOCKDOWN", "ABRIEGELUNG"),
+        OUTBREAK("OUTBREAK", "AUSBRUCH"),
+        WAR("WAR", "KRIEG"),
+        NONE("NONE", "N/V"),
+        RETREAT("RETREAT", "PLEITE"),
+        INVESTMENT("INVESTMENT", "INVESTITION");
         //@formatter:on
 
         private final String name;
+        private final List<String> otherNames;
 
-        private State(String name) {
+        private State(String name, String... otherNames) {
             this.name = name;
+            this.otherNames = otherNames == null || otherNames.length <= 0 ? Collections.emptyList() : Arrays.asList(otherNames);
         }
 
         public static State findBestMatching(String name) {
@@ -566,6 +561,13 @@ public class FactionScannerApp {
                     best = e;
                     bestError = error;
                 }
+                for (String otherName : e.getOtherNames()) {
+                    error = MiscUtil.levenshteinError(otherName, fixedName);
+                    if (error <= 0.25f && error < bestError) {
+                        best = e;
+                        bestError = error;
+                    }
+                }
             }
             return best;
         }
@@ -574,30 +576,29 @@ public class FactionScannerApp {
             return this.name;
         }
 
+        public List<String> getOtherNames() {
+            return this.otherNames;
+        }
+
     }
 
     public static enum Relationship {
 
         //@formatter:off
-        HOSTILE("HOSTILE"),
-        UNFRIENDLY("UNFRIENDLY"),
+        HOSTILE("HOSTILE", "FEINDLICH"),
+        UNFRIENDLY("UNFRIENDLY", "NICHT WOHLGESINNT"),
         NEUTRAL("NEUTRAL"),
-        CORDIAL("CORDIAL"),
-        FRIENDLY("FRIENDLY"),
-        ALLIED("ALLIED"),
-
-        FEINDLICH("FEINDLICH"),
-        NICHT_WOHLGESINNT("NICHT WOHLGESINNT"),
-        //NEUTRAL("NEUTRAL"),
-        HERZLICH("HERZLICH"),
-        WOHLGESINNT("WOHLGESINNT"),
-        VERBUENDET("VERBÜNDET");
+        CORDIAL("CORDIAL", "HERZLICH"),
+        FRIENDLY("FRIENDLY", "WOHLGESINNT"),
+        ALLIED("ALLIED", "VERBÜNDET");
         //@formatter:on
 
         private final String name;
+        private final List<String> otherNames;
 
-        private Relationship(String name) {
+        private Relationship(String name, String... otherNames) {
             this.name = name;
+            this.otherNames = otherNames == null || otherNames.length <= 0 ? Collections.emptyList() : Arrays.asList(otherNames);
         }
 
         public static Relationship findBestMatching(String name) {
@@ -610,6 +611,13 @@ public class FactionScannerApp {
                     best = e;
                     bestError = error;
                 }
+                for (String otherName : e.getOtherNames()) {
+                    error = MiscUtil.levenshteinError(otherName, fixedName);
+                    if (error <= 0.25f && error < bestError) {
+                        best = e;
+                        bestError = error;
+                    }
+                }
             }
             return best;
         }
@@ -618,36 +626,32 @@ public class FactionScannerApp {
             return this.name;
         }
 
+        public List<String> getOtherNames() {
+            return this.otherNames;
+        }
+
     }
 
     public static enum KnownLabel {
 
         //@formatter:off
-        CONTROLLING_FACTION("CONTROLLING FACTION"),
-        FACTION("FACTION"),
-        GOVERNMENT("GOVERNMENT"),
-        ALLEGIANCE("ALLEGIANCE"),
-        INFLUENCE("INFLUENCE"),
-        STATE("STATE"),
-        RELATIONSHIP("RELATIONSHIP"),
-        BACK("BACK"),
-        EXIT("EXIT"),
-
-        KONTROLLIERENDE_FRAKTION("KONTROLLIERENDE FRAKTION"),
-        FRAKTION("FRAKTION"),
-        REGIERUNG("REGIERUNG"),
-        ZUGEHOERIGKEIT("ZUGEHÖRIGKEIT"),
-        EINFLUSS("EINFLUSS"),
-        ZUSTAND("ZUSTAND"),
-        BEZIEHUNG("BEZIEHUNG"),
-        ZURUECK("ZURÜCK"),
-        VERLASSEN("VERLASSEN");
+        CONTROLLING_FACTION("CONTROLLING FACTION", "KONTROLLIERENDE FRAKTION"),
+        FACTION("FACTION", "FRAKTION"),
+        GOVERNMENT("GOVERNMENT", "REGIERUNG"),
+        ALLEGIANCE("ALLEGIANCE", "ZUGEHÖRIGKEIT"),
+        INFLUENCE("INFLUENCE", "EINFLUSS"),
+        STATE("STATE", "ZUSTAND"),
+        RELATIONSHIP("RELATIONSHIP", "BEZIEHUNG"),
+        BACK("BACK", "ZURÜCK"),
+        EXIT("EXIT", "VERLASSEN");
         //@formatter:on
 
         private final String name;
+        private final List<String> otherNames;
 
-        private KnownLabel(String name) {
+        private KnownLabel(String name, String... otherNames) {
             this.name = name;
+            this.otherNames = otherNames == null || otherNames.length <= 0 ? Collections.emptyList() : Arrays.asList(otherNames);
         }
 
         public static KnownLabel findBestMatching(String name) {
@@ -660,12 +664,23 @@ public class FactionScannerApp {
                     best = e;
                     bestError = error;
                 }
+                for (String otherName : e.getOtherNames()) {
+                    error = MiscUtil.levenshteinError(otherName, fixedName);
+                    if (error <= 0.25f && error < bestError) {
+                        best = e;
+                        bestError = error;
+                    }
+                }
             }
             return best;
         }
 
         public String getName() {
             return this.name;
+        }
+
+        public List<String> getOtherNames() {
+            return this.otherNames;
         }
 
     }
