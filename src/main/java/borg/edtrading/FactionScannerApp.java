@@ -894,7 +894,7 @@ public class FactionScannerApp {
         public static KnownFaction findBestMatching(String name) {
             KnownFaction best = null;
             float bestError = Float.MAX_VALUE;
-            String fixedName = name.toUpperCase().replace("0", "O").replace("1", "I").replace("5", "S").replace("8", "B");
+            String fixedName = name.toUpperCase();
             for (KnownFaction e : KnownFaction.values()) {
                 float error = MiscUtil.levenshteinError(e.getName(), fixedName);
                 if (error <= 0.25f && error < bestError) {
