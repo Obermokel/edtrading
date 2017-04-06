@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -138,12 +139,15 @@ public class FactionScannerApp {
         updateSystemFactions(systemFactions, ocrResult);
         updateDateAndSystemFromFilename(systemFactions, screenshotFile);
 
-        String tableName = "INFLUENCE_" + systemFactions.getSystemName().toUpperCase().replaceAll("\\W", "_");
         String date = new SimpleDateFormat("dd.MM.yyyy").format(systemFactions.getDate());
-        GoogleSpreadsheet gplInfAndState = new GoogleSpreadsheet(spreadsheetId, tableName);
-        GoogleTable tbl = gplInfAndState.getTable(tableName);
-        if (tbl == null) {
-            throw new FactionScanException("TABLE NOT FOUND", "Table '" + tableName + "' not found in Google sheet", ocrResult);
+        String tableNameInfluence = "INFLUENCE_" + systemFactions.getSystemName().toUpperCase().replaceAll("\\W", "_");
+        GoogleSpreadsheet gplInfluence = new GoogleSpreadsheet(spreadsheetId, tableNameInfluence);
+        GoogleTable tblInfluence = gplInfluence.getTable(tableNameInfluence);
+        String tableNameState = "STATE_" + systemFactions.getSystemName().toUpperCase().replaceAll("\\W", "_");
+        GoogleSpreadsheet gplState = new GoogleSpreadsheet(spreadsheetId, tableNameState);
+        GoogleTable tblState = gplState.getTable(tableNameState);
+        if (tblInfluence == null) {
+            throw new FactionScanException("TABLE NOT FOUND", "Table '" + tableNameInfluence + "' not found in Google sheet", ocrResult);
             //throw new RuntimeException("Table '" + tableName + "' not found");
         } else {
             for (KnownFaction faction : systemFactions.getFactions().keySet()) {
@@ -151,21 +155,41 @@ public class FactionScannerApp {
                     String factionName = faction.getName();
                     String influence = String.format(Locale.GERMANY, "%.1f%%", systemFactions.getFactions().get(faction).getInfluence());
 
-                    int colIdx = tbl.getColumnIndex(factionName);
+                    int colIdx = tblInfluence.getColumnIndex(factionName);
                     if (colIdx < 0) {
-                        logger.info("Adding column '" + factionName + "' to table '" + tableName + "'");
-                        colIdx = tbl.addColumn(factionName);
+                        logger.info("Adding column '" + factionName + "' to table '" + tableNameInfluence + "'");
+                        colIdx = tblInfluence.addColumn(factionName);
                     }
-                    int rowIdx = tbl.getRowIndex(date);
+                    int rowIdx = tblInfluence.getRowIndex(date);
                     if (rowIdx < 0) {
-                        logger.info("Adding row '" + date + "' to table '" + tableName + "'");
-                        rowIdx = tbl.addRow(date);
+                        logger.info("Adding row '" + date + "' to table '" + tableNameInfluence + "'");
+                        rowIdx = tblInfluence.addRow(date);
                     }
-                    String existingValue = tbl.getCellValue(rowIdx, colIdx);
-                    if (StringUtils.isNotEmpty(existingValue)) {
+                    String existingValue = tblInfluence.getCellValue(rowIdx, colIdx);
+                    if (StringUtils.isNotEmpty(existingValue) && !existingValue.equals(influence)) {
                         logger.warn("Overwriting " + existingValue + " with " + influence + " for " + factionName + " (" + date + ")");
                     }
-                    tbl.setCellValue(rowIdx, colIdx, influence);
+                    tblInfluence.setCellValue(rowIdx, colIdx, influence);
+                }
+                if (systemFactions.getFactions().get(faction).getState() != null) {
+                    String factionName = faction.getName();
+                    String state = systemFactions.getFactions().get(faction).getState().toString();
+
+                    int colIdx = tblState.getColumnIndex(factionName);
+                    if (colIdx < 0) {
+                        logger.info("Adding column '" + factionName + "' to table '" + tableNameState + "'");
+                        colIdx = tblState.addColumn(factionName);
+                    }
+                    int rowIdx = tblState.getRowIndex(date);
+                    if (rowIdx < 0) {
+                        logger.info("Adding row '" + date + "' to table '" + tableNameState + "'");
+                        rowIdx = tblState.addRow(date);
+                    }
+                    String existingValue = tblState.getCellValue(rowIdx, colIdx);
+                    if (StringUtils.isNotEmpty(existingValue) && !existingValue.equals(state)) {
+                        logger.warn("Overwriting " + existingValue + " with " + state + " for " + factionName + " (" + date + ")");
+                    }
+                    tblState.setCellValue(rowIdx, colIdx, state);
                 }
             }
         }
@@ -273,8 +297,16 @@ public class FactionScannerApp {
         });
         List<File> fileList = new ArrayList<>(fileArray.length);
         for (File f : fileArray) {
-            fileList.add(f);
+            if (System.currentTimeMillis() - f.lastModified() > 10000L) {
+                fileList.add(f);
+            }
         }
+        Collections.sort(fileList, new Comparator<File>() {
+            @Override
+            public int compare(File f1, File f2) {
+                return f1.getName().compareTo(f2.getName());
+            }
+        });
         return fileList;
     }
 
