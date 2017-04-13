@@ -5,6 +5,7 @@ import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;
 import borg.edtrading.eddn.EddnListener;
+import borg.edtrading.journal.entries.AbstractJournalEntry.Faction;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.services.EddbService;
 import borg.edtrading.sidepanel.ScannedBody;
@@ -324,8 +325,8 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
     }
 
     @Override
-    public void onCommanderLocation(Date timestamp, String commanderName, String systemName, Coord systemCoords) {
-        this.area.onCommanderLocation(timestamp, commanderName, systemName, systemCoords);
+    public void onCommanderLocation(Date timestamp, String commanderName, String systemName, Coord systemCoords, List<Faction> systemFactions) {
+        this.area.onCommanderLocation(timestamp, commanderName, systemName, systemCoords, systemFactions);
         this.area.repaint();
     }
 
@@ -353,7 +354,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
         }
 
         @Override
-        public void onCommanderLocation(Date timestamp, String commanderName, String systemName, Coord systemCoords) {
+        public void onCommanderLocation(Date timestamp, String commanderName, String systemName, Coord systemCoords, List<Faction> systemFactions) {
             this.commanderLocations.put(commanderName, systemCoords);
         }
 

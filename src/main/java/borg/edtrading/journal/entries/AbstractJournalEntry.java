@@ -5,6 +5,8 @@ import borg.edtrading.journal.Event;
 import borg.edtrading.journal.NameCount;
 import borg.edtrading.journal.RingData;
 import borg.edtrading.util.MiscUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -14,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -24,6 +27,8 @@ import java.util.Map;
 public class AbstractJournalEntry implements Serializable, Comparable<AbstractJournalEntry> {
 
     private static final long serialVersionUID = -9096842249098740097L;
+
+    static final Logger logger = LogManager.getLogger(AbstractJournalEntry.class);
 
     private final Date timestamp;
     private final Event event;
@@ -171,15 +176,57 @@ public class AbstractJournalEntry implements Serializable, Comparable<AbstractJo
     }
 
     protected Map<String, Float> readPercentages(Map<String, Object> data, String name) {
-        Map<String, Number> map = this.readMap(data, name, String.class, Number.class);
+        try {
+            List<Map> list = this.readList(data, name, Map.class);
 
-        if (map == null) {
+            if (list == null) {
+                return null;
+            } else {
+                Map<String, Float> result = new LinkedHashMap<>();
+
+                for (Map m : list) {
+                    String matName = (String) m.get("Name");
+                    Number matPercent = (Number) m.get("Percent");
+                    result.put(matName, matPercent.floatValue());
+                }
+
+                return result;
+            }
+        } catch (Exception e1) {
+            logger.warn("Failed to read percentages", e1);
+
+            Map<String, Number> map = this.readMap(data, name, String.class, Number.class);
+
+            if (map == null) {
+                return null;
+            } else {
+                Map<String, Float> result = new LinkedHashMap<>(map.size());
+                for (Map.Entry<String, Number> e : map.entrySet()) {
+                    result.put(e.getKey(), e.getValue().floatValue());
+                }
+                return result;
+            }
+        }
+    }
+
+    protected List<Faction> readFactions(LinkedHashMap<String, Object> data, String name) {
+        List<Map> list = this.readList(data, name, Map.class);
+
+        if (list == null) {
             return null;
         } else {
-            Map<String, Float> result = new LinkedHashMap<>(map.size());
-            for (Map.Entry<String, Number> e : map.entrySet()) {
-                result.put(e.getKey(), e.getValue().floatValue());
+            List<Faction> result = new ArrayList<>();
+
+            for (Map m : list) {
+                Faction faction = new Faction();
+                faction.setName((String) m.get("Name"));
+                faction.setAllegiance((String) m.get("Allegiance"));
+                faction.setGovernment((String) m.get("Government"));
+                faction.setFactionState((String) m.get("FactionState"));
+                faction.setInfluence(((Number) m.get("Influence")).floatValue());
+                result.add(faction);
             }
+
             return result;
         }
     }
@@ -190,6 +237,63 @@ public class AbstractJournalEntry implements Serializable, Comparable<AbstractJo
 
     public Event getEvent() {
         return this.event;
+    }
+
+    public static class Faction implements Serializable {
+
+        private static final long serialVersionUID = 390359291506715008L;
+
+        private String name = null;
+        private String allegiance = null;
+        private String government = null;
+        private String factionState = null;
+        private Float influence = null;
+
+        @Override
+        public String toString() {
+            return this.name + " (" + this.factionState + "): " + String.format(Locale.US, "%.1f%%", this.influence * 100);
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getAllegiance() {
+            return this.allegiance;
+        }
+
+        public void setAllegiance(String allegiance) {
+            this.allegiance = allegiance;
+        }
+
+        public String getGovernment() {
+            return this.government;
+        }
+
+        public void setGovernment(String government) {
+            this.government = government;
+        }
+
+        public String getFactionState() {
+            return this.factionState;
+        }
+
+        public void setFactionState(String factionState) {
+            this.factionState = factionState;
+        }
+
+        public Float getInfluence() {
+            return this.influence;
+        }
+
+        public void setInfluence(Float influence) {
+            this.influence = influence;
+        }
+
     }
 
 }

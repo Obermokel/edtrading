@@ -34,6 +34,7 @@ public class FSDJumpEntry extends AbstractJournalEntry {
     private final Float boostUsed;
     private final List<String> powers;
     private final String powerplayState;
+    private final List<Faction> factions;
 
     public FSDJumpEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -55,6 +56,7 @@ public class FSDJumpEntry extends AbstractJournalEntry {
         this.boostUsed = this.readFloat(data, "BoostUsed");
         this.powers = this.readList(data, "Powers", String.class);
         this.powerplayState = this.readString(data, "PowerplayState");
+        this.factions = this.readFactions(data, "Factions");
     }
 
     /**
@@ -138,6 +140,10 @@ public class FSDJumpEntry extends AbstractJournalEntry {
 
     public String getPowerplayState() {
         return this.powerplayState;
+    }
+
+    public List<Faction> getFactions() {
+        return this.factions;
     }
 
 }

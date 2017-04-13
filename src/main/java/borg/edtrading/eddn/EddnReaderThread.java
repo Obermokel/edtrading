@@ -4,6 +4,7 @@ import borg.edtrading.data.Coord;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.JournalReader;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
+import borg.edtrading.journal.entries.AbstractJournalEntry.Faction;
 import borg.edtrading.journal.entries.exploration.ScanEntry;
 import borg.edtrading.journal.entries.location.FSDJumpEntry;
 import borg.edtrading.journal.entries.location.LocationEntry;
@@ -74,6 +75,7 @@ public class EddnReaderThread extends Thread {
                         String uploaderId = MiscUtil.getAsString(((Map<String, Object>) data.get("header")).get("uploaderID"));
                         String systemName = null;
                         Coord systemCoords = null;
+                        List<Faction> systemFactions = null;
                         LinkedHashMap<String, Object> journalMessage = new LinkedHashMap<String, Object>((Map<String, Object>) data.get("message"));
                         AbstractJournalEntry journalData = journalReader.readJournalData(journalMessage);
                         Date timestamp = journalData.getTimestamp();
@@ -84,6 +86,7 @@ public class EddnReaderThread extends Thread {
                         } else if (journalData.getEvent() == Event.FSDJump) {
                             systemName = ((FSDJumpEntry) journalData).getStarSystem();
                             systemCoords = ((FSDJumpEntry) journalData).getStarPos();
+                            systemFactions = ((FSDJumpEntry) journalData).getFactions();
                         } else if (journalData.getEvent() == Event.Scan) {
                             systemName = ((ScanEntry) journalData).getStarSystem();
                             systemCoords = ((ScanEntry) journalData).getStarPos();
@@ -92,7 +95,7 @@ public class EddnReaderThread extends Thread {
                         if (timestamp != null && StringUtils.isNotEmpty(uploaderId) && StringUtils.isNotEmpty(systemName) && systemCoords != null) {
                             for (EddnListener listener : this.listeners) {
                                 try {
-                                    listener.onCommanderLocation(timestamp, uploaderId, systemName, systemCoords);
+                                    listener.onCommanderLocation(timestamp, uploaderId, systemName, systemCoords, systemFactions);
                                 } catch (Exception ex) {
                                     logger.warn(listener + " failed: " + ex);
                                 }

@@ -1,8 +1,10 @@
 package borg.edtrading.eddn;
 
 import borg.edtrading.data.Coord;
+import borg.edtrading.journal.entries.AbstractJournalEntry.Faction;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * EddnListener
@@ -11,6 +13,6 @@ import java.util.Date;
  */
 public interface EddnListener {
 
-    void onCommanderLocation(Date timestamp, String commanderName, String systemName, Coord systemCoords);
+    void onCommanderLocation(Date timestamp, String commanderName, String systemName, Coord systemCoords, List<Faction> systemFactions);
 
 }
