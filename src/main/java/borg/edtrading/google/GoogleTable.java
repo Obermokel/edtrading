@@ -68,9 +68,6 @@ public class GoogleTable {
         row.set(colIdx, value);
     }
 
-    // TODO
-    // moveColumn
-
     public String getTitle() {
         return this.title;
     }
@@ -191,6 +188,10 @@ public class GoogleTable {
         } catch (Exception e) {
             throw new IOException("Failed to set " + range + " to '" + value + "'", e);
         }
+    }
+
+    public void insertRowAbove(int rowIdx) {
+        // TODO
     }
 
 }
