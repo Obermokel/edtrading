@@ -133,9 +133,19 @@ public class AbstractJournalEntry implements Serializable, Comparable<AbstractJo
     }
 
     protected Map<String, Integer> readNameCountMap(Map<String, Object> data, String name) {
-        Map<String, Number> ncMap = this.readMap(data, name, String.class, Number.class);
+        Object nc = data.remove(name);
 
-        if (ncMap != null) {
+        if (nc instanceof List) {
+            List<Map<String, Object>> ncList = (List<Map<String, Object>>) nc;
+
+            Map<String, Integer> result = new LinkedHashMap<>(ncList.size());
+            for (Map<String, Object> m : ncList) {
+                result.put(MiscUtil.getAsString(m.get("Name")), MiscUtil.getAsInt(m.get("Count")));
+            }
+            return result;
+        } else if (nc instanceof Map) {
+            Map<String, Number> ncMap = (Map<String, Number>) nc;
+
             Map<String, Integer> result = new LinkedHashMap<>(ncMap.size());
             for (String n : ncMap.keySet()) {
                 result.put(n, ncMap.get(n).intValue());
@@ -176,36 +186,26 @@ public class AbstractJournalEntry implements Serializable, Comparable<AbstractJo
     }
 
     protected Map<String, Float> readPercentages(Map<String, Object> data, String name) {
-        try {
-            List<Map> list = this.readList(data, name, Map.class);
+        Object nc = data.remove(name);
 
-            if (list == null) {
-                return null;
-            } else {
-                Map<String, Float> result = new LinkedHashMap<>();
+        if (nc instanceof List) {
+            List<Map<String, Object>> ncList = (List<Map<String, Object>>) nc;
 
-                for (Map m : list) {
-                    String matName = (String) m.get("Name");
-                    Number matPercent = (Number) m.get("Percent");
-                    result.put(matName, matPercent.floatValue());
-                }
-
-                return result;
+            Map<String, Float> result = new LinkedHashMap<>(ncList.size());
+            for (Map<String, Object> m : ncList) {
+                result.put(MiscUtil.getAsString(m.get("Name")), MiscUtil.getAsFloat(m.get("Percent")));
             }
-        } catch (Exception e1) {
-            logger.warn("Failed to read percentages", e1);
+            return result;
+        } else if (nc instanceof Map) {
+            Map<String, Number> ncMap = (Map<String, Number>) nc;
 
-            Map<String, Number> map = this.readMap(data, name, String.class, Number.class);
-
-            if (map == null) {
-                return null;
-            } else {
-                Map<String, Float> result = new LinkedHashMap<>(map.size());
-                for (Map.Entry<String, Number> e : map.entrySet()) {
-                    result.put(e.getKey(), e.getValue().floatValue());
-                }
-                return result;
+            Map<String, Float> result = new LinkedHashMap<>(ncMap.size());
+            for (String n : ncMap.keySet()) {
+                result.put(n, ncMap.get(n).floatValue());
             }
+            return result;
+        } else {
+            return null;
         }
     }
 

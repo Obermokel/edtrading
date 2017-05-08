@@ -1,6 +1,5 @@
 package borg.edtrading;
 
-import borg.edtrading.cfg.Constants;
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddn.EddnListener;
 import borg.edtrading.eddn.EddnReaderThread;
@@ -43,7 +42,8 @@ public class FsdJumpListener {
 
         eddnReaderThread.interrupt();
 
-        File baseDir = new File(Constants.TEMP_DIR, "BGS Journal");
+        //File baseDir = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Factions\\BGS Journal");
+        File baseDir = new File(System.getProperty("user.home"), "FSDJumpListener");
         if (!baseDir.exists()) {
             baseDir.mkdirs();
         }

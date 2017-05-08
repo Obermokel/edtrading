@@ -1,10 +1,12 @@
 package borg.edtrading.journal.entries.location;
 
+import borg.edtrading.data.Coord;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * DockedEntry
@@ -16,6 +18,7 @@ public class DockedEntry extends AbstractJournalEntry {
     private static final long serialVersionUID = -5020421222455569735L;
 
     private final String starSystem;
+    private final Coord starPos;
     private final String stationName;
     private final String stationType;
     private final String stationFaction;
@@ -28,11 +31,13 @@ public class DockedEntry extends AbstractJournalEntry {
     private final String systemSecurityLocalized;
     private final String factionState;
     private final Boolean cockpitBreach;
+    private final List<Faction> factions;
 
     public DockedEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
 
         this.starSystem = this.readString(data, "StarSystem");
+        this.starPos = this.readCoord(data, "StarPos");
         this.stationName = this.readString(data, "StationName");
         this.stationType = this.readString(data, "StationType");
         this.stationAllegiance = data.containsKey("Allegiance") ? this.readString(data, "Allegiance") : this.readString(data, "StationAllegiance");
@@ -45,10 +50,15 @@ public class DockedEntry extends AbstractJournalEntry {
         this.systemSecurityLocalized = data.containsKey("Security_Localised") ? this.readString(data, "Security_Localised") : this.readString(data, "SystemSecurity_Localised");
         this.factionState = this.readString(data, "FactionState");
         this.cockpitBreach = this.readBoolean(data, "CockpitBreach");
+        this.factions = this.readFactions(data, "Factions");
     }
 
     public String getStarSystem() {
         return this.starSystem;
+    }
+
+    public Coord getStarPos() {
+        return this.starPos;
     }
 
     public String getStationName() {
@@ -97,6 +107,10 @@ public class DockedEntry extends AbstractJournalEntry {
 
     public Boolean getCockpitBreach() {
         return this.cockpitBreach;
+    }
+
+    public List<Faction> getFactions() {
+        return this.factions;
     }
 
 }

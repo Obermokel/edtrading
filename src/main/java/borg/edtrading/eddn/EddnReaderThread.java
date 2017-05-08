@@ -6,6 +6,7 @@ import borg.edtrading.journal.JournalReader;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
 import borg.edtrading.journal.entries.AbstractJournalEntry.Faction;
 import borg.edtrading.journal.entries.exploration.ScanEntry;
+import borg.edtrading.journal.entries.location.DockedEntry;
 import borg.edtrading.journal.entries.location.FSDJumpEntry;
 import borg.edtrading.journal.entries.location.LocationEntry;
 import borg.edtrading.util.MiscUtil;
@@ -83,10 +84,15 @@ public class EddnReaderThread extends Thread {
                         if (journalData.getEvent() == Event.Location) {
                             systemName = ((LocationEntry) journalData).getStarSystem();
                             systemCoords = ((LocationEntry) journalData).getStarPos();
+                            systemFactions = ((LocationEntry) journalData).getFactions();
                         } else if (journalData.getEvent() == Event.FSDJump) {
                             systemName = ((FSDJumpEntry) journalData).getStarSystem();
                             systemCoords = ((FSDJumpEntry) journalData).getStarPos();
                             systemFactions = ((FSDJumpEntry) journalData).getFactions();
+                        } else if (journalData.getEvent() == Event.Docked) {
+                            systemName = ((DockedEntry) journalData).getStarSystem();
+                            systemCoords = ((DockedEntry) journalData).getStarPos();
+                            systemFactions = ((DockedEntry) journalData).getFactions();
                         } else if (journalData.getEvent() == Event.Scan) {
                             systemName = ((ScanEntry) journalData).getStarSystem();
                             systemCoords = ((ScanEntry) journalData).getStarPos();

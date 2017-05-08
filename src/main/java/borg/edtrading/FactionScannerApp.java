@@ -250,7 +250,7 @@ public class FactionScannerApp {
                         } else if (currentLabel == KnownLabel.ALLEGIANCE) {
                             systemFaction.setAllegiance(Allegiance.findBestMatching(currentValue));
                         } else if (currentLabel == KnownLabel.INFLUENCE) {
-                            String fixedValue = currentValue.toUpperCase().replace(" ", "").replace("%", "").replace(",", ".");
+                            String fixedValue = currentValue.toUpperCase().replace(" ", "").replace("%", "").replace(",", ".").replace("▪", "");
                             fixedValue = fixedValue.replace("O", "0").replace("D", "0").replace("I", "1").replace("S", "5").replace("B", "8");
                             try {
                                 systemFaction.setInfluence(new BigDecimal(fixedValue.trim()));
@@ -770,6 +770,16 @@ public class FactionScannerApp {
         LALANDE_39866_CORP_("LALANDE 39866 CORP."), // LALANDE 39866
         LALANDE_39866_GOLD_CREW("LALANDE 39866 GOLD CREW"), // LALANDE 39866
         AUTOCRACY_OF_LALANDE_39866("AUTOCRACY OF LALANDE 39866"), // LALANDE 39866
+        LTT_18486_JET_ENERGY_COMPANY("LTT 18486 JET ENERGY COMPANY"), // Mikinn
+        KORAZOTZ_GALACTIC_INC("KORAZOTZ GALACTIC INC"), // PEMOTEN
+        NAVAJOAR_FORTUNE_CORPORATION("NAVAJOAR FORTUNE CORPORATION"), // PEMOTEN
+        PEMOTEN_BROTHERHOOD("PEMOTEN BROTHERHOOD"), // PEMOTEN
+        FROG_PROGRESSIVE_PARTY("FROG PROGRESSIVE PARTY"), // FROG
+        FROG_COMMODITIES("FROG COMMODITIES"), // FROG
+        CHINICOLLO_LEAGUE("CHINICOLLO LEAGUE"), // FROG
+        FROG_JET_BROTHERHOOD("FROG JET BROTHERHOOD"), // FROG
+        FROG_AUTOCRACY("FROG AUTOCRACY"), // FROG
+        DIAMOND_FROGS("DIAMOND FROGS"), // FROG
         GERMAN_PILOT_LOUNGE("GERMAN PILOT LOUNGE");
         //@formatter:on
 

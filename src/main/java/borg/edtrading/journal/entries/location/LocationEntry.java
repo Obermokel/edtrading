@@ -35,6 +35,7 @@ public class LocationEntry extends AbstractJournalEntry {
     private final String factionState;
     private final List<String> powers;
     private final String powerplayState;
+    private final List<Faction> factions;
 
     public LocationEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -57,6 +58,7 @@ public class LocationEntry extends AbstractJournalEntry {
         this.factionState = this.readString(data, "FactionState");
         this.powers = this.readList(data, "Powers", String.class);
         this.powerplayState = this.readString(data, "PowerplayState");
+        this.factions = this.readFactions(data, "Factions");
     }
 
     public Boolean getDocked() {
@@ -129,6 +131,10 @@ public class LocationEntry extends AbstractJournalEntry {
 
     public String getPowerplayState() {
         return this.powerplayState;
+    }
+
+    public List<Faction> getFactions() {
+        return this.factions;
     }
 
 }
