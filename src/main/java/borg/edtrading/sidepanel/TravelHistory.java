@@ -597,6 +597,13 @@ public class TravelHistory implements JournalUpdateListener, GameSessionListener
                         logger.warn(listener + " failed: " + ex);
                     }
                 }
+            } else if (entry.getEvent() == Event.Died) {
+                for (VisitedSystem visitedSystem : this.visitedSystems) {
+                    visitedSystem.setToPayedOut();
+                    for (ScannedBody scannedBody : visitedSystem.getScannedBodies()) {
+                        scannedBody.setToPayedOut();
+                    }
+                }
             }
         } catch (Exception e) {
             logger.error("Failed to handle " + entry, e);
