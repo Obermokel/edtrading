@@ -18,8 +18,11 @@ import borg.edtrading.journal.entries.fight.HeatDamageEntry;
 import borg.edtrading.journal.entries.fight.HeatWarningEntry;
 import borg.edtrading.journal.entries.fight.HullDamageEntry;
 import borg.edtrading.journal.entries.fight.InterdictedEntry;
+import borg.edtrading.journal.entries.fight.PVPKillEntry;
 import borg.edtrading.journal.entries.fight.RebootRepairEntry;
 import borg.edtrading.journal.entries.fight.ResurrectEntry;
+import borg.edtrading.journal.entries.fight.ScannedEntry;
+import borg.edtrading.journal.entries.fight.SelfDestructEntry;
 import borg.edtrading.journal.entries.fight.ShieldStateEntry;
 import borg.edtrading.journal.entries.fleet.FetchRemoteModuleEntry;
 import borg.edtrading.journal.entries.fleet.ModuleBuyEntry;
@@ -33,8 +36,11 @@ import borg.edtrading.journal.entries.fleet.ShipyardNewEntry;
 import borg.edtrading.journal.entries.fleet.ShipyardSellEntry;
 import borg.edtrading.journal.entries.fleet.ShipyardSwapEntry;
 import borg.edtrading.journal.entries.fleet.ShipyardTransferEntry;
+import borg.edtrading.journal.entries.game.CargoEntry;
 import borg.edtrading.journal.entries.game.FileheaderEntry;
 import borg.edtrading.journal.entries.game.LoadGameEntry;
+import borg.edtrading.journal.entries.game.LoadoutEntry;
+import borg.edtrading.journal.entries.game.MaterialsEntry;
 import borg.edtrading.journal.entries.game.ProgressEntry;
 import borg.edtrading.journal.entries.game.PromotionEntry;
 import borg.edtrading.journal.entries.game.RankEntry;
@@ -46,6 +52,7 @@ import borg.edtrading.journal.entries.inventory.MaterialCollectedEntry;
 import borg.edtrading.journal.entries.inventory.MaterialDiscardedEntry;
 import borg.edtrading.journal.entries.inventory.MaterialDiscoveredEntry;
 import borg.edtrading.journal.entries.inventory.MiningRefinedEntry;
+import borg.edtrading.journal.entries.inventory.PassengersEntry;
 import borg.edtrading.journal.entries.inventory.ScientificResearchEntry;
 import borg.edtrading.journal.entries.inventory.SellDronesEntry;
 import borg.edtrading.journal.entries.inventory.SynthesisEntry;
@@ -54,6 +61,7 @@ import borg.edtrading.journal.entries.location.DockedEntry;
 import borg.edtrading.journal.entries.location.FSDJumpEntry;
 import borg.edtrading.journal.entries.location.LiftoffEntry;
 import borg.edtrading.journal.entries.location.LocationEntry;
+import borg.edtrading.journal.entries.location.StartJumpEntry;
 import borg.edtrading.journal.entries.location.SupercruiseEntryEntry;
 import borg.edtrading.journal.entries.location.SupercruiseExitEntry;
 import borg.edtrading.journal.entries.location.TouchdownEntry;
@@ -235,6 +243,8 @@ public class JournalReader {
                     return new BuyAmmoEntry(timestamp, event, data);
                 case BuyDrones:
                     return new BuyDronesEntry(timestamp, event, data);
+                case Cargo:
+                    return new CargoEntry(timestamp, event, data);
                 case CollectCargo:
                     return new CollectCargoEntry(timestamp, event, data);
                 case CockpitBreached:
@@ -311,6 +321,8 @@ public class JournalReader {
                     return new LiftoffEntry(timestamp, event, data);
                 case LoadGame:
                     return new LoadGameEntry(timestamp, event, data);
+                case Loadout:
+                    return new LoadoutEntry(timestamp, event, data);
                 case Location:
                     return new LocationEntry(timestamp, event, data);
                 case MarketBuy:
@@ -323,6 +335,8 @@ public class JournalReader {
                     return new MaterialDiscardedEntry(timestamp, event, data);
                 case MaterialDiscovered:
                     return new MaterialDiscoveredEntry(timestamp, event, data);
+                case Materials:
+                    return new MaterialsEntry(timestamp, event, data);
                 case MiningRefined:
                     return new MiningRefinedEntry(timestamp, event, data);
                 case MissionAbandoned:
@@ -345,6 +359,8 @@ public class JournalReader {
                     return new ModuleStoreEntry(timestamp, event, data);
                 case ModuleSwap:
                     return new ModuleSwapEntry(timestamp, event, data);
+                case Passengers:
+                    return new PassengersEntry(timestamp, event, data);
                 case PayFines:
                     return new PayFinesEntry(timestamp, event, data);
                 case PayLegacyFines:
@@ -361,6 +377,8 @@ public class JournalReader {
                     return new ProgressEntry(timestamp, event, data);
                 case Promotion:
                     return new PromotionEntry(timestamp, event, data);
+                case PVPKill:
+                    return new PVPKillEntry(timestamp, event, data);
                 case Rank:
                     return new RankEntry(timestamp, event, data);
                 case RebootRepair:
@@ -381,12 +399,16 @@ public class JournalReader {
                     return new ResurrectEntry(timestamp, event, data);
                 case Scan:
                     return new ScanEntry(timestamp, event, data);
+                case Scanned:
+                    return new ScannedEntry(timestamp, event, data);
                 case ScientificResearch:
                     return new ScientificResearchEntry(timestamp, event, data);
                 case Screenshot:
                     return new ScreenshotEntry(timestamp, event, data);
                 case SellDrones:
                     return new SellDronesEntry(timestamp, event, data);
+                case SelfDestruct:
+                    return new SelfDestructEntry(timestamp, event, data);
                 case SellExplorationData:
                     return new SellExplorationDataEntry(timestamp, event, data);
                 case SendText:
@@ -403,6 +425,8 @@ public class JournalReader {
                     return new ShipyardSellEntry(timestamp, event, data);
                 case ShipyardSwap:
                     return new ShipyardSwapEntry(timestamp, event, data);
+                case StartJump:
+                    return new StartJumpEntry(timestamp, event, data);
                 case SupercruiseEntry:
                     return new SupercruiseEntryEntry(timestamp, event, data);
                 case SupercruiseExit:
