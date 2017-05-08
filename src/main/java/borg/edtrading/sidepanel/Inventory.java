@@ -9,6 +9,8 @@ import borg.edtrading.journal.JournalUpdateListener;
 import borg.edtrading.journal.NameCount;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
 import borg.edtrading.journal.entries.engineer.EngineerCraftEntry;
+import borg.edtrading.journal.entries.game.CargoEntry;
+import borg.edtrading.journal.entries.game.MaterialsEntry;
 import borg.edtrading.journal.entries.inventory.BuyDronesEntry;
 import borg.edtrading.journal.entries.inventory.CollectCargoEntry;
 import borg.edtrading.journal.entries.inventory.EjectCargoEntry;
@@ -335,6 +337,42 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
                 for (String name : this.getNames(ItemType.COMMODITY)) {
                     if (this.getHave(name) > 0) {
                         this.reset(name, 0, ItemType.COMMODITY);
+                    }
+                }
+            } else if (entry.getEvent() == Event.Cargo) {
+                CargoEntry e = (CargoEntry) entry;
+                for (String name : this.getNames(ItemType.COMMODITY)) {
+                    this.reset(name, 0, ItemType.COMMODITY);
+                }
+                if (e.getInventory() != null) {
+                    for (String name : e.getInventory().keySet()) {
+                        this.reset(name, e.getInventory().get(name), ItemType.COMMODITY);
+                    }
+                }
+            } else if (entry.getEvent() == Event.Materials) {
+                MaterialsEntry e = (MaterialsEntry) entry;
+                for (String name : this.getNames(ItemType.ELEMENT)) {
+                    this.reset(name, 0, ItemType.ELEMENT);
+                }
+                if (e.getRaw() != null) {
+                    for (String name : e.getRaw().keySet()) {
+                        this.reset(name, e.getRaw().get(name), ItemType.ELEMENT);
+                    }
+                }
+                for (String name : this.getNames(ItemType.MANUFACTURED)) {
+                    this.reset(name, 0, ItemType.MANUFACTURED);
+                }
+                if (e.getManufactured() != null) {
+                    for (String name : e.getManufactured().keySet()) {
+                        this.reset(name, e.getManufactured().get(name), ItemType.MANUFACTURED);
+                    }
+                }
+                for (String name : this.getNames(ItemType.DATA)) {
+                    this.reset(name, 0, ItemType.DATA);
+                }
+                if (e.getEncoded() != null) {
+                    for (String name : e.getEncoded().keySet()) {
+                        this.reset(name, e.getEncoded().get(name), ItemType.DATA);
                     }
                 }
             }
