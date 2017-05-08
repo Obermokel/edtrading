@@ -2,7 +2,9 @@ package borg.edtrading.journal.entries;
 
 import borg.edtrading.data.Coord;
 import borg.edtrading.journal.Event;
+import borg.edtrading.journal.ModuleData;
 import borg.edtrading.journal.NameCount;
+import borg.edtrading.journal.PassengerManifestData;
 import borg.edtrading.journal.RingData;
 import borg.edtrading.util.MiscUtil;
 import org.apache.logging.log4j.LogManager;
@@ -180,6 +182,45 @@ public class AbstractJournalEntry implements Serializable, Comparable<AbstractJo
                 BigDecimal innerRad = this.readBigDecimal(e, "InnerRad");
                 BigDecimal outerRad = this.readBigDecimal(e, "OuterRad");
                 result.add(new RingData(ringName, ringClass, massMT, innerRad, outerRad));
+            }
+            return result;
+        }
+    }
+
+    protected List<ModuleData> readModules(Map<String, Object> data, String name) {
+        List<Map> list = this.readList(data, name, Map.class);
+
+        if (list == null) {
+            return null;
+        } else {
+            List<ModuleData> result = new ArrayList<>(list.size());
+            for (Map e : list) {
+                String slot = this.readString(e, "Slot");
+                String item = this.readString(e, "Item");
+                Boolean on = this.readBoolean(e, "On");
+                Integer priority = this.readInt(e, "Priority");
+                Float health = this.readFloat(e, "Health");
+                Integer value = this.readInt(e, "Value");
+                result.add(new ModuleData(slot, item, on, priority, health, value));
+            }
+            return result;
+        }
+    }
+
+    protected List<PassengerManifestData> readPassengerManifest(Map<String, Object> data, String name) {
+        List<Map> list = this.readList(data, name, Map.class);
+
+        if (list == null) {
+            return null;
+        } else {
+            List<PassengerManifestData> result = new ArrayList<>(list.size());
+            for (Map e : list) {
+                String type = this.readString(e, "Type");
+                Boolean vip = this.readBoolean(e, "VIP");
+                Boolean wanted = this.readBoolean(e, "Wanted");
+                Integer count = this.readInt(e, "Count");
+                Integer missionID = this.readInt(e, "MissionID");
+                result.add(new PassengerManifestData(type, vip, wanted, count, missionID));
             }
             return result;
         }

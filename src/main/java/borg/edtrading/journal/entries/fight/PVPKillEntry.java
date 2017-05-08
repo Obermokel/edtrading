@@ -15,9 +15,22 @@ public class PVPKillEntry extends AbstractJournalEntry {
 
     private static final long serialVersionUID = 7472706879123845211L;
 
+    private final String victim;
+    private final Integer combatRank;
+
     public PVPKillEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
-        // TODO Auto-generated constructor stub
+
+        this.victim = this.readString(data, "Victim");
+        this.combatRank = this.readInt(data, "CombatRank");
+    }
+
+    public String getVictim() {
+        return this.victim;
+    }
+
+    public Integer getCombatRank() {
+        return this.combatRank;
     }
 
 }
