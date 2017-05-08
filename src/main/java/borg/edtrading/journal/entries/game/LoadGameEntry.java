@@ -23,6 +23,10 @@ public class LoadGameEntry extends AbstractJournalEntry {
     private final Integer credits;
     private final Integer loan;
     private final Boolean startLanded;
+    private final String ShipIdent;
+    private final String ShipName;
+    private final Float FuelLevel;
+    private final Float FuelCapacity;
 
     public LoadGameEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -35,6 +39,10 @@ public class LoadGameEntry extends AbstractJournalEntry {
         this.credits = this.readInt(data, "Credits");
         this.loan = this.readInt(data, "Loan");
         this.startLanded = this.readBoolean(data, "StartLanded");
+        this.ShipIdent = this.readString(data, "ShipIdent");
+        this.ShipName = this.readString(data, "ShipName");
+        this.FuelLevel = this.readFloat(data, "FuelLevel");
+        this.FuelCapacity = this.readFloat(data, "FuelCapacity");
     }
 
     public String getCommander() {
@@ -67,6 +75,22 @@ public class LoadGameEntry extends AbstractJournalEntry {
 
     public Boolean getStartLanded() {
         return this.startLanded;
+    }
+
+    public String getShipIdent() {
+        return this.ShipIdent;
+    }
+
+    public String getShipName() {
+        return this.ShipName;
+    }
+
+    public Float getFuelLevel() {
+        return this.FuelLevel;
+    }
+
+    public Float getFuelCapacity() {
+        return this.FuelCapacity;
     }
 
 }

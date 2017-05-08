@@ -185,6 +185,30 @@ public class AbstractJournalEntry implements Serializable, Comparable<AbstractJo
         }
     }
 
+    protected Map<String, Integer> readAmounts(Map<String, Object> data, String name, String key) {
+        Object nc = data.remove(name);
+
+        if (nc instanceof List) {
+            List<Map<String, Object>> ncList = (List<Map<String, Object>>) nc;
+
+            Map<String, Integer> result = new LinkedHashMap<>(ncList.size());
+            for (Map<String, Object> m : ncList) {
+                result.put(MiscUtil.getAsString(m.get(key)), MiscUtil.getAsInt(m.get("Amount")));
+            }
+            return result;
+        } else if (nc instanceof Map) {
+            Map<String, Number> ncMap = (Map<String, Number>) nc;
+
+            Map<String, Integer> result = new LinkedHashMap<>(ncMap.size());
+            for (String n : ncMap.keySet()) {
+                result.put(n, ncMap.get(n).intValue());
+            }
+            return result;
+        } else {
+            return null;
+        }
+    }
+
     protected Map<String, Float> readPercentages(Map<String, Object> data, String name) {
         Object nc = data.remove(name);
 

@@ -21,6 +21,7 @@ public class BountyEntry extends AbstractJournalEntry {
     private static final long serialVersionUID = -2858103216807639804L;
 
     private final String victimFaction;
+    private final String victimFactionLocalized;
     private final Integer totalReward;
     private final List<BountyReward> rewards;
     private final Integer sharedWithOthers;
@@ -33,6 +34,7 @@ public class BountyEntry extends AbstractJournalEntry {
         super(timestamp, event, data);
 
         this.victimFaction = this.readString(data, "VictimFaction");
+        this.victimFactionLocalized = this.readString(data, "VictimFaction_Localised");
         this.totalReward = this.readInt(data, "TotalReward");
         this.rewards = this.readRewards(data, "Rewards");
         this.sharedWithOthers = this.readInt(data, "SharedWithOthers");
@@ -54,6 +56,10 @@ public class BountyEntry extends AbstractJournalEntry {
 
     public String getVictimFaction() {
         return this.victimFaction;
+    }
+
+    public String getVictimFactionLocalized() {
+        return this.victimFactionLocalized;
     }
 
     public Integer getTotalReward() {

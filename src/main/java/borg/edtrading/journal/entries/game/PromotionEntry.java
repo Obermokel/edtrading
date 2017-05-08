@@ -18,6 +18,7 @@ public class PromotionEntry extends AbstractJournalEntry {
     private final Integer combat;
     private final Integer trade;
     private final Integer explore;
+    private final Integer empire;
 
     public PromotionEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -25,6 +26,7 @@ public class PromotionEntry extends AbstractJournalEntry {
         this.combat = this.readInt(data, "Combat");
         this.trade = this.readInt(data, "Trade");
         this.explore = this.readInt(data, "Explore");
+        this.empire = this.readInt(data, "Empire");
     }
 
     public Integer getCombat() {
@@ -37,6 +39,10 @@ public class PromotionEntry extends AbstractJournalEntry {
 
     public Integer getExplore() {
         return this.explore;
+    }
+
+    public Integer getEmpire() {
+        return this.empire;
     }
 
 }

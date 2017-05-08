@@ -19,6 +19,7 @@ public class DockedEntry extends AbstractJournalEntry {
 
     private final String starSystem;
     private final Coord starPos;
+    private final Float distFromStarLS;
     private final String stationName;
     private final String stationType;
     private final String stationFaction;
@@ -38,6 +39,7 @@ public class DockedEntry extends AbstractJournalEntry {
 
         this.starSystem = this.readString(data, "StarSystem");
         this.starPos = this.readCoord(data, "StarPos");
+        this.distFromStarLS = this.readFloat(data, "DistFromStarLS");
         this.stationName = this.readString(data, "StationName");
         this.stationType = this.readString(data, "StationType");
         this.stationAllegiance = data.containsKey("Allegiance") ? this.readString(data, "Allegiance") : this.readString(data, "StationAllegiance");
@@ -59,6 +61,10 @@ public class DockedEntry extends AbstractJournalEntry {
 
     public Coord getStarPos() {
         return this.starPos;
+    }
+
+    public Float getDistFromStarLS() {
+        return this.distFromStarLS;
     }
 
     public String getStationName() {

@@ -47,6 +47,8 @@ public class ScanEntry extends AbstractJournalEntry {
     private final String atmosphereType;
     private final String volcanism;
     private final Map<String, Float> materials;
+    private final Map<String, Float> atmosphereComposition;
+    private final String reserveLevel;
 
     public ScanEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -79,6 +81,8 @@ public class ScanEntry extends AbstractJournalEntry {
         this.atmosphereType = this.readString(data, "AtmosphereType");
         this.volcanism = this.readString(data, "Volcanism");
         this.materials = this.readPercentages(data, "Materials");
+        this.atmosphereComposition = this.readPercentages(data, "AtmosphereComposition");
+        this.reserveLevel = this.readString(data, "ReserveLevel");
     }
 
     public String getStarSystem() {
@@ -191,6 +195,14 @@ public class ScanEntry extends AbstractJournalEntry {
 
     public Map<String, Float> getMaterials() {
         return this.materials;
+    }
+
+    public Map<String, Float> getAtmosphereComposition() {
+        return this.atmosphereComposition;
+    }
+
+    public String getReserveLevel() {
+        return this.reserveLevel;
     }
 
 }

@@ -17,12 +17,14 @@ public class TouchdownEntry extends AbstractJournalEntry {
 
     private final Float latitude;
     private final Float longitude;
+    private final Boolean playerControlled;
 
     public TouchdownEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
 
         this.latitude = this.readFloat(data, "Latitude");
         this.longitude = this.readFloat(data, "Longitude");
+        this.playerControlled = this.readBoolean(data, "PlayerControlled");
     }
 
     public Float getLatitude() {
@@ -31,6 +33,10 @@ public class TouchdownEntry extends AbstractJournalEntry {
 
     public Float getLongitude() {
         return this.longitude;
+    }
+
+    public Boolean getPlayerControlled() {
+        return this.playerControlled;
     }
 
 }

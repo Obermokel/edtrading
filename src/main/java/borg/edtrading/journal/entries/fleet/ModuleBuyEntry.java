@@ -24,6 +24,8 @@ public class ModuleBuyEntry extends AbstractJournalEntry {
     private final String sellItem;
     private final String sellItemLocalized;
     private final Integer sellPrice;
+    private final String storedItem;
+    private final String storedItemLocalized;
 
     public ModuleBuyEntry(Date timestamp, Event event, LinkedHashMap<String, Object> data) {
         super(timestamp, event, data);
@@ -37,6 +39,8 @@ public class ModuleBuyEntry extends AbstractJournalEntry {
         this.sellItem = this.readString(data, "SellItem");
         this.sellItemLocalized = this.readString(data, "SellItem_Localised");
         this.sellPrice = this.readInt(data, "SellPrice");
+        this.storedItem = this.readString(data, "StoredItem");
+        this.storedItemLocalized = this.readString(data, "StoredItem_Localised");
     }
 
     public String getSlot() {
@@ -73,6 +77,14 @@ public class ModuleBuyEntry extends AbstractJournalEntry {
 
     public Integer getSellPrice() {
         return this.sellPrice;
+    }
+
+    public String getStoredItem() {
+        return this.storedItem;
+    }
+
+    public String getStoredItemLocalized() {
+        return this.storedItemLocalized;
     }
 
 }

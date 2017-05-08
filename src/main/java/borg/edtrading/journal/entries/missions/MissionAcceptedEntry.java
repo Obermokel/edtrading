@@ -18,6 +18,8 @@ public class MissionAcceptedEntry extends AbstractJournalEntry {
     private final String faction;
     private final String name;
     private final Date expiry;
+    private final String influence;
+    private final String reputation;
     private final Integer passengerCount;
     private final Boolean passengerVIPs;
     private final Boolean passengerWanted;
@@ -35,6 +37,8 @@ public class MissionAcceptedEntry extends AbstractJournalEntry {
         this.faction = this.readString(data, "Faction");
         this.name = this.readString(data, "Name");
         this.expiry = this.readDate(data, "Expiry");
+        this.influence = this.readString(data, "Influence");
+        this.reputation = this.readString(data, "Reputation");
         this.passengerCount = this.readInt(data, "PassengerCount");
         this.passengerVIPs = this.readBoolean(data, "PassengerVIPs");
         this.passengerWanted = this.readBoolean(data, "PassengerWanted");
@@ -57,6 +61,14 @@ public class MissionAcceptedEntry extends AbstractJournalEntry {
 
     public Date getExpiry() {
         return this.expiry;
+    }
+
+    public String getInfluence() {
+        return this.influence;
+    }
+
+    public String getReputation() {
+        return this.reputation;
     }
 
     public Integer getPassengerCount() {
