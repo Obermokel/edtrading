@@ -21,6 +21,7 @@ public class ShipLoadout implements Serializable {
 
     private Integer shipID = null;
     private String shipType = null;
+    private String shipIdent = null;
     private String shipName = null;
     private Integer buyPrice = null;
     private Float fuelLevel = null;
@@ -41,6 +42,13 @@ public class ShipLoadout implements Serializable {
         this.setShipID(shipID);
         this.setShipType(shipType);
         this.setBuyPrice(buyPrice);
+    }
+
+    public ShipLoadout(Integer shipID, String shipType, String shipIdent, String shipName) {
+        this.setShipID(shipID);
+        this.setShipType(shipType);
+        this.setShipIdent(shipIdent);
+        this.setShipName(shipName);
     }
 
     public int getShipValue() {
@@ -89,6 +97,14 @@ public class ShipLoadout implements Serializable {
 
     public void setShipType(String shipType) {
         this.shipType = shipType;
+    }
+
+    public String getShipIdent() {
+        return this.shipIdent;
+    }
+
+    public void setShipIdent(String shipIdent) {
+        this.shipIdent = shipIdent;
     }
 
     public String getShipName() {

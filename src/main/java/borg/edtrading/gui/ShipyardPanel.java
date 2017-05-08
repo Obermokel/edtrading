@@ -274,7 +274,7 @@ public class ShipyardPanel extends JPanel implements GameSessionListener, Action
                     lo.setMaxFuelPerJump(MiscUtil.getAsFloat(this.txtMaxFuelPerJump.getText(), 0.0f));
                     lo.setOptTankJumpRange(MiscUtil.getAsFloat(this.txtOptFuelJumpRange.getText(), 0.0f));
                     lo.setFullTankJumpRange(MiscUtil.getAsFloat(this.txtMaxFuelJumpRange.getText(), 0.0f));
-                    this.gameSession.saveShipLoadout(this.gameSession.getCommander(), lo);
+                    //this.gameSession.saveShipLoadout(this.gameSession.getCommander(), lo);
                 } catch (Exception ex) {
                     logger.error("Failed to save " + lo, ex);
                 }

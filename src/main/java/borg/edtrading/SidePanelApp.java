@@ -20,7 +20,6 @@ import borg.edtrading.sidepanel.InventoryListener;
 import borg.edtrading.sidepanel.ScannedBody;
 import borg.edtrading.sidepanel.ShipLoadout;
 import borg.edtrading.sidepanel.ShipModule;
-import borg.edtrading.sidepanel.ShipModuleList;
 import borg.edtrading.sidepanel.Transactions;
 import borg.edtrading.sidepanel.TravelHistory;
 import borg.edtrading.sidepanel.TravelHistoryListener;
@@ -99,7 +98,6 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
         inventory = new Inventory(journalReaderThread, gameSession);
         transactions = new Transactions(journalReaderThread);
         travelHistory = new TravelHistory(journalReaderThread, gameSession);
-        new ShipModuleList(gameSession);
 
         // Init the reader from existing files, then start to watch for changes
         journalReaderThread.init();
