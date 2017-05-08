@@ -192,12 +192,6 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
     public void windowClosing(WindowEvent e) {
         journalReaderThread.interrupt();
         eddnReaderThread.interrupt();
-
-        try {
-            inventory.save();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
     }
 
     @Override

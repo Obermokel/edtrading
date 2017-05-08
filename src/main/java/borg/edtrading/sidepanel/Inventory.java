@@ -23,13 +23,10 @@ import borg.edtrading.journal.entries.missions.MissionAcceptedEntry;
 import borg.edtrading.journal.entries.missions.MissionCompletedEntry;
 import borg.edtrading.journal.entries.starport.MarketBuyEntry;
 import borg.edtrading.journal.entries.starport.MarketSellEntry;
-import com.google.gson.Gson;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -50,7 +47,6 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
 
     private String commander = null;
     private int cargoCapacity = 0;
-    private SortedMap<String, SortedMap<String, Integer>> offsetByName = new TreeMap<>();
     private SortedMap<String, SortedMap<String, Integer>> haveByName = new TreeMap<>();
     private SortedMap<String, SortedMap<String, Integer>> collectedByName = new TreeMap<>();
     private SortedMap<String, SortedMap<String, Integer>> discardedByName = new TreeMap<>();
@@ -72,7 +68,6 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
 
     public Inventory(String commander, Journal journal) throws IOException {
         this.setCommander(commander);
-        this.offsetByName.put(this.getCommander(), new TreeMap<>());
         this.haveByName.put(this.getCommander(), new TreeMap<>());
         this.collectedByName.put(this.getCommander(), new TreeMap<>());
         this.discardedByName.put(this.getCommander(), new TreeMap<>());
@@ -80,62 +75,8 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
         this.priorityByName.put(this.getCommander(), new TreeMap<>());
         this.surplusByName.put(this.getCommander(), new TreeMap<>());
         this.requiredByName.put(this.getCommander(), new TreeMap<>());
-        this.loadOffsets(this.getCommander());
         for (AbstractJournalEntry entry : journal.getEntries()) {
             this.onNewJournalEntry(entry);
-        }
-    }
-
-    private void loadOffsets(String commander) throws IOException {
-        File dir = new File(System.getProperty("user.home"), ".edsidepanel");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        File file = new File(dir, "InventoryOffsets." + commander + ".json");
-        if (!file.exists() || file.length() == 0) {
-            // Do nothing
-        } else {
-            String json = FileUtils.readFileToString(file, "UTF-8");
-            TreeMap<String, Number> offsets = new Gson().fromJson(json, TreeMap.class);
-            for (String name : offsets.keySet()) {
-                String guessedName = guessName(name, null);
-                try {
-                    this.offsetByName.get(commander).put(guessedName, offsets.get(name).intValue());
-                    this.haveByName.get(commander).put(guessedName, offsets.get(name).intValue());
-                } catch (Exception e) {
-                    logger.error("Failed to load offset for " + name + " (" + guessedName + ")", e);
-                }
-            }
-        }
-    }
-
-    private void saveOffsets(String commander) throws IOException {
-        if (StringUtils.isNotEmpty(commander)) {
-            File dir = new File(System.getProperty("user.home"), ".edsidepanel");
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            File file = new File(dir, "InventoryOffsets." + commander + ".json");
-            SortedMap<String, Integer> offsets = new TreeMap<>();
-            for (String name : this.haveByName.get(commander).keySet()) {
-                offsets.put(name, this.offsetByName.get(commander).getOrDefault(name, 0));
-            }
-            String json = new Gson().toJson(offsets);
-            FileUtils.write(file, json, "UTF-8", false);
-        }
-    }
-
-    public void save() throws IOException {
-        if (StringUtils.isNotEmpty(this.getCommander())) {
-            File dir = new File(System.getProperty("user.home"), ".edsidepanel");
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            File file = new File(dir, "Inventory." + this.getCommander() + ".json");
-            String json = new Gson().toJson(this.haveByName.get(this.getCommander()));
-            FileUtils.write(file, json, "UTF-8", false);
-
-            this.saveOffsets(this.getCommander());
         }
     }
 
@@ -205,27 +146,6 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
 
     public int getRequired(String name) {
         return this.requiredByName.get(this.getCommander()).getOrDefault(name, 0);
-    }
-
-    public void changeOffset(String name, int offsetChange) {
-        int prev = this.offsetByName.get(this.getCommander()).getOrDefault(name, 0);
-        this.offsetByName.get(this.getCommander()).put(name, prev + offsetChange);
-        prev = this.haveByName.get(this.getCommander()).getOrDefault(name, 0);
-        this.haveByName.get(this.getCommander()).put(name, prev + offsetChange);
-    }
-
-    public void incOffset(String name) {
-        int prev = this.offsetByName.get(this.getCommander()).getOrDefault(name, 0);
-        this.offsetByName.get(this.getCommander()).put(name, prev + 1);
-        prev = this.haveByName.get(this.getCommander()).getOrDefault(name, 0);
-        this.haveByName.get(this.getCommander()).put(name, prev + 1);
-    }
-
-    public void decOffset(String name) {
-        int prev = this.offsetByName.get(this.getCommander()).getOrDefault(name, 0);
-        this.offsetByName.get(this.getCommander()).put(name, prev - 1);
-        prev = this.haveByName.get(this.getCommander()).getOrDefault(name, 0);
-        this.haveByName.get(this.getCommander()).put(name, prev - 1);
     }
 
     public boolean addListener(InventoryListener listener) {
@@ -383,27 +303,16 @@ public class Inventory implements JournalUpdateListener, GameSessionListener, Se
 
     @Override
     public void onGameLoaded(String commander, String gameMode, String group, ShipLoadout ship) {
-        try {
-            this.save();
-        } catch (Exception e) {
-            logger.error("Failed to save old inventory for CMDR " + this.getCommander(), e);
-        }
         this.setCommander(commander);
         this.setCargoCapacity(ship == null ? 0 : ship.getCargoCapacity());
-        try {
-            if (this.offsetByName.get(this.getCommander()) == null) {
-                this.offsetByName.put(this.getCommander(), new TreeMap<>());
-                this.haveByName.put(this.getCommander(), new TreeMap<>());
-                this.collectedByName.put(this.getCommander(), new TreeMap<>());
-                this.discardedByName.put(this.getCommander(), new TreeMap<>());
-                this.spentByName.put(this.getCommander(), new TreeMap<>());
-                this.priorityByName.put(this.getCommander(), new TreeMap<>());
-                this.surplusByName.put(this.getCommander(), new TreeMap<>());
-                this.requiredByName.put(this.getCommander(), new TreeMap<>());
-                this.loadOffsets(this.getCommander());
-            }
-        } catch (Exception e) {
-            logger.error("Failed to load offsets for CMDR " + this.getCommander(), e);
+        if (this.haveByName.get(this.getCommander()) == null) {
+            this.haveByName.put(this.getCommander(), new TreeMap<>());
+            this.collectedByName.put(this.getCommander(), new TreeMap<>());
+            this.discardedByName.put(this.getCommander(), new TreeMap<>());
+            this.spentByName.put(this.getCommander(), new TreeMap<>());
+            this.priorityByName.put(this.getCommander(), new TreeMap<>());
+            this.surplusByName.put(this.getCommander(), new TreeMap<>());
+            this.requiredByName.put(this.getCommander(), new TreeMap<>());
         }
     }
 

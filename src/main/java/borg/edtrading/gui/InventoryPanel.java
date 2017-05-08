@@ -315,7 +315,7 @@ public class InventoryPanel extends Box implements InventoryListener {
                 int haveBefore = this.inventory.getHave(name);
                 //logger.info(String.format(Locale.US, "%s %d -> %d", name, haveBefore, haveAfter));
                 if (haveAfter != haveBefore) {
-                    this.inventory.changeOffset(name, haveAfter - haveBefore);
+                    //this.inventory.changeOffset(name, haveAfter - haveBefore);
                     this.refresh(null, null);
                 }
             }
