@@ -33,11 +33,12 @@ public class AyStar {
     private Map<Long, Path> openBySystem = null;
     private Set<Long> closed = null;
     private Set<Long> neutronStarIDs = null;
-    private List<MinimizedStarSystem> starSystemsWithNeutronStars = null;
+    private Map<Coord, List<MinimizedStarSystem>> starSystemsWithNeutronStarsBySector = null;
     private Map<Coord, List<MinimizedStarSystem>> starSystemsWithScoopableStarsBySector = null;
     private FuelAndJumpRangeLookup fuelJumpLUT = null;
     private float maxTotalDistanceLy = 0;
     private float maxJumpRangeBoosted = 0;
+    private int counter = 0;
     private Path closestToGoalSoFar = null;
 
     public void initialize(EddbSystem source, EddbSystem goal, Set<MinimizedStarSystem> minimizedNeutronStarSystems, Set<MinimizedStarSystem> minimizedScoopableStarSystems, FuelAndJumpRangeLookup fuelJumpLUT) {
@@ -50,7 +51,7 @@ public class AyStar {
             this.openBySystem = new HashMap<>();
             this.closed = new HashSet<>();
             this.neutronStarIDs = minimizedNeutronStarSystems.stream().map(ss -> ss.getId()).collect(Collectors.toSet());
-            this.starSystemsWithNeutronStars = minimizedNeutronStarSystems.stream().collect(Collectors.toList());
+            this.starSystemsWithNeutronStarsBySector = mapBySector(minimizedNeutronStarSystems);
             this.starSystemsWithScoopableStarsBySector = mapBySector(minimizedScoopableStarSystems);
             this.fuelJumpLUT = fuelJumpLUT;
             this.maxTotalDistanceLy = 1.5f * source.distanceTo(goal);
@@ -76,6 +77,8 @@ public class AyStar {
                 // Because we always poll the best path so far, the current path is
                 // the best path to this system
                 this.closed.add(path.getMinimizedStarSystem().getId());
+                this.removeFromSector(path.getMinimizedStarSystem(), this.starSystemsWithScoopableStarsBySector);
+                this.removeFromSector(path.getMinimizedStarSystem(), this.starSystemsWithNeutronStarsBySector);
             }
 
             if (this.closestToGoalSoFar == null || path.getRemainingDistanceLy() < this.closestToGoalSoFar.getRemainingDistanceLy()) {
@@ -100,11 +103,15 @@ public class AyStar {
             //            }
 
             List<MinimizedStarSystem> neighbours = this.findNeighbours(path);
+            //logger.debug(String.format(Locale.US, "%6d neighbours for %s", neighbours.size(), path.getMinimizedStarSystem().getCoord().toString()));
 
             final float boostValue = this.neutronStarIDs.contains(path.getMinimizedStarSystem().getId()) ? 4.0f : 1.0f;
             for (int i = 0; i < neighbours.size(); i++) {
                 MinimizedStarSystem neighbour = neighbours.get(i);
                 float remainingDistanceLy = neighbour.distanceTo(this.goal);
+                if (remainingDistanceLy >= path.getRemainingDistanceLy()) {
+                    continue;
+                }
                 float extraTravelledDistanceLy = path.getMinimizedStarSystem().distanceTo(neighbour);
                 float fuelLevel = this.fuelJumpLUT.getMaxFuelTons(); // Scoop until full by default
                 if (this.neutronStarIDs.contains(neighbour.getId())) {
@@ -128,7 +135,7 @@ public class AyStar {
                 }
             }
 
-            if (this.closed.size() % 1000 == 0) {
+            if (++this.counter % 1000 == 0) {
                 return this.closestToGoalSoFar;
             }
         }
@@ -161,20 +168,21 @@ public class AyStar {
         List<MinimizedStarSystem> systemsInRange = new ArrayList<>(scoopableSystemsInCloseSectors.size());
         for (int i = 0; i < scoopableSystemsInCloseSectors.size(); i++) {
             MinimizedStarSystem s = scoopableSystemsInCloseSectors.get(i);
-            if (!this.closed.contains(s.getId())) {
+            //            if (!this.closed.contains(s.getId())) {
+            if (s.distanceTo(currentStarSystem) <= currentJumpRange) {
+                systemsInRange.add(s);
+            }
+            //            }
+        }
+        if (!mustScoop) {
+            List<MinimizedStarSystem> neutronSystemsInCloseSectors = findSystemsBySector(this.starSystemsWithNeutronStarsBySector, currentCoord, currentJumpRange);
+            for (int i = 0; i < neutronSystemsInCloseSectors.size(); i++) {
+                MinimizedStarSystem s = neutronSystemsInCloseSectors.get(i);
+                //                if (!this.closed.contains(s.getId())) {
                 if (s.distanceTo(currentStarSystem) <= currentJumpRange) {
                     systemsInRange.add(s);
                 }
-            }
-        }
-        if (!mustScoop) {
-            for (int i = 0; i < this.starSystemsWithNeutronStars.size(); i++) {
-                MinimizedStarSystem s = this.starSystemsWithNeutronStars.get(i);
-                if (!this.closed.contains(s.getId())) {
-                    if (s.distanceTo(currentStarSystem) <= currentJumpRange) {
-                        systemsInRange.add(s);
-                    }
-                }
+                //                }
             }
         }
 
@@ -201,6 +209,14 @@ public class AyStar {
         //logger.debug("Found " + result.size() + " systems around sector " + currentSector + " with jump range = " + currentJumpRange);
 
         return result;
+    }
+
+    private void removeFromSector(MinimizedStarSystem starSystemToRemove, Map<Coord, List<MinimizedStarSystem>> starSystemsBySector) {
+        Coord sector = coordToSector(starSystemToRemove.getCoord());
+        List<MinimizedStarSystem> systemsInThisSector = starSystemsBySector.get(sector);
+        if (systemsInThisSector != null) {
+            systemsInThisSector.remove(starSystemToRemove);
+        }
     }
 
     private Map<Coord, List<MinimizedStarSystem>> mapBySector(Collection<MinimizedStarSystem> starSystems) {
