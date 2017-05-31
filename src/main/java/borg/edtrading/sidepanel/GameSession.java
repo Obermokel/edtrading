@@ -127,14 +127,14 @@ public class GameSession implements JournalUpdateListener, Serializable {
                 ShipLoadout shipLoadout = new ShipLoadout(e.getShipID(), e.getShip(), e.getShipIdent(), e.getShipName());
                 if (e.getModules() != null) {
                     for (ModuleData data : e.getModules()) {
-                        ShipModule module = new ShipModule(data.getItem(), data.getItem(), data.getValue());
+                        ShipModule module = new ShipModule(data.getItem().toLowerCase(), data.getItem(), data.getValue());
                         shipLoadout.getModulesBySlot().put(data.getSlot(), module);
                     }
                 }
                 this.setCurrentShipLoadout(shipLoadout);
             } else if (entry.getEvent() == Event.ModuleBuy) {
                 ModuleBuyEntry e = (ModuleBuyEntry) entry;
-                ShipModule newModule = new ShipModule(e.getBuyItem(), e.getBuyItemLocalized(), e.getBuyPrice());
+                ShipModule newModule = new ShipModule(e.getBuyItem().toLowerCase(), e.getBuyItemLocalized(), e.getBuyPrice());
                 ShipModule oldModule = this.getCurrentShipLoadout().getModulesBySlot().put(e.getSlot(), newModule);
                 for (GameSessionListener listener : this.listeners) {
                     try {
@@ -164,7 +164,7 @@ public class GameSession implements JournalUpdateListener, Serializable {
                 //                this.saveStoredModules(this.getCommander(), this.getStoredModules());
             } else if (entry.getEvent() == Event.ModuleRetrieve) {
                 ModuleRetrieveEntry e = (ModuleRetrieveEntry) entry;
-                ShipModule newModule = new ShipModule(e.getRetrievedItem(), e.getRetrievedItemLocalized(), null);
+                ShipModule newModule = new ShipModule(e.getRetrievedItem().toLowerCase(), e.getRetrievedItemLocalized(), null);
                 ShipModule oldModule = this.getCurrentShipLoadout().getModulesBySlot().put(e.getSlot(), newModule);
                 for (GameSessionListener listener : this.listeners) {
                     try {
@@ -179,7 +179,7 @@ public class GameSession implements JournalUpdateListener, Serializable {
                 if ("Armour".equals(e.getSlot()) || "FrameShiftDrive".equals(e.getSlot()) || "FuelTank".equals(e.getSlot()) || "LifeSupport".equals(e.getSlot()) || "MainEngines".equals(e.getSlot()) || "PowerDistributor".equals(e.getSlot())
                         || "PowerPlant".equals(e.getSlot()) || "Radar".equals(e.getSlot())) {
                     // Class E default for core internals
-                    newModule = new ShipModule(e.getStoredItem().replaceAll("_class\\d_", "_class1_"), e.getStoredItemLocalized(), null);
+                    newModule = new ShipModule(e.getStoredItem().toLowerCase().replaceAll("_class\\d_", "_class1_"), e.getStoredItemLocalized(), null);
                 }
                 ShipModule oldModule = this.getCurrentShipLoadout().getModulesBySlot().put(e.getSlot(), newModule);
                 for (GameSessionListener listener : this.listeners) {
@@ -264,7 +264,10 @@ public class GameSession implements JournalUpdateListener, Serializable {
                 } else {
                     this.setCurrentShipID(e.getShipID());
                     this.setCurrentShipType(e.getShip());
-                    this.setCurrentShipLoadout(new ShipLoadout(e.getShipID(), e.getShip(), e.getShipIdent(), e.getShipName()));
+                    if (this.getCurrentShipLoadout() == null) {
+                        this.setCurrentShipLoadout(new ShipLoadout(e.getShipID(), e.getShip(), e.getShipIdent(), e.getShipName()));
+                    }
+                    this.getCurrentShipLoadout().setFuelLevel(e.getFuelLevel());
                 }
                 for (GameSessionListener listener : this.listeners) {
                     try {
