@@ -82,18 +82,23 @@ public class FactionScannerApp {
         File uploadDir = new File(Constants.FACTION_SCREENSHOTS_DIR, "upload");
         File doneDir = new File(Constants.FACTION_SCREENSHOTS_DIR, "done");
         File errorDir = new File(Constants.FACTION_SCREENSHOTS_DIR, "error");
+        File duplicatesDir = new File(Constants.FACTION_SCREENSHOTS_DIR, "duplicates");
 
         List<File> screenshotFiles = FactionScannerApp.selectAllScreenshots(uploadDir);
         for (File screenshotFile : screenshotFiles) {
             try {
-                SystemFactions systemFactions = processScreenshotFile(screenshotFile);
-                logger.info("Successfully scanned " + screenshotFile);
-                File destDir = new File(doneDir, systemFactions.getSystemName());
-                File destFile = new File(destDir, screenshotFile.getName());
-                if (destFile.exists()) {
-                    destFile.delete();
+                if (screenshotFile.getName().matches(".+\\(\\d+\\).png")) {
+                    FileUtils.moveFileToDirectory(screenshotFile, duplicatesDir, true);
+                } else {
+                    SystemFactions systemFactions = processScreenshotFile(screenshotFile);
+                    logger.info("Successfully scanned " + screenshotFile);
+                    File destDir = new File(doneDir, systemFactions.getSystemName());
+                    File destFile = new File(destDir, screenshotFile.getName());
+                    if (destFile.exists()) {
+                        destFile.delete();
+                    }
+                    FileUtils.moveFileToDirectory(screenshotFile, destDir, true);
                 }
-                FileUtils.moveFileToDirectory(screenshotFile, destDir, true);
             } catch (Exception e1) {
                 if (System.currentTimeMillis() - screenshotFile.lastModified() < 600000L) {
                     logger.warn("Failed to process " + screenshotFile + ": " + e1);
@@ -754,7 +759,7 @@ public class FactionScannerApp {
         UNITING_NOEGIN("UNITING NOEGIN"),
         UZUMERU_NETCOMS_INCORPORATED("UZUMERU NETCOMS INCORPORATED"),
         V1703_AQUILAE_NATURAL_LIMITED("V1703 AQUILAE NATURAL LIMITED"),
-        PARTNERSHIP_OF_ROSS_193("PARTNERSHIP OF ROSS 193"), // Ngaru
+        PARTNERSHIP_OF_ROSS_193("PARTNERSHIP OF ROSS 193"), // ROSS 193, Ngaru
         LHS_3564_CONSERVATIVES("LHS 3564 CONSERVATIVES"), // Nez Pelliri
         PEOPLE_S_MIKINN_LIBERALS("PEOPLE'S MIKINN LIBERALS"), // Mikinn
         _51_AQUILAE_SILVER_PUBLIC_INC("51 AQUILAE SILVER PUBLIC INC"), // Mikinn
@@ -776,10 +781,15 @@ public class FactionScannerApp {
         PEMOTEN_BROTHERHOOD("PEMOTEN BROTHERHOOD"), // PEMOTEN
         FROG_PROGRESSIVE_PARTY("FROG PROGRESSIVE PARTY"), // FROG
         FROG_COMMODITIES("FROG COMMODITIES"), // FROG
+        DIAMOND_FROGS("DIAMOND FROGS"), // FROG
         CHINICOLLO_LEAGUE("CHINICOLLO LEAGUE"), // FROG
         FROG_JET_BROTHERHOOD("FROG JET BROTHERHOOD"), // FROG
         FROG_AUTOCRACY("FROG AUTOCRACY"), // FROG
-        DIAMOND_FROGS("DIAMOND FROGS"), // FROG
+        WOLF_896_CRIMSON_ALLIED_PARTNERS("WOLF 896 CRIMSON ALLIED PARTNERS"), // ROSS 193
+        ROSS_193_NETWORK("ROSS 193 NETWORK"), // ROSS 193
+        AZAKA_GOLD_UNIVERSAL_LTD("AZAKA GOLD UNIVERSAL LTD"), // ROSS 193
+        EARLS_OF_ROSS_193("EARLS OF ROSS 193"), // ROSS 193
+        NGARUAYANKA_DYNAMIC_ORGANISATION("NGARUAYANKA DYNAMIC ORGANISATION"), // ROSS 193
         GERMAN_PILOT_LOUNGE("GERMAN PILOT LOUNGE");
         //@formatter:on
 
