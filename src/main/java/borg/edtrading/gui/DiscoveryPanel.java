@@ -27,17 +27,20 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
+import java.util.stream.Collectors;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.JTextArea;
 
 /**
  * DiscoveryPanel
@@ -53,18 +56,19 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
     private ApplicationContext appctx = null;
     private TravelHistory travelHistory = null;
 
-    private JTextField txtClosestBlackHoleName = new JTextField(30);
-    private JLabel lblClosestBlackHoleDistance = new JLabel();
-    private JTextField txtClosestNeutronStarName = new JTextField(30);
-    private JLabel lblClosestNeutronStarDistance = new JLabel();
-    private JTextField txtClosestEarthLikeWorldName = new JTextField(30);
-    private JLabel lblClosestEarthLikeWorldDistance = new JLabel();
-    private JTextField txtClosestAmmoniaWorldName = new JTextField(30);
-    private JLabel lblClosestAmmoniaWorldDistance = new JLabel();
-    private JTextField txtClosestWaterWorldName = new JTextField(30);
-    private JLabel lblClosestWaterWorldDistance = new JLabel();
-    private JTextField txtClosestTerraformableName = new JTextField(30);
-    private JLabel lblClosestTerraformableDistance = new JLabel();
+    //    private JTextField txtClosestBlackHoleName = new JTextField(30);
+    //    private JLabel lblClosestBlackHoleDistance = new JLabel();
+    //    private JTextField txtClosestNeutronStarName = new JTextField(30);
+    //    private JLabel lblClosestNeutronStarDistance = new JLabel();
+    //    private JTextField txtClosestEarthLikeWorldName = new JTextField(30);
+    //    private JLabel lblClosestEarthLikeWorldDistance = new JLabel();
+    //    private JTextField txtClosestAmmoniaWorldName = new JTextField(30);
+    //    private JLabel lblClosestAmmoniaWorldDistance = new JLabel();
+    //    private JTextField txtClosestWaterWorldName = new JTextField(30);
+    //    private JLabel lblClosestWaterWorldDistance = new JLabel();
+    //    private JTextField txtClosestTerraformableName = new JTextField(30);
+    //    private JLabel lblClosestTerraformableDistance = new JLabel();
+    private JTextArea txtClosestNeutronStars = new JTextArea(20, 40);
 
     private Area area = null;
 
@@ -78,37 +82,41 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
         Box box = new Box(BoxLayout.Y_AXIS);
         Font font = new Font("Sans Serif", Font.BOLD, 18);
         if (SidePanelApp.BIG_AND_BLACK) {
-            this.txtClosestBlackHoleName.setFont(font);
-            this.lblClosestBlackHoleDistance.setFont(font);
-            this.txtClosestNeutronStarName.setFont(font);
-            this.lblClosestNeutronStarDistance.setFont(font);
-            this.txtClosestEarthLikeWorldName.setFont(font);
-            this.lblClosestEarthLikeWorldDistance.setFont(font);
-            this.txtClosestAmmoniaWorldName.setFont(font);
-            this.lblClosestAmmoniaWorldDistance.setFont(font);
-            this.txtClosestWaterWorldName.setFont(font);
-            this.lblClosestWaterWorldDistance.setFont(font);
-            this.txtClosestTerraformableName.setFont(font);
-            this.lblClosestTerraformableDistance.setFont(font);
+            //            this.txtClosestBlackHoleName.setFont(font);
+            //            this.lblClosestBlackHoleDistance.setFont(font);
+            //            this.txtClosestNeutronStarName.setFont(font);
+            //            this.lblClosestNeutronStarDistance.setFont(font);
+            //            this.txtClosestEarthLikeWorldName.setFont(font);
+            //            this.lblClosestEarthLikeWorldDistance.setFont(font);
+            //            this.txtClosestAmmoniaWorldName.setFont(font);
+            //            this.lblClosestAmmoniaWorldDistance.setFont(font);
+            //            this.txtClosestWaterWorldName.setFont(font);
+            //            this.lblClosestWaterWorldDistance.setFont(font);
+            //            this.txtClosestTerraformableName.setFont(font);
+            //            this.lblClosestTerraformableDistance.setFont(font);
+            this.txtClosestNeutronStars.setFont(font);
         }
 
-        box.add(distanceLabel("Closest black hole:", this.lblClosestBlackHoleDistance));
-        box.add(this.txtClosestBlackHoleName);
-        box.add(new JLabel(" "));
-        box.add(distanceLabel("Closest neutron star:", this.lblClosestNeutronStarDistance));
-        box.add(this.txtClosestNeutronStarName);
-        box.add(new JLabel(" "));
-        box.add(distanceLabel("Closest earth-like world:", this.lblClosestEarthLikeWorldDistance));
-        box.add(this.txtClosestEarthLikeWorldName);
-        box.add(new JLabel(" "));
-        box.add(distanceLabel("Closest ammonia world:", this.lblClosestAmmoniaWorldDistance));
-        box.add(this.txtClosestAmmoniaWorldName);
-        box.add(new JLabel(" "));
-        box.add(distanceLabel("Closest water world:", this.lblClosestWaterWorldDistance));
-        box.add(this.txtClosestWaterWorldName);
-        box.add(new JLabel(" "));
-        box.add(distanceLabel("Closest terraformable:", this.lblClosestTerraformableDistance));
-        box.add(this.txtClosestTerraformableName);
+        //        box.add(distanceLabel("Closest black hole:", this.lblClosestBlackHoleDistance));
+        //        box.add(this.txtClosestBlackHoleName);
+        //        box.add(new JLabel(" "));
+        //        box.add(distanceLabel("Closest neutron star:", this.lblClosestNeutronStarDistance));
+        //        box.add(this.txtClosestNeutronStarName);
+        //        box.add(new JLabel(" "));
+        //        box.add(distanceLabel("Closest earth-like world:", this.lblClosestEarthLikeWorldDistance));
+        //        box.add(this.txtClosestEarthLikeWorldName);
+        //        box.add(new JLabel(" "));
+        //        box.add(distanceLabel("Closest ammonia world:", this.lblClosestAmmoniaWorldDistance));
+        //        box.add(this.txtClosestAmmoniaWorldName);
+        //        box.add(new JLabel(" "));
+        //        box.add(distanceLabel("Closest water world:", this.lblClosestWaterWorldDistance));
+        //        box.add(this.txtClosestWaterWorldName);
+        //        box.add(new JLabel(" "));
+        //        box.add(distanceLabel("Closest terraformable:", this.lblClosestTerraformableDistance));
+        //        box.add(this.txtClosestTerraformableName);
+        //        box.add(new JLabel(" "));
+        box.add(new JLabel("Closest neutron stars:"));
+        box.add(this.txtClosestNeutronStars);
         box.add(new JLabel(" "));
         JPanel dummyPanel = new JPanel(new BorderLayout());
         dummyPanel.add(box, BorderLayout.NORTH);
@@ -155,163 +163,186 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
 
         final EddbService eddbService = this.appctx.getBean(EddbService.class);
 
-        EddbBody closestBlackHole = null;
-        Float closestBlackHoleDistance = null;
-        for (float range = 2; range <= 16384 && closestBlackHole == null; range *= 2) {
-            Page<EddbBody> page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("BH", "SMBH"), new PageRequest(0, 1000));
-            while (page != null) {
-                List<EddbBody> bodies = page.getContent();
-                for (EddbBody body : bodies) {
-                    float distance = body.getCoord().distanceTo(coord);
-                    if (closestBlackHoleDistance == null || distance < closestBlackHoleDistance) {
-                        closestBlackHoleDistance = distance;
-                        closestBlackHole = body;
-                    }
-                }
-                if (page.hasNext()) {
-                    page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("BH", "SMBH"), page.nextPageable());
-                } else {
-                    page = null;
-                }
-            }
-        }
-        if (closestBlackHole != null) {
-            this.txtClosestBlackHoleName.setText(String.format(Locale.US, "%s", closestBlackHole.getName()));
-            this.lblClosestBlackHoleDistance.setText(String.format(Locale.US, "%.1f Ly", closestBlackHoleDistance));
-        }
+        //        EddbBody closestBlackHole = null;
+        //        Float closestBlackHoleDistance = null;
+        //        for (float range = 2; range <= 16384 && closestBlackHole == null; range *= 2) {
+        //            Page<EddbBody> page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("BH", "SMBH"), new PageRequest(0, 1000));
+        //            while (page != null) {
+        //                List<EddbBody> bodies = page.getContent();
+        //                for (EddbBody body : bodies) {
+        //                    float distance = body.getCoord().distanceTo(coord);
+        //                    if (closestBlackHoleDistance == null || distance < closestBlackHoleDistance) {
+        //                        closestBlackHoleDistance = distance;
+        //                        closestBlackHole = body;
+        //                    }
+        //                }
+        //                if (page.hasNext()) {
+        //                    page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("BH", "SMBH"), page.nextPageable());
+        //                } else {
+        //                    page = null;
+        //                }
+        //            }
+        //        }
+        //        if (closestBlackHole != null) {
+        //            this.txtClosestBlackHoleName.setText(String.format(Locale.US, "%s", closestBlackHole.getName()));
+        //            this.lblClosestBlackHoleDistance.setText(String.format(Locale.US, "%.1f Ly", closestBlackHoleDistance));
+        //        }
 
-        EddbBody closestNeutronStar = null;
-        Float closestNeutronStarDistance = null;
-        for (float range = 2; range <= 16384 && closestNeutronStar == null; range *= 2) {
-            Page<EddbBody> page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("NS"), new PageRequest(0, 1000));
-            while (page != null) {
-                List<EddbBody> bodies = page.getContent();
-                for (EddbBody body : bodies) {
-                    float distance = body.getCoord().distanceTo(coord);
-                    if (closestNeutronStarDistance == null || distance < closestNeutronStarDistance) {
-                        closestNeutronStarDistance = distance;
-                        closestNeutronStar = body;
-                    }
-                }
-                if (page.hasNext()) {
-                    page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("NS"), page.nextPageable());
-                } else {
-                    page = null;
-                }
-            }
-        }
-        if (closestNeutronStar != null) {
-            this.txtClosestNeutronStarName.setText(String.format(Locale.US, "%s", closestNeutronStar.getName()));
-            this.lblClosestNeutronStarDistance.setText(String.format(Locale.US, "%.1f Ly", closestNeutronStarDistance));
-        }
+        //        EddbBody closestNeutronStar = null;
+        //        Float closestNeutronStarDistance = null;
+        //        for (float range = 2; range <= 16384 && closestNeutronStar == null; range *= 2) {
+        //            Page<EddbBody> page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("NS"), new PageRequest(0, 1000));
+        //            while (page != null) {
+        //                List<EddbBody> bodies = page.getContent();
+        //                for (EddbBody body : bodies) {
+        //                    float distance = body.getCoord().distanceTo(coord);
+        //                    if (closestNeutronStarDistance == null || distance < closestNeutronStarDistance) {
+        //                        closestNeutronStarDistance = distance;
+        //                        closestNeutronStar = body;
+        //                    }
+        //                }
+        //                if (page.hasNext()) {
+        //                    page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("NS"), page.nextPageable());
+        //                } else {
+        //                    page = null;
+        //                }
+        //            }
+        //        }
+        //        if (closestNeutronStar != null) {
+        //            this.txtClosestNeutronStarName.setText(String.format(Locale.US, "%s", closestNeutronStar.getName()));
+        //            this.lblClosestNeutronStarDistance.setText(String.format(Locale.US, "%.1f Ly", closestNeutronStarDistance));
+        //        }
 
-        EddbBody closestEarthLikeWorld = null;
-        Float closestEarthLikeWorldDistance = null;
-        for (float range = 2; range <= 16384 && closestEarthLikeWorld == null; range *= 2) {
-            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_EARTH_LIKE_WORLD), new PageRequest(0, 1000));
-            while (page != null) {
-                List<EddbBody> bodies = page.getContent();
-                for (EddbBody body : bodies) {
-                    if (!this.travelHistory.isScanned(body.getName())) {
-                        float distance = body.getCoord().distanceTo(coord);
-                        if (closestEarthLikeWorldDistance == null || distance < closestEarthLikeWorldDistance) {
-                            closestEarthLikeWorldDistance = distance;
-                            closestEarthLikeWorld = body;
-                        }
-                    }
-                }
-                if (page.hasNext()) {
-                    page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_EARTH_LIKE_WORLD), page.nextPageable());
-                } else {
-                    page = null;
-                }
-            }
-        }
-        if (closestEarthLikeWorld != null) {
-            this.txtClosestEarthLikeWorldName.setText(String.format(Locale.US, "%s", closestEarthLikeWorld.getName()));
-            this.lblClosestEarthLikeWorldDistance.setText(String.format(Locale.US, "%.1f Ly", closestEarthLikeWorldDistance));
-        }
+        //        EddbBody closestEarthLikeWorld = null;
+        //        Float closestEarthLikeWorldDistance = null;
+        //        for (float range = 2; range <= 16384 && closestEarthLikeWorld == null; range *= 2) {
+        //            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_EARTH_LIKE_WORLD), new PageRequest(0, 1000));
+        //            while (page != null) {
+        //                List<EddbBody> bodies = page.getContent();
+        //                for (EddbBody body : bodies) {
+        //                    if (!this.travelHistory.isScanned(body.getName())) {
+        //                        float distance = body.getCoord().distanceTo(coord);
+        //                        if (closestEarthLikeWorldDistance == null || distance < closestEarthLikeWorldDistance) {
+        //                            closestEarthLikeWorldDistance = distance;
+        //                            closestEarthLikeWorld = body;
+        //                        }
+        //                    }
+        //                }
+        //                if (page.hasNext()) {
+        //                    page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_EARTH_LIKE_WORLD), page.nextPageable());
+        //                } else {
+        //                    page = null;
+        //                }
+        //            }
+        //        }
+        //        if (closestEarthLikeWorld != null) {
+        //            this.txtClosestEarthLikeWorldName.setText(String.format(Locale.US, "%s", closestEarthLikeWorld.getName()));
+        //            this.lblClosestEarthLikeWorldDistance.setText(String.format(Locale.US, "%.1f Ly", closestEarthLikeWorldDistance));
+        //        }
+        //
+        //        EddbBody closestAmmoniaWorld = null;
+        //        Float closestAmmoniaWorldDistance = null;
+        //        for (float range = 2; range <= 16384 && closestAmmoniaWorld == null; range *= 2) {
+        //            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_AMMONIA_WORLD), new PageRequest(0, 1000));
+        //            while (page != null) {
+        //                List<EddbBody> bodies = page.getContent();
+        //                for (EddbBody body : bodies) {
+        //                    if (!this.travelHistory.isScanned(body.getName())) {
+        //                        float distance = body.getCoord().distanceTo(coord);
+        //                        if (closestAmmoniaWorldDistance == null || distance < closestAmmoniaWorldDistance) {
+        //                            closestAmmoniaWorldDistance = distance;
+        //                            closestAmmoniaWorld = body;
+        //                        }
+        //                    }
+        //                }
+        //                if (page.hasNext()) {
+        //                    page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_AMMONIA_WORLD), page.nextPageable());
+        //                } else {
+        //                    page = null;
+        //                }
+        //            }
+        //        }
+        //        if (closestAmmoniaWorld != null) {
+        //            this.txtClosestAmmoniaWorldName.setText(String.format(Locale.US, "%s", closestAmmoniaWorld.getName()));
+        //            this.lblClosestAmmoniaWorldDistance.setText(String.format(Locale.US, "%.1f Ly", closestAmmoniaWorldDistance));
+        //        }
+        //
+        //        EddbBody closestWaterWorld = null;
+        //        Float closestWaterWorldDistance = null;
+        //        for (float range = 2; range <= 16384 && closestWaterWorld == null; range *= 2) {
+        //            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_WATER_WORLD), new PageRequest(0, 1000));
+        //            while (page != null) {
+        //                List<EddbBody> bodies = page.getContent();
+        //                for (EddbBody body : bodies) {
+        //                    if (!this.travelHistory.isScanned(body.getName())) {
+        //                        float distance = body.getCoord().distanceTo(coord);
+        //                        if (closestWaterWorldDistance == null || distance < closestWaterWorldDistance) {
+        //                            closestWaterWorldDistance = distance;
+        //                            closestWaterWorld = body;
+        //                        }
+        //                    }
+        //                }
+        //                if (page.hasNext()) {
+        //                    page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_WATER_WORLD), page.nextPageable());
+        //                } else {
+        //                    page = null;
+        //                }
+        //            }
+        //        }
+        //        if (closestWaterWorld != null) {
+        //            this.txtClosestWaterWorldName.setText(String.format(Locale.US, "%s", closestWaterWorld.getName()));
+        //            this.lblClosestWaterWorldDistance.setText(String.format(Locale.US, "%.1f Ly", closestWaterWorldDistance));
+        //        }
+        //
+        //        EddbBody closestTerraformable = null;
+        //        Float closestTerraformableDistance = null;
+        //        for (float range = 2; range <= 16384 && closestTerraformable == null; range *= 2) {
+        //            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ Boolean.TRUE, null, new PageRequest(0, 1000));
+        //            while (page != null) {
+        //                List<EddbBody> bodies = page.getContent();
+        //                for (EddbBody body : bodies) {
+        //                    if (!this.travelHistory.isScanned(body.getName())) {
+        //                        float distance = body.getCoord().distanceTo(coord);
+        //                        if (closestTerraformableDistance == null || distance < closestTerraformableDistance) {
+        //                            closestTerraformableDistance = distance;
+        //                            closestTerraformable = body;
+        //                        }
+        //                    }
+        //                }
+        //                if (page.hasNext()) {
+        //                    page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ Boolean.TRUE, null, page.nextPageable());
+        //                } else {
+        //                    page = null;
+        //                }
+        //            }
+        //        }
+        //        if (closestTerraformable != null) {
+        //            this.txtClosestTerraformableName.setText(String.format(Locale.US, "%s", closestTerraformable.getName()));
+        //            this.lblClosestTerraformableDistance.setText(String.format(Locale.US, "%.1f Ly", closestTerraformableDistance));
+        //        }
 
-        EddbBody closestAmmoniaWorld = null;
-        Float closestAmmoniaWorldDistance = null;
-        for (float range = 2; range <= 16384 && closestAmmoniaWorld == null; range *= 2) {
-            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_AMMONIA_WORLD), new PageRequest(0, 1000));
-            while (page != null) {
-                List<EddbBody> bodies = page.getContent();
-                for (EddbBody body : bodies) {
-                    if (!this.travelHistory.isScanned(body.getName())) {
-                        float distance = body.getCoord().distanceTo(coord);
-                        if (closestAmmoniaWorldDistance == null || distance < closestAmmoniaWorldDistance) {
-                            closestAmmoniaWorldDistance = distance;
-                            closestAmmoniaWorld = body;
-                        }
-                    }
-                }
-                if (page.hasNext()) {
-                    page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_AMMONIA_WORLD), page.nextPageable());
-                } else {
-                    page = null;
-                }
+        List<EddbBody> closestNeutronStars = new ArrayList<>();
+        float range = 200;
+        Page<EddbBody> page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("NS"), new PageRequest(0, 1000));
+        while (page != null) {
+            List<EddbBody> bodies = page.getContent();
+            closestNeutronStars.addAll(bodies);
+            if (page.hasNext()) {
+                page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("NS"), page.nextPageable());
+            } else {
+                page = null;
             }
         }
-        if (closestAmmoniaWorld != null) {
-            this.txtClosestAmmoniaWorldName.setText(String.format(Locale.US, "%s", closestAmmoniaWorld.getName()));
-            this.lblClosestAmmoniaWorldDistance.setText(String.format(Locale.US, "%.1f Ly", closestAmmoniaWorldDistance));
-        }
-
-        EddbBody closestWaterWorld = null;
-        Float closestWaterWorldDistance = null;
-        for (float range = 2; range <= 16384 && closestWaterWorld == null; range *= 2) {
-            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_WATER_WORLD), new PageRequest(0, 1000));
-            while (page != null) {
-                List<EddbBody> bodies = page.getContent();
-                for (EddbBody body : bodies) {
-                    if (!this.travelHistory.isScanned(body.getName())) {
-                        float distance = body.getCoord().distanceTo(coord);
-                        if (closestWaterWorldDistance == null || distance < closestWaterWorldDistance) {
-                            closestWaterWorldDistance = distance;
-                            closestWaterWorld = body;
-                        }
-                    }
-                }
-                if (page.hasNext()) {
-                    page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_WATER_WORLD), page.nextPageable());
-                } else {
-                    page = null;
-                }
+        Collections.sort(closestNeutronStars, new Comparator<EddbBody>() {
+            @Override
+            public int compare(EddbBody b1, EddbBody b2) {
+                Float d1 = b1.getCoord().distanceTo(coord);
+                Float d2 = b2.getCoord().distanceTo(coord);
+                return d1.compareTo(d2);
             }
-        }
-        if (closestWaterWorld != null) {
-            this.txtClosestWaterWorldName.setText(String.format(Locale.US, "%s", closestWaterWorld.getName()));
-            this.lblClosestWaterWorldDistance.setText(String.format(Locale.US, "%.1f Ly", closestWaterWorldDistance));
-        }
-
-        EddbBody closestTerraformable = null;
-        Float closestTerraformableDistance = null;
-        for (float range = 2; range <= 16384 && closestTerraformable == null; range *= 2) {
-            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ Boolean.TRUE, null, new PageRequest(0, 1000));
-            while (page != null) {
-                List<EddbBody> bodies = page.getContent();
-                for (EddbBody body : bodies) {
-                    if (!this.travelHistory.isScanned(body.getName())) {
-                        float distance = body.getCoord().distanceTo(coord);
-                        if (closestTerraformableDistance == null || distance < closestTerraformableDistance) {
-                            closestTerraformableDistance = distance;
-                            closestTerraformable = body;
-                        }
-                    }
-                }
-                if (page.hasNext()) {
-                    page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ Boolean.TRUE, null, page.nextPageable());
-                } else {
-                    page = null;
-                }
-            }
-        }
-        if (closestTerraformable != null) {
-            this.txtClosestTerraformableName.setText(String.format(Locale.US, "%s", closestTerraformable.getName()));
-            this.lblClosestTerraformableDistance.setText(String.format(Locale.US, "%.1f Ly", closestTerraformableDistance));
-        }
+        });
+        closestNeutronStars = closestNeutronStars.size() <= 20 ? closestNeutronStars : closestNeutronStars.subList(0, 20);
+        this.txtClosestNeutronStars.setText(closestNeutronStars.stream().map(b -> b.getName()).collect(Collectors.joining("\n")));
     }
 
     @Override
