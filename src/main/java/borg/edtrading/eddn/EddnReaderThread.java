@@ -66,50 +66,80 @@ public class EddnReaderThread extends Thread {
 
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] compressed = socket.recv(0);
-                byte[] decompressed = decompress(compressed);
-                String json = new String(decompressed, "UTF-8");
 
-                try {
-                    LinkedHashMap<String, Object> data = gson.fromJson(json, LinkedHashMap.class);
-                    String schemaRef = MiscUtil.getAsString(data.get("$schemaRef"));
-                    if ("http://schemas.elite-markets.net/eddn/journal/1".equals(schemaRef)) {
-                        String uploaderId = MiscUtil.getAsString(((Map<String, Object>) data.get("header")).get("uploaderID"));
-                        String systemName = null;
-                        Coord systemCoords = null;
-                        List<Faction> systemFactions = null;
-                        LinkedHashMap<String, Object> journalMessage = new LinkedHashMap<String, Object>((Map<String, Object>) data.get("message"));
-                        AbstractJournalEntry journalData = journalReader.readJournalData(journalMessage);
-                        Date timestamp = journalData.getTimestamp();
-
-                        if (journalData.getEvent() == Event.Location) {
-                            systemName = ((LocationEntry) journalData).getStarSystem();
-                            systemCoords = ((LocationEntry) journalData).getStarPos();
-                            systemFactions = ((LocationEntry) journalData).getFactions();
-                        } else if (journalData.getEvent() == Event.FSDJump) {
-                            systemName = ((FSDJumpEntry) journalData).getStarSystem();
-                            systemCoords = ((FSDJumpEntry) journalData).getStarPos();
-                            systemFactions = ((FSDJumpEntry) journalData).getFactions();
-                        } else if (journalData.getEvent() == Event.Docked) {
-                            systemName = ((DockedEntry) journalData).getStarSystem();
-                            systemCoords = ((DockedEntry) journalData).getStarPos();
-                            systemFactions = ((DockedEntry) journalData).getFactions();
-                        } else if (journalData.getEvent() == Event.Scan) {
-                            systemName = ((ScanEntry) journalData).getStarSystem();
-                            systemCoords = ((ScanEntry) journalData).getStarPos();
+                if (compressed == null) {
+                    // Reconnect
+                    try {
+                        if (socket != null) {
+                            logger.debug("Closing socket after receiving null");
+                            socket.close();
                         }
+                    } catch (Exception e) {
+                        logger.error("Failed to close 0MQ socket", e);
+                    }
+                    try {
+                        if (context != null) {
+                            logger.debug("Terminating context after receiving null");
+                            context.term();
+                        }
+                    } catch (Exception e) {
+                        // Ignore
+                    }
 
-                        if (timestamp != null && StringUtils.isNotEmpty(uploaderId) && StringUtils.isNotEmpty(systemName) && systemCoords != null) {
-                            for (EddnListener listener : this.listeners) {
-                                try {
-                                    listener.onCommanderLocation(timestamp, uploaderId, systemName, systemCoords, systemFactions);
-                                } catch (Exception ex) {
-                                    logger.warn(listener + " failed: " + ex);
+                    logger.debug("Re-instantiating context after receiving null");
+                    context = ZMQ.context(1);
+
+                    logger.debug("Opening socket after receiving null");
+                    socket = context.socket(ZMQ.SUB);
+                    socket.subscribe(new byte[0]);
+                    socket.setReceiveTimeOut(600000);
+                    socket.connect("tcp://eddn-relay.elite-markets.net:9500");
+                } else {
+                    byte[] decompressed = decompress(compressed);
+                    String json = new String(decompressed, "UTF-8");
+
+                    try {
+                        LinkedHashMap<String, Object> data = gson.fromJson(json, LinkedHashMap.class);
+                        String schemaRef = MiscUtil.getAsString(data.get("$schemaRef"));
+                        if ("http://schemas.elite-markets.net/eddn/journal/1".equals(schemaRef)) {
+                            String uploaderId = MiscUtil.getAsString(((Map<String, Object>) data.get("header")).get("uploaderID"));
+                            String systemName = null;
+                            Coord systemCoords = null;
+                            List<Faction> systemFactions = null;
+                            LinkedHashMap<String, Object> journalMessage = new LinkedHashMap<String, Object>((Map<String, Object>) data.get("message"));
+                            AbstractJournalEntry journalData = journalReader.readJournalData(journalMessage);
+                            Date timestamp = journalData.getTimestamp();
+
+                            if (journalData.getEvent() == Event.Location) {
+                                systemName = ((LocationEntry) journalData).getStarSystem();
+                                systemCoords = ((LocationEntry) journalData).getStarPos();
+                                systemFactions = ((LocationEntry) journalData).getFactions();
+                            } else if (journalData.getEvent() == Event.FSDJump) {
+                                systemName = ((FSDJumpEntry) journalData).getStarSystem();
+                                systemCoords = ((FSDJumpEntry) journalData).getStarPos();
+                                systemFactions = ((FSDJumpEntry) journalData).getFactions();
+                            } else if (journalData.getEvent() == Event.Docked) {
+                                systemName = ((DockedEntry) journalData).getStarSystem();
+                                systemCoords = ((DockedEntry) journalData).getStarPos();
+                                systemFactions = ((DockedEntry) journalData).getFactions();
+                            } else if (journalData.getEvent() == Event.Scan) {
+                                systemName = ((ScanEntry) journalData).getStarSystem();
+                                systemCoords = ((ScanEntry) journalData).getStarPos();
+                            }
+
+                            if (timestamp != null && StringUtils.isNotEmpty(uploaderId) && StringUtils.isNotEmpty(systemName) && systemCoords != null) {
+                                for (EddnListener listener : this.listeners) {
+                                    try {
+                                        listener.onCommanderLocation(timestamp, uploaderId, systemName, systemCoords, systemFactions);
+                                    } catch (Exception ex) {
+                                        logger.warn(listener + " failed: " + ex);
+                                    }
                                 }
                             }
                         }
+                    } catch (Exception e) {
+                        logger.error("Failed to process received JSON '" + json + "'", e);
                     }
-                } catch (Exception e) {
-                    logger.error("Failed to process received JSON '" + json + "'", e);
                 }
             }
         } catch (Exception e) {
