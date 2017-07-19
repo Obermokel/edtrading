@@ -572,7 +572,7 @@ public class FactionScannerApp {
         CIVIL_WAR("CIVIL WAR", "BÜRGERKRIEG"),
         ELECTION("ELECTION", "WAHLEN"),
         EXPANSION("EXPANSION"),
-        LOCKDOWN("LOCKDOWN", "ABRIEGELUNG"),
+        LOCKDOWN("LOCKDOWN", "KRIEGSRECHT"),
         OUTBREAK("OUTBREAK", "AUSBRUCH"),
         WAR("WAR", "KRIEG"),
         NONE("NONE", "N/V"),
