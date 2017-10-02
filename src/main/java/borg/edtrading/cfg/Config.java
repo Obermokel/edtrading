@@ -36,7 +36,8 @@ public class Config {
     @Bean
     public Client client() {
         TransportClient client = TransportClient.builder().settings(Settings.settingsBuilder().put("cluster.name", "eddbmirror")).build();
-        client.addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress("127.0.0.1", 9300)));
+        //client.addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress("127.0.0.1", 9300)));
+        client.addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress("192.168.178.24", 9300)));
         return client;
     }
 

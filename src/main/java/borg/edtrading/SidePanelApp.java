@@ -11,7 +11,6 @@ import borg.edtrading.gui.StatusPanel;
 import borg.edtrading.gui.TransactionsPanel;
 import borg.edtrading.journal.JournalReaderThread;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
-import borg.edtrading.services.EddbService;
 import borg.edtrading.sidepanel.GameSession;
 import borg.edtrading.sidepanel.GameSessionListener;
 import borg.edtrading.sidepanel.Inventory;
@@ -83,7 +82,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
             }
         }
 
-        APPCTX.getBean(EddbService.class).updateEddbData(/* forceReindex = */ false);
+        //APPCTX.getBean(EddbService.class).updateEddbData(/* forceReindex = */ false);
 
         frame = new JFrame("SidePanel");
 
