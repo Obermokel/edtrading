@@ -26,6 +26,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -63,12 +64,16 @@ public class FactionScannerApp {
     public static void main(String[] args) throws IOException {
 
         while (!Thread.interrupted()) {
-            characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
-            templates = Template.fromFolder("BodyScanner");
+            File uploadDir = new File(Constants.FACTION_SCREENSHOTS_DIR, "upload");
+            List<File> screenshotFiles = FactionScannerApp.selectAllScreenshots(uploadDir);
 
-            processUploadedScreenshots();
+            if (!screenshotFiles.isEmpty()) {
+                characterLocator = new CharacterLocator(2, 40, 16, 40, 1); // min 2x16, max 40x40, 1px border
+                templates = Template.fromFolder("BodyScanner");
 
-            // TODO Check all screenshots, remember last date
+                reloadFactionNames();
+                processUploadedScreenshots(screenshotFiles);
+            }
 
             try {
                 Thread.sleep(10000L);
@@ -78,13 +83,21 @@ public class FactionScannerApp {
         }
     }
 
-    private static void processUploadedScreenshots() {
-        File uploadDir = new File(Constants.FACTION_SCREENSHOTS_DIR, "upload");
+    private static void reloadFactionNames() {
+        File factionsFile = new File(Constants.FACTION_SCREENSHOTS_DIR, "factions.txt");
+
+        try {
+            KnownFaction.reload(factionsFile);
+        } catch (IOException e) {
+            logger.error("Failed to reload faction names from " + factionsFile, e);
+        }
+    }
+
+    private static void processUploadedScreenshots(List<File> screenshotFiles) {
         File doneDir = new File(Constants.FACTION_SCREENSHOTS_DIR, "done");
         File errorDir = new File(Constants.FACTION_SCREENSHOTS_DIR, "error");
         File duplicatesDir = new File(Constants.FACTION_SCREENSHOTS_DIR, "duplicates");
 
-        List<File> screenshotFiles = FactionScannerApp.selectAllScreenshots(uploadDir);
         for (File screenshotFile : screenshotFiles) {
             try {
                 if (screenshotFile.getName().matches(".+\\(\\d+\\).png")) {
@@ -722,107 +735,74 @@ public class FactionScannerApp {
 
     }
 
-    public static enum KnownFaction {
+    public static class KnownFaction implements Serializable, Comparable<KnownFaction> {
 
-        //@formatter:off
-        ALLIANCE_OF_STHA_181("ALLIANCE OF STHA 181"),
-        ALLIANCE_OF_HRISASTSHI("ALLIANCE OF HRISASTSHI"),
-        BAVARINGONI_BLUE_RATS("BAVARINGONI BLUE RATS"),
-        BD_10_5238_PUBLIC_INC("BD-10 5238 PUBLIC INC"),
-        CLAN_OF_MARIDAL("CLAN OF MARIDAL"),
-        HRISASTSHI_CO("HRISASTSHI CO"),
-        HRISASTSHI_EMPIRE_CONSULATE("HRISASTSHI EMPIRE CONSULATE"),
-        HRISASTSHI_JET_BOYS("HRISASTSHI JET BOYS"),
-        HRISASTSHI_PURPLE_LEGAL_PARTNERS("HRISASTSHI PURPLE LEGAL PARTNERS"),
-        INDEPENDENTS_OF_MARIDAL("INDEPENDENTS OF MARIDAL"),
-        JEN_ELABOG_FUTURE("JEN ELABOG FUTURE"),
-        JUSTICE_PARTY_OF_MARIDAL("JUSTICE PARTY OF MARIDAL"),
-        LAW_PARTY_OF_LTT_15899("LAW PARTY OF LTT 15899"),
-        LFT_1504_LIMITED("LFT 1504 LIMITED"),
-        LHS_3598_TRANSPORT_GROUP("LHS 3598 TRANSPORT GROUP"),
-        LIBERALS_OF_LP_575_38("LIBERALS OF LP 575-38"),
-        LP_575_38_BLUE_TRANSPORT_COMMS("LP 575-38 BLUE TRANSPORT COMMS"),
-        LP_575_38_ORGANISATION("LP 575-38 ORGANISATION"),
-        MARIDAL_COMMODITIES("MARIDAL COMMODITIES"),
-        NEW_LP_635_46_CONFEDERATION("NEW LP 635-46 CONFEDERATION"),
-        NEZ_PELLIRI_DOMINION("NEZ PELLIRI DOMINION"),
-        NEZ_PELLIRI_GANG("NEZ PELLIRI GANG"),
-        NEZ_PELLIRI_SILVER_GALACTIC("NEZ PELLIRI SILVER GALACTIC"),
-        NGARU_CRIMSON_COUNCIL("NGARU CRIMSON COUNCIL"),
-        /** Present in Ngaru and Noegin */
-        NGARU_SERVICES("NGARU SERVICES"),
-        NOEGIN_PURPLE_BOYS("NOEGIN PURPLE BOYS"),
-        PARTNERSHIP_OF_NGARU("PARTNERSHIP OF NGARU"),
-        ROSS_754_LABOUR("ROSS 754 LABOUR"),
-        SUN_TAKUSH_POWER_PLC("SUN TAKUSH POWER PLC"),
-        UNITED_LP_575_38_MOVEMENT("UNITED LP 575-38 MOVEMENT"),
-        UNITING_NOEGIN("UNITING NOEGIN"),
-        UZUMERU_NETCOMS_INCORPORATED("UZUMERU NETCOMS INCORPORATED"),
-        V1703_AQUILAE_NATURAL_LIMITED("V1703 AQUILAE NATURAL LIMITED"),
-        HAR_CREW("HAR CREW"), // NOEGIN
-        PARTNERSHIP_OF_ROSS_193("PARTNERSHIP OF ROSS 193"), // ROSS 193, Ngaru
-        LHS_3564_CONSERVATIVES("LHS 3564 CONSERVATIVES"), // Nez Pelliri
-        PEOPLE_S_MIKINN_LIBERALS("PEOPLE'S MIKINN LIBERALS"), // Mikinn
-        _51_AQUILAE_SILVER_PUBLIC_INC("51 AQUILAE SILVER PUBLIC INC"), // Mikinn
-        MOB_OF_MIKINN("MOB OF MIKINN"), // Mikinn
-        BUREAU_OF_MIKINN_LEAGUE("BUREAU OF MIKINN LEAGUE"), // Mikinn
-        MIKINN_GOLD_FEDERAL_INDUSTRIES("MIKINN GOLD FEDERAL INDUSTRIES"), // Mikinn
-        LP_635_46_GOLD_POWER_NETWORK("LP 635-46 GOLD POWER NETWORK"), // LP 635-46
-        LP_635_46_SYSTEMS("LP 635-46 SYSTEMS"), // LP 635-46
-        EARLS_OF_LP_635_46("EARLS OF LP 635-46"), // LP 635-46
-        LHS_3564_SYSTEMS("LHS 3564 SYSTEMS"), // LP 635-46
-        LALANDE_39866_CO("LALANDE 39866 CO"), // LALANDE 39866
-        PROGRESSIVE_PARTY_OF_LALANDE_39866("PROGRESSIVE PARTY OF LALANDE 39866"), // LALANDE 39866
-        LALANDE_39866_CORP_("LALANDE 39866 CORP."), // LALANDE 39866
-        LALANDE_39866_GOLD_CREW("LALANDE 39866 GOLD CREW"), // LALANDE 39866
-        AUTOCRACY_OF_LALANDE_39866("AUTOCRACY OF LALANDE 39866"), // LALANDE 39866
-        LTT_18486_JET_ENERGY_COMPANY("LTT 18486 JET ENERGY COMPANY"), // Mikinn
-        KORAZOTZ_GALACTIC_INC("KORAZOTZ GALACTIC INC"), // PEMOTEN
-        NAVAJOAR_FORTUNE_CORPORATION("NAVAJOAR FORTUNE CORPORATION"), // PEMOTEN
-        PEMOTEN_BROTHERHOOD("PEMOTEN BROTHERHOOD"), // PEMOTEN
-        LORDS_OF_NAVAJOAR("LORDS OF NAVAJOAR"), // PEMOTEN
-        FROG_PROGRESSIVE_PARTY("FROG PROGRESSIVE PARTY"), // FROG
-        FROG_COMMODITIES("FROG COMMODITIES"), // FROG
-        DIAMOND_FROGS("DIAMOND FROGS"), // FROG
-        CHINICOLLO_LEAGUE("CHINICOLLO LEAGUE"), // FROG
-        FROG_JET_BROTHERHOOD("FROG JET BROTHERHOOD"), // FROG
-        FROG_AUTOCRACY("FROG AUTOCRACY"), // FROG
-        WOLF_896_CRIMSON_ALLIED_PARTNERS("WOLF 896 CRIMSON ALLIED PARTNERS"), // ROSS 193
-        ROSS_193_NETWORK("ROSS 193 NETWORK"), // ROSS 193
-        AZAKA_GOLD_UNIVERSAL_LTD("AZAKA GOLD UNIVERSAL LTD"), // ROSS 193
-        EARLS_OF_ROSS_193("EARLS OF ROSS 193"), // ROSS 193
-        NGARUAYANKA_DYNAMIC_ORGANISATION("NGARUAYANKA DYNAMIC ORGANISATION"), // ROSS 193
-        DJABUSHIS_SYSTEMS("DJABUSHIS SYSTEMS"),
-        NEW_DJABUSHIS_CONSTITUTION_PARTY("NEW DJABUSHIS CONSTITUTION PARTY"),
-        UNION_OF_DJABUSHIS_ALLIANCE("UNION OF DJABUSHIS ALLIANCE"),
-        DJABUSHIS_INDUSTRIES("DJABUSHIS INDUSTRIES"),
-        INDEPENDENTS_OF_LP_576_34("INDEPENDENTS OF LP 576-34"),
-        INDEPENDENT_HAR_CONFEDERACY("INDEPENDENT HAR CONFEDERACY"),
-        HAR_CRIMSON_LEGAL_CORP("HAR CRIMSON LEGAL CORP."),
-        JEN_ELABOG_STATE_SERVICES("JEN ELABOG STATE SERVICES"),
-        JEN_ELABOG_ALLIED_PARTNERS("JEN ELABOG ALLIED PARTNERS"),
-        OFFICIAL_JEN_ELABOG_DEFENCE_PARTY("OFFICIAL JEN ELABOG DEFENCE PARTY"),
-        MAFIA_OF_JEN_ELABOG("MAFIA OF JEN ELABOG"),
-        NEW_AZAKA_LIBERALS("NEW AZAKA LIBERALS"),
-        DELTA_EQUULEI_PURPLE_POWER_HLDGS("DELTA EQUULEI PURPLE POWER HLDGS"),
-        MOVEMENT_FOR_SESUYAR_LABOUR("MOVEMENT FOR SESUYAR LABOUR"),
-        AZAKA_COMMS_COMMODITIES("AZAKA COMMS COMMODITIES"),
-        MARQUIS_DU_AZAKA("MARQUIS DU AZAKA"),
-        TIANNODAABE_NOBLES("TIANNODAABE NOBLES"),
-        GERMAN_PILOT_LOUNGE("GERMAN PILOT LOUNGE");
-        //@formatter:on
+        private static final long serialVersionUID = 8240710068001174107L;
 
-        private final String name;
+        private static final List<KnownFaction> FACTIONS = new ArrayList<>();
 
-        private KnownFaction(String name) {
-            this.name = name;
+        private String name = null;
+
+        public KnownFaction(String name) {
+            this.setName(name);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            KnownFaction other = (KnownFaction) obj;
+            if (this.name == null) {
+                if (other.name != null) {
+                    return false;
+                }
+            } else if (!this.name.equals(other.name)) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
+            return result;
+        }
+
+        @Override
+        public int compareTo(KnownFaction other) {
+            return this.name.toUpperCase().compareTo(other.name.toUpperCase());
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
+
+        public static void reload(File file) throws IOException {
+            KnownFaction.FACTIONS.clear();
+
+            List<String> lines = FileUtils.readLines(file, "UTF-8");
+            for (String line : lines) {
+                if (StringUtils.isNotBlank(line)) {
+                    KnownFaction.FACTIONS.add(new KnownFaction(line.trim()));
+                }
+            }
         }
 
         public static KnownFaction findBestMatching(String name) {
             KnownFaction best = null;
             float bestError = Float.MAX_VALUE;
             String fixedName = name.toUpperCase();
-            for (KnownFaction e : KnownFaction.values()) {
+            for (KnownFaction e : KnownFaction.FACTIONS) {
                 float error = MiscUtil.levenshteinError(e.getName(), fixedName);
                 if (error <= 0.25f && error < bestError) {
                     best = e;
@@ -834,6 +814,10 @@ public class FactionScannerApp {
 
         public String getName() {
             return this.name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
         }
 
     }
