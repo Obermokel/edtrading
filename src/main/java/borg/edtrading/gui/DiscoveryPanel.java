@@ -4,6 +4,7 @@ import borg.edtrading.SidePanelApp;
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;
+import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.eddn.EddnListener;
 import borg.edtrading.journal.entries.AbstractJournalEntry.Faction;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
@@ -12,6 +13,7 @@ import borg.edtrading.sidepanel.ScannedBody;
 import borg.edtrading.sidepanel.TravelHistory;
 import borg.edtrading.sidepanel.TravelHistoryListener;
 import borg.edtrading.sidepanel.VisitedSystem;
+import borg.edtrading.util.MiscUtil;
 import borg.edtrading.util.StarUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -32,8 +34,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.swing.Box;
@@ -68,7 +73,8 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
     //    private JLabel lblClosestWaterWorldDistance = new JLabel();
     //    private JTextField txtClosestTerraformableName = new JTextField(30);
     //    private JLabel lblClosestTerraformableDistance = new JLabel();
-    private JTextArea txtClosestNeutronStars = new JTextArea(20, 40);
+    private JTextArea txtClosestNeutronStars = new JTextArea(10, 40);
+    private JTextArea txtClosestValuableSystems = new JTextArea(10, 40);
 
     private Area area = null;
 
@@ -95,6 +101,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
             //            this.txtClosestTerraformableName.setFont(font);
             //            this.lblClosestTerraformableDistance.setFont(font);
             this.txtClosestNeutronStars.setFont(font);
+            this.txtClosestValuableSystems.setFont(font);
         }
 
         //        box.add(distanceLabel("Closest black hole:", this.lblClosestBlackHoleDistance));
@@ -117,6 +124,9 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
         //        box.add(new JLabel(" "));
         box.add(new JLabel("Closest neutron stars:"));
         box.add(this.txtClosestNeutronStars);
+        box.add(new JLabel(" "));
+        box.add(new JLabel("Closest valuable systems:"));
+        box.add(this.txtClosestValuableSystems);
         box.add(new JLabel(" "));
         JPanel dummyPanel = new JPanel(new BorderLayout());
         dummyPanel.add(box, BorderLayout.NORTH);
@@ -323,6 +333,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
 
         List<EddbBody> closestNeutronStars = new ArrayList<>();
         float range = 200;
+        int maxNumber = 10;
         Page<EddbBody> page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("NS"), new PageRequest(0, 1000));
         while (page != null) {
             List<EddbBody> bodies = page.getContent();
@@ -341,8 +352,113 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
                 return d1.compareTo(d2);
             }
         });
-        closestNeutronStars = closestNeutronStars.size() <= 20 ? closestNeutronStars : closestNeutronStars.subList(0, 20);
+        closestNeutronStars = closestNeutronStars.size() <= maxNumber ? closestNeutronStars : closestNeutronStars.subList(0, maxNumber);
         this.txtClosestNeutronStars.setText(closestNeutronStars.stream().map(b -> b.getName()).collect(Collectors.joining("\n")));
+
+        LinkedHashMap<String, Long> nearbyValuableSystems = this.findNearbyValuableSystems();
+        StringBuilder systemPayouts = new StringBuilder();
+        int counter = 0;
+        for (String systemName : nearbyValuableSystems.keySet()) {
+            if (counter++ < maxNumber) {
+                long payout = nearbyValuableSystems.get(systemName);
+                systemPayouts.append(String.format(Locale.US, "%-30s %,10d CR\n", systemName, payout));
+            }
+        }
+        this.txtClosestValuableSystems.setText(systemPayouts.toString().trim());
+    }
+
+    /**
+     * @return
+     *      Map&lt;systemName, systemPayout&gt;
+     */
+    private LinkedHashMap<String, Long> findNearbyValuableSystems() {
+        LinkedHashMap<String, Long> valueBySystem = new LinkedHashMap<>();
+
+        try {
+            final Coord coord = this.travelHistory.getCoord();
+            final EddbService eddbService = this.appctx.getBean(EddbService.class);
+
+            final float range = 200; // Ly
+            final long maxDistanceFromArrival = 10_000L; // Ls
+            final long minValue = 1_000_000L; // CR
+
+            Set<Long> systemIds = new HashSet<>();
+
+            logger.debug("Searching for ELW, WW and AW...");
+            Page<EddbBody> page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ null, Arrays.asList(EddbBody.TYPE_ID_EARTH_LIKE_WORLD, EddbBody.TYPE_ID_WATER_WORLD, EddbBody.TYPE_ID_AMMONIA_WORLD), new PageRequest(0, 1000));
+            while (page != null) {
+                List<EddbBody> bodies = page.getContent();
+                systemIds.addAll(bodies.stream().map(EddbBody::getSystemId).collect(Collectors.toList()));
+                if (page.hasNext()) {
+                    page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("NS"), page.nextPageable());
+                } else {
+                    page = null;
+                }
+            }
+            logger.debug("...found " + systemIds.size() + " system(s) until now");
+
+            logger.debug("Searching for TCs...");
+            page = eddbService.findPlanetsNear(coord, range, /* isTerraformingCandidate = */ Boolean.TRUE, null, new PageRequest(0, 1000));
+            while (page != null) {
+                List<EddbBody> bodies = page.getContent();
+                systemIds.addAll(bodies.stream().map(EddbBody::getSystemId).collect(Collectors.toList()));
+                if (page.hasNext()) {
+                    page = eddbService.findStarsNear(coord, range, /* isMainStar = */ Boolean.TRUE, Arrays.asList("NS"), page.nextPageable());
+                } else {
+                    page = null;
+                }
+            }
+            logger.debug("...found " + systemIds.size() + " system(s) until now");
+
+            logger.debug("Evaluating systems...");
+            for (Long systemId : systemIds) {
+                String systemName = null;
+                long systemPayout = 0L;
+
+                List<EddbBody> bodies = eddbService.findBodiesOfSystem(systemId);
+                for (EddbBody body : bodies) {
+                    if (systemName == null) {
+                        EddbSystem system = appctx.getBean(EddbSystemRepository.class).findOne(body.getSystemId());
+                        if (system != null) {
+                            systemName = system.getName();
+                        }
+                    }
+
+                    if (body.getDistanceToArrival() != null && body.getDistanceToArrival().longValue() <= maxDistanceFromArrival) {
+                        if (EddbBody.TERRAFORMING_STATE_ID_CANDIDATE_FOR_TERRAFORMING.equals(body.getTerraformingStateId())) {
+                            if (EddbBody.TYPE_ID_EARTH_LIKE_WORLD.equals(body.getTypeId())) {
+                                systemPayout += 600000;
+                            } else if (EddbBody.TYPE_ID_WATER_WORLD.equals(body.getTypeId())) {
+                                systemPayout += 700000;
+                            } else if (EddbBody.TYPE_ID_AMMONIA_WORLD.equals(body.getTypeId())) {
+                                systemPayout += 300000;
+                            } else {
+                                systemPayout += 300000; // Avg of HMC and rocky
+                            }
+                        } else {
+                            if (EddbBody.TYPE_ID_EARTH_LIKE_WORLD.equals(body.getTypeId())) {
+                                systemPayout += 600000;
+                            } else if (EddbBody.TYPE_ID_WATER_WORLD.equals(body.getTypeId())) {
+                                systemPayout += 400000;
+                            } else if (EddbBody.TYPE_ID_AMMONIA_WORLD.equals(body.getTypeId())) {
+                                systemPayout += 300000;
+                            }
+                        }
+                    }
+                }
+
+                if (systemPayout >= minValue) {
+                    valueBySystem.put(systemName, systemPayout);
+                }
+            }
+            logger.debug("..." + valueBySystem.size() + " system(s) left");
+
+            MiscUtil.sortMapByValueReverse(valueBySystem);
+        } catch (Exception e) {
+            logger.error("Failed to find nearby valuable systems", e);
+        }
+
+        return valueBySystem;
     }
 
     @Override

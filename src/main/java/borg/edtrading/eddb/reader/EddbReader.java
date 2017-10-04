@@ -266,7 +266,13 @@ public class EddbReader {
     }
 
     private <T extends EddbEntity> void deleteOldEntities(String index, Class<T> type, Set<Long> currentEntityIds) {
-        logger.trace("Deleting old entities from " + index);
+        logger.info("Deleting old entities from " + index);
+
+        final DateFormat dfEta = new SimpleDateFormat("MMM dd @ HH:mm", Locale.US);
+        final int total = currentEntityIds.size();
+
+        long startBatch = System.currentTimeMillis();
+        int n = 0;
 
         Set<Long> oldEntityIds = new HashSet<>();
         SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices(index).withTypes(index).withPageable(new PageRequest(0, 1000)).build();
@@ -279,6 +285,16 @@ public class EddbReader {
                     if (!currentEntityIds.contains(entity.getId())) {
                         oldEntityIds.add(entity.getId());
                     }
+
+                    if (++n % 100000 == 0) {
+                        long millis = System.currentTimeMillis() - startBatch;
+                        double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
+                        int entitiesRemaining = total - n;
+                        double secondsRemaining = entitiesRemaining / entitiesPerSec;
+                        Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
+                        logger.info(String.format(Locale.US, "Checked %,d of %,d %s (%.1f/sec) -- ETA %s", n, total, index, entitiesPerSec, dfEta.format(eta)));
+                        startBatch = System.currentTimeMillis();
+                    }
                 }
             } else {
                 hasRecords = false;
@@ -290,7 +306,7 @@ public class EddbReader {
             esTemplate.delete(type, String.valueOf(oldEntityId));
         }
 
-        logger.debug("Deleted " + oldEntityIds.size() + " entities from " + index);
+        logger.info("Deleted " + oldEntityIds.size() + " entities from " + index);
     }
 
     private void enrichEddbData() {
@@ -421,8 +437,10 @@ public class EddbReader {
                     startBatch = System.currentTimeMillis();
                 }
             }
-            for (T entity : repo.save(batch)) {
-                savedEntityIds.add(entity.getId());
+            if (!batch.isEmpty()) {
+                for (T entity : repo.save(batch)) {
+                    savedEntityIds.add(entity.getId());
+                }
             }
             batch.clear();
         }
@@ -482,8 +500,10 @@ public class EddbReader {
                     }
                     line = reader.readLine();
                 }
-                for (T entity : repo.save(batch)) {
-                    savedEntityIds.add(entity.getId());
+                if (!batch.isEmpty()) {
+                    for (T entity : repo.save(batch)) {
+                        savedEntityIds.add(entity.getId());
+                    }
                 }
                 batch.clear();
             } else {
@@ -514,8 +534,10 @@ public class EddbReader {
                         startBatch = System.currentTimeMillis();
                     }
                 }
-                for (T entity : repo.save(batch)) {
-                    savedEntityIds.add(entity.getId());
+                if (!batch.isEmpty()) {
+                    for (T entity : repo.save(batch)) {
+                        savedEntityIds.add(entity.getId());
+                    }
                 }
                 batch.clear();
             }
