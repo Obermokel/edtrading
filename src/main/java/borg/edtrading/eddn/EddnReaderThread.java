@@ -35,6 +35,8 @@ import java.util.zip.Inflater;
  */
 public class EddnReaderThread extends Thread {
 
+    private static final String RELAY = "tcp://eddn.edcd.io:9500";
+
     static final Logger logger = LogManager.getLogger(EddnReaderThread.class);
 
     private final List<EddnListener> listeners = new ArrayList<>();
@@ -62,7 +64,7 @@ public class EddnReaderThread extends Thread {
             socket = context.socket(ZMQ.SUB);
             socket.subscribe(new byte[0]);
             socket.setReceiveTimeOut(600000);
-            socket.connect("tcp://eddn.edcd.io:9500");
+            socket.connect(RELAY);
 
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] compressed = socket.recv(0);
@@ -93,7 +95,7 @@ public class EddnReaderThread extends Thread {
                     socket = context.socket(ZMQ.SUB);
                     socket.subscribe(new byte[0]);
                     socket.setReceiveTimeOut(600000);
-                    socket.connect("tcp://eddn-relay.elite-markets.net:9500");
+                    socket.connect(RELAY);
                 } else {
                     byte[] decompressed = decompress(compressed);
                     String json = new String(decompressed, "UTF-8");
@@ -101,7 +103,7 @@ public class EddnReaderThread extends Thread {
                     try {
                         LinkedHashMap<String, Object> data = gson.fromJson(json, LinkedHashMap.class);
                         String schemaRef = MiscUtil.getAsString(data.get("$schemaRef"));
-                        if ("http://schemas.elite-markets.net/eddn/journal/1".equals(schemaRef)) {
+                        if ("https://eddn.edcd.io/schemas/journal/1".equals(schemaRef)) {
                             String uploaderId = MiscUtil.getAsString(((Map<String, Object>) data.get("header")).get("uploaderID"));
                             String systemName = null;
                             Coord systemCoords = null;
@@ -134,6 +136,14 @@ public class EddnReaderThread extends Thread {
                                     } catch (Exception ex) {
                                         logger.warn(listener + " failed: " + ex);
                                     }
+                                }
+                            }
+
+                            for (EddnListener listener : this.listeners) {
+                                try {
+                                    listener.onJournalData(journalData);
+                                } catch (Exception ex) {
+                                    logger.warn(listener + " failed: " + ex);
                                 }
                             }
                         }

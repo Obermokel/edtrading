@@ -32,7 +32,10 @@ public class EddbBody implements EddbEntity {
     public static final Long TYPE_ID_AMMONIA_WORLD = new Long(20);
     public static final Long TYPE_ID_WATER_WORLD = new Long(36);
 
+    public static final Long TERRAFORMING_STATE_ID_NOT_TERRAFORMABLE = new Long(1);
     public static final Long TERRAFORMING_STATE_ID_CANDIDATE_FOR_TERRAFORMING = new Long(2);
+    public static final Long TERRAFORMING_STATE_ID_TERRAFORMING_COMPLETED = new Long(3);
+    public static final Long TERRAFORMING_STATE_ID_BEING_TERRAFORMED = new Long(4);
 
     private transient EddbSystem system = null;
     private Coord coord = null;

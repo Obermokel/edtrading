@@ -2,6 +2,7 @@ package borg.edtrading;
 
 import borg.edtrading.cfg.Config;
 import borg.edtrading.data.Item.ItemType;
+import borg.edtrading.eddn.EddnReaderThread;
 import borg.edtrading.gui.DiscoveryPanel;
 import borg.edtrading.gui.InventoryPanel;
 import borg.edtrading.gui.JournalLogPanel;
@@ -56,7 +57,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
     private JFrame frame = null;
     private JTabbedPane tabbedPane = null;
     private JournalReaderThread journalReaderThread = null;
-    //private EddnReaderThread eddnReaderThread = null;
+    private EddnReaderThread eddnReaderThread = null;
     private GameSession gameSession = null;
     private Inventory inventory = null;
     private Transactions transactions = null;
@@ -88,7 +89,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
 
         // Create the reader thread
         journalReaderThread = new JournalReaderThread(journalDir);
-        //eddnReaderThread = new EddnReaderThread();
+        eddnReaderThread = new EddnReaderThread();
 
         // Create and register the journal listeners
         gameSession = new GameSession(journalReaderThread);
@@ -100,7 +101,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
         // Init the reader from existing files, then start to watch for changes
         journalReaderThread.init();
         journalReaderThread.start();
-        //eddnReaderThread.start();
+        eddnReaderThread.start();
 
         inventory.addListener(this);
         travelHistory.addListener(this);
@@ -127,7 +128,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
         DiscoveryPanel discoveryPanel = new DiscoveryPanel(APPCTX, travelHistory);
         ShipyardPanel shipyardPanel = new ShipyardPanel(gameSession);
 
-        //eddnReaderThread.addListener(discoveryPanel);
+        eddnReaderThread.addListener(discoveryPanel);
 
         tabbedPane = new JTabbedPane();
         if (SidePanelApp.BIG_AND_BLACK) {
@@ -187,7 +188,7 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
     @Override
     public void windowClosing(WindowEvent e) {
         journalReaderThread.interrupt();
-        //eddnReaderThread.interrupt();
+        eddnReaderThread.interrupt();
     }
 
     @Override
@@ -199,13 +200,13 @@ public class SidePanelApp implements WindowListener, GameSessionListener, Travel
                 break;
             }
         }
-        //        while (eddnReaderThread.isAlive()) {
-        //            try {
-        //                Thread.sleep(10);
-        //            } catch (InterruptedException ex) {
-        //                break;
-        //            }
-        //        }
+        while (eddnReaderThread.isAlive()) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException ex) {
+                break;
+            }
+        }
 
         System.exit(0);
     }

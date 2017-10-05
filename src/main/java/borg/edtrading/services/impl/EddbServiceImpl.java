@@ -203,9 +203,9 @@ public class EddbServiceImpl implements EddbService {
     }
 
     @Override
-    public void updateEddbData(boolean forceReindex) {
+    public void updateEddbData(boolean forceReindex, boolean deleteOldEntities) {
         try {
-            this.eddbReader.loadEddbDataIntoElasticsearch(forceReindex);
+            this.eddbReader.loadEddbDataIntoElasticsearch(forceReindex, deleteOldEntities);
         } catch (IOException e) {
             throw new RuntimeException("Failed to update EDDB data", e);
         }

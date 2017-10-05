@@ -120,7 +120,7 @@ public class NeutronJumpApp {
 
         EddbService eddbService = APPCTX.getBean(EddbService.class);
         EddbSystemRepository eddbSystemRepository = APPCTX.getBean(EddbSystemRepository.class);
-        eddbService.updateEddbData(/* forceReindex = */ false);
+        eddbService.updateEddbData(/* forceReindex = */ false, /* deleteOldEntities = */ false);
 
         // Lookup source and destination
         EddbSystem fromSystem = eddbService.findSystemByName(fromName);

@@ -53,7 +53,7 @@ public class GalmapAnimationApp {
     private static final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
     public static void main(String[] args) throws Exception {
-        APPCTX.getBean(EddbService.class).updateEddbData(false);
+        APPCTX.getBean(EddbService.class).updateEddbData(false, false);
 
         Date release_2_0 = df.parse("2015-12-15");
         Date release_2_1 = df.parse("2016-05-26");

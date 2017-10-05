@@ -174,7 +174,7 @@ public class EddbReader {
         }
     }
 
-    public void loadEddbDataIntoElasticsearch(boolean forceReindex) throws IOException {
+    public void loadEddbDataIntoElasticsearch(boolean forceReindex, boolean deleteOldEntities) throws IOException {
         if (!BASE_DIR.exists()) {
             BASE_DIR.mkdirs();
         }
@@ -184,13 +184,17 @@ public class EddbReader {
         boolean commoditiesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/commodities.json", commoditiesFile);
         if (commoditiesUpdated || forceReindex || this.commodityRepo.count() <= 0) {
             Set<Long> currentEntityIds = this.readJsonFileIntoRepo(null, commoditiesFile, EddbCommodity.class, this.commodityRepo);
-            this.deleteOldEntities("eddbcommodity", EddbCommodity.class, currentEntityIds);
+            if (deleteOldEntities) {
+                this.deleteOldEntities("eddbcommodity", EddbCommodity.class, currentEntityIds);
+            }
         }
         File modulesFile = new File(BASE_DIR, "modules.json");
         boolean modulesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/modules.json", modulesFile);
         if (modulesUpdated || forceReindex || this.moduleRepo.count() <= 0) {
             Set<Long> currentEntityIds = this.readJsonFileIntoRepo(null, modulesFile, EddbModule.class, this.moduleRepo);
-            this.deleteOldEntities("eddbmodule", EddbModule.class, currentEntityIds);
+            if (deleteOldEntities) {
+                this.deleteOldEntities("eddbmodule", EddbModule.class, currentEntityIds);
+            }
         }
         File marketEntriesFile = new File(BASE_DIR, "listings.csv");
         boolean marketEntriesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/listings.csv", marketEntriesFile);
@@ -198,7 +202,9 @@ public class EddbReader {
             Page<EddbMarketEntry> first = this.marketEntryRepo.findAll(new PageRequest(0, 1, new Sort(new Sort.Order(Direction.DESC, "updatedAt", NullHandling.NULLS_LAST))));
             Date lastUpdate = first == null || first.getTotalElements() < 1 ? null : first.getContent().get(0).getUpdatedAt();
             Set<Long> currentEntityIds = this.readCsvFileIntoRepo(lastUpdate, marketEntriesFile, new EddbMarketEntryCsvRecordParser(), this.marketEntryRepo);
-            this.deleteOldEntities("eddbmarketentry", EddbMarketEntry.class, currentEntityIds);
+            if (deleteOldEntities) {
+                this.deleteOldEntities("eddbmarketentry", EddbMarketEntry.class, currentEntityIds);
+            }
         }
         File systemsFile = new File(BASE_DIR, "systems.csv");
         File systemsPopulatedFile = new File(BASE_DIR, "systems_populated.jsonl");
@@ -212,7 +218,9 @@ public class EddbReader {
             Map<Long, EdsmSystem> edsmSystemsById = this.loadEdsmSystemsById(edsmFile);
             Set<Long> currentEntityIds = this.readCsvFileIntoRepo(lastUpdate, systemsFile, new EddbSystemCsvRecordParser(edsmSystemsById), this.systemRepo);
             currentEntityIds.addAll(this.readJsonFileIntoRepo(lastUpdate, systemsPopulatedFile, EddbSystem.class, this.systemRepo));
-            this.deleteOldEntities("eddbsystem", EddbSystem.class, currentEntityIds);
+            if (deleteOldEntities) {
+                this.deleteOldEntities("eddbsystem", EddbSystem.class, currentEntityIds);
+            }
         }
         File bodiesFile = new File(BASE_DIR, "bodies.jsonl");
         boolean bodiesUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/bodies.jsonl", bodiesFile);
@@ -220,7 +228,9 @@ public class EddbReader {
             Page<EddbBody> first = this.bodyRepo.findAll(new PageRequest(0, 1, new Sort(new Sort.Order(Direction.DESC, "updatedAt", NullHandling.NULLS_LAST))));
             Date lastUpdate = first == null || first.getTotalElements() < 1 ? null : first.getContent().get(0).getUpdatedAt();
             Set<Long> currentEntityIds = this.readJsonFileIntoRepo(lastUpdate, bodiesFile, EddbBody.class, this.bodyRepo);
-            this.deleteOldEntities("eddbbody", EddbBody.class, currentEntityIds);
+            if (deleteOldEntities) {
+                this.deleteOldEntities("eddbbody", EddbBody.class, currentEntityIds);
+            }
         }
         File stationsFile = new File(BASE_DIR, "stations.jsonl");
         boolean stationsUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/stations.jsonl", stationsFile);
@@ -228,7 +238,9 @@ public class EddbReader {
             Page<EddbStation> first = this.stationRepo.findAll(new PageRequest(0, 1, new Sort(new Sort.Order(Direction.DESC, "updatedAt", NullHandling.NULLS_LAST))));
             Date lastUpdate = first == null || first.getTotalElements() < 1 ? null : first.getContent().get(0).getUpdatedAt();
             Set<Long> currentEntityIds = this.readJsonFileIntoRepo(lastUpdate, stationsFile, EddbStation.class, this.stationRepo);
-            this.deleteOldEntities("eddbstation", EddbStation.class, currentEntityIds);
+            if (deleteOldEntities) {
+                this.deleteOldEntities("eddbstation", EddbStation.class, currentEntityIds);
+            }
         }
         File factionsFile = new File(BASE_DIR, "factions.jsonl");
         boolean factionsUpdated = this.downloadIfUpdated("https://eddb.io/archive/v5/factions.jsonl", factionsFile);
@@ -236,9 +248,13 @@ public class EddbReader {
             Page<EddbFaction> first = this.factionRepo.findAll(new PageRequest(0, 1, new Sort(new Sort.Order(Direction.DESC, "updatedAt", NullHandling.NULLS_LAST))));
             Date lastUpdate = first == null || first.getTotalElements() < 1 ? null : first.getContent().get(0).getUpdatedAt();
             Set<Long> currentEntityIds = this.readJsonFileIntoRepo(lastUpdate, factionsFile, EddbFaction.class, this.factionRepo);
-            this.deleteOldEntities("eddbfaction", EddbFaction.class, currentEntityIds);
+            if (deleteOldEntities) {
+                this.deleteOldEntities("eddbfaction", EddbFaction.class, currentEntityIds);
+            }
         }
-        this.enrichEddbData();
+        if (commoditiesUpdated || modulesUpdated || marketEntriesUpdated || systemsUpdated || systemsPopulatedUpdated || bodiesUpdated || stationsUpdated || factionsUpdated || forceReindex) {
+            this.enrichEddbData();
+        }
         long end = System.currentTimeMillis();
         logger.info("Downloaded data in " + DurationFormatUtils.formatDuration(end - start, "H:mm:ss"));
     }
@@ -275,8 +291,8 @@ public class EddbReader {
         int n = 0;
 
         Set<Long> oldEntityIds = new HashSet<>();
-        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices(index).withTypes(index).withPageable(new PageRequest(0, 1000)).build();
-        String scrollId = esTemplate.scan(searchQuery, 300000, false);
+        SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices(index).withTypes(index).withPageable(new PageRequest(0, 10000)).build();
+        String scrollId = esTemplate.scan(searchQuery, 300000, true);
         boolean hasRecords = true;
         while (hasRecords) {
             Page<T> page = esTemplate.scroll(scrollId, 300000, type);
@@ -660,6 +676,8 @@ public class EddbReader {
             conn = (HttpURLConnection) new URL(url).openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept-Encoding", "gzip");
+            conn.setConnectTimeout(60000);
+            conn.setReadTimeout(600000);
             int responseCode = conn.getResponseCode();
             String responseMessage = conn.getResponseMessage();
             if (responseCode != 200) {

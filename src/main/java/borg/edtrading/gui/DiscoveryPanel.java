@@ -6,6 +6,7 @@ import borg.edtrading.eddb.data.EddbBody;
 import borg.edtrading.eddb.data.EddbSystem;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.eddn.EddnListener;
+import borg.edtrading.journal.entries.AbstractJournalEntry;
 import borg.edtrading.journal.entries.AbstractJournalEntry.Faction;
 import borg.edtrading.journal.entries.exploration.SellExplorationDataEntry;
 import borg.edtrading.services.EddbService;
@@ -77,6 +78,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
     private JTextArea txtClosestValuableSystems = new JTextArea(10, 40);
 
     private Area area = null;
+    private long lastAreaRepaintForJournal = System.currentTimeMillis();
 
     public DiscoveryPanel(ApplicationContext appctx, TravelHistory travelHistory) {
         this.setLayout(new BorderLayout());
@@ -474,7 +476,14 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
     @Override
     public void onCommanderLocation(Date timestamp, String commanderName, String systemName, Coord systemCoords, List<Faction> systemFactions) {
         this.area.onCommanderLocation(timestamp, commanderName, systemName, systemCoords, systemFactions);
-        this.area.repaint();
+    }
+
+    @Override
+    public void onJournalData(AbstractJournalEntry journalData) {
+        if (System.currentTimeMillis() - this.lastAreaRepaintForJournal > 60000L) {
+            this.area.repaint();
+            this.lastAreaRepaintForJournal = System.currentTimeMillis();
+        }
     }
 
     public static class Area extends JPanel implements EddnListener {
@@ -503,6 +512,11 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
         @Override
         public void onCommanderLocation(Date timestamp, String commanderName, String systemName, Coord systemCoords, List<Faction> systemFactions) {
             this.commanderLocations.put(commanderName, systemCoords);
+        }
+
+        @Override
+        public void onJournalData(AbstractJournalEntry journalData) {
+            // Do nothing
         }
 
         @Override

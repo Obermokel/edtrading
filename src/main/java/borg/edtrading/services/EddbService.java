@@ -37,7 +37,7 @@ public interface EddbService {
 
     // ----
 
-    void updateEddbData(boolean forceReindex);
+    void updateEddbData(boolean forceReindex, boolean deleteOldEntities);
 
     // ----
 

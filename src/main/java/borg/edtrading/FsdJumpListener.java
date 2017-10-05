@@ -3,6 +3,7 @@ package borg.edtrading;
 import borg.edtrading.data.Coord;
 import borg.edtrading.eddn.EddnListener;
 import borg.edtrading.eddn.EddnReaderThread;
+import borg.edtrading.journal.entries.AbstractJournalEntry;
 import borg.edtrading.journal.entries.AbstractJournalEntry.Faction;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -79,6 +80,11 @@ public class FsdJumpListener {
                     }
                 }
             }
+        }
+
+        @Override
+        public void onJournalData(AbstractJournalEntry journalData) {
+            // Do nothing
         }
 
         public void flush() throws IOException {
