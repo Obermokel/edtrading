@@ -19,7 +19,7 @@ import java.util.List;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-@Document(indexName = "eddbsystem", type = "eddbsystem", shards = 4, replicas = 0)
+@Document(indexName = "eddbsystem", type = "eddbsystem", shards = 1, replicas = 0)
 public class EddbSystem implements EddbEntity {
 
     private static final long serialVersionUID = -2929675737765201360L;

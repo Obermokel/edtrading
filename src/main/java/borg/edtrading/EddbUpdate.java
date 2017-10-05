@@ -1,6 +1,7 @@
 package borg.edtrading;
 
 import borg.edtrading.cfg.Config;
+import borg.edtrading.eddn.EddnReaderThread;
 import borg.edtrading.services.EddbService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,7 +21,9 @@ public class EddbUpdate {
     private static final AnnotationConfigApplicationContext APPCTX = new AnnotationConfigApplicationContext(Config.class);
 
     public static void main(String[] args) throws IOException {
-        APPCTX.getBean(EddbService.class).updateEddbData(/* forceReindex = */ false);
+        new EddnReaderThread();
+
+        APPCTX.getBean(EddbService.class).updateEddbData(/* forceReindex = */ true);
     }
 
 }

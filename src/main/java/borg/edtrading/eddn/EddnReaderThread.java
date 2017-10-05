@@ -62,7 +62,7 @@ public class EddnReaderThread extends Thread {
             socket = context.socket(ZMQ.SUB);
             socket.subscribe(new byte[0]);
             socket.setReceiveTimeOut(600000);
-            socket.connect("tcp://eddn-relay.elite-markets.net:9500");
+            socket.connect("tcp://eddn.edcd.io:9500");
 
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] compressed = socket.recv(0);

@@ -20,7 +20,7 @@ import java.util.Locale;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-@Document(indexName = "eddbbody", type = "eddbbody", shards = 4, replicas = 0)
+@Document(indexName = "eddbbody", type = "eddbbody", shards = 1, replicas = 0)
 public class EddbBody implements EddbEntity {
 
     private static final long serialVersionUID = -785705194031217696L;
