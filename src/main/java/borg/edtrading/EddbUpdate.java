@@ -7,7 +7,6 @@ import borg.edtrading.eddb.data.EddbSystem;
 import borg.edtrading.eddb.repositories.EddbBodyRepository;
 import borg.edtrading.eddb.repositories.EddbSystemRepository;
 import borg.edtrading.eddn.EddnListener;
-import borg.edtrading.eddn.EddnReaderThread;
 import borg.edtrading.journal.Event;
 import borg.edtrading.journal.entries.AbstractJournalEntry;
 import borg.edtrading.journal.entries.AbstractJournalEntry.Faction;
@@ -46,9 +45,9 @@ public class EddbUpdate {
         EddbUpdateThread eddbUpdateThread = new EddbUpdateThread();
         eddbUpdateThread.start();
 
-        EddnReaderThread eddnReaderThread = new EddnReaderThread();
-        eddnReaderThread.addListener(new ElasticUpdater(APPCTX));
-        eddnReaderThread.start();
+        //        EddnReaderThread eddnReaderThread = new EddnReaderThread();
+        //        eddnReaderThread.addListener(new ElasticUpdater(APPCTX));
+        //        eddnReaderThread.start();
     }
 
     public static class EddbUpdateThread extends Thread {
