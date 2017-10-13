@@ -98,7 +98,7 @@ public class Path implements Comparable<Path> {
     }
 
     public EddbSystem getStarSystem(EddbSystemRepository repo) {
-        return repo.findOne(this.getMinimizedStarSystem().getId());
+        return repo.findById(this.getMinimizedStarSystem().getId()).orElse(null);
     }
 
     public Path getPrev() {

@@ -19,11 +19,11 @@ import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.SearchQuery;
+import org.springframework.data.util.CloseableIterator;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -98,55 +98,47 @@ public class GalmapAnimationApp {
             qb.must(QueryBuilders.rangeQuery("coord.y").from(-3333.0).to(3333.0));
             SortBuilder sb = SortBuilders.fieldSort("coord.y").order(SortOrder.ASC);
             SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices("eddbsystem").withQuery(qb).withSort(sb).withPageable(new PageRequest(0, 1000)).build();
-            String scrollId = elasticsearchTemplate.scan(searchQuery, 1000, false);
-            boolean hasRecords = true;
-            while (hasRecords) {
-                Page<EddbSystem> page = elasticsearchTemplate.scroll(scrollId, 5000, EddbSystem.class);
-                if (page.hasContent()) {
-                    System.out.print(".");
-                    for (EddbSystem system : page.getContent()) {
-                        String starClass = null;
-                        try {
-                            EddbBody mainStar = mainStarsBySystem.get(system.getId());
-                            if (mainStar != null && mainStar.getCreatedAt() != null && mainStar.getCreatedAt().compareTo(date) <= 0) {
-                                starClass = mainStar.getStarClass();
-                            }
-                        } catch (Exception e) {
-                            // Ignore
+            try (CloseableIterator<EddbSystem> stream = elasticsearchTemplate.stream(searchQuery, EddbSystem.class)) {
+                while (stream.hasNext()) {
+                    EddbSystem system = stream.next();
+                    String starClass = null;
+                    try {
+                        EddbBody mainStar = mainStarsBySystem.get(system.getId());
+                        if (mainStar != null && mainStar.getCreatedAt() != null && mainStar.getCreatedAt().compareTo(date) <= 0) {
+                            starClass = mainStar.getStarClass();
                         }
+                    } catch (Exception e) {
+                        // Ignore
+                    }
 
-                        if (system.getCreatedAt().before(release_2_0)) {
-                            mapCreatorGalaxy.drawStar(system.getCoord(), starClass, null, 7, 128, 127);
-                            mapCreatorSol.drawStar(system.getCoord(), starClass, null, 7, 128, 127);
-                        } else if (system.getCreatedAt().before(release_2_1)) {
-                            mapCreatorGalaxy.drawStar(system.getCoord(), starClass, null, 5, 128, 127);
-                            mapCreatorSol.drawStar(system.getCoord(), starClass, null, 5, 128, 127);
-                        } else if (system.getCreatedAt().before(release_2_2)) {
+                    if (system.getCreatedAt().before(release_2_0)) {
+                        mapCreatorGalaxy.drawStar(system.getCoord(), starClass, null, 7, 128, 127);
+                        mapCreatorSol.drawStar(system.getCoord(), starClass, null, 7, 128, 127);
+                    } else if (system.getCreatedAt().before(release_2_1)) {
+                        mapCreatorGalaxy.drawStar(system.getCoord(), starClass, null, 5, 128, 127);
+                        mapCreatorSol.drawStar(system.getCoord(), starClass, null, 5, 128, 127);
+                    } else if (system.getCreatedAt().before(release_2_2)) {
+                        mapCreatorGalaxy.drawStar(system.getCoord(), starClass, null, 3, 128, 127);
+                        mapCreatorSol.drawStar(system.getCoord(), starClass, null, 3, 128, 127);
+                    } else {
+                        if (StringUtils.isEmpty(starClass)) {
+                            mapCreatorGalaxy.drawStar(system.getCoord(), starClass, null, 1, 128, 127);
+                            mapCreatorSol.drawStar(system.getCoord(), starClass, null, 1, 128, 127);
+                        } else {
                             mapCreatorGalaxy.drawStar(system.getCoord(), starClass, null, 3, 128, 127);
                             mapCreatorSol.drawStar(system.getCoord(), starClass, null, 3, 128, 127);
-                        } else {
-                            if (StringUtils.isEmpty(starClass)) {
-                                mapCreatorGalaxy.drawStar(system.getCoord(), starClass, null, 1, 128, 127);
-                                mapCreatorSol.drawStar(system.getCoord(), starClass, null, 1, 128, 127);
-                            } else {
-                                mapCreatorGalaxy.drawStar(system.getCoord(), starClass, null, 3, 128, 127);
-                                mapCreatorSol.drawStar(system.getCoord(), starClass, null, 3, 128, 127);
-                            }
-                        }
-
-                        nSystems++;
-                        if (StringUtils.isNotEmpty(starClass)) {
-                            nMainStars++;
-                            if ("N".equals(starClass) || "NS".equals(starClass)) {
-                                nNeutronStars++;
-                            }
                         }
                     }
-                } else {
-                    hasRecords = false;
+
+                    nSystems++;
+                    if (StringUtils.isNotEmpty(starClass)) {
+                        nMainStars++;
+                        if ("N".equals(starClass) || "NS".equals(starClass)) {
+                            nNeutronStars++;
+                        }
+                    }
                 }
             }
-            elasticsearchTemplate.clearScroll(scrollId);
 
             // Draw reference texts
             mapCreatorGalaxy.drawString(new Coord(0.0f, 0.0f, 0.0f), "Sol", Color.WHITE, new Font("Sans Serif", Font.BOLD, 64));
@@ -202,19 +194,12 @@ public class GalmapAnimationApp {
         qb.must(QueryBuilders.termQuery("isMainStar", true));
         qb.must(QueryBuilders.existsQuery("starClass"));
         SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices("eddbbody").withQuery(qb).withPageable(new PageRequest(0, 1000)).build();
-        String scrollId = elasticsearchTemplate.scan(searchQuery, 1000, false);
-        boolean hasRecords = true;
-        while (hasRecords) {
-            Page<EddbBody> page = elasticsearchTemplate.scroll(scrollId, 5000, EddbBody.class);
-            if (page.hasContent()) {
-                for (EddbBody body : page.getContent()) {
-                    result.put(body.getSystemId(), body);
-                }
-            } else {
-                hasRecords = false;
+        try (CloseableIterator<EddbBody> stream = elasticsearchTemplate.stream(searchQuery, EddbBody.class)) {
+            while (stream.hasNext()) {
+                EddbBody body = stream.next();
+                result.put(body.getSystemId(), body);
             }
         }
-        elasticsearchTemplate.clearScroll(scrollId);
 
         return result;
     }

@@ -5,7 +5,6 @@ import com.google.gson.annotations.SerializedName;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldIndex;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.io.Serializable;
@@ -20,7 +19,7 @@ import java.util.Locale;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-@Document(indexName = "eddbbody", type = "eddbbody", shards = 1, replicas = 0)
+@Document(indexName = "eddbbody", type = "eddbbody", shards = 3, replicas = 0)
 public class EddbBody implements EddbEntity {
 
     private static final long serialVersionUID = -785705194031217696L;
@@ -39,7 +38,7 @@ public class EddbBody implements EddbEntity {
 
     private transient EddbSystem system = null;
     private Coord coord = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     private String starClass = null;
 
     public EddbSystem getSystem() {
@@ -81,30 +80,30 @@ public class EddbBody implements EddbEntity {
     private Long systemId = null;
     @SerializedName("group_id")
     private Long groupId = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("group_name")
     private String groupName = null;
     @SerializedName("type_id")
     private Long typeId = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("type_name")
     private String typeName = null;
     @Field(type = FieldType.Double)
     @SerializedName("distance_to_arrival")
     private BigDecimal distanceToArrival = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("full_spectral_class")
     private String fullSpectralClass = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("spectral_class")
     private String spectralClass = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("spectral_sub_class")
     private String spectralSubClass = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("luminosity_class")
     private String luminosityClass = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("luminosity_sub_class")
     private String luminositySubClass = null;
     @Field(type = FieldType.Double)
@@ -121,28 +120,28 @@ public class EddbBody implements EddbEntity {
     @Field(type = FieldType.Double)
     @SerializedName("solar_radius")
     private BigDecimal solarRadius = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("catalogue_gliese_id")
     private String catalogueGlieseId = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("catalogue_hipp_id")
     private String catalogueHippId = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("catalogue_hd_id")
     private String catalogueHdId = null;
     @SerializedName("volcanism_type_id")
     private Long volcanismTypeId = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("volcanism_type_name")
     private String volcanismTypeName = null;
     @SerializedName("atmosphere_type_id")
     private Long atmosphereTypeId = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("atmosphere_type_name")
     private String atmosphereTypeName = null;
     @SerializedName("terraforming_state_id")
     private Long terraformingStateId = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("terraforming_state_name")
     private String terraformingStateName = null;
     @Field(type = FieldType.Double)
@@ -662,7 +661,7 @@ public class EddbBody implements EddbEntity {
         private String name = null;
         @SerializedName("ring_type_id")
         private Long ringTypeId = null;
-        @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+        @Field(type = FieldType.keyword)
         @SerializedName("ring_type_name")
         private String ringTypeName = null;
         @Field(type = FieldType.Double)
@@ -810,7 +809,7 @@ public class EddbBody implements EddbEntity {
 
         @SerializedName("material_id")
         private Long id = null;
-        @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+        @Field(type = FieldType.keyword)
         @SerializedName("material_name")
         private String name = null;
         @SerializedName("share")
@@ -883,7 +882,7 @@ public class EddbBody implements EddbEntity {
 
         @SerializedName("atmosphere_component_id")
         private Long id = null;
-        @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+        @Field(type = FieldType.keyword)
         @SerializedName("atmosphere_component_name")
         private String name = null;
         @SerializedName("share")
@@ -956,7 +955,7 @@ public class EddbBody implements EddbEntity {
 
         @SerializedName("solid_component_id")
         private Long id = null;
-        @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+        @Field(type = FieldType.keyword)
         @SerializedName("solid_component_name")
         private String name = null;
         @SerializedName("share")

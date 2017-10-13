@@ -30,6 +30,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.SearchQuery;
+import org.springframework.data.util.CloseableIterator;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -222,7 +223,7 @@ public class NeutronJumpApp {
             return SerializationUtils.deserialize(new FileInputStream(serFile));
         } else {
             Map<String, List<EddbBody>> arrivalStarsBySpectralClass = eddbService.mapStarsBySpectralClass(/* arrivalOnly = */ true);
-            List<EddbSystem> starSystemsWithNeutronStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, "NS").parallelStream().map(b -> eddbSystemRepository.findOne(b.getSystemId())).collect(Collectors.toList());
+            List<EddbSystem> starSystemsWithNeutronStars = eddbService.retainStarsOfSpectralClasses(arrivalStarsBySpectralClass, "NS").parallelStream().map(b -> eddbSystemRepository.findById(b.getSystemId()).orElse(null)).collect(Collectors.toList());
             HashSet<MinimizedStarSystem> result = new HashSet<>(starSystemsWithNeutronStars.size());
             ListIterator<EddbSystem> it = starSystemsWithNeutronStars.listIterator();
             while (it.hasNext()) {
@@ -249,21 +250,14 @@ public class NeutronJumpApp {
             int count = (int) elasticsearchTemplate.count(searchQuery);
             logger.debug("Found " + count + " systems");
             HashSet<MinimizedStarSystem> result = new HashSet<>(count);
-            String scrollId = elasticsearchTemplate.scan(searchQuery, 1000, false);
-            boolean hasRecords = true;
-            while (hasRecords) {
-                Page<EddbSystem> page = elasticsearchTemplate.scroll(scrollId, 5000, EddbSystem.class);
-                if (page.hasContent()) {
-                    for (EddbSystem system : page.getContent()) {
-                        if (!starSystemsWithUnscoopableStars.contains(system.getId())) {
-                            result.add(new MinimizedStarSystem(system));
-                        }
+            try (CloseableIterator<EddbSystem> stream = elasticsearchTemplate.stream(searchQuery, EddbSystem.class)) {
+                while (stream.hasNext()) {
+                    EddbSystem system = stream.next();
+                    if (!starSystemsWithUnscoopableStars.contains(system.getId())) {
+                        result.add(new MinimizedStarSystem(system));
                     }
-                } else {
-                    hasRecords = false;
                 }
             }
-            elasticsearchTemplate.clearScroll(scrollId);
 
             SerializationUtils.serialize(result, new FileOutputStream(serFile));
             return result;
@@ -284,10 +278,10 @@ public class NeutronJumpApp {
             Path prevPath = null;
             for (Path currPath : sortedPaths) {
                 if (prevPath != null) {
-                    EddbSystem fromSystem = systemRepo.findOne(prevPath.getMinimizedStarSystem().getId());
+                    EddbSystem fromSystem = systemRepo.findById(prevPath.getMinimizedStarSystem().getId()).orElse(null);
                     List<EddbBody> fromBodies = eddbService.findBodiesOfSystem(prevPath.getMinimizedStarSystem().getId());
 
-                    EddbSystem toSystem = systemRepo.findOne(currPath.getMinimizedStarSystem().getId());
+                    EddbSystem toSystem = systemRepo.findById(currPath.getMinimizedStarSystem().getId()).orElse(null);
                     List<EddbBody> toBodies = eddbService.findBodiesOfSystem(currPath.getMinimizedStarSystem().getId());
 
                     route.add(new RouteElement(route, currPath.getTotalJumps(), fromSystem, fromBodies, toSystem, toBodies, currPath.getFuelLevel(), currPath.getTravelledDistanceLy(), currPath.getRemainingDistanceLy()));

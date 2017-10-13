@@ -7,6 +7,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -35,10 +36,14 @@ public class Config {
 
     @Bean
     public Client client() {
-        TransportClient client = TransportClient.builder().settings(Settings.settingsBuilder().put("cluster.name", "eddbmirror")).build();
-        //client.addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress("127.0.0.1", 9300)));
-        //client.addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress("192.168.178.24", 9300))); // T410s
-        client.addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress("192.168.178.31", 9300))); // PLAYSTATION
+        Settings settings = Settings.builder().put("cluster.name", "eddbmirror").put("client.transport.sniff", true).build();
+
+        TransportClient client = new PreBuiltTransportClient(settings) //
+                //                .addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress("127.0.0.1", 9300))) // localhost ;)
+                //                .addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress("192.168.178.24", 9300))) // T410s
+                .addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress("192.168.178.53", 9300))); // NEUSS
+        //                .addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress("192.168.178.31", 9300))); // PLAYSTATION
+
         return client;
     }
 

@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.SearchQuery;
+import org.springframework.data.util.CloseableIterator;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -60,17 +61,11 @@ public class EddbServiceImpl implements EddbService {
         logger.debug("Loading all systems");
 
         SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices("eddbsystem").withPageable(new PageRequest(0, 1000)).build();
-        String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
-        boolean hasRecords = true;
-        while (hasRecords) {
-            Page<EddbSystem> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbSystem.class);
-            if (page.hasContent()) {
-                result.addAll(page.getContent());
-            } else {
-                hasRecords = false;
+        try (CloseableIterator<EddbSystem> stream = this.elasticsearchTemplate.stream(searchQuery, EddbSystem.class)) {
+            while (stream.hasNext()) {
+                result.add(stream.next());
             }
         }
-        this.elasticsearchTemplate.clearScroll(scrollId);
 
         return result;
     }
@@ -136,34 +131,28 @@ public class EddbServiceImpl implements EddbService {
         logger.debug("Mapping" + (arrivalOnly ? " arrival" : "") + " stars by spectral class");
 
         SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(combinedQuery).withIndices("eddbbody").withTypes("eddbbody").withPageable(new PageRequest(0, 1000)).build();
-        String scrollId = this.elasticsearchTemplate.scan(searchQuery, 1000, false);
-        boolean hasRecords = true;
-        while (hasRecords) {
-            Page<EddbBody> page = this.elasticsearchTemplate.scroll(scrollId, 5000, EddbBody.class);
-            if (page.hasContent()) {
-                for (EddbBody body : page.getContent()) {
-                    String spectralClass = body.getSpectralClass();
-                    if (spectralClass == null) {
-                        if (EddbBody.TYPE_ID_BLACK_HOLE.equals(body.getTypeId())) {
-                            spectralClass = "BH";
-                        } else if (EddbBody.TYPE_ID_SUPERMASSIVE_BLACK_HOLE.equals(body.getTypeId())) {
-                            spectralClass = "SMBH";
-                        } else if (EddbBody.TYPE_ID_NEUTRON_STAR.equals(body.getTypeId())) {
-                            spectralClass = "NS";
-                        }
+        try (CloseableIterator<EddbBody> stream = this.elasticsearchTemplate.stream(searchQuery, EddbBody.class)) {
+            while (stream.hasNext()) {
+                EddbBody body = stream.next();
+
+                String spectralClass = body.getSpectralClass();
+                if (spectralClass == null) {
+                    if (EddbBody.TYPE_ID_BLACK_HOLE.equals(body.getTypeId())) {
+                        spectralClass = "BH";
+                    } else if (EddbBody.TYPE_ID_SUPERMASSIVE_BLACK_HOLE.equals(body.getTypeId())) {
+                        spectralClass = "SMBH";
+                    } else if (EddbBody.TYPE_ID_NEUTRON_STAR.equals(body.getTypeId())) {
+                        spectralClass = "NS";
                     }
-                    List<EddbBody> stars = result.get(spectralClass);
-                    if (stars == null) {
-                        stars = new ArrayList<>();
-                        result.put(spectralClass, stars);
-                    }
-                    stars.add(body);
                 }
-            } else {
-                hasRecords = false;
+                List<EddbBody> stars = result.get(spectralClass);
+                if (stars == null) {
+                    stars = new ArrayList<>();
+                    result.put(spectralClass, stars);
+                }
+                stars.add(body);
             }
         }
-        this.elasticsearchTemplate.clearScroll(scrollId);
 
         if (logger.isDebugEnabled()) {
             for (String spectralClass : result.keySet()) {

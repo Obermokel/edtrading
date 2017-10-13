@@ -23,8 +23,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.mutable.MutableInt;
-import org.apache.commons.lang3.mutable.MutableLong;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,6 +38,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.SearchQuery;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+import org.springframework.data.util.CloseableIterator;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -214,7 +213,11 @@ public class EddbReader {
             Page<EddbSystem> first = this.systemRepo.findAll(new PageRequest(0, 1, new Sort(new Sort.Order(Direction.DESC, "updatedAt", NullHandling.NULLS_LAST))));
             Date lastUpdate = first == null || first.getTotalElements() < 1 ? null : first.getContent().get(0).getUpdatedAt();
             File edsmFile = new File(BASE_DIR, "systemsWithCoordinates.json");
-            this.downloadIfUpdated("https://www.edsm.net/dump/systemsWithCoordinates.json", edsmFile);
+            try {
+                this.downloadIfUpdated("https://www.edsm.net/dump/systemsWithCoordinates.json", edsmFile);
+            } catch (Exception e) {
+                logger.error("Failed to download EDSM file: " + e);
+            }
             Map<Long, EdsmSystem> edsmSystemsById = this.loadEdsmSystemsById(edsmFile);
             Set<Long> currentEntityIds = this.readCsvFileIntoRepo(lastUpdate, systemsFile, new EddbSystemCsvRecordParser(edsmSystemsById), this.systemRepo);
             currentEntityIds.addAll(this.readJsonFileIntoRepo(lastUpdate, systemsPopulatedFile, EddbSystem.class, this.systemRepo));
@@ -288,35 +291,30 @@ public class EddbReader {
 
         final DateFormat dfEta = new SimpleDateFormat("MMM dd @ HH:mm", Locale.US);
         long startBatch = System.currentTimeMillis();
-        int n = 0;
 
         Set<Long> oldEntityIds = new HashSet<>();
         SearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(QueryBuilders.matchAllQuery()).withIndices(index).withTypes(index).withPageable(new PageRequest(0, 10000)).build();
-        String scrollId = esTemplate.scan(searchQuery, 300000, true);
-        boolean hasRecords = true;
-        while (hasRecords) {
-            Page<T> page = esTemplate.scroll(scrollId, 300000, type);
-            if (page.hasContent()) {
-                for (T entity : page.getContent()) {
-                    if (!currentEntityIds.contains(entity.getId())) {
-                        oldEntityIds.add(entity.getId());
-                    }
+        int n = 0;
+        int total = (int) esTemplate.count(searchQuery);
+        try (CloseableIterator<T> stream = esTemplate.stream(searchQuery, type)) {
+            while (stream.hasNext()) {
+                T entity = stream.next();
 
-                    if (++n % 100000 == 0) {
-                        long millis = System.currentTimeMillis() - startBatch;
-                        double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
-                        int entitiesRemaining = (int) page.getTotalElements() - n;
-                        double secondsRemaining = entitiesRemaining / entitiesPerSec;
-                        Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
-                        logger.info(String.format(Locale.US, "Checked %,d of %,d %s (%.1f/sec) -- ETA %s", n, page.getTotalElements(), index, entitiesPerSec, dfEta.format(eta)));
-                        startBatch = System.currentTimeMillis();
-                    }
+                if (!currentEntityIds.contains(entity.getId())) {
+                    oldEntityIds.add(entity.getId());
                 }
-            } else {
-                hasRecords = false;
+
+                if (++n % 100000 == 0) {
+                    long millis = System.currentTimeMillis() - startBatch;
+                    double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
+                    int entitiesRemaining = total - n;
+                    double secondsRemaining = entitiesRemaining / entitiesPerSec;
+                    Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
+                    logger.info(String.format(Locale.US, "Checked %,d of %,d %s (%.1f/sec) -- ETA %s", n, total, index, entitiesPerSec, dfEta.format(eta)));
+                    startBatch = System.currentTimeMillis();
+                }
             }
         }
-        esTemplate.clearScroll(scrollId);
 
         for (Long oldEntityId : oldEntityIds) {
             esTemplate.delete(type, String.valueOf(oldEntityId));
@@ -334,136 +332,108 @@ public class EddbReader {
 
         logger.debug("Setting body coords...");
         SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices("eddbbody").withQuery(qb).withPageable(new PageRequest(0, 1000)).build();
-        String scrollId = esTemplate.scan(searchQuery, 300000, false);
-        boolean hasRecords = true;
-        MutableLong startBatch = new MutableLong(System.currentTimeMillis());
-        MutableInt n = new MutableInt(0);
-        while (hasRecords) {
-            Page<EddbBody> page = esTemplate.scroll(scrollId, 300000, EddbBody.class);
-            if (page.hasContent()) {
-                List<EddbBody> content = page.getContent();
-                content.parallelStream().forEach(c -> {
-                    c.setStarClass(c.toStarClass());
-                    EddbSystem system = systemRepo.findOne(c.getSystemId());
-                    if (system != null) {
-                        c.setCoord(system.getCoord());
-                    }
-                    n.increment();
-                    if (n.intValue() % 100000 == 0) {
-                        long millis = System.currentTimeMillis() - startBatch.longValue();
-                        double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
-                        int entitiesRemaining = (int) page.getTotalElements() - n.intValue();
-                        double secondsRemaining = entitiesRemaining / entitiesPerSec;
-                        Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
-                        logger.info(String.format(Locale.US, "Processed %,d of %,d %s (%.1f/sec) -- ETA %s", n.intValue(), page.getTotalElements(), "bodies", entitiesPerSec, dfEta.format(eta)));
-                        startBatch.setValue(System.currentTimeMillis());
-                    }
-                });
-                bodyRepo.save(content);
-            } else {
-                hasRecords = false;
+        int total = (int) esTemplate.count(searchQuery);
+        int n = 0;
+        long startBatch = System.currentTimeMillis();
+        try (CloseableIterator<EddbBody> stream = esTemplate.stream(searchQuery, EddbBody.class)) {
+            while (stream.hasNext()) {
+                EddbBody c = stream.next();
+
+                c.setStarClass(c.toStarClass());
+                EddbSystem system = systemRepo.findById(c.getSystemId()).orElse(null);
+                if (system != null) {
+                    c.setCoord(system.getCoord());
+                }
+                if (++n % 100000 == 0) {
+                    long millis = System.currentTimeMillis() - startBatch;
+                    double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
+                    int entitiesRemaining = total - n;
+                    double secondsRemaining = entitiesRemaining / entitiesPerSec;
+                    Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
+                    logger.info(String.format(Locale.US, "Processed %,d of %,d %s (%.1f/sec) -- ETA %s", n, total, "eddbbody", entitiesPerSec, dfEta.format(eta)));
+                    startBatch = System.currentTimeMillis();
+                }
+                bodyRepo.save(c);
             }
         }
-        esTemplate.clearScroll(scrollId);
 
         logger.debug("Setting station coords...");
         searchQuery = new NativeSearchQueryBuilder().withIndices("eddbstation").withQuery(qb).withPageable(new PageRequest(0, 1000)).build();
-        scrollId = esTemplate.scan(searchQuery, 300000, false);
-        hasRecords = true;
-        startBatch.setValue(System.currentTimeMillis());
-        n.setValue(0);
-        while (hasRecords) {
-            Page<EddbStation> page = esTemplate.scroll(scrollId, 300000, EddbStation.class);
-            if (page.hasContent()) {
-                List<EddbStation> content = page.getContent();
-                content.parallelStream().forEach(c -> {
-                    EddbSystem system = systemRepo.findOne(c.getSystemId());
-                    if (system != null) {
-                        c.setCoord(system.getCoord());
-                    }
-                    n.increment();
-                    if (n.intValue() % 100000 == 0) {
-                        long millis = System.currentTimeMillis() - startBatch.longValue();
-                        double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
-                        int entitiesRemaining = (int) page.getTotalElements() - n.intValue();
-                        double secondsRemaining = entitiesRemaining / entitiesPerSec;
-                        Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
-                        logger.info(String.format(Locale.US, "Processed %,d of %,d %s (%.1f/sec) -- ETA %s", n.intValue(), page.getTotalElements(), "stations", entitiesPerSec, dfEta.format(eta)));
-                        startBatch.setValue(System.currentTimeMillis());
-                    }
-                });
-                stationRepo.save(content);
-            } else {
-                hasRecords = false;
+        total = (int) esTemplate.count(searchQuery);
+        n = 0;
+        startBatch = System.currentTimeMillis();
+        try (CloseableIterator<EddbStation> stream = esTemplate.stream(searchQuery, EddbStation.class)) {
+            while (stream.hasNext()) {
+                EddbStation c = stream.next();
+
+                EddbSystem system = systemRepo.findById(c.getSystemId()).orElse(null);
+                if (system != null) {
+                    c.setCoord(system.getCoord());
+                }
+                if (++n % 100000 == 0) {
+                    long millis = System.currentTimeMillis() - startBatch;
+                    double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
+                    int entitiesRemaining = total - n;
+                    double secondsRemaining = entitiesRemaining / entitiesPerSec;
+                    Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
+                    logger.info(String.format(Locale.US, "Processed %,d of %,d %s (%.1f/sec) -- ETA %s", n, total, "eddbstation", entitiesPerSec, dfEta.format(eta)));
+                    startBatch = System.currentTimeMillis();
+                }
+                stationRepo.save(c);
             }
         }
-        esTemplate.clearScroll(scrollId);
 
         logger.debug("Setting faction home coords...");
         searchQuery = new NativeSearchQueryBuilder().withIndices("eddbfaction").withQuery(qb).withPageable(new PageRequest(0, 1000)).build();
-        scrollId = esTemplate.scan(searchQuery, 300000, false);
-        hasRecords = true;
-        startBatch.setValue(System.currentTimeMillis());
-        n.setValue(0);
-        while (hasRecords) {
-            Page<EddbFaction> page = esTemplate.scroll(scrollId, 300000, EddbFaction.class);
-            if (page.hasContent()) {
-                List<EddbFaction> content = page.getContent();
-                content.parallelStream().forEach(c -> {
-                    EddbSystem system = systemRepo.findOne(c.getHomeSystemId());
-                    if (system != null) {
-                        c.setCoord(system.getCoord());
-                    }
-                    n.increment();
-                    if (n.intValue() % 100000 == 0) {
-                        long millis = System.currentTimeMillis() - startBatch.longValue();
-                        double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
-                        int entitiesRemaining = (int) page.getTotalElements() - n.intValue();
-                        double secondsRemaining = entitiesRemaining / entitiesPerSec;
-                        Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
-                        logger.info(String.format(Locale.US, "Processed %,d of %,d %s (%.1f/sec) -- ETA %s", n.intValue(), page.getTotalElements(), "factions", entitiesPerSec, dfEta.format(eta)));
-                        startBatch.setValue(System.currentTimeMillis());
-                    }
-                });
-                factionRepo.save(content);
-            } else {
-                hasRecords = false;
+        total = (int) esTemplate.count(searchQuery);
+        n = 0;
+        startBatch = System.currentTimeMillis();
+        try (CloseableIterator<EddbFaction> stream = esTemplate.stream(searchQuery, EddbFaction.class)) {
+            while (stream.hasNext()) {
+                EddbFaction c = stream.next();
+
+                EddbSystem system = systemRepo.findById(c.getHomeSystemId()).orElse(null);
+                if (system != null) {
+                    c.setCoord(system.getCoord());
+                }
+                if (++n % 100000 == 0) {
+                    long millis = System.currentTimeMillis() - startBatch;
+                    double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
+                    int entitiesRemaining = total - n;
+                    double secondsRemaining = entitiesRemaining / entitiesPerSec;
+                    Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
+                    logger.info(String.format(Locale.US, "Processed %,d of %,d %s (%.1f/sec) -- ETA %s", n, total, "eddbfaction", entitiesPerSec, dfEta.format(eta)));
+                    startBatch = System.currentTimeMillis();
+                }
+                factionRepo.save(c);
             }
         }
-        esTemplate.clearScroll(scrollId);
 
         logger.debug("Setting market entry coords...");
         searchQuery = new NativeSearchQueryBuilder().withIndices("eddbmarketentry").withQuery(qb).withPageable(new PageRequest(0, 1000)).build();
-        scrollId = esTemplate.scan(searchQuery, 300000, false);
-        hasRecords = true;
-        startBatch.setValue(System.currentTimeMillis());
-        n.setValue(0);
-        while (hasRecords) {
-            Page<EddbMarketEntry> page = esTemplate.scroll(scrollId, 300000, EddbMarketEntry.class);
-            if (page.hasContent()) {
-                List<EddbMarketEntry> content = page.getContent();
-                content.parallelStream().forEach(c -> {
-                    EddbStation station = stationRepo.findOne(c.getStationId());
-                    if (station != null) {
-                        c.setCoord(station.getCoord());
-                    }
-                    n.increment();
-                    if (n.intValue() % 100000 == 0) {
-                        long millis = System.currentTimeMillis() - startBatch.longValue();
-                        double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
-                        int entitiesRemaining = (int) page.getTotalElements() - n.intValue();
-                        double secondsRemaining = entitiesRemaining / entitiesPerSec;
-                        Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
-                        logger.info(String.format(Locale.US, "Processed %,d of %,d %s (%.1f/sec) -- ETA %s", n.intValue(), page.getTotalElements(), "market entries", entitiesPerSec, dfEta.format(eta)));
-                        startBatch.setValue(System.currentTimeMillis());
-                    }
-                });
-                marketEntryRepo.save(content);
-            } else {
-                hasRecords = false;
+        total = (int) esTemplate.count(searchQuery);
+        n = 0;
+        startBatch = System.currentTimeMillis();
+        try (CloseableIterator<EddbMarketEntry> stream = esTemplate.stream(searchQuery, EddbMarketEntry.class)) {
+            while (stream.hasNext()) {
+                EddbMarketEntry c = stream.next();
+
+                EddbStation station = stationRepo.findById(c.getStationId()).orElse(null);
+                if (station != null) {
+                    c.setCoord(station.getCoord());
+                }
+                if (++n % 100000 == 0) {
+                    long millis = System.currentTimeMillis() - startBatch;
+                    double entitiesPerSec = (100000d / Math.max(1, millis)) * 1000d;
+                    int entitiesRemaining = total - n;
+                    double secondsRemaining = entitiesRemaining / entitiesPerSec;
+                    Date eta = new Date(System.currentTimeMillis() + (long) (secondsRemaining * 1000));
+                    logger.info(String.format(Locale.US, "Processed %,d of %,d %s (%.1f/sec) -- ETA %s", n, total, "eddbmarketentry", entitiesPerSec, dfEta.format(eta)));
+                    startBatch = System.currentTimeMillis();
+                }
+                marketEntryRepo.save(c);
             }
         }
-        esTemplate.clearScroll(scrollId);
     }
 
     private <T extends EddbEntity> Set<Long> readCsvFileIntoRepo(Date lastUpdate, File file, CSVRecordParser<T> csvRecordParser, ElasticsearchRepository<T, Long> repo) throws IOException {
@@ -488,7 +458,7 @@ public class EddbReader {
                     savedEntityIds.add(parsed.getId());
                 }
                 if (batch.size() >= batchSize) {
-                    for (T entity : repo.save(batch)) {
+                    for (T entity : repo.saveAll(batch)) {
                         savedEntityIds.add(entity.getId());
                     }
                     batch.clear();
@@ -504,7 +474,7 @@ public class EddbReader {
                 }
             }
             if (!batch.isEmpty()) {
-                for (T entity : repo.save(batch)) {
+                for (T entity : repo.saveAll(batch)) {
                     savedEntityIds.add(entity.getId());
                 }
             }
@@ -547,7 +517,7 @@ public class EddbReader {
                             savedEntityIds.add(parsed.getId());
                         }
                         if (batch.size() >= batchSize) {
-                            for (T entity : repo.save(batch)) {
+                            for (T entity : repo.saveAll(batch)) {
                                 savedEntityIds.add(entity.getId());
                             }
                             batch.clear();
@@ -567,7 +537,7 @@ public class EddbReader {
                     line = reader.readLine();
                 }
                 if (!batch.isEmpty()) {
-                    for (T entity : repo.save(batch)) {
+                    for (T entity : repo.saveAll(batch)) {
                         savedEntityIds.add(entity.getId());
                     }
                 }
@@ -585,7 +555,7 @@ public class EddbReader {
                         savedEntityIds.add(loadedEntity.getId());
                     }
                     if (batch.size() >= batchSize) {
-                        for (T entity : repo.save(batch)) {
+                        for (T entity : repo.saveAll(batch)) {
                             savedEntityIds.add(entity.getId());
                         }
                         batch.clear();
@@ -601,7 +571,7 @@ public class EddbReader {
                     }
                 }
                 if (!batch.isEmpty()) {
-                    for (T entity : repo.save(batch)) {
+                    for (T entity : repo.saveAll(batch)) {
                         savedEntityIds.add(entity.getId());
                     }
                 }

@@ -4,7 +4,6 @@ import com.google.gson.annotations.SerializedName;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldIndex;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.util.Date;
@@ -14,7 +13,7 @@ import java.util.Date;
  *
  * @author <a href="mailto:b.guenther@xsite.de">Boris Guenther</a>
  */
-@Document(indexName = "eddbmodule", type = "eddbmodule", shards = 1, replicas = 0)
+@Document(indexName = "eddbmodule", type = "eddbmodule", shards = 3, replicas = 0)
 public class EddbModule implements EddbEntity {
 
     private static final long serialVersionUID = 6837140492504224340L;
@@ -26,12 +25,12 @@ public class EddbModule implements EddbEntity {
     private String name = null; // Only set for powerplay modules
     @SerializedName("class")
     private Integer size = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("rating")
     private String rating = null;
     @SerializedName("price")
     private Integer price = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("weapon_mode")
     private String weaponMode = null; // Fixed etc
     @SerializedName("missile_type")
@@ -42,7 +41,7 @@ public class EddbModule implements EddbEntity {
     //    private Long edId = null;
     //    @SerializedName("ed_symbol")
     //    private String edSymbol = null;
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    @Field(type = FieldType.keyword)
     @SerializedName("ship")
     private String ship = null;
     @SerializedName("group_id")

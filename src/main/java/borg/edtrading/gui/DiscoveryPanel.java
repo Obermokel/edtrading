@@ -420,7 +420,7 @@ public class DiscoveryPanel extends JPanel implements TravelHistoryListener, Edd
                 List<EddbBody> bodies = eddbService.findBodiesOfSystem(systemId);
                 for (EddbBody body : bodies) {
                     if (systemName == null) {
-                        EddbSystem system = appctx.getBean(EddbSystemRepository.class).findOne(body.getSystemId());
+                        EddbSystem system = appctx.getBean(EddbSystemRepository.class).findById(body.getSystemId()).orElse(null);
                         if (system != null) {
                             systemName = system.getName();
                         }
