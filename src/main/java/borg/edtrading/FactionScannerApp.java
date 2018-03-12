@@ -273,7 +273,8 @@ public class FactionScannerApp {
                             try {
                                 systemFaction.setInfluence(new BigDecimal(fixedValue.trim()));
                             } catch (NumberFormatException e) {
-                                throw new FactionScanException("INFLUENCE UNKNOWN", "Failed to parse '" + currentValue + "' (fixed to '" + fixedValue + "') to influence of " + currentFaction, ocrResult);
+                                systemFaction.setInfluence(new BigDecimal("-1"));
+                                //throw new FactionScanException("INFLUENCE UNKNOWN", "Failed to parse '" + currentValue + "' (fixed to '" + fixedValue + "') to influence of " + currentFaction, ocrResult);
                                 //System.exit(1);
                                 //systemFaction.setInfluence(new BigDecimal("99.9"));
                             }

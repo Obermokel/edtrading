@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -34,6 +35,8 @@ public class ExplorationPayoutCalculator {
 
     public static void main(String[] args) throws Exception {
         Journal journal = new Journal(new JournalReader().readEntireJournal(Constants.JOURNAL_DIR));
+
+        final Date MIN_DATE = new SimpleDateFormat("yyyy-MM-dd").parse("2017-04-12");
 
         String systemName = "Sol";
         SortedMap<String, String> scannedBodyClassesByBodyName = new TreeMap<>();
@@ -55,6 +58,9 @@ public class ExplorationPayoutCalculator {
         LinkedHashMap<String, List<Integer>> payouts = new LinkedHashMap<>();
         List<SellExplorationDataEntry> sellEntries = MiscUtil.unsafeCast(journal.getEntries(null, null, Event.SellExplorationData));
         for (SellExplorationDataEntry entry : sellEntries) {
+            if (entry.getTimestamp().before(MIN_DATE)) {
+                continue;
+            }
             if (entry.getSystems().size() == 1) {
                 systemName = entry.getSystems().get(0);
                 List<String> scannedBodies = scannedBodyNamesBySystemName.getOrDefault(systemName, Collections.emptyList());
@@ -111,6 +117,8 @@ public class ExplorationPayoutCalculator {
         }
 
         System.out.println();
+        System.out.println("huhu");
+        System.out.println("MIN_DATE = " + MIN_DATE);
         //MiscUtil.sortMapByValue(payouts);
         for (String bodyClass : payouts.keySet()) {
             List<Integer> classPayouts = payouts.get(bodyClass);
