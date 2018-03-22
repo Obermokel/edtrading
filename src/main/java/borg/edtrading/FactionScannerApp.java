@@ -192,7 +192,7 @@ public class FactionScannerApp {
 						BigDecimal existingValueBD = new BigDecimal(existingValue.replace(",", ".").replace("%", ""));
 						if (systemFactions.getFactions().get(faction).getInfluence().floatValue() <= 0) {
 							allowOverwrite = false;
-						} else if (existingValueBD.floatValue() <= 0 || existingValueBD.stripTrailingZeros().scale() <= 1) {
+						} else if (existingValueBD.floatValue() <= 0) {
 							logger.warn("Overwriting " + existingValue + " with " + influence + " for " + factionName + " (" + date + ")");
 						} else {
 							allowOverwrite = false;
