@@ -48,6 +48,11 @@ public interface Constants {
     File FACTION_SCREENSHOTS_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\Factions");
 
     /**
+     * Where screenshots showing distances are stored
+     */
+    File DISTANCES_SCREENSHOTS_DIR = new File(System.getProperty("user.home"), "Trilateration");
+
+    /**
      * Where this program stores its data
      */
     File EDTRADING_BASE_DIR = new File(System.getProperty("user.home"), "Google Drive\\Elite Dangerous\\edtrading");

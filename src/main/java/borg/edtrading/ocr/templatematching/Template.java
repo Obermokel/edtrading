@@ -1,15 +1,5 @@
 package borg.edtrading.ocr.templatematching;
 
-import boofcv.abst.distort.FDistort;
-import boofcv.alg.interpolate.TypeInterpolate;
-import boofcv.gui.image.VisualizeImageData;
-import boofcv.io.image.ConvertBufferedImage;
-import boofcv.struct.image.GrayF32;
-import borg.edtrading.cfg.Constants;
-import borg.edtrading.ocr.imagetransformation.Transformation;
-import borg.edtrading.ocr.screenshots.Region;
-import borg.edtrading.util.ImageUtil;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -19,6 +9,16 @@ import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
+
+import boofcv.abst.distort.FDistort;
+import boofcv.alg.interpolate.TypeInterpolate;
+import boofcv.gui.image.VisualizeImageData;
+import boofcv.io.image.ConvertBufferedImage;
+import boofcv.struct.image.GrayF32;
+import borg.edtrading.cfg.Constants;
+import borg.edtrading.ocr.imagetransformation.Transformation;
+import borg.edtrading.ocr.screenshots.Region;
+import borg.edtrading.util.ImageUtil;
 
 /**
  * Template which can be matched against screenshots or regions of screenshots
@@ -67,8 +67,11 @@ public class Template {
     }
 
     public static List<Template> fromFolder(String templateSetName) throws IOException {
+        return Template.fromFolder(new File(Constants.TEMPLATES_DIR, templateSetName));
+    }
+
+    public static List<Template> fromFolder(File setDir) throws IOException {
         List<Template> result = new ArrayList<>();
-        File setDir = new File(Constants.TEMPLATES_DIR, templateSetName);
         File[] textDirs = setDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {

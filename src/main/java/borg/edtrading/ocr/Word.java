@@ -1,15 +1,16 @@
 package borg.edtrading.ocr;
 
-import borg.edtrading.ocr.bodyscanner.BodyScanner;
-import borg.edtrading.ocr.templatematching.Match;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import borg.edtrading.ocr.bodyscanner.BodyScanner;
+import borg.edtrading.ocr.templatematching.Match;
 
 /**
  * A sorted sequence of template matches which are very close to each other, therefore
@@ -138,7 +139,7 @@ public class Word {
                 known += m.getErrorPerPixel() <= BodyScanner.ERROR_PER_PIXEL_KNOWN ? 1 : 0;
             }
             float knownPercent = known / this.matches.size();
-            return known <= 1 || knownPercent < 0.5f;
+            return known <= 1 || knownPercent < 0.25f;
         }
 
         public Word build() {
