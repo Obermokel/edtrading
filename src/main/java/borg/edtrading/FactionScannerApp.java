@@ -122,16 +122,14 @@ public class FactionScannerApp {
 						FileUtils.moveFileToDirectory(screenshotFile, errorDir, true);
 						if (e1 instanceof FactionScanException) {
 							FactionScanException fse = (FactionScanException) e1;
-							if (StringUtils.isNotEmpty(fse.getReasonCode()) && fse.getOcrResult() != null
-									&& fse.getOcrResult().getAllTextLinesDebugImage() != null) {
+							if (StringUtils.isNotEmpty(fse.getReasonCode()) && fse.getOcrResult() != null && fse.getOcrResult().getAllTextLinesDebugImage() != null) {
 								BufferedImage debugImage = fse.getOcrResult().getAllTextLinesDebugImage();
 								Graphics2D g = debugImage.createGraphics();
 								g.setFont(new Font("Tahoma", Font.BOLD, 32));
 								g.setColor(Color.RED);
 								g.drawString(fse.getReasonMessage(), 1000, 100);
 								g.dispose();
-								ImageIO.write(debugImage, "PNG",
-										new File(errorDir, screenshotFile.getName().replace(".png", " " + fse.getReasonCode() + ".png")));
+								ImageIO.write(debugImage, "PNG", new File(errorDir, screenshotFile.getName().replace(".png", " " + fse.getReasonCode() + ".png")));
 							}
 						}
 					} catch (FileExistsException e2) {
@@ -189,13 +187,11 @@ public class FactionScannerApp {
 					String existingValue = tblInfluence.getCellValue(rowIdx, colIdx);
 					boolean allowOverwrite = true;
 					if (StringUtils.isNotEmpty(existingValue) && !existingValue.equals(influence)) {
-						BigDecimal existingValueBD = new BigDecimal(existingValue.replace(",", ".").replace("%", ""));
+						//BigDecimal existingValueBD = new BigDecimal(existingValue.replace(",", ".").replace("%", ""));
 						if (systemFactions.getFactions().get(faction).getInfluence().floatValue() <= 0) {
 							allowOverwrite = false;
-						} else if (existingValueBD.floatValue() <= 0) {
-							logger.warn("Overwriting " + existingValue + " with " + influence + " for " + factionName + " (" + date + ")");
 						} else {
-							allowOverwrite = false;
+							logger.warn("Overwriting " + existingValue + " with " + influence + " for " + factionName + " (" + date + ")");
 						}
 					}
 					if (allowOverwrite) {
